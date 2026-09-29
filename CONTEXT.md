@@ -11,3 +11,7 @@ _Avoid_: User, account, household, tenant
 **Person**:
 A member of a Family who can be attached to calendar entries and used as a filter; a Person never signs in.
 _Avoid_: User, member, participant
+
+**Entry**:
+Anything the Family puts on the calendar at a date or time: a birthday, a holiday, an appointment, a class, an outing.
+_Avoid_: Event (a kind of Entry, not the general term), item, appointment
