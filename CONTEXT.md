@@ -5,7 +5,7 @@ A personal web calendar where one family plans its shared life: birthdays, holid
 ## Language
 
 **Family**:
-The single account that signs in and owns every piece of data in the calendar.
+The single account that signs in and owns every piece of data in the calendar; each installation serves exactly one Family.
 _Avoid_: User, account, household, tenant
 
 **Person**:
