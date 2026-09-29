@@ -13,5 +13,13 @@ A member of a Family who can be attached to calendar entries and used as a filte
 _Avoid_: User, member, participant
 
 **Entry**:
-Anything the Family puts on the calendar at a date or time: a birthday, a holiday, an appointment, a class, an outing.
+Anything the Family puts on the calendar at a date or time: a birthday, a holiday, an appointment, a class, an outing. Every Entry has exactly one Entry Type.
 _Avoid_: Event (a kind of Entry, not the general term), item, appointment
+
+**Entry Type**:
+A Family-configurable template for Entries: a name, a colour, which optional features its Entries offer (repetition, Importance, location, Persons, notes, time of day) and their defaults. Some come built in; Birthday is built in and cannot be removed.
+_Avoid_: Category, kind, typology, tag
+
+**Importance**:
+How prominent an Entry is in the views: Low, Normal or High.
+_Avoid_: Priority, urgency
