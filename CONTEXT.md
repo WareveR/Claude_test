@@ -17,7 +17,7 @@ Anything the Family puts on the calendar at a date or time: a birthday, a holida
 _Avoid_: Event (a kind of Entry, not the general term), item, appointment
 
 **Entry Type**:
-A Family-configurable template for Entries: a name, a colour, which optional features its Entries offer (repetition, Importance, location, Persons, notes, time of day) and their defaults. Some come built in; Birthday is built in and cannot be removed.
+A Family-configurable template that pre-fills new Entries: a name, a colour, an icon or thumbnail image, and defaults for the optional features (repetition, Importance, location, Persons, notes, time of day). It only sets defaults; any Entry may use any feature. Some come built in; Birthday is built in and cannot be removed.
 _Avoid_: Category, kind, typology, tag
 
 **Importance**:
