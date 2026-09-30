@@ -79,3 +79,7 @@ _Avoid_: To-do, chore, reminder
 **Tasks view**:
 The view listing Tasks in four groups (Overdue, Today, Upcoming, No date), with done Tasks behind a "Show done" switch. The Person Filter applies to it as to the calendar views.
 _Avoid_: To-do list, task list
+
+**Weather Location**:
+A place saved for the weather forecast by searching a town name; the Family keeps up to 10. Exactly one is selected at a time for the whole Family, and switching it on any device switches it everywhere. With none saved, no weather is shown.
+_Avoid_: Home location, city, weather city
