@@ -55,3 +55,11 @@ _Avoid_: View filter, member filter
 **Birthday Entry**:
 An Entry of the built-in Birthday type. It is either synced from a Person's date of birth (attached to that Person; its date and Person change only on the Person) or entered by hand for someone outside the Family. The birth year is optional; when known, the age reached is shown. A birthday party is a separate, ordinary Entry.
 _Avoid_: Anniversary, birthdate entry
+
+**Family Password**:
+The single secret that signs any device in as the Family: at least 10 characters, no complexity rules. It is recovered through the Family's one registered recovery email, or, as a last resort, through a new setup code in the hosting settings.
+_Avoid_: Login, account password, PIN
+
+**Signed-in Device**:
+A browser or device holding a Family session that lasts a year from its last use. Each one is listed and can be signed out on its own; changing the Family Password signs out all of them. Every Signed-in Device can edit.
+_Avoid_: Session, user, client
