@@ -95,3 +95,7 @@ _Avoid_: Sync, export, subscription
 **Public Holiday**:
 A holiday the app calculates for the countries, regions and municipality chosen in the Family settings (Portugal's national holidays by default). It shows as a label on its day in each device's language, with the date lightly shaded. It is not an Entry: it can't be edited, sends no Reminders, and each device can hide Public Holidays.
 _Avoid_: Bank holiday, feriado, holiday Entry
+
+**Voice Entry**:
+Creating an Entry or Task by speaking one sentence. The browser turns speech into text, and a Workers AI model fills in the details. The app then reads a short summary aloud and listens: "yes" saves at once, while "no", silence or an unclear answer opens the filled-in form. Each device can switch the spoken readback off; the form then always opens. Voice Entry never edits existing Entries.
+_Avoid_: Voice command, dictation, assistant
