@@ -23,3 +23,15 @@ _Avoid_: Category, kind, typology, tag
 **Importance**:
 How prominent an Entry is in the views: Low, Normal or High.
 _Avoid_: Priority, urgency
+
+**Timed Entry**:
+An Entry with a start time and an optional end time, read in the Family Time Zone; it may span several days (a trip from Friday 18:00 to Sunday 20:00). Without an end it shows as a moment at its start.
+_Avoid_: Event, appointment (both are Entry Types)
+
+**All-day Entry**:
+An Entry covering one or more whole days with no clock times; a range includes both its first and last day ("1 to 15 August" covers the 15th).
+_Avoid_: Full-day, date-only
+
+**Family Time Zone**:
+The single time zone the whole Family's clock times are read in. Entries have no zone of their own, and a Timed Entry keeps its clock time if the Family Time Zone changes.
+_Avoid_: Local time, user time zone
