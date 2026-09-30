@@ -9,7 +9,7 @@ The single account that signs in and owns every piece of data in the calendar; e
 _Avoid_: User, account, household, tenant
 
 **Person**:
-A member of a Family who can be attached to calendar entries and used as a filter; a Person never signs in.
+A member of a Family who can be attached to calendar entries and used as a filter; a Person never signs in. A Person has a name, a colour and an optional photo. Removing a Person archives them (gone from pickers and filters, kept on past Entries); only a Person no Entry mentions can be deleted.
 _Avoid_: User, member, participant
 
 **Entry**:
@@ -43,3 +43,11 @@ _Avoid_: Recurrence, series, rule
 **Occurrence**:
 One date or time a repeating Entry falls on. An Occurrence can be skipped or edited on its own; edits and deletions apply to this Occurrence, this and the following ones, or all of them.
 _Avoid_: Instance, event
+
+**Family-wide Entry**:
+An Entry with no Persons attached: it is for the whole Family. There is no separate "everyone" marker.
+_Avoid_: Shared entry, general entry (General is an Entry Type)
+
+**Person Filter**:
+The selection of Persons the views are narrowed to. It shows Entries for any selected Person, plus Family-wide Entries unless those are switched off, and each device remembers its last selection.
+_Avoid_: View filter, member filter
