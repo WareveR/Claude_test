@@ -91,3 +91,7 @@ _Avoid_: Alert, alarm, notification (the delivery, not the setting)
 **Calendar Feed**:
 A read-only, secret .ics link covering chosen Persons that other calendar apps subscribe to. It can be revoked and replaced; it never takes changes back.
 _Avoid_: Sync, export, subscription
+
+**Public Holiday**:
+A holiday the app calculates for the countries, regions and municipality chosen in the Family settings (Portugal's national holidays by default). It shows as a label on its day in each device's language, with the date lightly shaded. It is not an Entry: it can't be edited, sends no Reminders, and each device can hide Public Holidays.
+_Avoid_: Bank holiday, feriado, holiday Entry
