@@ -9,7 +9,7 @@ The single account that signs in and owns every piece of data in the calendar; e
 _Avoid_: User, account, household, tenant
 
 **Person**:
-A member of a Family who can be attached to calendar entries and used as a filter; a Person never signs in. A Person has a name, a colour and an optional photo. Removing a Person archives them (gone from pickers and filters, kept on past Entries); only a Person no Entry mentions can be deleted.
+A member of a Family who can be attached to calendar entries and used as a filter; a Person never signs in. A Person has a name, a colour, an optional photo and an optional date of birth, which keeps a Birthday Entry in sync. Removing a Person archives them (gone from pickers and filters, kept on past Entries); only a Person no Entry mentions can be deleted.
 _Avoid_: User, member, participant
 
 **Entry**:
@@ -51,3 +51,7 @@ _Avoid_: Shared entry, general entry (General is an Entry Type)
 **Person Filter**:
 The selection of Persons the views are narrowed to. It shows Entries for any selected Person, plus Family-wide Entries unless those are switched off, and each device remembers its last selection.
 _Avoid_: View filter, member filter
+
+**Birthday Entry**:
+An Entry of the built-in Birthday type. It is either synced from a Person's date of birth (attached to that Person; its date and Person change only on the Person) or entered by hand for someone outside the Family. The birth year is optional; when known, the age reached is shown. A birthday party is a separate, ordinary Entry.
+_Avoid_: Anniversary, birthdate entry
