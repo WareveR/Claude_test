@@ -36,6 +36,10 @@ _Avoid_: Full-day, date-only
 The single time zone the whole Family's clock times are read in. Entries have no zone of their own, and a Timed Entry keeps its clock time if the Family Time Zone changes.
 _Avoid_: Local time, user time zone
 
+**Family Language**:
+The language chosen at setup (pt-PT or English in v1) that every email the app sends is written in. Each device may show the app in another supported language; a new device starts in its browser's language when supported, otherwise the Family Language. Date formats, first day of the week and clock follow the language shown.
+_Avoid_: Locale, default language, user language
+
 **Repetition**:
 The rule that makes an Entry repeat: daily, weekly, monthly or yearly, every N of them, optionally on several weekdays, ending never, on a date or after a number of times. A date missing from a month (the 31st, 29 February) falls on that month's last day.
 _Avoid_: Recurrence, series, rule
