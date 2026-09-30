@@ -1,0 +1,3 @@
+# Entries keep their clock time in one Family Time Zone
+
+Every Timed Entry is stored as a clock time (date plus time of day) read in the single Family Time Zone, not as an absolute instant and not with a zone of its own. Family life runs on local clock time: a class at 10:00 should stay at 10:00 when summer time starts or when the Family changes its zone. Per-Entry zones for travel were rejected as complexity a personal calendar doesn't need; travel times go in Family time or in the notes. Moving later to absolute instants or per-Entry zones means converting every stored Timed Entry, so treat it as a migration rather than a tweak.
