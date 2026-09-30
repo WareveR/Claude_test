@@ -35,3 +35,11 @@ _Avoid_: Full-day, date-only
 **Family Time Zone**:
 The single time zone the whole Family's clock times are read in. Entries have no zone of their own, and a Timed Entry keeps its clock time if the Family Time Zone changes.
 _Avoid_: Local time, user time zone
+
+**Repetition**:
+The rule that makes an Entry repeat: daily, weekly, monthly or yearly, every N of them, optionally on several weekdays, ending never, on a date or after a number of times. A date missing from a month (the 31st, 29 February) falls on that month's last day.
+_Avoid_: Recurrence, series, rule
+
+**Occurrence**:
+One date or time a repeating Entry falls on. An Occurrence can be skipped or edited on its own; edits and deletions apply to this Occurrence, this and the following ones, or all of them.
+_Avoid_: Instance, event
