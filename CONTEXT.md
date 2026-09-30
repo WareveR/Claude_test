@@ -69,5 +69,13 @@ A browser or device holding a Family session that lasts a year from its last use
 _Avoid_: Session, user, client
 
 **Display Mode**:
-A per-device setting for a screen used as a wall display (typically a tablet): the screen stays awake, text is larger, the view returns to today after a few minutes without touch and rolls over at midnight, and editing controls are hidden. Leaving Display Mode is one step; it is not a separate access level.
+A per-device setting for a screen used as a wall display (typically a tablet): the screen stays awake, text is larger, the view returns to today after a few minutes without touch and rolls over at midnight, and editing controls are hidden except ticking a Task done. Leaving Display Mode is one step; it is not a separate access level.
 _Avoid_: Kiosk, read-only mode, wall mode
+
+**Task**:
+Something to get done, separate from an Entry: a title, optional notes, an optional due date (with an optional time), any number of Persons (none = the whole Family) and a done state that any device can tick or undo. It has no Entry Type or Importance. A repeating Task follows a Repetition; ticking it brings up the next one, and only the oldest undone one shows. A Task is overdue once its due day ends (or its due time passes) in the Family Time Zone. Dated Tasks appear on their due day in the calendar views.
+_Avoid_: To-do, chore, reminder
+
+**Tasks view**:
+The view listing Tasks in four groups (Overdue, Today, Upcoming, No date), with done Tasks behind a "Show done" switch. The Person Filter applies to it as to the calendar views.
+_Avoid_: To-do list, task list
