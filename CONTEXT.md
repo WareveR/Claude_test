@@ -83,3 +83,11 @@ _Avoid_: To-do list, task list
 **Weather Location**:
 A place saved for the weather forecast by searching a town name; the Family keeps up to 10. Exactly one is selected at a time for the whole Family, and switching it on any device switches it everywhere. With none saved, no weather is shown.
 _Avoid_: Home location, city, weather city
+
+**Reminder**:
+A phone notification sent a set time before an Entry or one of its Occurrences ("1 day before", "1 hour before"); an Entry has zero or more, defaulted by its Entry Type. All-day Entries remind at 09:00 in the Family Time Zone; a dated Task reminds at its due time, or 09:00 on its due day. Each Signed-in Device chooses which Persons it is reminded about, or switches Reminders off; Display Mode devices get none.
+_Avoid_: Alert, alarm, notification (the delivery, not the setting)
+
+**Calendar Feed**:
+A read-only, secret .ics link covering chosen Persons that other calendar apps subscribe to. It can be revoked and replaced; it never takes changes back.
+_Avoid_: Sync, export, subscription
