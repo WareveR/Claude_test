@@ -63,3 +63,7 @@ _Avoid_: Login, account password, PIN
 **Signed-in Device**:
 A browser or device holding a Family session that lasts a year from its last use. Each one is listed and can be signed out on its own; changing the Family Password signs out all of them. Every Signed-in Device can edit.
 _Avoid_: Session, user, client
+
+**Display Mode**:
+A per-device setting for a screen used as a wall display (typically a tablet): the screen stays awake, text is larger, the view returns to today after a few minutes without touch and rolls over at midnight, and editing controls are hidden. Leaving Display Mode is one step; it is not a separate access level.
+_Avoid_: Kiosk, read-only mode, wall mode
