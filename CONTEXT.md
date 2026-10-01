@@ -73,11 +73,15 @@ A per-device setting for a screen used as a wall display (typically a tablet): t
 _Avoid_: Kiosk, read-only mode, wall mode
 
 **Task**:
-Something to get done, separate from an Entry: a title, optional notes, an optional due date (with an optional time), any number of Persons (none = the whole Family) and a done state that any device can tick or undo. It has no Entry Type or Importance. A repeating Task follows a Repetition; ticking it brings up the next one, and only the oldest undone one shows. A Task is overdue once its due day ends (or its due time passes) in the Family Time Zone. Dated Tasks appear on their due day in the calendar views.
+Something to get done, separate from an Entry: a title, optional notes, an optional due date (with an optional time), any number of Persons (none = the whole Family) and a done state that any device can tick or undo. It has no Entry Type or Importance. A repeating Task follows a Repetition; ticking it brings up the next one, and only the oldest undone one shows. A Task is overdue once its due day ends (or its due time passes) in the Family Time Zone. Dated Tasks appear on their due day in the calendar views. A Task may belong to one Checklist.
 _Avoid_: To-do, chore, reminder
 
+**Checklist**:
+A named group of Tasks done together, such as the summer cleaning, back to school or holiday packing, showing its progress ("3 of 8 done"). It has an optional period (start and end): before the start it is not pending, and at the end its undone Tasks become overdue; a Task without its own due date takes the Checklist's end. Its Persons are only the default for new Tasks, and the Person Filter shows it when any of its Tasks matches. A Checklist comes back as a new round, all Tasks undone, either by a Repetition (Task dates move with it) or by "Use again"; the previous round closes with only its result kept ("2025: 7 of 8"), even if unfinished. Its Tasks repeat only with the Checklist, and adding, editing or removing one applies to every future round. It reminds once at the start of its period unless switched off. Its period shows as an all-day bar in the calendar views.
+_Avoid_: Task list, project, template, group
+
 **Tasks view**:
-The view listing Tasks in four groups (Overdue, Today, Upcoming, No date), with done Tasks behind a "Show done" switch. The Person Filter applies to it as to the calendar views.
+The view listing Tasks in four groups (Overdue, Today, Upcoming, No date), with done Tasks behind a "Show done" switch. A Checklist shows as one expandable row with its progress in the group of its end; its dated Tasks also show on their own, labelled with the Checklist's name. The Person Filter applies to it as to the calendar views.
 _Avoid_: To-do list, task list
 
 **Weather Location**:
@@ -85,7 +89,7 @@ A place saved for the weather forecast by searching a town name; the Family keep
 _Avoid_: Home location, city, weather city
 
 **Reminder**:
-A phone notification sent a set time before an Entry or one of its Occurrences ("1 day before", "1 hour before"); an Entry has zero or more, defaulted by its Entry Type. All-day Entries remind at 09:00 in the Family Time Zone; a dated Task reminds at its due time, or 09:00 on its due day. Each Signed-in Device chooses which Persons it is reminded about, or switches Reminders off; Display Mode devices get none.
+A phone notification sent a set time before an Entry or one of its Occurrences ("1 day before", "1 hour before"); an Entry has zero or more, defaulted by its Entry Type. All-day Entries remind at 09:00 in the Family Time Zone; a dated Task reminds at its due time, or 09:00 on its due day; a Checklist reminds at 09:00 on the first day of its period. Each Signed-in Device chooses which Persons it is reminded about, or switches Reminders off; Display Mode devices get none.
 _Avoid_: Alert, alarm, notification (the delivery, not the setting)
 
 **Calendar Feed**:
@@ -101,5 +105,5 @@ Creating an Entry or Task by speaking one sentence. The browser turns speech int
 _Avoid_: Voice command, dictation, assistant
 
 **Briefing**:
-A few sentences in natural language at the top of the day view (and of today's column in Display Mode) saying what is coming up and what deserves attention: "Tomorrow Diana has Scouts, Mum's birthday is next week, and Christmas is a month away, a good time to start thinking about presents." A Workers AI model picks three to five things worth mentioning from the next 60 days of Entries, Tasks, Birthdays and Public Holidays, favouring High Importance and what is closest, and may add a suggestion or question. There is one Briefing for the Family and one for each Person, in each language in use: with exactly one Person in the Person Filter that Person's Briefing shows, otherwise the Family's. It is written once a day before dawn, rewritten when something in the next 7 days changes, and has a Refresh button. When the model fails, a plain countdown list of the same things shows instead.
+A few sentences in natural language at the top of the day view (and of today's column in Display Mode) saying what is coming up and what deserves attention: "Tomorrow Diana has Scouts, Mum's birthday is next week, and Christmas is a month away, a good time to start thinking about presents." A Workers AI model picks three to five things worth mentioning from the next 60 days of Entries, Tasks, Checklists, Birthdays and Public Holidays, favouring High Importance and what is closest, and may add a suggestion or question. There is one Briefing for the Family and one for each Person, in each language in use: with exactly one Person in the Person Filter that Person's Briefing shows, otherwise the Family's. It is written once a day before dawn, rewritten when something in the next 7 days changes, and has a Refresh button. When the model fails, a plain countdown list of the same things shows instead.
 _Avoid_: Summary, digest, home page, dashboard
