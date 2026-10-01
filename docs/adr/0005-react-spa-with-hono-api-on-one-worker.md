@@ -12,5 +12,6 @@ The supporting choices are:
 - **Styling:** Tailwind CSS.
 - **Calendar views:** our own code, so extra views can be added later.
 - **Voice Entry (#27):** the browser's speech recognition and speech synthesis, plus a small Cloudflare Workers AI model within its free daily allowance to turn a sentence into an Entry or Task. When the model fails, the plain form opens instead.
+- **Briefing (#42):** the same Workers AI allowance writes the Briefings, once a day before dawn by a Cron Trigger and again when something in the next 7 days changes, rather than on every page load. When the model fails or the allowance runs out, a plain countdown list is shown instead.
 
 The owner prefers well-known tools with low upkeep over learning something new. React was chosen over Svelte for its larger ecosystem, at the cost of about 45 KB more to download once. Full-stack server-rendering frameworks were rejected: they spend Worker CPU on every page and complicate offline use. Calendar libraries were rejected because they handle the year view, Person colours and Display Mode poorly or only in paid versions. Temporal was not used because it is not yet in every supported browser.
