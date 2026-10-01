@@ -257,6 +257,9 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-r
 .sim{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;max-width:1180px;margin:10px auto 0}
 .sim button{font-size:12px;padding:6px 12px;border-radius:99px;border:1px solid var(--line);background:var(--surface);font-weight:600}
 @media (max-width:860px){.frame.wall{aspect-ratio:auto;height:auto;max-height:none}.dmbody{grid-template-columns:1fr!important}.days7{grid-template-columns:repeat(7,minmax(120px,1fr));overflow-x:auto}.dmnow{flex-wrap:wrap}.dmnow .clk{font-size:34px}.dmnow .dt{font-size:17px;white-space:normal}.wmgrid{min-height:480px}}
+.fbtn{margin-left:auto;display:flex;align-items:center;gap:6px;height:40px;padding:0 12px;border-radius:99px;border:1px solid var(--line);background:var(--surface);font-weight:600;font-size:14px}
+.fbtn.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.back+.fbtn{margin-left:8px}
 /* prototype switcher */
 .switcher{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;align-items:center;gap:4px;background:var(--chrome);color:var(--chrome-ink);border-radius:99px;padding:4px;box-shadow:0 8px 24px rgba(0,0,0,.3);z-index:10;max-width:calc(100% - 32px)}
 .switcher button{width:36px;height:36px;border-radius:50%;font-size:18px;color:var(--chrome-ink)}
@@ -355,7 +358,7 @@ const short=s=>`${WD[wd(s)]} ${dnum(s)}`;
 const mins=t=>{const[h,m]=t.split(':').map(Number);return h*60+m;};
 
 // ---------- state ----------
-const V=[{k:'A',name:'Hoje + 7 dias em grelha, com navegação'},{k:'B',name:'7 colunas de cartões'},{k:'C',name:'5 semanas na parede + hoje'}];
+const V=[{k:'A',name:'Hoje + 7 dias em grelha, com navegação e filtro'},{k:'B',name:'7 colunas de cartões'},{k:'C',name:'5 semanas na parede + hoje'}];
 let st={v:0,view:'day',cur:TODAY,sel:new Set(),fam:true,hol:true,sheet:null,toast:null};
 try{const h=location.hash.replace('#','').toUpperCase();const i=V.findIndex(x=>x.k===h);if(i>=0)st.v=i;}catch(e){}
 
@@ -457,7 +460,7 @@ function renderA(){
   const its=occ(TODAY);const start=st.cur;const days=Array.from({length:7},(_,i)=>add(start,i));
   return `<div class="frame wall">${dmHeader()}<div class="dmbody" style="grid-template-columns:minmax(300px,.8fr) 2fr">
   <section>${vHourly()}${taskAcc(TODAY)}<div class="sh">Hoje <span class="muted">${its.length} entradas</span></div>${its.map(bItem).join('')||'<p class="muted">Nada marcado.</p>'}</section>
-  <section><div class="navrow"><button class="iconbtn" data-nav7="-1" aria-label="Semana anterior">‹</button><button class="iconbtn" data-nav7="1" aria-label="Semana seguinte">›</button><span class="sh" style="margin:0">${start===TODAY?'Próximos 7 dias, a começar hoje':`${dnum(start)} ${MN[mon(start)].slice(0,3)} – ${dnum(add(start,6))} ${MN[mon(add(start,6))].slice(0,3)}`}</span>${backPill('A ver outra semana')}</div><div style="overflow:auto;border:1px solid var(--line);border-radius:12px">${timeGrid(days,{px:34,from:8,to:23,enc:'B'})}</div></section>
+  <section><div class="navrow"><button class="iconbtn" data-nav7="-1" aria-label="Semana anterior">‹</button><button class="iconbtn" data-nav7="1" aria-label="Semana seguinte">›</button><span class="sh" style="margin:0">${start===TODAY?'Próximos 7 dias, a começar hoje':`${dnum(start)} ${MN[mon(start)].slice(0,3)} – ${dnum(add(start,6))} ${MN[mon(add(start,6))].slice(0,3)}`}</span>${backPill('A ver outra semana')}${filterBtn()}</div><div style="overflow:auto;border:1px solid var(--line);border-radius:12px">${timeGrid(days,{px:34,from:8,to:23,enc:'B'})}</div></section>
   </div>${sheets()}</div>`;}
 
 // ---------- B: seven day columns as cards, no time grid ----------
@@ -483,9 +486,19 @@ function renderC(){
   <div class="sh">Amanhã <span class="muted">${short(tm)}</span></div>${occ(tm).map(bItem).join('')||'<p class="muted">Nada marcado.</p>'}</section>
   </div>${sheets()}</div>`;}
 
+// Person Filter: the same one as every view (#10), remembered on this tablet; it applies to the whole board
+function filterBtn(){const on=st.sel.size||!st.fam;
+  return `<button class="fbtn ${on?'on':''}" data-sheet="filter" aria-label="Filtrar Pessoas">${ic('users',18)}${on?`${avs([...st.sel])}${st.fam?'':'<span class="small">sem Família</span>'}`:'<span>Todos</span>'}</button>`;}
 // ---------- sheets: read-only in Display Mode ----------
 function sheets(){
   let h='';
+  if(st.sheet==='filter'){
+    h=`<div class="sheetwrap center" data-close><div class="sheet" role="dialog" aria-label="Filtro de Pessoas"><h2>Mostrar neste ecrã</h2><div class="row">${PIDS.map(p=>`<button class="pchip" aria-pressed="${st.sel.has(p)}" data-person="${p}"><span class="av" style="background:${P[p].c}">${P[p].n[0]}</span>${P[p].n}</button>`).join('')}</div>
+      <p class="small muted" style="margin:0">Nenhuma selecionada = todas. Aplica-se à grelha, à lista de hoje e às tarefas, e fica guardado neste tablet: não volta atrás ao fim de 3 minutos.</p>
+      <button class="switch" data-toggle="fam"><span>Entradas da Família (sem Pessoa)</span><span class="knob ${st.fam?'on':''}"></span></button>
+      <button class="switch" data-toggle="hol"><span>Feriados</span><span class="knob ${st.hol?'on':''}"></span></button>
+      <button class="btn" data-close>Fechar</button></div></div>`;
+  }
   if(st.sheet&&st.sheet.e){
     const e=E.find(x=>x.id===st.sheet.e);
     const when=e.from?(e.rep?`todos os anos a ${dnum(e.from)} de ${MN[mon(e.from)]}`:e.from===e.to?long(e.from)+' · dia todo':`${long(e.from)} → ${long(e.to)} (inclusive)`):(e.rep?`${e.start.slice(11)}${e.end?'–'+e.end.slice(11):''} · repete ${e.rep.d?'todos os dias':'às '+e.rep.w.map(i=>WDL[i]+'s').join(', ')}`:`${long(e.start.slice(0,10))} ${e.start.slice(11)}${e.end?' → '+(e.end.slice(0,10)!==e.start.slice(0,10)?long(e.end.slice(0,10))+' ':'')+e.end.slice(11):' (sem hora de fim)'}`);
@@ -522,6 +535,8 @@ app.addEventListener('click',e=>{
   if(ds.nav7){st.cur=add(st.cur,7*ds.nav7);return render();}
   if(ds.navm){st.cur=addMonth(st.cur,+ds.navm);if(st.cur.slice(0,7)===TODAY.slice(0,7))st.cur=TODAY;return render();}
   if(ds.go==='today'){st.cur=TODAY;return render();}
+  if(ds.sheet){st.sheet=ds.sheet;return render();}
+  if(ds.person){st.sel.has(ds.person)?st.sel.delete(ds.person):st.sel.add(ds.person);return render();}
   if(ds.toggle){st[ds.toggle]=!st[ds.toggle];return render();}
   if(ds.e){st.sheet={e:+ds.e};return render();}
   if(ds.t){const t=TK.find(x=>x.id===+ds.t);t.done=!t.done;return toast(t.done?`Feita: ${t.t}`:`Por fazer: ${t.t}`);}
