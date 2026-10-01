@@ -9,8 +9,12 @@ The single account that signs in and owns every piece of data in the calendar; e
 _Avoid_: User, account, household, tenant
 
 **Person**:
-A member of a Family who can be attached to calendar entries and used as a filter; a Person never signs in. A Person has a name, a colour, an optional photo and an optional date of birth, which keeps a Birthday Entry in sync. Removing a Person archives them (gone from pickers and filters, kept on past Entries); only a Person no Entry mentions can be deleted.
+A member of a Family who can be attached to calendar entries and used as a filter; a Person never signs in. A Person has a name, a colour, an optional photo, optional Nicknames and an optional date of birth, which keeps a Birthday Entry in sync. Removing a Person archives them (gone from pickers and filters, kept on past Entries); only a Person no Entry mentions can be deleted.
 _Avoid_: User, member, participant
+
+**Nickname**:
+Another name a Person answers to in a Voice Entry, such as "Mum", "my wife" or "Di". A Person may have several; they are never shown in the views.
+_Avoid_: Alias, label
 
 **Entry**:
 Anything the Family puts on the calendar at a date or time: a birthday, a holiday, an appointment, a class, an outing. Every Entry has exactly one Entry Type.
@@ -101,8 +105,8 @@ A holiday the app calculates for the countries, regions and municipality chosen 
 _Avoid_: Bank holiday, feriado, holiday Entry
 
 **Voice Entry**:
-Creating an Entry or Task by speaking one sentence. The browser turns speech into text, and a Workers AI model fills in the details. The app then reads a short summary aloud and listens: "yes" saves at once, while "no", silence or an unclear answer opens the filled-in form. Each device can switch the spoken readback off; the form then always opens. Voice Entry never edits existing Entries.
-_Avoid_: Voice command, dictation, assistant
+Creating or changing an Entry or Task with one sentence, spoken or typed, from the same microphone button. The browser turns speech into text, and a Workers AI model works out what is meant. A change may touch anything the Entry or Task form can ("Task X is done", "dinner moves to next Friday", "make it every two weeks"), but never deletes. It finds the Entry or Task among those from 7 days ago to 90 days ahead plus undated and overdue Tasks; when several match it asks which, and when none does it changes nothing. One sentence changes one Entry or Task, though it may change several of its details. For a repeating Entry it asks "only this time or from now on?" unless the sentence says, and a change to the Repetition itself applies from now on. The app then reads a short summary aloud and listens: "yes" saves at once, with an Undo for a few seconds, while "no", silence or an unclear answer opens the filled-in form. Each device can switch the spoken readback off; the form then always opens. Voice Entry is not offered in Display Mode.
+_Avoid_: Voice command, dictation, assistant, chat
 
 **Briefing**:
 A few sentences in natural language at the top of the day view (and of today's column in Display Mode) saying what is coming up and what deserves attention: "Tomorrow Diana has Scouts, Mum's birthday is next week, and Christmas is a month away, a good time to start thinking about presents." A Workers AI model picks three to five things worth mentioning from the next 60 days of Entries, Tasks, Checklists, Birthdays and Public Holidays, favouring High Importance and what is closest, and may add a suggestion or question. There is one Briefing for the Family and one for each Person, in each language in use: with exactly one Person in the Person Filter that Person's Briefing shows, otherwise the Family's. It is written once a day before dawn, rewritten when something in the next 7 days changes, and has a Refresh button. When the model fails, a plain countdown list of the same things shows instead.
