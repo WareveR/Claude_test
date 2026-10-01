@@ -1,0 +1,530 @@
+<title>Wall Tablet Display</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#eef0ec; --frame:#fbfbf8; --surface:#ffffff; --ink:#151a17; --muted:#56605a; --line:#cfd6cf;
+  --accent:#20624a; --accent-ink:#ffffff; --weekend:#d6e6f5; --weekend-ink:#1d4f80; --holiday:#fbeee3; --holiday-ink:#9a4a16;
+  --overdue:#b3261e; --chrome:#1e2420; --chrome-ink:#f4f6f2;
+  --display:"Fraunces", Georgia, "Times New Roman", serif;
+  --body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#1a1f1c; --frame:#252b27; --surface:#323a35; --ink:#f4f7f3; --muted:#bcc6bf; --line:#4a544d;
+  --accent:#7fd6ae; --accent-ink:#0d1a14; --weekend:#28425e; --weekend-ink:#cfe4fa; --holiday:#33241a; --holiday-ink:#f0a877;
+  --overdue:#ff8a80; --chrome:#e7ebe6; --chrome-ink:#121614; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1a1f1c; --frame:#252b27; --surface:#323a35; --ink:#f4f7f3; --muted:#bcc6bf; --line:#4a544d;
+  --accent:#7fd6ae; --accent-ink:#0d1a14; --weekend:#28425e; --weekend-ink:#cfe4fa; --holiday:#33241a; --holiday-ink:#f0a877;
+  --overdue:#ff8a80; --chrome:#e7ebe6; --chrome-ink:#121614; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;padding:12px 16px 84px;}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.note{max-width:420px;margin:0 auto 10px;color:var(--muted);font-size:12px;line-height:1.4}
+.note b{color:var(--ink)}
+.frame{position:relative;max-width:400px;margin:0 auto;height:min(760px, calc(100vh - 150px));min-height:520px;background:var(--frame);border:1px solid var(--line);border-radius:28px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 10px 30px rgba(0,0,0,.08)}
+.frame.wide{max-width:1000px;border-radius:14px}
+.scroll{flex:1;overflow:auto;min-height:0}
+.top{display:flex;align-items:center;gap:8px;padding:14px 16px 8px}
+.top h1{font-family:var(--display);font-weight:650;font-size:22px;margin:0;flex:1;text-wrap:balance}
+.iconbtn{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line);background:var(--surface);font-size:15px}
+.tabs{display:flex;border-top:1px solid var(--line);background:var(--surface)}
+.tabs button{flex:1;padding:10px 0 12px;font-size:12px;color:var(--muted);font-weight:600}
+.tabs button[aria-current="true"]{color:var(--accent)}
+.seg{display:flex;gap:4px;margin:0 16px 8px;padding:3px;border-radius:10px;background:var(--weekend)}
+.seg button{flex:1;padding:6px 0;border-radius:8px;font-size:12px;font-weight:600;color:var(--muted)}
+.seg button[aria-current="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+.tnum{font-variant-numeric:tabular-nums}
+.fab{position:absolute;right:16px;bottom:64px;width:52px;height:52px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:22px;display:grid;place-items:center;box-shadow:0 6px 16px rgba(0,0,0,.2)}
+.fab.mic{right:78px;width:44px;height:44px;bottom:68px;font-size:18px;background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+/* day headers / agenda */
+.dayhead{display:flex;align-items:baseline;gap:8px;padding:12px 16px 4px;position:sticky;top:0;background:var(--frame);z-index:1}
+.dayhead .d{font-family:var(--display);font-size:18px;font-weight:650}
+.dayhead.today .d{color:var(--accent)}
+.hol{display:inline-block;font-size:11px;font-weight:600;color:var(--holiday-ink);background:var(--holiday);padding:1px 7px;border-radius:99px}
+.wx{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap}
+.wx.far{opacity:.5}
+.list{display:flex;flex-direction:column;gap:6px;padding:4px 16px 8px}
+.item{display:flex;gap:10px;align-items:center;width:100%;text-align:left;padding:8px 10px;border-radius:10px;background:var(--surface);border:1px solid var(--line);min-width:0}
+.item .time{width:44px;flex:none;font-size:12px;color:var(--muted)}
+.item .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.item.low{opacity:.6}
+.item.high .t{font-weight:700}
+.stripe{width:4px;align-self:stretch;border-radius:4px;flex:none}
+.task{display:flex;gap:10px;align-items:center;padding:6px 10px;border-radius:10px;border:1px dashed var(--line);width:100%;text-align:left}
+.box{width:18px;height:18px;border-radius:5px;border:2px solid var(--muted);flex:none;display:grid;place-items:center;font-size:11px;line-height:1}
+.task.done .t{text-decoration:line-through;color:var(--muted)}
+.task.done .box{background:var(--muted);border-color:var(--muted);color:var(--frame)}
+.task .t{flex:1;min-width:0}
+.overdue{color:var(--overdue);font-weight:600}
+.dots{display:flex;gap:2px}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.av{width:20px;height:20px;border-radius:50%;display:inline-grid;place-items:center;font-size:10px;font-weight:700;color:#fff;flex:none}
+.avs{display:flex}
+.avs .av+.av{margin-left:-5px;box-shadow:0 0 0 2px var(--surface)}
+.empty{padding:10px 16px;color:var(--muted);font-size:12px}
+.ic{display:inline-block;vertical-align:-3px;flex:none}
+.tacc{margin:8px 16px 0;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tacch{display:flex;gap:6px;align-items:center;width:100%;padding:9px 12px;font-weight:600;font-size:14px;text-align:left}
+.tacch .overdue{color:var(--overdue)}
+.tacch .chev{margin-left:auto;color:var(--muted);transition:transform .15s}
+.tacc.open .chev{transform:rotate(180deg)}
+.tacc .list{padding:0 8px 8px}
+.twx{font-size:13px;font-weight:500;color:var(--muted);margin-left:8px;white-space:nowrap}
+.overline{margin:8px 16px 0;padding:8px 12px;border-radius:10px;background:color-mix(in srgb,var(--overdue) 12%,transparent);color:var(--overdue);font-weight:600;font-size:13px;text-align:left;width:calc(100% - 32px)}
+.hourly{display:flex;gap:6px;overflow-x:auto;padding:4px 16px 8px}
+.hourly div{flex:none;text-align:center;font-size:11px;padding:6px 8px;border-radius:10px;background:var(--surface);border:1px solid var(--line);min-width:48px}
+.hourly b{display:block;font-size:13px}
+/* month grid */
+.mgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--line);border-block:1px solid var(--line)}
+.mgrid .wd.we{background:var(--weekend);color:var(--weekend-ink)}
+.mgrid .wd{background:var(--frame);text-align:center;font-size:11px;color:var(--muted);padding:4px 0;font-weight:600}
+.cell{background:var(--surface);min-height:62px;padding:3px;text-align:left;display:flex;flex-direction:column;gap:2px;min-width:0;overflow:hidden}
+.cell.out{opacity:.4}
+.cell.we{background:var(--weekend)}
+.cell.we .n{color:var(--weekend-ink)}
+.cell.holi{background:var(--holiday)}
+.cell .n{font-size:12px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.cell.today .n span:first-child{background:var(--accent);color:var(--accent-ink);border-radius:99px;padding:0 6px}
+.cell.sel{outline:2px solid var(--accent);outline-offset:-2px}
+.chip{font-size:10px;line-height:14px;padding:0 4px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.chip.low{opacity:.55}
+.more{font-size:10px;color:var(--muted)}
+/* year */
+.ygrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:8px 16px}
+.mini h3{font-size:12px;margin:0 0 4px;font-weight:700}
+.mini .g{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;font-size:9px;text-align:center}
+.mini .g span{padding:1px 0;border-radius:3px}
+.mini .g .hi{background:var(--accent);color:var(--accent-ink);font-weight:700}
+.mini .g .hd{color:var(--holiday-ink);font-weight:700}
+.mini .g .td{outline:1.5px solid var(--ink)}
+.hilist{padding:0 16px 16px}
+.hilist h2,.sect{font-family:var(--display);font-size:15px;margin:12px 16px 6px}
+/* time grid */
+.tg{position:relative;display:grid}
+.tg .hours{position:relative}
+.tg .hr{position:absolute;left:0;right:0;border-top:1px solid var(--line);font-size:10px;color:var(--muted);padding-left:2px}
+.tg .col{position:relative;border-left:1px solid var(--line)}
+.ev{position:absolute;left:2px;right:2px;border-radius:6px;padding:2px 4px;font-size:10px;line-height:12px;overflow:hidden;text-align:left}
+.ev.moment{border-radius:99px;height:16px!important}
+.ev.low{opacity:.55}
+.now{position:absolute;left:0;right:0;border-top:2px solid var(--overdue);z-index:2}
+.allrow{display:grid;gap:2px;padding:4px 0;border-bottom:1px solid var(--line)}
+.colhead{text-align:center;font-size:11px;padding:4px 0;font-weight:600}
+.colhead.hd,.col.hd,.hdcell{background:var(--holiday)}
+.colhead.we,.col.we,.wecell{background:var(--weekend)}
+.colhead.we{color:var(--weekend-ink)}
+.hdchip{color:var(--holiday-ink);font-weight:600;background:transparent;border:1px solid color-mix(in srgb,var(--holiday-ink) 40%,transparent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.colhead.today{color:var(--accent)}
+/* lanes (variant C) */
+.lanes{display:grid;gap:1px;background:var(--line);border-block:1px solid var(--line)}
+.lanes>div{background:var(--surface);padding:4px;min-height:44px;min-width:0;display:flex;flex-direction:column;gap:2px}
+.lanes .lh{background:var(--frame);font-size:11px;font-weight:700;display:flex;align-items:center;gap:4px;justify-content:center}
+.lanes .rh{background:var(--frame);font-size:11px;font-weight:700;justify-content:center;align-items:flex-start}
+/* sheets */
+.sheetwrap{position:absolute;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:flex-end;z-index:5}
+.sheet{background:var(--frame);width:100%;border-radius:20px 20px 0 0;padding:16px;max-height:80%;overflow:auto;display:flex;flex-direction:column;gap:10px}
+.sheet h2{font-family:var(--display);margin:0;font-size:20px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pchip{display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:99px;border:1.5px solid var(--line);font-weight:600;font-size:13px}
+.pchip[aria-pressed="true"]{border-color:var(--ink);background:var(--surface)}
+.switch{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid var(--line);width:100%;text-align:left}
+.knob{width:38px;height:22px;border-radius:99px;background:var(--line);position:relative;flex:none}
+.knob::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--frame);transition:left .15s}
+.knob.on{background:var(--accent)}
+.knob.on::after{left:19px}
+.btn{padding:10px 14px;border-radius:10px;background:var(--accent);color:var(--accent-ink);font-weight:700;text-align:center}
+.kv{display:grid;grid-template-columns:90px 1fr;gap:6px 10px;font-size:13px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0}
+.toast{position:absolute;left:50%;bottom:130px;transform:translateX(-50%);background:var(--chrome);color:var(--chrome-ink);padding:8px 14px;border-radius:99px;font-size:12px;z-index:6;white-space:nowrap}
+/* display mode */
+.board{display:grid;grid-template-columns:1.25fr 1fr .9fr;gap:18px;padding:22px;height:100%;min-height:0}
+.board>section{min-width:0;display:flex;flex-direction:column;gap:10px;overflow:auto}
+.clock{font-family:var(--display);font-size:64px;line-height:1;font-weight:650}
+.bdate{font-size:20px;font-weight:600}
+.bitem{display:flex;gap:12px;align-items:center;padding:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-size:17px}
+.bitem .time{width:58px;font-size:15px;color:var(--muted);flex:none}
+.bitem .t{flex:1;min-width:0}
+.bday{padding:8px 0;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
+.bday .h{display:flex;gap:8px;align-items:baseline;font-weight:700;font-size:15px}
+.bday .i{font-size:14px;display:flex;gap:6px;align-items:center;min-width:0}
+.bday .i span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btask{display:flex;gap:12px;align-items:center;padding:12px;border-radius:12px;border:1.5px dashed var(--line);font-size:17px;text-align:left;width:100%}
+.btask .box{width:26px;height:26px;border-radius:7px}
+.btask.done .t{text-decoration:line-through;color:var(--muted)}
+.btask.done .box{background:var(--muted);border-color:var(--muted);color:var(--frame)}
+@media (max-width:760px){.board{grid-template-columns:1fr;height:auto}.frame.wide{height:auto;min-height:0}.frame.wide .scroll{overflow:visible}}
+.yp{border-collapse:separate;border-spacing:1px;font-size:10px;margin:0 16px}
+.yp th{font-weight:700;color:var(--muted);padding:2px 0;min-width:20px}
+.yp th.we,.yp td.we{background:var(--weekend)}
+.yp th.ml{position:sticky;left:0;background:var(--frame);z-index:1;text-align:left;padding-right:6px;color:var(--ink);font-size:11px;min-width:30px}
+.yp td{padding:0;height:22px;min-width:20px}
+.yp td.void{background:transparent}
+.yp td.void.we{background:color-mix(in srgb,var(--weekend) 45%,transparent)}
+.yp td.we button{color:var(--weekend-ink);font-weight:600}
+.yp th.we{color:var(--weekend-ink)}
+.yp td button{width:100%;height:22px;display:grid;place-items:center;border-radius:3px;position:relative;font-size:10px}
+.yp td.hd button{background:var(--holiday);color:var(--holiday-ink);font-weight:700}
+.yp td.td button{outline:2px solid var(--ink);outline-offset:-2px;font-weight:700}
+.yp td button i{position:absolute;bottom:2px;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--accent)}
+.nowbar{display:flex;align-items:center;gap:10px;padding:10px 16px 6px;border-bottom:1px solid var(--line);background:var(--surface);font-size:13px}
+.nclock{font-family:var(--display);font-size:20px;font-weight:650}
+.ndate{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+[data-wx]{cursor:pointer}
+.nwx{white-space:nowrap;padding:3px 8px;border-radius:99px;border:1px solid var(--line)}
+.sheetwrap.center{align-items:center;padding:16px}
+.sheetwrap.center .sheet{border-radius:16px}
+/* ---------- Display Mode (#35): landscape wall tablet, larger type, no editing ---------- */
+.frame.wall{max-width:1180px;width:100%;height:auto;aspect-ratio:16/10;max-height:calc(100vh - 150px);min-height:560px;border-radius:18px;border-width:10px;border-color:var(--chrome)}
+.wall{font-size:16px}
+.dmnow{display:flex;align-items:center;gap:18px;padding:14px 24px;border-bottom:1px solid var(--line);background:var(--surface)}
+.dmnow .clk{font-family:var(--display);font-size:46px;font-weight:650;line-height:1}
+.dmnow .dt{font-size:22px;font-weight:600;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dmnow .dt .hol{font-size:14px;vertical-align:3px}
+.dmnow .w{font-size:20px;white-space:nowrap;padding:6px 14px;border-radius:99px;border:1px solid var(--line);display:flex;gap:8px;align-items:center}
+.dmnow .w .ic{width:26px;height:26px}
+.dmbody{flex:1;min-height:0;display:grid;gap:18px;padding:16px 24px 18px}
+.dmbody>section{min-width:0;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:8px}
+.sh{font-family:var(--display);font-size:19px;font-weight:650;margin:2px 0;display:flex;align-items:baseline;gap:8px}
+.sh .muted{font-family:var(--body);font-size:14px;font-weight:500}
+.bitem{display:flex;gap:12px;align-items:center;padding:9px 12px;border-radius:12px;border:1px solid var(--line);font-size:18px;text-align:left;width:100%}
+.bitem .time{width:62px;font-size:16px;color:var(--muted);flex:none}
+.bitem .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.bitem.high .t{font-weight:700}
+.bitem.past{opacity:.45}
+.bitem.low{opacity:.6}
+.wall .tacc{margin:0}
+.wall .tacch{font-size:17px;padding:11px 14px}
+.wall .task{font-size:17px;padding:10px 12px}
+.wall .task .box{width:24px;height:24px;border-radius:7px}
+.wall .hourly{padding:0}
+.wall .hourly div{font-size:13px;min-width:62px;padding:8px}
+.wall .hourly b{font-size:16px}
+.vhourly{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
+.vhourly div{text-align:center;font-size:12px;padding:6px 0;border-radius:10px;background:var(--surface);border:1px solid var(--line)}
+.vhourly div.nowh{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.vhourly b{display:block;font-size:15px}
+/* A: week grid sizing */
+.wall .tg .hr{font-size:12px}
+.wall .ev{font-size:12px;line-height:14px;padding:3px 5px}
+.wall .colhead{font-size:14px;padding:6px 0}
+.wall .chip{font-size:12px;line-height:17px;padding:0 5px}
+/* B: seven day columns */
+.days7{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;flex:1;min-height:0}
+.dcol{background:var(--surface);display:flex;flex-direction:column;gap:5px;padding:8px;min-width:0;overflow:auto}
+.dcol.we{background:var(--weekend)}
+.dcol.hd{background:var(--holiday)}
+.dcol .dh{display:flex;flex-direction:column;gap:1px;padding-bottom:6px;border-bottom:1px solid var(--line);margin-bottom:2px}
+.dcol .dh .n{font-family:var(--display);font-size:28px;font-weight:650;line-height:1}
+.dcol .dh .wdn{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.dcol.we .dh .wdn,.dcol.we .dh .n{color:var(--weekend-ink)}
+.dcol.today .dh .n,.dcol.today .dh .wdn{color:var(--accent)}
+.dcol.today{box-shadow:inset 0 4px 0 var(--accent)}
+.dcol .dw{font-size:14px;color:var(--muted);display:flex;gap:4px;align-items:center}
+.dcol .dw.far{opacity:.55}
+.dcard{border-radius:8px;padding:5px 7px;font-size:14px;line-height:1.25;text-align:left;width:100%;display:flex;flex-direction:column;gap:2px;border-left:4px solid}
+.dcard .tm{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;display:flex;justify-content:space-between;align-items:center;gap:4px}
+.dcard.past{opacity:.45}
+.dcard.low{opacity:.6}
+.dcard.high .tt{font-weight:700}
+.dtask{font-size:14px;display:flex;gap:6px;align-items:center;text-align:left;padding:4px 6px;border:1px dashed var(--line);border-radius:8px;background:var(--surface)}
+.dtask.done span:last-child{text-decoration:line-through;color:var(--muted)}
+.dhol{font-size:12px;font-weight:700;color:var(--holiday-ink)}
+/* C: month on the wall */
+.wmgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-auto-rows:1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;flex:1;min-height:0}
+.wmgrid .wd{background:var(--frame);text-align:center;font-size:13px;color:var(--muted);padding:5px 0;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.wmgrid .wd.we{background:var(--weekend);color:var(--weekend-ink)}
+.wcell{background:var(--surface);padding:4px 5px;display:flex;flex-direction:column;gap:2px;min-width:0;min-height:0;overflow:hidden;text-align:left}
+.wcell.we{background:var(--weekend)}
+.wcell.hd{background:var(--holiday)}
+.wcell.out{opacity:.4}
+.wcell .n{font-size:15px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+.wcell.we .n{color:var(--weekend-ink)}
+.wcell.today{box-shadow:inset 0 0 0 3px var(--accent)}
+.wcell.today .n>span:first-child{background:var(--accent);color:var(--accent-ink);border-radius:99px;padding:0 7px}
+.wcell .n .ic{width:15px;height:15px}
+.wcell .chip{font-size:12px;line-height:16px}
+.navrow{display:flex;align-items:center;gap:8px}
+.navrow .iconbtn{width:40px;height:40px;font-size:18px}
+.back{margin-left:auto;font-size:13px;padding:5px 12px;border-radius:99px;background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--ink);font-weight:600}
+.exit{font-size:12px;color:var(--muted);white-space:nowrap}
+.wall .sheet{max-width:560px;margin:0 auto}
+.sim{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;max-width:1180px;margin:10px auto 0}
+.sim button{font-size:12px;padding:6px 12px;border-radius:99px;border:1px solid var(--line);background:var(--surface);font-weight:600}
+@media (max-width:860px){.frame.wall{aspect-ratio:auto;height:auto;max-height:none}.dmbody{grid-template-columns:1fr!important}.days7{grid-template-columns:repeat(7,minmax(120px,1fr));overflow-x:auto}.dmnow{flex-wrap:wrap}.dmnow .clk{font-size:34px}.dmnow .dt{font-size:17px;white-space:normal}.wmgrid{min-height:480px}}
+/* prototype switcher */
+.switcher{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;align-items:center;gap:4px;background:var(--chrome);color:var(--chrome-ink);border-radius:99px;padding:4px;box-shadow:0 8px 24px rgba(0,0,0,.3);z-index:10;max-width:calc(100% - 32px)}
+.switcher button{width:36px;height:36px;border-radius:50%;font-size:18px;color:var(--chrome-ink)}
+.switcher .lbl{padding:0 10px;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<p class="note" style="max-width:1180px"><b>Protótipo do ticket #35: Display Mode num tablet de parede.</b> Mesma Família de exemplo do #16, hoje fixo em quarta-feira, 30 de setembro de 2026, 14:10. Use as setas em baixo (ou ← →) para comparar três disposições. Pode tocar em entradas (só leitura), marcar tarefas e tocar na meteorologia. Nada é guardado.</p>
+<div id="app"></div>
+<div class="sim"><button id="idle">Simular 3 min sem toque</button></div>
+<div class="switcher" role="toolbar" aria-label="Variante do protótipo">
+  <button id="prev" aria-label="Variante anterior">‹</button>
+  <span class="lbl" id="vlabel"></span>
+  <button id="next" aria-label="Variante seguinte">›</button>
+</div>
+<script>
+const TODAY='2026-09-30', NOW='14:10';
+const P={ana:{n:'Ana',c:'#d9467a'},rui:{n:'Rui',c:'#2f6fd6'},maria:{n:'Maria',c:'#2a9d5b'},tomas:{n:'Tomás',c:'#e07b1a'}};
+const PIDS=Object.keys(P);
+const ICO={
+ stetho:'<path d="M5 3v6a5 5 0 0 0 10 0V3"/><path d="M10 14v1a5 5 0 0 0 10 0v-2"/><circle cx="20" cy="11" r="2"/>',
+ school:'<path d="M4 10a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M8 14h8v3"/>',
+ cake:'<path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8M4 16c1.3 0 2-1 4-1s2.7 1 4 1 2-1 4-1 2.7 1 4 1M2 21h20M12 8v3M12 4h.01"/>',
+ plane:'<path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>',
+ sport:'<circle cx="12" cy="12" r="9"/><path d="m12 8 3.5 2.5-1.3 4h-4.4l-1.3-4zM12 3v5M21 10l-5.5.5M17.5 19.5l-3.3-5M6.5 19.5l3.3-5M3 10l5.5.5"/>',
+ work:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2M3 13h18"/>',
+ pin:'<path d="M19 10c0 5.5-7 11-7 11s-7-5.5-7-11a7 7 0 0 1 14 0z"/><circle cx="12" cy="10" r="2.5"/>',
+ sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+ suncloud:'<path d="M12 2v2M4.9 4.9l1.4 1.4M20 12h2M19.1 4.9l-1.4 1.4M15.9 12.6a4 4 0 0 0-5.9-4.1"/><path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6z"/>',
+ cloud:'<path d="M17.5 19H9a7 7 0 1 1 6.7-9h1.8a4.5 4.5 0 1 1 0 9z"/>',
+ rain:'<path d="M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.2"/><path d="M16 14v6M8 14v6M12 16v6"/>',
+ storm:'<path d="M6 16.3A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 .5 9"/><path d="m13 12-3 5h4l-3 5"/>',
+ users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>',
+ mic:'<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4"/>',
+ drop:'<path d="M12 21a6 6 0 0 0 6-6c0-4-6-11-6-11S6 11 6 15a6 6 0 0 0 6 6z"/>',
+ check:'<path d="M20 6 9 17l-5-5"/>',
+ square:'<rect x="4" y="4" width="16" height="16" rx="3"/>',
+ chev:'<path d="m6 9 6 6 6-6"/>'
+};
+const ic=(n,z=16)=>`<svg class="ic" viewBox="0 0 24 24" width="${z}" height="${z}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICO[n]}</svg>`;
+const T={appt:{n:'Consulta',i:ic('stetho'),c:'#c0392b'},school:{n:'Escola',i:ic('school'),c:'#8e5cc4'},bday:{n:'Aniversário',i:ic('cake'),c:'#c9950c'},trip:{n:'Viagem',i:ic('plane'),c:'#1a9aa0'},sport:{n:'Desporto',i:ic('sport'),c:'#3b8a3e'},work:{n:'Trabalho',i:ic('work'),c:'#5a6475'},gen:{n:'Geral',i:ic('pin'),c:'#8a7560'}};
+const FAMC='#7d857f';
+// Entries: all-day use from/to; timed use start/end (end optional); rep: w=[weekday idx Mon=0], y=yearly, d=daily
+const E=[
+ {id:1,t:'Dentista',ty:'appt',p:['ana'],imp:'high',start:'2026-10-06T15:00',end:'2026-10-06T16:00'},
+ {id:2,t:'Futebol',ty:'sport',p:['tomas'],imp:'normal',start:'2026-09-05T10:00',end:'2026-09-05T11:30',rep:{w:[5]}},
+ {id:3,t:'Férias no Algarve',ty:'trip',p:[],imp:'high',from:'2026-10-09',to:'2026-10-11'},
+ {id:4,t:'Reunião de pais',ty:'school',p:['rui','maria'],imp:'normal',start:'2026-10-01T18:30',end:'2026-10-01T19:30'},
+ {id:5,t:'Aniversário da Maria',ty:'bday',p:['maria'],imp:'high',from:'2016-10-03',to:'2016-10-03',rep:{y:1},born:2016},
+ {id:6,t:'Viagem de trabalho ao Porto',ty:'work',p:['rui'],imp:'normal',start:'2026-10-02T18:00',end:'2026-10-04T20:00'},
+ {id:7,t:'Tomar vitamina',ty:'gen',p:['ana'],imp:'low',start:'2026-09-01T08:00',end:null,rep:{d:1}},
+ {id:8,t:'Natação',ty:'sport',p:['maria'],imp:'normal',start:'2026-09-02T17:30',end:'2026-09-02T18:30',rep:{w:[2]}},
+ {id:9,t:'Jantar com os avós',ty:'gen',p:[],imp:'normal',start:'2026-09-30T20:00',end:'2026-09-30T22:00'},
+ {id:10,t:'Aniversário da Avó Lurdes',ty:'bday',p:[],imp:'high',from:'1951-10-20',to:'1951-10-20',rep:{y:1},born:1951},
+ {id:11,t:'Vacina da gripe',ty:'appt',p:['tomas'],imp:'normal',start:'2026-10-14T09:30',end:null},
+ {id:12,t:'Festa de anos da Maria',ty:'gen',p:['maria'],imp:'normal',start:'2026-10-04T15:00',end:'2026-10-04T18:00'},
+ {id:13,t:'Pediatra',ty:'appt',p:['tomas'],imp:'normal',start:'2026-09-30T09:00',end:'2026-09-30T09:30'},
+ {id:14,t:'Reunião trimestral',ty:'work',p:['rui'],imp:'low',start:'2026-09-30T10:00',end:'2026-09-30T11:30'},
+ {id:15,t:'Yoga',ty:'sport',p:['ana'],imp:'low',start:'2026-09-03T19:00',end:'2026-09-03T20:00',rep:{w:[3]}},
+ {id:16,t:'Casamento da prima Inês',ty:'gen',p:[],imp:'high',from:'2026-11-14',to:'2026-11-14'},
+ {id:17,t:'Viagem a Londres',ty:'trip',p:[],imp:'high',from:'2026-12-27',to:'2027-01-02'},
+ {id:18,t:'Teste de Matemática',ty:'school',p:['maria'],imp:'high',start:'2026-10-07T09:00',end:null},
+ {id:19,t:'Dia de praia',ty:'trip',p:[],imp:'high',from:'2026-07-18',to:'2026-07-26'},
+];
+const TK=[
+ {id:101,t:'Pôr o lixo na rua',p:['tomas'],due:'2026-09-29',time:'20:00',done:false,rep:'semanal'},
+ {id:102,t:'Pagar a renda',p:['rui'],due:'2026-10-01',done:false,rep:'mensal'},
+ {id:103,t:'Comprar presente para a Maria',p:['ana','rui'],due:'2026-10-02',done:false},
+ {id:104,t:'Levar o formulário assinado',p:['maria'],due:'2026-09-30',done:false},
+ {id:105,t:'Renovar o cartão de cidadão',p:['ana'],due:null,done:false},
+ {id:106,t:'Marcar a revisão do carro',p:[],due:'2026-10-12',done:false},
+ {id:107,t:'Regar as plantas',p:[],due:'2026-09-28',done:true},
+ {id:108,t:'Devolver livros à biblioteca',p:['tomas'],due:'2026-09-25',done:false},
+];
+const H={'2026-01-01':'Ano Novo','2026-04-03':'Sexta-feira Santa','2026-04-05':'Páscoa','2026-04-25':'Dia da Liberdade','2026-05-01':'Dia do Trabalhador','2026-06-04':'Corpo de Deus','2026-06-10':'Dia de Portugal','2026-06-13':'Santo António (Lisboa)','2026-08-15':'Assunção de Nossa Senhora','2026-10-05':'Implantação da República','2026-11-01':'Todos os Santos','2026-12-01':'Restauração da Independência','2026-12-08':'Imaculada Conceição','2026-12-25':'Natal'};
+const WXI=['☀️','🌤️','⛅','🌥️','🌦️','🌧️','⛈️','🌤️','☀️','☀️','🌥️','🌧️','🌦️','⛅','☀️'];
+const WXH=[24,23,22,21,19,18,17,20,22,23,21,18,19,21,22], WXL=[15,14,14,13,13,12,11,12,13,14,14,12,12,13,14];
+const HOURLY=[['08h','🌤️',16,0],['10h','☀️',19,0],['12h','☀️',22,0],['14h','☀️',24,5],['16h','🌤️',23,10],['18h','⛅',20,20],['20h','🌥️',18,30],['22h','🌥️',16,30]];
+const WXN={'☀️':'sun','🌤️':'suncloud','⛅':'suncloud','🌥️':'cloud','🌦️':'rain','🌧️':'rain','⛈️':'storm'};
+WXI.forEach((x,i)=>WXI[i]=ic(WXN[x]));HOURLY.forEach(h=>h[1]=ic(WXN[h[1]],15));
+const WD=['seg','ter','qua','qui','sex','sáb','dom'], WDL=['segunda','terça','quarta','quinta','sexta','sábado','domingo'];
+const MN=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+
+// ---------- date helpers (UTC-safe on YYYY-MM-DD) ----------
+const D=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(Date.UTC(y,m-1,d));};
+const S=dt=>dt.toISOString().slice(0,10);
+const add=(s,n)=>{const d=D(s);d.setUTCDate(d.getUTCDate()+n);return S(d);};
+const wd=s=>(D(s).getUTCDay()+6)%7;
+const addMonth=(s,n)=>{const d=D(s);return S(new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+n,1)));};
+const monday=s=>add(s,-wd(s));
+const dnum=s=>+s.slice(8);
+const mon=s=>+s.slice(5,7)-1;
+const yr=s=>+s.slice(0,4);
+const diff=(a,b)=>Math.round((D(a)-D(b))/864e5);
+const long=s=>`${WDL[wd(s)]}, ${dnum(s)} de ${MN[mon(s)]}`;
+const short=s=>`${WD[wd(s)]} ${dnum(s)}`;
+const mins=t=>{const[h,m]=t.split(':').map(Number);return h*60+m;};
+
+// ---------- state ----------
+const V=[{k:'A',name:'Hoje + 7 dias em grelha, com navegação'},{k:'B',name:'7 colunas de cartões'},{k:'C',name:'5 semanas na parede + hoje'}];
+let st={v:0,view:'day',cur:TODAY,sel:new Set(),fam:true,hol:true,sheet:null,toast:null};
+try{const h=location.hash.replace('#','').toUpperCase();const i=V.findIndex(x=>x.k===h);if(i>=0)st.v=i;}catch(e){}
+
+
+const vis=e=>{if(!e.p.length)return st.fam;if(!st.sel.size)return true;return e.p.some(x=>st.sel.has(x));};
+const holi=s=>st.hol&&H[s];
+const wx=s=>{const i=diff(s,TODAY);return i>=0&&i<15?{i:WXI[i],h:WXH[i],l:WXL[i],far:i>=7}:null;};
+const wxHtml=s=>{const w=wx(s);return w?`<span class="wx tnum ${w.far?'far':''}" data-wx role="button" tabindex="0" title="${w.far?'Previsão menos fiável':'Previsão do tempo'}">${w.i} ${w.h}°/${w.l}°</span>`:'';};
+const nowBar=()=>{const w=wx(TODAY);return `<div class="nowbar"><span class="nclock tnum">${NOW}</span><span class="ndate">${WDL[wd(TODAY)]}, ${dnum(TODAY)} de ${MN[mon(TODAY)]}</span><span class="nwx tnum" data-wx role="button" tabindex="0" title="Previsão do tempo">${w.i} ${w.h}°/${w.l}° <span class="muted">Lisboa</span></span></div>`;};
+
+function occ(s){
+  const out=[];
+  for(const e of E){
+    if(!vis(e))continue;
+    if(e.from){
+      if(e.rep&&e.rep.y){ if(s.slice(5)===e.from.slice(5)&&s>=e.from) out.push({e,ad:true,age:yr(s)-e.born}); }
+      else if(e.from<=s&&s<=e.to) out.push({e,ad:true,cont:e.from!==e.to,first:s===e.from,last:s===e.to});
+      continue;
+    }
+    const sd=e.start.slice(0,10),stt=e.start.slice(11),ed=e.end?e.end.slice(0,10):sd,et=e.end?e.end.slice(11):null;
+    if(e.rep){
+      if(s<sd)continue;
+      const ok=e.rep.d||(e.rep.w&&e.rep.w.includes(wd(s)));
+      if(ok) out.push({e,s:stt,en:et,rep:true});
+    }else if(sd<=s&&s<=ed){
+      if(sd!==ed) out.push({e,ad:true,span:true,label:`${short(sd)} ${stt} → ${short(ed)} ${et}`,s:s===sd?stt:null,en:s===ed?et:null});
+      else out.push({e,s:stt,en:et});
+    }
+  }
+  return out.sort((a,b)=>(a.ad?0:1)-(b.ad?0:1)||(a.s||'').localeCompare(b.s||''));
+}
+const tvis=t=>{if(!t.p.length)return st.fam;if(!st.sel.size)return true;return t.p.some(x=>st.sel.has(x));};
+const tasksOn=s=>TK.filter(t=>t.due===s&&tvis(t));
+const isOver=t=>!t.done&&t.due&&(t.due<TODAY||(t.due===TODAY&&t.time&&t.time<NOW));
+const overdue=()=>TK.filter(t=>tvis(t)&&isOver(t));
+
+// ---------- visual encodings per variant ----------
+const pcols=e=>e.p.length?e.p.map(x=>P[x].c):[FAMC];
+const stripe=e=>{const c=pcols(e);const n=c.length;return `linear-gradient(${c.map((x,i)=>`${x} ${i*100/n}% ${(i+1)*100/n}%`).join(',')})`;};
+const avs=ps=>`<span class="avs">${(ps.length?ps:['fam']).map(x=>x==='fam'?`<span class="av" style="background:${FAMC}" title="Família">F</span>`:`<span class="av" style="background:${P[x].c}" title="${P[x].n}">${P[x].n[0]}</span>`).join('')}</span>`;
+const tint=(c,p)=>`color-mix(in srgb, ${c} ${p}%, var(--surface))`;
+const title=o=>o.e.t+(o.age>0?` (${o.age} anos)`:'');
+const timeTxt=o=>o.ad?(o.span?(o.s?o.s:o.en?'até '+o.en:'o dia todo'):'dia todo'):(o.s+(o.en?'':' •'));
+
+function itemA(o){return `<button class="item ${o.e.imp}" data-e="${o.e.id}"><span class="stripe" style="background:${stripe(o.e)}"></span><span class="time tnum">${timeTxt(o)}</span><span>${T[o.e.ty].i}</span><span class="t">${title(o)}</span></button>`;}
+function itemB(o){const c=T[o.e.ty].c;return `<button class="item ${o.e.imp}" data-e="${o.e.id}" style="background:${tint(c,16)};border-color:${tint(c,40)}"><span class="time tnum">${timeTxt(o)}</span><span class="t">${T[o.e.ty].i} ${title(o)}</span>${avs(o.e.p)}</button>`;}
+function itemC(o,pid){const c=pid?(pid==='fam'?FAMC:P[pid].c):pcols(o.e)[0];return `<button class="chip ${o.e.imp}" data-e="${o.e.id}" style="background:${tint(c,22)};border-left:3px solid ${c}">${o.ad?'':o.s+' '}${T[o.e.ty].i} ${title(o)}</button>`;}
+function taskRow(t,day){const over=isOver(t);return `<button class="task ${t.done?'done':''}" data-t="${t.id}"><span class="box">${t.done?ic('check',12):''}</span><span class="t">${t.t}${day&&t.due||t.time?` <span class="muted small tnum">${[day&&t.due?short(t.due):'',t.time||''].filter(Boolean).join(' ')}</span>`:''}</span>${over?'<span class="overdue small">atrasada</span>':''}${avs(t.p)}</button>`;}
+// ---------- shared pieces ----------
+// Tasks for a day or a week folded into one accordion; a range holding today also gathers every overdue Task
+function taskAcc(d,to=d){
+  const ts=TK.filter(t=>tvis(t)&&(t.due>=d&&t.due<=to||TODAY>=d&&TODAY<=to&&isOver(t))).filter(t=>!(d<=TODAY&&TODAY<=to&&t.done&&t.due<TODAY)).sort((a,b)=>(a.due||'').localeCompare(b.due||''));
+  if(!ts.length)return '';const o=ts.filter(isOver).length;
+  return `<div class="tacc ${st.tacc?'open':''}"><button class="tacch" data-toggle="tacc" aria-expanded="${!!st.tacc}"><span>Tarefas ${ts.length}</span>${o?`<span class="overdue">· ${o} atrasada${o>1?'s':''}</span>`:''}<span class="chev">${ic('chev')}</span></button>${st.tacc?`<div class="list">${ts.map(t=>taskRow(t,d!==to)).join('')}</div>`:''}</div>`;}
+function hourly(){return `<div class="hourly" data-wx role="button" tabindex="0" aria-label="Previsão por hora">${HOURLY.map(h=>`<div class="tnum">${h[0]}<b>${h[1]} ${h[2]}°</b>${h[3]}% ${ic('drop',11)}</div>`).join('')}</div>`;}
+function monthCells(s){const first=s.slice(0,8)+'01';const start=monday(first);const cells=[];for(let i=0;i<42;i++)cells.push(add(start,i));return cells;}
+function lanesOf(items){ // greedy column assignment for overlapping timed items
+  const cols=[];for(const o of items){const s=mins(o.s),e=o.en?mins(o.en):s+30;let k=cols.findIndex(end=>end<=s);if(k<0){k=cols.length;cols.push(e);}else cols[k]=e;o.k=k;}
+  items.forEach(o=>o.n=cols.length);return items;
+}
+const dcls=d=>holi(d)?'hd':wd(d)>4?'we':'';
+function timeGrid(days,{px=40,from=7,to=23,colKey=null,colLabels=null,enc='B'}={}){
+  const cols=colKey?colLabels:days.map(d=>({key:d,label:short(d),today:d===TODAY,d}));
+  const hgt=(to-from)*px;
+  let head=`<div style="display:grid;grid-template-columns:34px repeat(${cols.length},1fr);position:sticky;top:0;background:var(--frame);z-index:2">
+    <span></span>${cols.map(c=>`<div class="colhead ${c.today?'today':''} ${c.d?dcls(c.d):''}">${c.label}${c.d&&wx(c.d)?`<div class="small muted">${wx(c.d).i} ${wx(c.d).h}°</div>`:''}</div>`).join('')}</div>`;
+  let all=`<div class="allrow" style="grid-template-columns:34px repeat(${cols.length},1fr)"><span class="small muted" style="padding-top:2px">dia</span>${cols.map(c=>{
+    const d=c.d||days[0];let its=occ(d).filter(o=>o.ad);if(colKey)its=its.filter(o=>c.key==='fam'?!o.e.p.length:o.e.p.includes(c.key));
+    const ts=enc==='B'||days.length===1?[]:tasksOn(d).filter(t=>!colKey||(c.key==='fam'?!t.p.length:t.p.includes(c.key)));
+    const hn=!colKey&&holi(d);return `<div class="${!colKey&&dcls(d)?dcls(d)+'cell':''}" style="display:flex;flex-direction:column;gap:2px;min-width:0">${hn?`<span class="chip hdchip" title="${H[d]}">${H[d]}</span>`:''}${its.map(o=>enc==='C'?itemC(o,colKey?c.key:null):`<button class="chip ${o.e.imp}" data-e="${o.e.id}" style="background:${tint(T[o.e.ty].c,25)}">${T[o.e.ty].i} ${title(o)}</button>`).join('')}${ts.map(t=>`<button class="chip" data-t="${t.id}" style="border:1px dashed var(--line);${t.done?'text-decoration:line-through;':''}">${ic(t.done?'check':'square',12)} ${t.t}</button>`).join('')}</div>`;}).join('')}</div>`;
+  let body=`<div class="tg" style="grid-template-columns:34px repeat(${cols.length},1fr);height:${hgt}px"><div class="hours">${Array.from({length:to-from},(_,i)=>`<div class="hr tnum" style="top:${i*px}px">${from+i}</div>`).join('')}</div>`;
+  for(const c of cols){
+    const d=c.d||days[0];let its=occ(d).filter(o=>!o.ad);if(colKey)its=its.filter(o=>c.key==='fam'?!o.e.p.length:o.e.p.includes(c.key));
+    lanesOf(its);
+    body+=`<div class="col ${colKey?'':dcls(d)}">${Array.from({length:to-from},(_,i)=>`<div class="hr" style="top:${i*px}px"></div>`).join('')}`;
+    for(const o of its){const s=Math.max(mins(o.s),from*60),e=o.en?mins(o.en):s+30;const top=(s-from*60)/60*px,h=Math.max((e-s)/60*px,16);
+      const col=enc==='C'?(colKey?(c.key==='fam'?FAMC:P[c.key].c):pcols(o.e)[0]):T[o.e.ty].c;
+      body+=`<button class="ev ${o.e.imp} ${o.en?'':'moment'}" data-e="${o.e.id}" style="top:${top}px;height:${h}px;left:calc(${o.k*100/o.n}% + 2px);width:calc(${100/o.n}% - 4px);right:auto;background:${tint(col,28)};border-left:3px solid ${col}"><b class="tnum">${o.s}</b> ${T[o.e.ty].i} ${o.e.t}${enc==='B'&&o.e.p.length?' · '+o.e.p.map(x=>P[x].n[0]).join(''):''}</button>`;}
+    if(d===TODAY){body+=`<div class="now" style="top:${(mins(NOW)-from*60)/60*px}px"></div>`;}
+    body+='</div>';
+  }
+  body+='</div>';
+  return (days.length===1&&!colKey?'':head)+all+body; // single-day grid: the date is already in the header
+}
+
+// ---------- Display Mode pieces shared by every variant ----------
+st.tacc=true; // on the wall the Tasks accordion starts open; it can be folded
+const pastNow=o=>o.s&&((o.en&&mins(o.en)<=mins(NOW))||(!o.en&&mins(o.s)<mins(NOW)-30));
+function dmHeader(){const w=wx(TODAY);
+  return `<header class="dmnow"><span class="clk tnum">${NOW}</span><span class="dt">${WDL[wd(TODAY)]}, ${dnum(TODAY)} de ${MN[mon(TODAY)]}${holi(TODAY)?` <span class="hol">${H[TODAY]}</span>`:''}</span>
+  <span class="w tnum" data-wx role="button" tabindex="0" title="Previsão do tempo">${w.i} ${w.h}°/${w.l}° <span class="muted" style="font-size:15px">Lisboa</span></span>
+  <span class="exit" title="Sair do Display Mode">${ic('square',12)} manter premido 3 s para sair</span></header>`;}
+function vHourly(){const nowH=Math.floor(mins(NOW)/120)*2;return `<div class="vhourly" data-wx role="button" tabindex="0" aria-label="Previsão por hora">${HOURLY.map(h=>`<div class="tnum ${+h[0].slice(0,2)===nowH?'nowh':''}">${h[0]}<b>${h[1]}</b><b>${h[2]}°</b>${h[3]}%</div>`).join('')}</div>`;}
+function bItem(o){const c=T[o.e.ty].c;return `<button class="bitem ${o.e.imp} ${pastNow(o)?'past':''}" data-e="${o.e.id}" style="background:${tint(c,14)};border-color:${tint(c,40)}"><span class="time tnum">${timeTxt(o)}</span><span class="t">${T[o.e.ty].i} ${title(o)}</span>${avs(o.e.p)}</button>`;}
+function backPill(label){return st.cur!==TODAY?`<button class="back" data-go="today">${label} · volta a hoje sozinho após 3 min</button>`:'';}
+
+// ---------- A: Today on the left, the next 7 days as a time grid on the right ----------
+function renderA(){
+  const its=occ(TODAY);const start=st.cur;const days=Array.from({length:7},(_,i)=>add(start,i));
+  return `<div class="frame wall">${dmHeader()}<div class="dmbody" style="grid-template-columns:minmax(300px,.8fr) 2fr">
+  <section>${vHourly()}${taskAcc(TODAY)}<div class="sh">Hoje <span class="muted">${its.length} entradas</span></div>${its.map(bItem).join('')||'<p class="muted">Nada marcado.</p>'}</section>
+  <section><div class="navrow"><button class="iconbtn" data-nav7="-1" aria-label="Semana anterior">‹</button><button class="iconbtn" data-nav7="1" aria-label="Semana seguinte">›</button><span class="sh" style="margin:0">${start===TODAY?'Próximos 7 dias, a começar hoje':`${dnum(start)} ${MN[mon(start)].slice(0,3)} – ${dnum(add(start,6))} ${MN[mon(add(start,6))].slice(0,3)}`}</span>${backPill('A ver outra semana')}</div><div style="overflow:auto;border:1px solid var(--line);border-radius:12px">${timeGrid(days,{px:34,from:8,to:23,enc:'B'})}</div></section>
+  </div>${sheets()}</div>`;}
+
+// ---------- B: seven day columns as cards, no time grid ----------
+function renderB(){
+  const start=st.cur;const days=Array.from({length:7},(_,i)=>add(start,i));
+  const col=d=>{const its=occ(d).filter(o=>o.e.imp!=='low'||d===TODAY);const w=wx(d);const ts=tasksOn(d);
+    return `<div class="dcol ${dcls(d)} ${d===TODAY?'today':''}"><div class="dh"><span class="wdn">${d===TODAY?'hoje':WDL[wd(d)]}</span><span class="n tnum">${dnum(d)}</span>${w?`<span class="dw tnum ${w.far?'far':''}" data-wx role="button" tabindex="0">${w.i} ${w.h}°/${w.l}°</span>`:''}${holi(d)?`<span class="dhol">${H[d]}</span>`:''}</div>
+    ${its.map(o=>{const c=T[o.e.ty].c;return `<button class="dcard ${o.e.imp} ${d===TODAY&&pastNow(o)?'past':''}" data-e="${o.e.id}" style="background:${tint(c,18)};border-color:${c}"><span class="tm"><span>${o.ad?(o.span?(o.s||(o.en?'até '+o.en:'dia todo')):'dia todo'):o.s}</span>${avs(o.e.p)}</span><span class="tt">${T[o.e.ty].i} ${title(o)}</span></button>`;}).join('')}
+    ${ts.map(t=>`<button class="dtask ${t.done?'done':''}" data-t="${t.id}">${ic(t.done?'check':'square',16)}<span>${t.t}</span></button>`).join('')}</div>`;};
+  return `<div class="frame wall">${dmHeader()}<div class="dmbody" style="grid-template-rows:auto auto 1fr">
+  <div class="navrow"><button class="iconbtn" data-nav7="-1" aria-label="Semana anterior">‹</button><button class="iconbtn" data-nav7="1" aria-label="Semana seguinte">›</button><span class="sh" style="margin:0">${start===TODAY?'Esta semana, a começar hoje':`${dnum(start)} ${MN[mon(start)].slice(0,3)} – ${dnum(add(start,6))} ${MN[mon(add(start,6))].slice(0,3)}`}</span>${backPill('A ver outra semana')}</div>
+  ${overdue().length?`<div class="tacc ${st.tacc?'open':''}"><button class="tacch" data-toggle="tacc"><span>Atrasadas ${overdue().length}</span><span class="chev">${ic('chev')}</span></button>${st.tacc?`<div class="row" style="padding:0 10px 10px">${overdue().map(t=>`<button class="dtask" data-t="${t.id}">${ic('square',16)}<span>${t.t} <span class="overdue small">${short(t.due)}</span></span>${avs(t.p)}</button>`).join('')}</div>`:''}</div>`:'<span></span>'}
+  <div class="days7">${days.map(col).join('')}</div></div>${sheets()}</div>`;}
+
+// ---------- C: the month as a paper wall calendar, today in a side rail ----------
+function renderC(){
+  const roll=st.cur===TODAY;const cells=roll?Array.from({length:35},(_,i)=>add(monday(TODAY),i)):monthCells(st.cur);const n=roll?35:cells[35].slice(0,7)===st.cur.slice(0,7)?42:35;const isOut=c=>roll?c<TODAY:c.slice(0,7)!==st.cur.slice(0,7);const its=occ(TODAY);const tm=add(TODAY,1);
+  return `<div class="frame wall">${dmHeader()}<div class="dmbody" style="grid-template-columns:2.3fr minmax(280px,1fr)">
+  <section><div class="navrow"><button class="iconbtn" data-navm="-1" aria-label="Mês anterior">‹</button><span class="sh" style="margin:0">${roll?'Esta semana e as 4 seguintes':MN[mon(st.cur)]+' '+yr(st.cur)}</span><button class="iconbtn" data-navm="1" aria-label="Mês seguinte">›</button>${backPill('A ver outro mês')}</div>
+  <div class="wmgrid" style="grid-template-rows:auto repeat(${n/7},1fr)">${WD.map((w,i)=>`<div class="wd ${i>4?'we':''}">${w}</div>`).join('')}${cells.slice(0,n).map(c=>{const e=occ(c).filter(o=>o.e.imp!=='low');const w=wx(c);const sh=e.slice(0,3);
+    return `<div class="wcell ${isOut(c)?'out':''} ${dcls(c)} ${c===TODAY?'today':''}"><span class="n tnum"><span>${dnum(c)===1?dnum(c)+' '+MN[mon(c)].slice(0,3):dnum(c)}</span>${w?`<span class="small muted" style="${w.far?'opacity:.55':''}">${w.i}</span>`:''}</span>${holi(c)?`<span class="dhol" style="font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${H[c]}</span>`:''}${sh.map(o=>`<button class="chip ${o.e.imp}" data-e="${o.e.id}" style="background:${tint(T[o.e.ty].c,30)}">${o.ad?'':o.s+' '}${o.e.t}</button>`).join('')}${e.length>3?`<span class="more">+${e.length-3}</span>`:''}</div>`;}).join('')}</div></section>
+  <section>${vHourly()}${taskAcc(TODAY)}<div class="sh">Hoje</div>${its.map(bItem).join('')||'<p class="muted">Nada marcado.</p>'}
+  <div class="sh">Amanhã <span class="muted">${short(tm)}</span></div>${occ(tm).map(bItem).join('')||'<p class="muted">Nada marcado.</p>'}</section>
+  </div>${sheets()}</div>`;}
+
+// ---------- sheets: read-only in Display Mode ----------
+function sheets(){
+  let h='';
+  if(st.sheet&&st.sheet.e){
+    const e=E.find(x=>x.id===st.sheet.e);
+    const when=e.from?(e.rep?`todos os anos a ${dnum(e.from)} de ${MN[mon(e.from)]}`:e.from===e.to?long(e.from)+' · dia todo':`${long(e.from)} → ${long(e.to)} (inclusive)`):(e.rep?`${e.start.slice(11)}${e.end?'–'+e.end.slice(11):''} · repete ${e.rep.d?'todos os dias':'às '+e.rep.w.map(i=>WDL[i]+'s').join(', ')}`:`${long(e.start.slice(0,10))} ${e.start.slice(11)}${e.end?' → '+(e.end.slice(0,10)!==e.start.slice(0,10)?long(e.end.slice(0,10))+' ':'')+e.end.slice(11):' (sem hora de fim)'}`);
+    h=`<div class="sheetwrap center" data-close><div class="sheet" role="dialog" aria-label="Entrada"><h2>${T[e.ty].i} ${e.t}</h2><dl class="kv"><dt>Quando</dt><dd>${when}</dd><dt>Para</dt><dd>${e.p.length?e.p.map(x=>P[x].n).join(', '):'Família'}</dd><dt>Tipo</dt><dd>${T[e.ty].n}</dd></dl>
+      <p class="small muted" style="margin:0">Display Mode: só leitura. Para editar, use o telemóvel.</p><button class="btn" data-close>Fechar</button></div></div>`;
+  }
+  if(st.sheet==='wx'){
+    h=`<div class="sheetwrap center" data-close><div class="sheet" role="dialog" aria-label="Abrir previsão do tempo"><h2>Abrir a previsão do tempo?</h2><p style="margin:0">Vai sair do calendário e abrir o site do IPMA com a previsão para Lisboa, num novo separador.</p>
+      <div class="row"><button class="btn" data-close style="flex:1;background:var(--weekend);color:var(--ink)">Cancelar</button><a class="btn" data-close href="https://www.ipma.pt/pt/otempo/prev.localidade.hora/" target="_blank" rel="noopener" style="flex:1;text-decoration:none">Abrir IPMA ↗</a></div></div></div>`;
+  }
+  if(st.toast)h+=`<div class="toast" role="status">${st.toast}</div>`;
+  return h;
+}
+
+// ---------- render + events ----------
+const app=document.getElementById('app');
+function render(){
+  app.innerHTML=[renderA,renderB,renderC][st.v]();
+  document.getElementById('vlabel').textContent=`${V[st.v].k} · ${V[st.v].name}`;
+}
+function setV(i){st.v=(i+V.length)%V.length;st.sheet=null;st.cur=TODAY;try{history.replaceState(null,'','#'+V[st.v].k.toLowerCase());}catch(e){}render();}
+document.getElementById('prev').onclick=()=>setV(st.v-1);
+document.getElementById('next').onclick=()=>setV(st.v+1);
+document.getElementById('idle').onclick=()=>{st.cur=TODAY;st.sheet=null;toast('3 min sem toque: voltou a hoje');};
+document.addEventListener('keydown',e=>{if(e.target.closest('input,textarea,select,[contenteditable]'))return;if(e.key==='ArrowLeft')setV(st.v-1);if(e.key==='ArrowRight')setV(st.v+1);if(e.key==='Escape'&&st.sheet){st.sheet=null;render();}if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('[data-wx]')){e.preventDefault();st.sheet='wx';render();}});
+function toast(m){st.toast=m;render();setTimeout(()=>{st.toast=null;render();},1800);}
+app.addEventListener('click',e=>{
+  if(e.target.closest('a[href]')){st.sheet=null;setTimeout(render,0);return;}
+  const w=e.target.closest('[data-wx]');if(w){e.stopPropagation();st.sheet='wx';return render();}
+  const b=e.target.closest('button,[data-close]');if(!b)return;
+  if(b.matches('.sheetwrap')&&e.target!==b)return;
+  const ds=b.dataset;
+  if('close' in ds){st.sheet=null;return render();}
+  if(ds.nav7){st.cur=add(st.cur,7*ds.nav7);return render();}
+  if(ds.navm){st.cur=addMonth(st.cur,+ds.navm);if(st.cur.slice(0,7)===TODAY.slice(0,7))st.cur=TODAY;return render();}
+  if(ds.go==='today'){st.cur=TODAY;return render();}
+  if(ds.toggle){st[ds.toggle]=!st[ds.toggle];return render();}
+  if(ds.e){st.sheet={e:+ds.e};return render();}
+  if(ds.t){const t=TK.find(x=>x.id===+ds.t);t.done=!t.done;return toast(t.done?`Feita: ${t.t}`:`Por fazer: ${t.t}`);}
+});
+render();
+</script>
