@@ -99,3 +99,7 @@ _Avoid_: Bank holiday, feriado, holiday Entry
 **Voice Entry**:
 Creating an Entry or Task by speaking one sentence. The browser turns speech into text, and a Workers AI model fills in the details. The app then reads a short summary aloud and listens: "yes" saves at once, while "no", silence or an unclear answer opens the filled-in form. Each device can switch the spoken readback off; the form then always opens. Voice Entry never edits existing Entries.
 _Avoid_: Voice command, dictation, assistant
+
+**Briefing**:
+A few sentences in natural language at the top of the day view (and of today's column in Display Mode) saying what is coming up and what deserves attention: "Tomorrow Diana has Scouts, Mum's birthday is next week, and Christmas is a month away, a good time to start thinking about presents." A Workers AI model picks three to five things worth mentioning from the next 60 days of Entries, Tasks, Birthdays and Public Holidays, favouring High Importance and what is closest, and may add a suggestion or question. There is one Briefing for the Family and one for each Person, in each language in use: with exactly one Person in the Person Filter that Person's Briefing shows, otherwise the Family's. It is written once a day before dawn, rewritten when something in the next 7 days changes, and has a Refresh button. When the model fails, a plain countdown list of the same things shows instead.
+_Avoid_: Summary, digest, home page, dashboard
