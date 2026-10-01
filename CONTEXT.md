@@ -37,7 +37,7 @@ The single time zone the whole Family's clock times are read in. Entries have no
 _Avoid_: Local time, user time zone
 
 **Family Language**:
-The language chosen at setup (pt-PT or English in v1) that every email the app sends is written in. Each device may show the app in another supported language; a new device starts in its browser's language when supported, otherwise the Family Language. Date formats, first day of the week and clock follow the language shown.
+The language chosen at setup (pt-PT or English in v1) that every email the app sends is written in. Each device may show the app in another supported language; a new device starts in its browser's language when supported, otherwise the Family Language. Date formats, first day of the week and clock follow the language shown, except the year view, which always runs Saturday to Sunday so every year has the same 37-column shape.
 _Avoid_: Locale, default language, user language
 
 **Repetition**:
