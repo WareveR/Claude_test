@@ -19,8 +19,12 @@ export async function api<T>(path: string, options: { method?: string; body?: un
   return body as T;
 }
 
+export type Family = { name: string; language: string; timeZone: string };
+export type Device = { id: string; name: string; language: string | null };
+
 export type Status = {
   familyExists: boolean;
   signedIn: boolean;
-  family: { name: string; language: string; timeZone: string } | null;
+  family: Family | null;
+  device: Device | null;
 };

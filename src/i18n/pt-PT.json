@@ -1,6 +1,11 @@
 {
-  "app": { "name": "Calendário da Família" },
-  "languages": { "pt-PT": "Português", "en": "English" },
+  "app": {
+    "name": "Calendário da Família"
+  },
+  "languages": {
+    "pt-PT": "Português",
+    "en": "English"
+  },
   "setup": {
     "title": "Criar o calendário da família",
     "setupCode": "Código de configuração",
@@ -31,5 +36,20 @@
   "errors": {
     "network": "Sem ligação. Verifica a internet e tenta de novo.",
     "unexpected": "Algo correu mal. Tenta de novo."
+  },
+  "views": {
+    "day": "Dia",
+    "week": "Semana",
+    "month": "Mês",
+    "year": "Ano",
+    "tasks": "Tarefas",
+    "today": "Hoje",
+    "previous": "Anterior",
+    "next": "Seguinte"
+  },
+  "settings": {
+    "title": "Definições",
+    "back": "Voltar",
+    "language": "Idioma deste dispositivo"
   }
 }

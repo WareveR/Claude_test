@@ -12,10 +12,11 @@ describe("first-run setup", () => {
 
     const res = await browser.post("/setup", VALID_SETUP);
     expect(res.status).toBe(201);
-    expect(await (await browser.get("/status")).json()).toEqual({
+    expect(await (await browser.get("/status")).json()).toMatchObject({
       familyExists: true,
       signedIn: true,
       family: { name: "Pires", language: "pt-PT", timeZone: "Europe/Lisbon" },
+      device: { name: "Chrome on Android", language: null },
     });
 
     const again = await new TestBrowser("192.0.2.5").post("/setup", VALID_SETUP);
