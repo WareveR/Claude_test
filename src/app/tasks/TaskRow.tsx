@@ -14,10 +14,13 @@ export function TaskRow({
   task,
   overdue,
   persons,
+  label,
 }: {
   task: Task;
   overdue: boolean;
   persons: Person[];
+  /** The Checklist a Task shown on its own belongs to. */
+  label?: string;
 }) {
   const { t } = useTranslation();
   const locale = formatLocale(useSignedIn().language);
@@ -56,6 +59,7 @@ export function TaskRow({
             <Lock aria-label={t("entries.private")} className="ml-1 inline" size={14} />
           )}
         </span>
+        {label && <span className="text-xs text-muted">{label}</span>}
         {due && (
           <span className={`text-xs ${overdue ? "font-medium text-overdue" : "text-muted"}`}>
             {due}

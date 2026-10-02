@@ -13,13 +13,15 @@ export type Task = {
   doneAt: string | null;
   repetition: Repetition | null;
   seriesId: string | null;
+  /** The Checklist this Task belongs to, if any. */
+  checklistId: string | null;
   createdAt: string;
   changedAt: string;
 };
 
 export type TaskDraft = Pick<
   Task,
-  "title" | "notes" | "dueDate" | "dueTime" | "personIds" | "private" | "repetition"
+  "title" | "notes" | "dueDate" | "dueTime" | "personIds" | "private" | "repetition" | "checklistId"
 >;
 
 export function useTasks() {

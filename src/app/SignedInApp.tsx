@@ -9,6 +9,7 @@ import { EntryTypePage } from "./entry-types/EntryTypeForm";
 import { PersonPage } from "./persons/PersonForm";
 import { SettingsPage } from "./settings/SettingsPage";
 import { Header } from "./shell/Header";
+import { ChecklistPage } from "./checklists/ChecklistForm";
 import { TaskPage } from "./tasks/TaskForm";
 import { TasksView } from "./tasks/TasksView";
 import { DayView, MonthView, TodayRedirect, WeekView, YearView } from "./views/Views";
@@ -35,6 +36,7 @@ const router = createBrowserRouter([
       { path: "/year/:year", element: <YearView /> },
       { path: "/tasks", element: <TasksView /> },
       { path: "/tasks/:id", element: <TaskPage /> },
+      { path: "/checklists/:id", element: <ChecklistPage /> },
       { path: "/entries/:id", element: <EntryPage /> },
       { path: "/settings", element: <SettingsPage /> },
       { path: "/settings/persons/:id", element: <PersonPage /> },
