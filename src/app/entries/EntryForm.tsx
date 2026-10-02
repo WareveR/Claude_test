@@ -20,7 +20,8 @@ import { usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
 import { ErrorText, Field, SubmitButton, TextInput } from "../screens/form";
 import { Icon } from "../ui/Icon";
-import { useEntry, type Entry, type EntryDraft } from "./model";
+import { occurrenceValues, useEntry, type Entry, type EntryDraft } from "./model";
+import { ScopeDialog, type Scope } from "./ScopeDialog";
 import { RepetitionFields } from "./RepetitionFields";
 
 const INPUT =
@@ -30,11 +31,24 @@ const QUARTER_HOURS = Array.from({ length: 96 }, (_, i) => clockTime(i * 15));
 
 export function EntryPage() {
   const { id } = useParams();
+  const [search] = useSearchParams();
   const isNew = id === "new";
   const entry = useEntry(isNew ? undefined : id);
   const types = useEntryTypes();
   if (!types.data || (!isNew && !entry.data)) return null;
-  return <EntryForm key={id} entry={isNew ? undefined : entry.data} types={types.data} />;
+  const date = search.get("occurrence");
+  const occurrence =
+    entry.data?.repetition && date && isPlainDate(date)
+      ? { date, values: occurrenceValues(entry.data, date) }
+      : null;
+  return (
+    <EntryForm
+      key={`${id}:${date}`}
+      entry={isNew ? undefined : entry.data}
+      occurrence={occurrence?.values ? { date: occurrence.date, values: occurrence.values } : null}
+      types={types.data}
+    />
+  );
 }
 
 /** A new Entry pre-filled from the address (date, time) and its Entry Type's defaults. */
@@ -93,7 +107,16 @@ function applyDefaults(draft: EntryDraft, d: EntryTypeDefaults, keepTime: boolea
   };
 }
 
-function EntryForm({ entry, types }: { entry?: Entry; types: EntryType[] }) {
+function EntryForm({
+  entry,
+  occurrence,
+  types,
+}: {
+  entry?: Entry;
+  /** The Occurrence of a repeating Entry the form was opened from. */
+  occurrence: { date: string; values: Entry } | null;
+  types: EntryType[];
+}) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -104,6 +127,7 @@ function EntryForm({ entry, types }: { entry?: Entry; types: EntryType[] }) {
   const startDate = search.get("date");
   const startTime = search.get("time");
   const [draft, setDraft] = useState<EntryDraft>(() => {
+    if (occurrence) return occurrence.values;
     if (entry) return entry;
     const type = types.find((ty) => ty.id === search.get("type")) ?? general;
     return newDraft(
@@ -122,15 +146,43 @@ function EntryForm({ entry, types }: { entry?: Entry; types: EntryType[] }) {
     if (window.history.length > 1) navigate(-1);
     else navigate(paths.day(draft.time.startDate));
   };
+  const [asking, setAsking] = useState<"save" | "delete" | null>(null);
+  const repetitionChanged =
+    JSON.stringify(draft.repetition) !== JSON.stringify(entry?.repetition ?? null);
   const save = useMutation({
-    mutationFn: () =>
-      entry
-        ? api(`/entries/${entry.id}`, { method: "PUT", body: draft })
-        : api("/entries", { method: "POST", body: draft }),
+    mutationFn: (scope: Scope | null) => {
+      if (!entry) return api("/entries", { method: "POST", body: draft });
+      if (!occurrence || scope === null) {
+        return api(`/entries/${entry.id}`, { method: "PUT", body: draft });
+      }
+      const at = `/entries/${entry.id}`;
+      if (scope === "this") {
+        return api(`${at}/occurrences/${occurrence.date}`, {
+          method: "PUT",
+          body: { ...draft, repetition: null },
+        });
+      }
+      if (scope === "following") {
+        return api(`${at}/following/${occurrence.date}`, { method: "POST", body: draft });
+      }
+      // "All": move the series by however far this Occurrence was moved.
+      const shift = dayDifference(occurrence.date, draft.time.startDate);
+      const time = moveStart(draft.time, addDays(entry.time.startDate, shift));
+      return api(at, { method: "PUT", body: { ...draft, time } });
+    },
     onSuccess: leave,
   });
   const remove = useMutation({
-    mutationFn: () => api(`/entries/${entry!.id}`, { method: "DELETE" }),
+    mutationFn: (scope: Scope | null) => {
+      const at = `/entries/${entry!.id}`;
+      if (occurrence && scope === "this") {
+        return api(`${at}/occurrences/${occurrence.date}`, { method: "DELETE" });
+      }
+      if (occurrence && scope === "following") {
+        return api(`${at}/following/${occurrence.date}`, { method: "DELETE" });
+      }
+      return api(at, { method: "DELETE" });
+    },
     onSuccess: leave,
   });
 
@@ -154,7 +206,8 @@ function EntryForm({ entry, types }: { entry?: Entry; types: EntryType[] }) {
 
   function submit(e: FormEvent) {
     e.preventDefault();
-    save.mutate();
+    if (occurrence) setAsking("save");
+    else save.mutate(null);
   }
 
   const time = draft.time;
@@ -432,8 +485,9 @@ function EntryForm({ entry, types }: { entry?: Entry; types: EntryType[] }) {
             type="button"
             className="text-overdue underline"
             onClick={() => {
-              if (window.confirm(t("entries.confirmDelete", { title: entry.title }))) {
-                remove.mutate();
+              if (occurrence) setAsking("delete");
+              else if (window.confirm(t("entries.confirmDelete", { title: entry.title }))) {
+                remove.mutate(null);
               }
             }}
           >
@@ -441,6 +495,22 @@ function EntryForm({ entry, types }: { entry?: Entry; types: EntryType[] }) {
           </button>
         </div>
       )}
+      {asking && (
+        <ScopeDialog
+          action={asking}
+          allowThis={asking === "delete" || !repetitionChanged}
+          onCancel={() => setAsking(null)}
+          onPick={(scope) => {
+            setAsking(null);
+            if (asking === "save") save.mutate(scope);
+            else remove.mutate(scope);
+          }}
+        />
+      )}
     </main>
   );
+}
+
+function dayDifference(from: string, to: string): number {
+  return Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000);
 }

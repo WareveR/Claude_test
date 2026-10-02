@@ -195,3 +195,107 @@ describe("repeating Entries", () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe("changing one Occurrence or the following", () => {
+  type Full = Entry & {
+    notes: string;
+    repetition: { end: Record<string, unknown> } | null;
+    seriesId: string | null;
+    exceptions: { date: string; skipped: boolean; override: Record<string, unknown> | null }[];
+  };
+
+  async function karate(end: Record<string, unknown> = { type: "never" }) {
+    const { browser, ana } = await family();
+    const body = {
+      title: "Karate",
+      entryTypeId: await typeId(browser, "activity"),
+      time: {
+        allDay: false,
+        startDate: "2026-10-06",
+        startTime: "18:00",
+        endDate: "2026-10-06",
+        endTime: "19:00",
+      },
+      repetition: { frequency: "weekly", interval: 1, weekdays: [1, 3], end },
+    };
+    const entry = (await (await browser.post("/entries", body)).json()) as Full;
+    return { browser, ana, body, entry };
+  }
+
+  it("skips one Occurrence", async () => {
+    const { browser, entry } = await karate();
+    expect((await browser.delete(`/entries/${entry.id}/occurrences/2026-10-13`)).status).toBe(204);
+    const [after] = (await (
+      await browser.get("/entries?from=2026-10-12&to=2026-10-18")
+    ).json()) as Full[];
+    expect(after.exceptions).toEqual([{ date: "2026-10-13", skipped: true, override: null }]);
+  });
+
+  it("edits one Occurrence alone", async () => {
+    const { browser, ana, body, entry } = await karate();
+    const res = await browser.request("PUT", `/entries/${entry.id}/occurrences/2026-10-13`, {
+      ...body,
+      repetition: null,
+      notes: "Gym B",
+      personIds: [ana.id],
+      time: { ...body.time, startDate: "2026-10-14", endDate: "2026-10-14" },
+    });
+    expect(res.status).toBe(200);
+    const updated = (await res.json()) as Full;
+    expect(updated.exceptions[0]).toMatchObject({
+      date: "2026-10-13",
+      skipped: false,
+      override: { notes: "Gym B", personIds: [ana.id], time: { startDate: "2026-10-14" } },
+    });
+    // The series itself is unchanged, and the Person now can't be deleted.
+    expect(updated.notes).toBe("");
+    expect((await browser.delete(`/persons/${ana.id}`)).status).toBe(409);
+  });
+
+  it("refuses a date that isn't an Occurrence", async () => {
+    const { browser, entry } = await karate();
+    expect((await browser.delete(`/entries/${entry.id}/occurrences/2026-10-12`)).status).toBe(404);
+  });
+
+  it("splits the series for this and the following", async () => {
+    const { browser, body, entry } = await karate();
+    await browser.delete(`/entries/${entry.id}/occurrences/2026-10-22`);
+    const res = await browser.post(`/entries/${entry.id}/following/2026-10-20`, {
+      ...body,
+      time: {
+        ...body.time,
+        startDate: "2026-10-20",
+        endDate: "2026-10-20",
+        startTime: "18:30",
+        endTime: "19:30",
+      },
+    });
+    expect(res.status).toBe(201);
+    const second = (await res.json()) as Full;
+    expect(second.seriesId).toBe(entry.id);
+    expect(second.exceptions.map((e) => e.date)).toEqual(["2026-10-22"]);
+
+    const first = (await (await browser.get(`/entries/${entry.id}`)).json()) as Full;
+    expect(first.repetition?.end).toEqual({ type: "until", date: "2026-10-19" });
+    expect(first.seriesId).toBe(entry.id);
+  });
+
+  it("keeps the remaining count when a counted series splits", async () => {
+    const { browser, body, entry } = await karate({ type: "count", count: 6 });
+    const res = await browser.post(`/entries/${entry.id}/following/2026-10-13`, body);
+    const second = (await res.json()) as Full;
+    const first = (await (await browser.get(`/entries/${entry.id}`)).json()) as Full;
+    expect(first.repetition?.end).toEqual({ type: "count", count: 2 });
+    expect(second.repetition?.end).toEqual({ type: "count", count: 4 });
+  });
+
+  it("deletes this and the following, or everything from the first Occurrence", async () => {
+    const { browser, entry } = await karate();
+    expect((await browser.delete(`/entries/${entry.id}/following/2026-10-15`)).status).toBe(204);
+    const cut = (await (await browser.get(`/entries/${entry.id}`)).json()) as Full;
+    expect(cut.repetition?.end).toEqual({ type: "until", date: "2026-10-14" });
+
+    await browser.delete(`/entries/${entry.id}/following/2026-10-06`);
+    expect((await browser.get(`/entries/${entry.id}`)).status).toBe(404);
+  });
+});

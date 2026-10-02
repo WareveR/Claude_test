@@ -36,6 +36,13 @@
       "when": 1790929248914,
       "tag": "0004_entries",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1790930438293,
+      "tag": "0005_occurrence_exceptions",
+      "breakpoints": true
     }
   ]
 }

@@ -176,5 +176,13 @@
     "badTime": "The end must come after the start.",
     "delete": "Delete entry",
     "confirmDelete": "Delete \"{{title}}\" for good? This can't be undone."
+  },
+  "scope": {
+    "saveTitle": "Save the change for…",
+    "deleteTitle": "Delete…",
+    "this": "This Occurrence only",
+    "following": "This and the following",
+    "all": "All of them",
+    "cancel": "Cancel"
   }
 }

@@ -1,9 +1,9 @@
-import { and, eq, gte, inArray, isNotNull, lte, or, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, isNotNull, like, lte, or, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { entryTimeProblem, isClockTime, type EntryTime } from "../../core/entry-time";
 import { ICONS, IMPORTANCES, type Importance } from "../../core/entry-type";
-import { isPlainDate } from "../../core/plain-date";
-import { isRepetition, type Repetition } from "../../core/repetition";
+import { addDays, isPlainDate } from "../../core/plain-date";
+import { isRepetition, occurrenceDates, type Repetition } from "../../core/repetition";
 import { randomId } from "../auth/crypto";
 import type { Db } from "../db";
 import { schema } from "../db";
@@ -113,7 +113,9 @@ function columns(v: EntryInput) {
   };
 }
 
-export function present(row: EntryRow, personIds: string[]) {
+type ExceptionRow = typeof schema.occurrenceException.$inferSelect;
+
+export function present(row: EntryRow, personIds: string[], exceptions: ExceptionRow[] = []) {
   const time: EntryTime = row.allDay
     ? { allDay: true, startDate: row.startDate, endDate: row.endDate! }
     : {
@@ -136,6 +138,12 @@ export function present(row: EntryRow, personIds: string[]) {
     private: row.private,
     reminders: row.reminders,
     repetition: row.repetition ?? null,
+    seriesId: row.seriesId,
+    exceptions: exceptions.map((e) => ({
+      date: e.originalDate,
+      skipped: e.skipped,
+      override: e.override,
+    })),
     createdAt: row.createdAt,
     changedAt: row.changedAt,
   };
@@ -152,10 +160,18 @@ async function withPersons(db: Db, rows: EntryRow[]) {
         rows.map((r) => r.id),
       ),
     );
+  const repeating = rows.filter((r) => r.repetition).map((r) => r.id);
+  const exceptions = repeating.length
+    ? await db
+        .select()
+        .from(schema.occurrenceException)
+        .where(inArray(schema.occurrenceException.entryId, repeating))
+    : [];
   return rows.map((row) =>
     present(
       row,
       links.filter((l) => l.entryId === row.id).map((l) => l.personId),
+      exceptions.filter((e) => e.entryId === row.id),
     ),
   );
 }
@@ -170,7 +186,13 @@ personMentionChecks.push(async (db, personId) => {
     .from(schema.entryPerson)
     .where(eq(schema.entryPerson.personId, personId))
     .limit(1);
-  return Boolean(link);
+  if (link) return true;
+  const [override] = await db
+    .select({ entryId: schema.occurrenceException.entryId })
+    .from(schema.occurrenceException)
+    .where(like(schema.occurrenceException.override, `%"${personId}"%`))
+    .limit(1);
+  return Boolean(override);
 });
 
 entryTypeDeleteSteps.push(async (db, typeId, moves, generalId) => {
@@ -270,5 +292,152 @@ entryRoutes.delete("/entries/:id", async (c) => {
     .where(eq(schema.entry.id, c.req.param("id")))
     .returning({ id: schema.entry.id });
   if (deleted.length === 0) return c.json({ error: "not_found" }, 404);
+  return c.body(null, 204);
+});
+
+async function loadEntry(db: Db, id: string) {
+  const [row] = await db.select().from(schema.entry).where(eq(schema.entry.id, id));
+  return row;
+}
+
+async function presentOne(db: Db, id: string) {
+  const rows = await db.select().from(schema.entry).where(eq(schema.entry.id, id));
+  return (await withPersons(db, rows))[0];
+}
+
+/** Whether `date` is one of the series' Occurrences. */
+function isOccurrence(row: EntryRow, date: string) {
+  if (!row.repetition || !isPlainDate(date)) return false;
+  return occurrenceDates(row.startDate, row.repetition, date, date).length === 1;
+}
+
+/** The series' Repetition cut to end the day before `date`. */
+function endBefore(row: EntryRow, date: string): Repetition {
+  const repetition = row.repetition!;
+  if (repetition.end.type === "count") {
+    const before = occurrenceDates(row.startDate, repetition, row.startDate, addDays(date, -1));
+    return { ...repetition, end: { type: "count", count: before.length } };
+  }
+  return { ...repetition, end: { type: "until", date: addDays(date, -1) } };
+}
+
+/** "This Occurrence": edit one Occurrence alone; any field but the Repetition. */
+entryRoutes.put("/entries/:id/occurrences/:date", async (c) => {
+  const db = c.get("db");
+  const { id, date } = c.req.param();
+  const row = await loadEntry(db, id);
+  if (!row || !isOccurrence(row, date)) return c.json({ error: "not_found" }, 404);
+  const parsed = await parseEntry(db, await c.req.json().catch(() => ({})));
+  if (!parsed.values) return c.json({ error: "invalid", ...parsed }, 400);
+  const { repetition, ...override } = parsed.values;
+  if (repetition && JSON.stringify(repetition) !== JSON.stringify(row.repetition)) {
+    return c.json({ error: "invalid", field: "repetition" }, 400);
+  }
+  await db
+    .insert(schema.occurrenceException)
+    .values({ entryId: id, originalDate: date, skipped: false, override })
+    .onConflictDoUpdate({
+      target: [schema.occurrenceException.entryId, schema.occurrenceException.originalDate],
+      set: { skipped: false, override },
+    });
+  await db
+    .update(schema.entry)
+    .set({ changedAt: c.get("now").toISOString() })
+    .where(eq(schema.entry.id, id));
+  return c.json(await presentOne(db, id));
+});
+
+/** "This Occurrence": skip one Occurrence. */
+entryRoutes.delete("/entries/:id/occurrences/:date", async (c) => {
+  const db = c.get("db");
+  const { id, date } = c.req.param();
+  const row = await loadEntry(db, id);
+  if (!row || !isOccurrence(row, date)) return c.json({ error: "not_found" }, 404);
+  await db
+    .insert(schema.occurrenceException)
+    .values({ entryId: id, originalDate: date, skipped: true, override: null })
+    .onConflictDoUpdate({
+      target: [schema.occurrenceException.entryId, schema.occurrenceException.originalDate],
+      set: { skipped: true, override: null },
+    });
+  return c.body(null, 204);
+});
+
+/**
+ * "This and the following": the old Entry ends the day before, and a new Entry from this
+ * Occurrence on carries the changes, linked by a series id. Later exceptions move with it.
+ */
+entryRoutes.post("/entries/:id/following/:date", async (c) => {
+  const db = c.get("db");
+  const { id, date } = c.req.param();
+  const row = await loadEntry(db, id);
+  if (!row || !isOccurrence(row, date)) return c.json({ error: "not_found" }, 404);
+  const parsed = await parseEntry(db, await c.req.json().catch(() => ({})));
+  if (!parsed.values) return c.json({ error: "invalid", ...parsed }, 400);
+  const now = c.get("now").toISOString();
+  const seriesId = row.seriesId ?? row.id;
+  const newId = randomId();
+  let repetition = parsed.values.repetition;
+  if (repetition?.end.type === "count" && row.repetition?.end.type === "count") {
+    // The new series keeps the times that were left.
+    const before = endBefore(row, date).end as { count: number };
+    repetition = {
+      ...repetition,
+      end: { type: "count", count: Math.max(1, repetition.end.count - before.count) },
+    };
+  }
+  const values = { ...parsed.values, repetition };
+  const oldEnd = endBefore(row, date);
+  const nothingLeft =
+    date === row.startDate || (oldEnd.end.type === "count" && oldEnd.end.count === 0);
+  await db.batch([
+    db
+      .insert(schema.entry)
+      .values({ id: newId, ...columns(values), seriesId, createdAt: now, changedAt: now }),
+    ...personLinks(db, newId, values.personIds),
+    db
+      .update(schema.occurrenceException)
+      .set({ entryId: newId })
+      .where(
+        and(
+          eq(schema.occurrenceException.entryId, id),
+          gte(schema.occurrenceException.originalDate, date),
+        ),
+      ),
+    nothingLeft
+      ? db.delete(schema.entry).where(eq(schema.entry.id, id))
+      : db
+          .update(schema.entry)
+          .set({ repetition: oldEnd, seriesId, changedAt: now })
+          .where(eq(schema.entry.id, id)),
+  ]);
+  return c.json(await presentOne(db, newId), 201);
+});
+
+/** "This and the following" for deleting: the series ends the day before. */
+entryRoutes.delete("/entries/:id/following/:date", async (c) => {
+  const db = c.get("db");
+  const { id, date } = c.req.param();
+  const row = await loadEntry(db, id);
+  if (!row || !isOccurrence(row, date)) return c.json({ error: "not_found" }, 404);
+  const oldEnd = endBefore(row, date);
+  if (date === row.startDate || (oldEnd.end.type === "count" && oldEnd.end.count === 0)) {
+    await db.delete(schema.entry).where(eq(schema.entry.id, id));
+  } else {
+    await db.batch([
+      db
+        .update(schema.entry)
+        .set({ repetition: oldEnd, changedAt: c.get("now").toISOString() })
+        .where(eq(schema.entry.id, id)),
+      db
+        .delete(schema.occurrenceException)
+        .where(
+          and(
+            eq(schema.occurrenceException.entryId, id),
+            gte(schema.occurrenceException.originalDate, date),
+          ),
+        ),
+    ]);
+  }
   return c.body(null, 204);
 });

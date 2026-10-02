@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { occurrencesOf } from "../../core/occurrences";
+import { occurrencesOf, type OccurrenceException } from "../../core/occurrences";
 import type { EntryTime } from "../../core/entry-time";
 import type { Importance } from "../../core/entry-type";
-import type { PlainDate } from "../../core/plain-date";
+import { addDays, type PlainDate } from "../../core/plain-date";
 import type { Repetition } from "../../core/repetition";
 import { api } from "../api";
 
@@ -20,9 +20,11 @@ export type Entry = {
   private: boolean;
   reminders: number[];
   repetition: Repetition | null;
+  seriesId?: string | null;
+  exceptions?: OccurrenceException<Partial<EntryDraft>>[];
 };
 
-export type EntryDraft = Omit<Entry, "id">;
+export type EntryDraft = Omit<Entry, "id" | "seriesId" | "exceptions">;
 
 /** One Occurrence of an Entry, drawn like an Entry but at its own time. */
 export type Shown = Entry & { occurrenceDate: string; key: string };
@@ -66,4 +68,12 @@ export function entryPath(entry: Entry | Shown): string {
   return entry.repetition && "occurrenceDate" in entry
     ? `/entries/${entry.id}?occurrence=${entry.occurrenceDate}`
     : `/entries/${entry.id}`;
+}
+
+/** The values one Occurrence shows: the series with that Occurrence's own changes. */
+export function occurrenceValues(entry: Entry, date: PlainDate): Entry | null {
+  const [occurrence] = occurrencesOf(entry, addDays(date, -40), addDays(date, 40)).filter(
+    (o) => o.date === date,
+  );
+  return occurrence ? { ...entry, ...occurrence.override, time: occurrence.time } : null;
 }

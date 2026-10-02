@@ -105,6 +105,8 @@ export const entry = sqliteTable("entry", {
   private: integer("private", { mode: "boolean" }).notNull().default(false),
   reminders: text("reminders", { mode: "json" }).$type<ReminderOffset[]>().notNull(),
   repetition: text("repetition", { mode: "json" }).$type<Repetition | null>(),
+  /** Links the Entries a "this and the following" change split one series into. */
+  seriesId: text("series_id"),
   createdAt: text("created_at").notNull(),
   changedAt: text("changed_at").notNull(),
 });
@@ -121,4 +123,21 @@ export const entryPerson = sqliteTable(
       .references(() => person.id),
   },
   (t) => [primaryKey({ columns: [t.entryId, t.personId] })],
+);
+
+/**
+ * One Occurrence of a repeating Entry skipped or edited alone, keyed by the Entry and the
+ * Occurrence's original date. The override holds the changed fields (never the Repetition).
+ */
+export const occurrenceException = sqliteTable(
+  "occurrence_exception",
+  {
+    entryId: text("entry_id")
+      .notNull()
+      .references(() => entry.id, { onDelete: "cascade" }),
+    originalDate: text("original_date").notNull(),
+    skipped: integer("skipped", { mode: "boolean" }).notNull().default(false),
+    override: text("override", { mode: "json" }).$type<Record<string, unknown> | null>(),
+  },
+  (t) => [primaryKey({ columns: [t.entryId, t.originalDate] })],
 );
