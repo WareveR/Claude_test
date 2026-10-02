@@ -7,6 +7,7 @@ import { useSignedIn } from "../family";
 import { paths } from "../paths";
 import { EntryTypesSection } from "../entry-types/EntryTypesSection";
 import { HolidaysSection } from "./HolidaysSection";
+import { FeedsSection } from "./FeedsSection";
 import { PersonsSection } from "../persons/PersonsSection";
 import { DevicesSection } from "./DevicesSection";
 import { PasswordSection } from "./PasswordSection";
@@ -51,6 +52,7 @@ export function SettingsPage() {
       <PersonsSection />
       <EntryTypesSection />
       <HolidaysSection />
+      <FeedsSection />
       <DevicesSection />
       <PasswordSection />
       <RecoveryEmailSection />

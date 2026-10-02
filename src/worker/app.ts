@@ -12,6 +12,7 @@ import { personRoutes } from "./routes/persons";
 import { taskRoutes } from "./routes/tasks";
 import { checklistRoutes } from "./routes/checklists";
 import { errorRoutes, unexpectedError } from "./routes/errors";
+import { feedRoutes, publicFeedRoutes } from "./routes/feeds";
 import { apiSecureHeaders, sameOriginOnly } from "./security";
 import type { AppEnv } from "./types";
 
@@ -35,6 +36,7 @@ app.get("/health", async (c) => {
 app.route("/", authRoutes);
 // Before any route group that requires a signed-in device.
 app.route("/", recoveryRoutes);
+app.route("/", publicFeedRoutes);
 app.route("/", recoveryEmailRoutes);
 app.route("/", deviceRoutes);
 app.route("/", devicesRoutes);
@@ -46,3 +48,4 @@ app.route("/", entryRoutes);
 app.route("/", taskRoutes);
 app.route("/", checklistRoutes);
 app.route("/", errorRoutes);
+app.route("/", feedRoutes);

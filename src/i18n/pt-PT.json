@@ -309,5 +309,27 @@
     "remove": "Remover",
     "removePlace": "Remover {{name}}",
     "municipalityHint": "Um feriado municipal que não apareça pode ser criado como Entrada anual."
+  },
+  "feeds": {
+    "title": "Feeds de calendário",
+    "hint": "Outras aplicações de calendário (o teu telemóvel, o calendário do trabalho) podem subscrever um endereço só de leitura.",
+    "everyone": "Todos",
+    "plusFamilyWide": "+ Toda a família",
+    "replace": "Substituir endereço",
+    "replaceOf": "Substituir endereço de {{name}}",
+    "confirmReplace": "Substituir o endereço de \"{{name}}\"? O endereço antigo deixa de funcionar.",
+    "revoke": "Revogar",
+    "revokeOf": "Revogar {{name}}",
+    "confirmRevoke": "Revogar \"{{name}}\"? O endereço deixa de funcionar para sempre.",
+    "name": "Nome do Feed",
+    "forWhom": "Para quem",
+    "noneHint": "Sem ninguém escolhido, o Feed abrange todos.",
+    "familyWide": "Incluir Eventos de toda a família",
+    "create": "Criar Feed de calendário",
+    "copyNow": "Copia este endereço agora; não volta a ser mostrado.",
+    "address": "Endereço do Feed",
+    "copy": "Copiar",
+    "open": "Abrir na aplicação de calendário",
+    "done": "Concluído"
   }
 }

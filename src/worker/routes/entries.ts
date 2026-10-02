@@ -182,6 +182,24 @@ async function withPersons(db: Db, rows: EntryRow[]) {
   );
 }
 
+/** Every Entry with its Persons and exceptions, for the Calendar Feed. */
+export async function allEntries(db: Db) {
+  const [rows, links, exceptions] = await Promise.all([
+    db.select().from(schema.entry),
+    db.select().from(schema.entryPerson),
+    db.select().from(schema.occurrenceException),
+  ]);
+  const personsOf = new Map<string, string[]>();
+  for (const l of links)
+    personsOf.set(l.entryId, [...(personsOf.get(l.entryId) ?? []), l.personId]);
+  const exceptionsOf = new Map<string, ExceptionRow[]>();
+  for (const e of exceptions)
+    exceptionsOf.set(e.entryId, [...(exceptionsOf.get(e.entryId) ?? []), e]);
+  return rows.map((row) =>
+    present(row, personsOf.get(row.id) ?? [], exceptionsOf.get(row.id) ?? []),
+  );
+}
+
 function personLinks(db: Db, entryId: string, personIds: string[]) {
   return personIds.map((personId) => db.insert(schema.entryPerson).values({ entryId, personId }));
 }

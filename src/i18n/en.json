@@ -309,5 +309,27 @@
     "remove": "Remove",
     "removePlace": "Remove {{name}}",
     "municipalityHint": "A municipal holiday that isn't listed can be added as a yearly Entry."
+  },
+  "feeds": {
+    "title": "Calendar Feeds",
+    "hint": "Other calendar apps (your phone, your work calendar) can subscribe to a read-only address.",
+    "everyone": "Everyone",
+    "plusFamilyWide": "+ Family-wide",
+    "replace": "Replace address",
+    "replaceOf": "Replace address of {{name}}",
+    "confirmReplace": "Replace the address of \"{{name}}\"? The old address stops working.",
+    "revoke": "Revoke",
+    "revokeOf": "Revoke {{name}}",
+    "confirmRevoke": "Revoke \"{{name}}\"? Its address stops working for good.",
+    "name": "Feed name",
+    "forWhom": "For whom",
+    "noneHint": "With nobody picked, the Feed covers everyone.",
+    "familyWide": "Include Family-wide Entries",
+    "create": "Create Feed",
+    "copyNow": "Copy this address now; it won't be shown again.",
+    "address": "Feed address",
+    "copy": "Copy",
+    "open": "Open in calendar app",
+    "done": "Done"
   }
 }
