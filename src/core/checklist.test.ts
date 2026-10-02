@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  dueRoundStart,
+  roundLabel,
+  shiftRound,
   checklistGroup,
   checklistProgress,
   checklistTaskTiming,
@@ -50,5 +53,36 @@ describe("Checklists", () => {
     expect(checklistGroup(summer, [task({})], { ...now, today: "2026-08-02" })).toBe("overdue");
     expect(checklistGroup({ startDate: null, endDate: null }, [task({})], now)).toBe("noDate");
     expect(checklistGroup(summer, [task({ doneAt: "x" })], now)).toBe("done");
+  });
+});
+
+describe("Checklist rounds", () => {
+  const yearly = { frequency: "yearly", interval: 1, end: { type: "never" } } as const;
+  const repeating = { ...summer, repetition: yearly };
+
+  it("starts a new round on the next Repetition date, not before", () => {
+    expect(dueRoundStart(repeating, "2026-12-31")).toBeNull();
+    expect(dueRoundStart(repeating, "2027-07-01")).toBe("2027-07-01");
+    // Several missed rounds: only the latest one starts.
+    expect(dueRoundStart(repeating, "2029-08-15")).toBe("2029-07-01");
+    expect(dueRoundStart({ ...summer, repetition: null }, "2027-07-01")).toBeNull();
+  });
+
+  it("shifts the period and its Tasks' dates together", () => {
+    expect(shiftRound(summer, "2027-07-01")).toEqual({
+      startDate: "2027-07-01",
+      endDate: "2027-07-31",
+      days: 365,
+    });
+    expect(shiftRound({ startDate: null, endDate: null }, null)).toEqual({
+      startDate: null,
+      endDate: null,
+      days: 0,
+    });
+  });
+
+  it("labels a closed round with its year", () => {
+    expect(roundLabel(summer, "2026-08-02")).toBe("2026");
+    expect(roundLabel({ startDate: null, endDate: null }, "2027-01-05")).toBe("2027");
   });
 });

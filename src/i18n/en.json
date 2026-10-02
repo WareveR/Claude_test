@@ -231,6 +231,12 @@
     "edit": "Edit checklist",
     "delete": "Delete checklist",
     "confirmDelete": "Delete \"{{name}}\" and its Tasks for good?",
-    "inChecklist": "In the checklist \"{{name}}\"."
+    "inChecklist": "In the checklist \"{{name}}\".",
+    "repeatHint": "When the next date comes, a new round starts: every Task undone, dates moved with the period.",
+    "useAgain": "Use again",
+    "useAgainHint": "Starts a new round now: every Task undone. Only this round's result is kept.",
+    "newStart": "New start (optional)",
+    "previousRounds": "Previous rounds",
+    "roundResult": "{{label}}: {{done}} of {{total}}"
   }
 }

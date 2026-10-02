@@ -101,3 +101,80 @@ describe("Checklists", () => {
     expect((await browser.delete(`/persons/${ana.id}`)).status).toBe(409);
   });
 });
+
+describe("Checklist rounds", () => {
+  async function summer(repetition: unknown = null) {
+    const { browser } = await family();
+    const checklist = (await (
+      await browser.post("/checklists", {
+        name: "Summer cleaning",
+        startDate: "2025-07-01",
+        endDate: "2025-07-31",
+        repetition,
+      })
+    ).json()) as Checklist & { id: string };
+    const ids: string[] = [];
+    for (const [title, dueDate] of [
+      ["Windows", "2025-07-05"],
+      ["Garage", null],
+    ] as const) {
+      const task = (await (
+        await browser.post("/tasks", { title, dueDate, checklistId: checklist.id })
+      ).json()) as { id: string };
+      ids.push(task.id);
+    }
+    await browser.post(`/tasks/${ids[0]}/done`);
+    return { browser, checklist };
+  }
+
+  const tasksOf = async (browser: Awaited<ReturnType<typeof family>>["browser"]) =>
+    (await (await browser.get("/tasks")).json()) as {
+      title: string;
+      dueDate: string | null;
+      doneAt: string | null;
+    }[];
+
+  it("starts the round a repeating Checklist is due for, keeping only the result", async () => {
+    const { browser, checklist } = await summer({
+      frequency: "yearly",
+      interval: 1,
+      end: { type: "never" },
+    });
+    const [rolled] = (await (await browser.get("/checklists")).json()) as (Checklist & {
+      rounds: unknown[];
+    })[];
+    // Today is after 1 July 2026, so the 2026 round (at least) has started.
+    expect(rolled.startDate! > checklist.startDate!).toBe(true);
+    expect(rolled.startDate!.slice(5)).toBe("07-01");
+    expect(rolled.endDate!.slice(5)).toBe("07-31");
+    expect(rolled.rounds).toEqual([{ label: "2025", done: 1, total: 2 }]);
+    const tasks = await tasksOf(browser);
+    expect(tasks.every((t) => t.doneAt === null)).toBe(true);
+    expect(tasks.find((t) => t.title === "Windows")!.dueDate!.slice(5)).toBe("07-05");
+    expect(tasks.find((t) => t.title === "Garage")!.dueDate).toBeNull();
+  });
+
+  it("starts a new round by hand with Use again, moving the dates", async () => {
+    const { browser, checklist } = await summer();
+    const res = await browser.post(`/checklists/${checklist.id}/rounds`, {
+      startDate: "2026-07-03",
+    });
+    expect(res.status).toBe(201);
+    expect(await res.json()).toMatchObject({
+      startDate: "2026-07-03",
+      endDate: "2026-08-02",
+      rounds: [{ label: "2025", done: 1, total: 2 }],
+    });
+    const windows = (await tasksOf(browser)).find((t) => t.title === "Windows")!;
+    expect(windows).toMatchObject({ dueDate: "2026-07-07", doneAt: null });
+  });
+
+  it("only repeats a Checklist with a period", async () => {
+    const { browser } = await family();
+    const res = await browser.post("/checklists", {
+      name: "Packing",
+      repetition: { frequency: "yearly", interval: 1, end: { type: "never" } },
+    });
+    expect(await res.json()).toMatchObject({ field: "repetition" });
+  });
+});

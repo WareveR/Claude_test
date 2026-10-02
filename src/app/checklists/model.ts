@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import type { Repetition } from "../../core/repetition";
 import { api } from "../api";
 
 export type Checklist = {
@@ -6,12 +7,17 @@ export type Checklist = {
   name: string;
   startDate: string | null;
   endDate: string | null;
+  repetition: Repetition | null;
   personIds: string[];
+  rounds: { label: string; done: number; total: number }[];
   createdAt: string;
   changedAt: string;
 };
 
-export type ChecklistDraft = Pick<Checklist, "name" | "startDate" | "endDate" | "personIds">;
+export type ChecklistDraft = Pick<
+  Checklist,
+  "name" | "startDate" | "endDate" | "repetition" | "personIds"
+>;
 
 export function useChecklists() {
   return useQuery({ queryKey: ["checklists"], queryFn: () => api<Checklist[]>("/checklists") });

@@ -33,6 +33,11 @@ export function addDays(date: PlainDate, days: number): PlainDate {
 }
 
 /** Adds months, keeping the day when it exists and otherwise taking the month's last day. */
+/** Whole days from one date to another; negative when `to` comes first. */
+export function daysBetween(from: PlainDate, to: PlainDate): number {
+  return Math.round((toUtc(to).getTime() - toUtc(from).getTime()) / 86_400_000);
+}
+
 export function addMonths(date: PlainDate, months: number): PlainDate {
   const [y, m, d] = date.split("-").map(Number);
   const first = new Date(Date.UTC(y, m - 1 + months, 1));
