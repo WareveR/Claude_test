@@ -6,11 +6,12 @@ import { api, ApiError } from "../api";
 import { ErrorText, Field, SubmitButton, TextInput } from "../screens/form";
 import { PERSON_COLORS, uploadPhoto, usePersons, type Person } from "./model";
 import { PersonAvatar } from "./PersonAvatar";
+import { readyToEdit } from "../offline/fresh";
 
 export function PersonPage() {
   const { id } = useParams();
   const persons = usePersons();
-  if (id !== "new" && !persons.data) return null;
+  if (id !== "new" && !readyToEdit(persons)) return null;
   const person = persons.data?.find((p) => p.id === id);
   return <PersonForm key={id} person={person} />;
 }
