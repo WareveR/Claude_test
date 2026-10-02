@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { YEAR_COLUMNS, yearRowOffset } from "../../core/layout";
 import { addDays, daysInMonth, formatPlainDate, type PlainDate } from "../../core/plain-date";
 import type { EntryType } from "../entry-types/model";
-import type { Entry } from "../entries/model";
+import type { Shown as Entry } from "../entries/model";
 import { entriesOn } from "./MonthGrid";
 
 const SATURDAY = "2026-08-01";

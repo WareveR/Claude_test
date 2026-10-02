@@ -128,7 +128,15 @@
     "daily": "Every day",
     "weekly": "Every week",
     "monthly": "Every month",
-    "yearly": "Every year"
+    "yearly": "Every year",
+    "frequency": "Repeats",
+    "interval": "Every",
+    "ends": "Ends",
+    "never": "Never",
+    "until": "On a date",
+    "count": "After a number of times",
+    "untilDate": "Last date",
+    "times": "Number of times"
   },
   "importance": {
     "low": "Low",

@@ -3,7 +3,7 @@ import { lastDate } from "../../core/entry-time";
 import { monthWeeks } from "../../core/layout";
 import { formatPlainDate, weekday, type PlainDate } from "../../core/plain-date";
 import type { EntryType } from "../entry-types/model";
-import type { Entry } from "../entries/model";
+import type { Shown as Entry } from "../entries/model";
 import { importanceClass } from "./EntryBlock";
 
 export function entriesOn(entries: Entry[], day: PlainDate): Entry[] {
@@ -68,7 +68,7 @@ export function MonthGrid({
               </span>
               {dayEntries.slice(0, 3).map((e) => (
                 <span
-                  key={e.id}
+                  key={e.key}
                   style={{ backgroundColor: colorOf(e) }}
                   className={`truncate rounded px-0.5 text-[10px] leading-tight text-white ${importanceClass(e)}`}
                 >

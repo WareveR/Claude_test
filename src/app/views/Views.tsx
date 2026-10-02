@@ -16,7 +16,7 @@ import { monthWeeks } from "../../core/layout";
 import { entriesOn, MonthGrid } from "../calendar/MonthGrid";
 import { TimeGrid } from "../calendar/TimeGrid";
 import { YearGrid } from "../calendar/YearGrid";
-import { useEntries } from "../entries/model";
+import { useOccurrences } from "../entries/model";
 import { useEntryTypes } from "../entry-types/model";
 import { useSignedIn } from "../family";
 import { usePersons } from "../persons/model";
@@ -86,7 +86,7 @@ function CalendarGrid({ days }: { days: PlainDate[] }) {
   const { family } = useSignedIn();
   const locale = useLocale();
   const now = useNow(60_000);
-  const entries = useEntries(days[0], days[days.length - 1]);
+  const entries = useOccurrences(days[0], days[days.length - 1]);
   const types = useEntryTypes();
   const persons = usePersons();
   return (
@@ -124,7 +124,7 @@ function Month({ first }: { first: PlainDate }) {
         ? today
         : first;
   const weeks = monthWeeks(first);
-  const entries = useEntries(weeks[0][0], weeks[weeks.length - 1][6]);
+  const entries = useOccurrences(weeks[0][0], weeks[weeks.length - 1][6]);
   const types = useEntryTypes();
   const persons = usePersons();
   const title = formatPlainDate(first, locale, { month: "long", year: "numeric" });
@@ -153,7 +153,7 @@ function Month({ first }: { first: PlainDate }) {
         {dayEntries.length === 0 && <p className="text-sm text-muted">{t("views.nothing")}</p>}
         {dayEntries.map((e) => (
           <EntryBlock
-            key={e.id}
+            key={e.key}
             entry={e}
             type={types.data?.find((ty) => ty.id === e.entryTypeId)}
             persons={persons.data ?? []}
@@ -177,7 +177,7 @@ function Year({ year }: { year: number }) {
   const locale = useLocale();
   const today = useToday();
   const date = `${year}-01-01`;
-  const entries = useEntries(date, `${year}-12-31`);
+  const entries = useOccurrences(date, `${year}-12-31`);
   const types = useEntryTypes();
   return (
     <>

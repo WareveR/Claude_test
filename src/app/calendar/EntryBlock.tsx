@@ -1,8 +1,8 @@
-import { Lock } from "lucide-react";
+import { Lock, Repeat } from "lucide-react";
 import { Link } from "react-router";
 import { EntryTypeBadge } from "../entry-types/EntryTypeBadge";
 import type { EntryType } from "../entry-types/model";
-import type { Entry } from "../entries/model";
+import { entryPath, type Entry, type Shown } from "../entries/model";
 import type { Person } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
 import { Icon } from "../ui/Icon";
@@ -23,7 +23,7 @@ export function EntryBlock({
   className = "",
   style,
 }: {
-  entry: Entry;
+  entry: Entry | Shown;
   type: EntryType | undefined;
   persons: Person[];
   label?: string;
@@ -35,7 +35,7 @@ export function EntryBlock({
     .filter((p): p is Person => Boolean(p));
   return (
     <Link
-      to={`/entries/${entry.id}`}
+      to={entryPath(entry)}
       data-testid="entry"
       style={{ backgroundColor: type?.color ?? "#607d8b", ...style }}
       className={`flex min-w-0 items-start gap-1 overflow-hidden rounded-md px-1 py-0.5 text-[11px] leading-tight text-white ${importanceClass(entry)} ${className}`}
@@ -51,6 +51,9 @@ export function EntryBlock({
         {label && <span className="mr-1 tabular-nums opacity-90">{label}</span>}
         <span className="break-words">{entry.title}</span>
       </span>
+      {entry.repetition && (
+        <Repeat aria-hidden size={10} strokeWidth={2} className="mt-0.5 shrink-0" />
+      )}
       {entry.private && <Lock aria-hidden size={10} strokeWidth={2} className="mt-0.5 shrink-0" />}
       {people.length > 0 && (
         <span className="flex shrink-0 -space-x-1">

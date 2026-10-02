@@ -4,7 +4,7 @@ import { daySpan } from "../../core/entry-time";
 import { layoutBars, layoutLanes } from "../../core/layout";
 import { formatPlainDate, weekday, type PlainDate } from "../../core/plain-date";
 import type { EntryType } from "../entry-types/model";
-import type { Entry } from "../entries/model";
+import type { Shown as Entry } from "../entries/model";
 import type { Person } from "../persons/model";
 import { EntryBlock } from "./EntryBlock";
 
@@ -76,7 +76,7 @@ export function TimeGrid({
       >
         {bars.map((bar) => (
           <EntryBlock
-            key={bar.entry.id}
+            key={bar.entry.key}
             entry={bar.entry}
             type={typeOf(bar.entry)}
             persons={persons}
@@ -129,7 +129,7 @@ export function TimeGrid({
                 ))}
                 {blocks.map((b) => (
                   <EntryBlock
-                    key={b.entry.id}
+                    key={b.entry.key}
                     entry={b.entry}
                     type={typeOf(b.entry)}
                     persons={persons}

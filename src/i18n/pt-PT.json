@@ -128,7 +128,15 @@
     "daily": "Todos os dias",
     "weekly": "Todas as semanas",
     "monthly": "Todos os meses",
-    "yearly": "Todos os anos"
+    "yearly": "Todos os anos",
+    "frequency": "Repete",
+    "interval": "A cada",
+    "ends": "Termina",
+    "never": "Nunca",
+    "until": "Numa data",
+    "count": "Ao fim de várias vezes",
+    "untilDate": "Última data",
+    "times": "Número de vezes"
   },
   "importance": {
     "low": "Baixa",

@@ -1,8 +1,9 @@
-import { and, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, isNotNull, lte, or, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { entryTimeProblem, isClockTime, type EntryTime } from "../../core/entry-time";
 import { ICONS, IMPORTANCES, type Importance } from "../../core/entry-type";
 import { isPlainDate } from "../../core/plain-date";
+import { isRepetition, type Repetition } from "../../core/repetition";
 import { randomId } from "../auth/crypto";
 import type { Db } from "../db";
 import { schema } from "../db";
@@ -24,6 +25,7 @@ export type EntryInput = {
   icon: string | null;
   private: boolean;
   reminders: number[];
+  repetition: Repetition | null;
 };
 
 function parseTime(value: unknown): EntryTime | null {
@@ -71,6 +73,8 @@ async function parseEntry(db: Db, body: Record<string, unknown>) {
   if (icon !== null && !ICONS.includes(icon as never)) return { field: "icon" };
   const reminders = Array.isArray(body.reminders) ? body.reminders : [];
   if (!reminders.every((r) => Number.isInteger(r) && r >= 0)) return { field: "reminders" };
+  const repetition = body.repetition ?? null;
+  if (repetition !== null && !isRepetition(repetition)) return { field: "repetition" };
   const text = (v: unknown) => (typeof v === "string" ? v.trim() : "");
   return {
     values: {
@@ -84,6 +88,7 @@ async function parseEntry(db: Db, body: Record<string, unknown>) {
       icon: icon as string | null,
       private: Boolean(body.private),
       reminders: [...new Set(reminders as number[])].sort((a, b) => b - a),
+      repetition: repetition as Repetition | null,
     } satisfies EntryInput,
   };
 }
@@ -104,6 +109,7 @@ function columns(v: EntryInput) {
     icon: v.icon,
     private: v.private,
     reminders: v.reminders,
+    repetition: v.repetition,
   };
 }
 
@@ -180,7 +186,10 @@ entryTypeDeleteSteps.push(async (db, typeId, moves, generalId) => {
 
 export const entryRoutes = new Hono<AppEnv>().use(requireDevice);
 
-/** Entries overlapping a date window, both ends included. */
+/**
+ * Entries that may touch a date window, both ends included: one-off Entries overlapping it and
+ * every repeating Entry starting by its end. The browser expands Occurrences for the window.
+ */
 entryRoutes.get("/entries", async (c) => {
   const from = c.req.query("from") ?? "";
   const to = c.req.query("to") ?? "";
@@ -199,7 +208,10 @@ entryRoutes.get("/entries", async (c) => {
     .where(
       and(
         lte(schema.entry.startDate, to),
-        gte(sql`coalesce(${schema.entry.endDate}, ${schema.entry.startDate})`, from),
+        or(
+          gte(sql`coalesce(${schema.entry.endDate}, ${schema.entry.startDate})`, from),
+          isNotNull(schema.entry.repetition),
+        ),
       ),
     );
   return c.json(await withPersons(db, rows));
