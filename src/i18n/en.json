@@ -212,6 +212,10 @@
     },
     "repeatNeedsDate": "Give it a due date to make it repeat.",
     "repeatHint": "Ticking it brings up the next one, due on the first date after today.",
-    "repeats": "Repeats"
+    "repeats": "Repeats",
+    "accordion_one": "Tasks {{count}}",
+    "accordion_other": "Tasks {{count}}",
+    "overdueCount_one": "{{count}} overdue",
+    "overdueCount_other": "{{count}} overdue"
   }
 }
