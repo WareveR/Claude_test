@@ -28,6 +28,10 @@ _Avoid_: Category, kind, typology, tag
 How prominent an Entry is in the views: Low, Normal or High.
 _Avoid_: Priority, urgency
 
+**Private**:
+A switch on an Entry or Task for things not everyone should see, such as a medical appointment. On a Signed-in Device it shows as usual, except in Display Mode, where only "Private" and its time show; the Calendar Feed shows it as "Busy", its Reminders say only the time ("Reminder at 10:00"), and it is left out of the Briefing.
+_Avoid_: Hidden, secret, confidential
+
 **Timed Entry**:
 An Entry with a start time and an optional end time, read in the Family Time Zone; it may span several days (a trip from Friday 18:00 to Sunday 20:00). Without an end it shows as a moment at its start.
 _Avoid_: Event, appointment (both are Entry Types)
@@ -69,11 +73,11 @@ The single secret that signs any device in as the Family: at least 10 characters
 _Avoid_: Login, account password, PIN
 
 **Signed-in Device**:
-A browser or device holding a Family session that lasts a year from its last use. Each one is listed and can be signed out on its own; changing the Family Password signs out all of them. Every Signed-in Device can edit.
+A browser or device holding a Family session that lasts a year from its last use. Each one is listed and can be signed out on its own; changing the Family Password signs out all of them. A device that is signed out, or finds it has been, deletes its offline copy of the calendar at once. Every Signed-in Device can edit.
 _Avoid_: Session, user, client
 
 **Display Mode**:
-A per-device setting for a screen used as a wall display (typically a tablet): the screen stays awake, text is larger, the view returns to today after a few minutes without touch and rolls over at midnight, and editing controls are hidden except ticking a Task done. Leaving Display Mode is one step; it is not a separate access level.
+A per-device setting for a screen used as a wall display (typically a tablet): the screen stays awake, text is larger, the view returns to today after a few minutes without touch and rolls over at midnight, editing controls are hidden except ticking a Task done, and Private Entries and Tasks show only as "Private". Leaving Display Mode is one step; it is not a separate access level.
 _Avoid_: Kiosk, read-only mode, wall mode
 
 **Task**:
@@ -93,11 +97,11 @@ A place saved for the weather forecast by searching a town name; the Family keep
 _Avoid_: Home location, city, weather city
 
 **Reminder**:
-A phone notification sent a set time before an Entry or one of its Occurrences ("1 day before", "1 hour before"); an Entry has zero or more, defaulted by its Entry Type. All-day Entries remind at 09:00 in the Family Time Zone; a dated Task reminds at its due time, or 09:00 on its due day; a Checklist reminds at 09:00 on the first day of its period. Each Signed-in Device chooses which Persons it is reminded about, or switches Reminders off; Display Mode devices get none.
+A phone notification sent a set time before an Entry or one of its Occurrences ("1 day before", "1 hour before"); an Entry has zero or more, defaulted by its Entry Type. All-day Entries remind at 09:00 in the Family Time Zone; a dated Task reminds at its due time, or 09:00 on its due day; a Checklist reminds at 09:00 on the first day of its period. The notification shows the title and time, never the notes (only the time for a Private one). Each Signed-in Device chooses which Persons it is reminded about, or switches Reminders off; Display Mode devices get none.
 _Avoid_: Alert, alarm, notification (the delivery, not the setting)
 
 **Calendar Feed**:
-A read-only, secret .ics link covering chosen Persons that other calendar apps subscribe to. It can be revoked and replaced; it never takes changes back.
+A read-only, secret .ics link covering chosen Persons that other calendar apps subscribe to. It can be revoked and replaced; it never takes changes back. Private Entries appear in it only as "Busy".
 _Avoid_: Sync, export, subscription
 
 **Public Holiday**:
@@ -109,5 +113,5 @@ Creating or changing an Entry or Task with one sentence, spoken or typed, from t
 _Avoid_: Voice command, dictation, assistant, chat
 
 **Briefing**:
-A few sentences in natural language at the top of the day view (and of today's column in Display Mode) saying what is coming up and what deserves attention: "Tomorrow Diana has Scouts, Mum's birthday is next week, and Christmas is a month away, a good time to start thinking about presents." A Workers AI model picks three to five things worth mentioning from the next 60 days of Entries, Tasks, Checklists, Birthdays and Public Holidays, favouring High Importance and what is closest, and may add a suggestion or question. There is one Briefing for the Family and one for each Person, in each language in use: with exactly one Person in the Person Filter that Person's Briefing shows, otherwise the Family's. It is written once a day before dawn, rewritten when something in the next 7 days changes, and has a Refresh button. When the model fails, a plain countdown list of the same things shows instead.
+A few sentences in natural language at the top of the day view (and of today's column in Display Mode) saying what is coming up and what deserves attention: "Tomorrow Diana has Scouts, Mum's birthday is next week, and Christmas is a month away, a good time to start thinking about presents." A Workers AI model picks three to five things worth mentioning from the next 60 days of Entries, Tasks, Checklists, Birthdays and Public Holidays, favouring High Importance and what is closest, and may add a suggestion or question. The model sees titles, dates and Persons' names, never notes or Private Entries and Tasks. There is one Briefing for the Family and one for each Person, in each language in use: with exactly one Person in the Person Filter that Person's Briefing shows, otherwise the Family's. It is written once a day before dawn, rewritten when something in the next 7 days changes, and has a Refresh button. When the model fails, a plain countdown list of the same things shows instead.
 _Avoid_: Summary, digest, home page, dashboard
