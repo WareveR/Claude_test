@@ -12,7 +12,9 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    cloudflare(),
+    // Workers AI only runs on Cloudflare: locally it fails and the Briefing shows its
+    // countdown fallback, unless REMOTE_BINDINGS=1 and wrangler is logged in.
+    cloudflare({ remoteBindings: process.env.REMOTE_BINDINGS === "1" }),
     VitePWA({
       // A new version waits until every window of the app is closed: it applies on the next
       // open, never in the middle of an edit.

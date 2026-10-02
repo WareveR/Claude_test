@@ -344,6 +344,12 @@
     "last": "Last full Export: {{when}}",
     "never": "No full Export yet."
   },
+  "briefing": {
+    "title": "Briefing",
+    "refresh": "Refresh",
+    "none": "No briefing yet.",
+    "failed": "The briefing could not be refreshed. Try again."
+  },
   "weather": {
     "title": "Weather",
     "hint": "The selected place is used on every device.",

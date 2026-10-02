@@ -19,6 +19,7 @@ const SKIPPED_TABLES = new Set([
   "recovery_token",
   "scheduler_run",
   "weather_cache",
+  "briefing",
 ]);
 
 /**

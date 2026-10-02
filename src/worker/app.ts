@@ -15,6 +15,7 @@ import { errorRoutes, unexpectedError } from "./routes/errors";
 import { feedRoutes, publicFeedRoutes } from "./routes/feeds";
 import { weatherRoutes } from "./routes/weather";
 import { exportRoutes } from "./routes/export";
+import { briefingRoutes } from "./routes/briefing";
 import { apiSecureHeaders, sameOriginOnly } from "./security";
 import type { AppEnv } from "./types";
 
@@ -53,3 +54,4 @@ app.route("/", errorRoutes);
 app.route("/", feedRoutes);
 app.route("/", weatherRoutes);
 app.route("/", exportRoutes);
+app.route("/", briefingRoutes);

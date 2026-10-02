@@ -2,6 +2,7 @@ import { integer, primaryKey, real, sqliteTable, text } from "drizzle-orm/sqlite
 import type { EntryTypeDefaults, Importance, ReminderOffset } from "../../core/entry-type";
 import type { HolidayPlace } from "../../core/holidays";
 import type { Repetition } from "../../core/repetition";
+import type { Segment } from "../../core/briefing";
 import type { Forecast } from "../../core/weather";
 
 /**
@@ -330,3 +331,17 @@ export const weatherCache = sqliteTable("weather_cache", {
   fetchedAt: text("fetched_at"),
   attemptedAt: text("attempted_at").notNull(),
 });
+
+/** The latest Briefing per scope ("family", later a Person) and language. */
+export const briefing = sqliteTable(
+  "briefing",
+  {
+    scope: text("scope").notNull(),
+    language: text("language").notNull(),
+    segments: text("segments", { mode: "json" }).$type<Segment[]>().notNull(),
+    /** Written as the countdown list because the model failed. */
+    fallback: integer("fallback", { mode: "boolean" }).notNull(),
+    writtenAt: text("written_at").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.scope, t.language] })],
+);
