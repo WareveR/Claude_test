@@ -9,12 +9,13 @@ import { usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
 import { ErrorText, Field, SubmitButton, TextInput } from "../screens/form";
 import { useChecklist, type Checklist, type ChecklistDraft } from "./model";
+import { readyToEdit } from "../offline/fresh";
 
 export function ChecklistPage() {
   const { id } = useParams();
   const isNew = id === "new";
   const checklist = useChecklist(isNew ? undefined : id);
-  if (!isNew && !checklist.data) return null;
+  if (!isNew && !readyToEdit(checklist)) return null;
   return <ChecklistForm key={id} checklist={isNew ? undefined : checklist.data} />;
 }
 

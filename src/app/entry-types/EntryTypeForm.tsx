@@ -12,6 +12,7 @@ import { ErrorText, Field, SubmitButton, TextInput } from "../screens/form";
 import { Icon } from "../ui/Icon";
 import { EntryTypeBadge } from "./EntryTypeBadge";
 import { REMINDER_CHOICES, reminderLabel, typeName, useEntryTypes, type EntryType } from "./model";
+import { readyToEdit } from "../offline/fresh";
 
 const FREQUENCIES = ["none", "daily", "weekly", "monthly", "yearly"] as const;
 const SELECT =
@@ -20,7 +21,7 @@ const SELECT =
 export function EntryTypePage() {
   const { id } = useParams();
   const types = useEntryTypes();
-  if (id !== "new" && !types.data) return null;
+  if (id !== "new" && !readyToEdit(types)) return null;
   return <EntryTypeForm key={id} type={types.data?.find((t) => t.id === id)} />;
 }
 

@@ -11,6 +11,7 @@ import { PersonAvatar } from "../persons/PersonAvatar";
 import { ErrorText, Field, SubmitButton, TextInput } from "../screens/form";
 import { paths } from "../paths";
 import { useTask, type Task, type TaskDraft } from "./model";
+import { readyToEdit } from "../offline/fresh";
 
 const INPUT = "rounded-md border border-line bg-surface px-3 py-2 text-base text-ink";
 
@@ -21,7 +22,7 @@ export function TaskPage() {
   const task = useTask(isNew ? undefined : id);
   const checklistId = isNew ? search.get("checklist") : task.data?.checklistId;
   const checklist = useChecklist(checklistId ?? undefined);
-  if (!isNew && !task.data) return null;
+  if (!isNew && !readyToEdit(task)) return null;
   if (checklistId && !checklist.data) return null;
   return <TaskForm key={id} task={isNew ? undefined : task.data} checklist={checklist.data} />;
 }

@@ -23,6 +23,7 @@ import { Icon } from "../ui/Icon";
 import { occurrenceValues, useEntry, type Entry, type EntryDraft } from "./model";
 import { ScopeDialog, type Scope } from "./ScopeDialog";
 import { RepetitionFields } from "./RepetitionFields";
+import { readyToEdit } from "../offline/fresh";
 
 const INPUT =
   "rounded-md border border-line bg-surface px-3 py-2 text-base text-ink dark:border-line";
@@ -35,7 +36,7 @@ export function EntryPage() {
   const isNew = id === "new";
   const entry = useEntry(isNew ? undefined : id);
   const types = useEntryTypes();
-  if (!types.data || (!isNew && !entry.data)) return null;
+  if (!types.data || (!isNew && !readyToEdit(entry))) return null;
   const date = search.get("occurrence");
   const occurrence =
     // A synced Birthday's edits always apply to every year.
