@@ -9,6 +9,7 @@ import { EntryTypesSection } from "../entry-types/EntryTypesSection";
 import { HolidaysSection } from "./HolidaysSection";
 import { WeatherSection } from "./WeatherSection";
 import { ExportSection } from "./ExportSection";
+import { RemindersSection } from "./RemindersSection";
 import { FeedsSection } from "./FeedsSection";
 import { PersonsSection } from "../persons/PersonsSection";
 import { DevicesSection } from "./DevicesSection";
@@ -56,6 +57,7 @@ export function SettingsPage() {
       <HolidaysSection />
       <WeatherSection />
       <ExportSection />
+      <RemindersSection />
       <FeedsSection />
       <DevicesSection />
       <PasswordSection />

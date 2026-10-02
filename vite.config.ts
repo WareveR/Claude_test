@@ -39,6 +39,8 @@ export default defineConfig({
       workbox: {
         // The app shell only. API answers live in the device's query cache, which is wiped
         // when the device is signed out; the service worker never keeps them.
+        // Push and notification-click handling lives in public/push-sw.js.
+        importScripts: ["push-sw.js"],
         globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/api\//],

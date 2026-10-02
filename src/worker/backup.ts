@@ -21,6 +21,7 @@ const SKIPPED_TABLES = new Set([
   "weather_cache",
   "briefing",
   "briefing_pending",
+  "reminder_sent",
 ]);
 
 /**

@@ -203,7 +203,21 @@
     "hoursBefore_one": "1 hora antes",
     "hoursBefore_other": "{{count}} horas antes",
     "daysBefore_one": "1 dia antes",
-    "daysBefore_other": "{{count}} dias antes"
+    "daysBefore_other": "{{count}} dias antes",
+    "title": "Lembretes",
+    "hint": "Notificações de Entradas e Tarefas apenas neste dispositivo.",
+    "notSetUp": "Os Lembretes não estão configurados neste servidor.",
+    "unsupported": "Este navegador não consegue mostrar notificações push.",
+    "addToHome": "No iPhone e no iPad, adicione primeiro a aplicação ao Ecrã principal e abra-a a partir daí para ativar os Lembretes.",
+    "allow": "Permitir notificações",
+    "denied": "As notificações estão bloqueadas para esta aplicação. Permita-as nas definições do navegador ou do sistema e tente de novo.",
+    "failed": "Não foi possível ativar as notificações. Tente de novo.",
+    "pushOn": "Notificações ativas neste dispositivo",
+    "turnOff": "Desativar neste dispositivo",
+    "switch": "Lembretes ativos",
+    "persons": "Lembrar-me de",
+    "everyone": "Todos",
+    "familyWide": "Os itens sem Pessoa em particular (para toda a Família) lembram sempre."
   },
   "entries": {
     "new": "Nova entrada",

@@ -40,6 +40,7 @@ export const NOT_EXPORTED = new Set([
   "weather_cache",
   "briefing",
   "briefing_pending",
+  "reminder_sent",
 ]);
 
 /** Settings › Export. The browser fetches the images itself and builds the ZIP. */
