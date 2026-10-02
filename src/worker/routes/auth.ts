@@ -3,15 +3,11 @@ import { isLanguage, isTimeZone } from "../../core/languages";
 import { safeEqual, randomId, sha256 } from "../auth/crypto";
 import { hashPassword, isAcceptablePassword, verifyPassword } from "../auth/password";
 import { currentDevice, endSession, startSession } from "../auth/session";
-import { clearFailures, recordFailure, retryAfter } from "../auth/throttle";
+import { clearFailures, clientIp, recordFailure, retryAfter } from "../auth/throttle";
 import { schema } from "../db";
 import type { AppEnv } from "../types";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function clientIp(c: { req: { header(name: string): string | undefined } }) {
-  return c.req.header("CF-Connecting-IP") ?? "unknown";
-}
 
 /** Setup, sign-in and sign-out: the routes that work without a session. */
 export const authRoutes = new Hono<AppEnv>();

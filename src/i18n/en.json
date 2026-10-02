@@ -51,5 +51,22 @@
     "title": "Settings",
     "back": "Back",
     "language": "Language on this device"
+  },
+  "devices": {
+    "title": "Signed-in devices",
+    "thisDevice": "this device",
+    "lastUsed": "Last used {{when}}",
+    "rename": "Rename {{name}}",
+    "newName": "New device name",
+    "signOut": "Sign out {{name}}",
+    "confirmSignOut": "Sign out {{name}}?"
+  },
+  "password": {
+    "title": "Change the Family Password",
+    "current": "Current password",
+    "new": "New password",
+    "hint": "Every device, this one included, will need to sign in again.",
+    "confirm": "Every device will need to sign in again. Continue?",
+    "submit": "Change password"
   }
 }

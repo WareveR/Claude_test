@@ -5,6 +5,8 @@ import { LANGUAGES } from "../../core/languages";
 import { api } from "../api";
 import { useSignedIn } from "../family";
 import { paths } from "../paths";
+import { DevicesSection } from "./DevicesSection";
+import { PasswordSection } from "./PasswordSection";
 
 export function SettingsPage() {
   const { t } = useTranslation();
@@ -42,6 +44,8 @@ export function SettingsPage() {
           ))}
         </select>
       </label>
+      <DevicesSection />
+      <PasswordSection />
       <button type="button" className="self-start underline" onClick={() => signOut.mutate()}>
         {t("signIn.signOut")}
       </button>

@@ -12,6 +12,10 @@ export function waitSeconds(failures: number): number {
   return Math.min(2 ** (failures - FREE_ATTEMPTS), MAX_WAIT_SECONDS);
 }
 
+export function clientIp(c: { req: { header(name: string): string | undefined } }): string {
+  return c.req.header("CF-Connecting-IP") ?? "unknown";
+}
+
 function keys(ip: string) {
   return [`ip:${ip}`, "global"];
 }
