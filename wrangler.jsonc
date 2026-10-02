@@ -22,6 +22,8 @@
     { "binding": "IMAGES", "bucket_name": "family-calendar-images" },
     { "binding": "BACKUPS", "bucket_name": "family-calendar-backups" },
   ],
+  // Workers AI writes the Briefing and reads Voice Entry sentences.
+  "ai": { "binding": "AI" },
   // Cloudflare Email Service; the sender address is set with the own domain (#53).
   "send_email": [{ "name": "EMAIL" }],
   "vars": {

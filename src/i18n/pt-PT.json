@@ -344,6 +344,12 @@
     "last": "Última exportação completa: {{when}}",
     "never": "Ainda não foi feita nenhuma exportação completa."
   },
+  "briefing": {
+    "title": "Resumo do dia",
+    "refresh": "Atualizar",
+    "none": "Ainda não há resumo.",
+    "failed": "Não foi possível atualizar o resumo. Tente de novo."
+  },
   "weather": {
     "title": "Meteorologia",
     "hint": "O local selecionado é usado em todos os dispositivos.",

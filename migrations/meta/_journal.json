@@ -120,6 +120,13 @@
       "when": 1790946649759,
       "tag": "0016_export",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1790947704368,
+      "tag": "0017_briefing",
+      "breakpoints": true
     }
   ]
 }

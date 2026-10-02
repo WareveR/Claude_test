@@ -15,6 +15,8 @@ export default defineConfig({
         plugins: [
           cloudflareTest(async () => ({
             wrangler: { configPath: "./wrangler.jsonc" },
+            // Workers AI is remote-only; tests replace it with a fake (src/worker/ai.ts).
+            remoteBindings: false,
             miniflare: {
               bindings: {
                 SETUP_CODE: "test-setup-code",

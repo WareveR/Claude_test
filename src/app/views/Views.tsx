@@ -12,6 +12,7 @@ import {
   todayIn,
   type PlainDate,
 } from "../../core/plain-date";
+import { BriefingBand } from "../briefing/BriefingBand";
 import { EntryBlock } from "../calendar/EntryBlock";
 import { monthWeeks } from "../../core/layout";
 import { entriesOn, MonthGrid } from "../calendar/MonthGrid";
@@ -86,6 +87,7 @@ export function DayView() {
         }
       />
       {date === today && <HourlyStrip />}
+      {date === today && <BriefingBand />}
       <TasksAccordion from={date} to={date} />
       <CalendarGrid days={[date]} />
     </>
