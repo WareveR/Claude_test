@@ -145,3 +145,33 @@ export const occurrenceException = sqliteTable(
   },
   (t) => [primaryKey({ columns: [t.entryId, t.originalDate] })],
 );
+
+/**
+ * A to-do beside the calendar. The due date and time are wall-clock in the Family Time Zone;
+ * `doneAt` records when any device ticked it done.
+ */
+export const task = sqliteTable("task", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  notes: text("notes").notNull().default(""),
+  dueDate: text("due_date"),
+  dueTime: text("due_time"),
+  private: integer("private", { mode: "boolean" }).notNull().default(false),
+  doneAt: text("done_at"),
+  createdAt: text("created_at").notNull(),
+  changedAt: text("changed_at").notNull(),
+});
+
+/** The Persons a Task is for; none means Family-wide. */
+export const taskPerson = sqliteTable(
+  "task_person",
+  {
+    taskId: text("task_id")
+      .notNull()
+      .references(() => task.id, { onDelete: "cascade" }),
+    personId: text("person_id")
+      .notNull()
+      .references(() => person.id),
+  },
+  (t) => [primaryKey({ columns: [t.taskId, t.personId] })],
+);

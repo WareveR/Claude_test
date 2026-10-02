@@ -9,7 +9,9 @@ import { EntryTypePage } from "./entry-types/EntryTypeForm";
 import { PersonPage } from "./persons/PersonForm";
 import { SettingsPage } from "./settings/SettingsPage";
 import { Header } from "./shell/Header";
-import { DayView, MonthView, TasksView, TodayRedirect, WeekView, YearView } from "./views/Views";
+import { TaskPage } from "./tasks/TaskForm";
+import { TasksView } from "./tasks/TasksView";
+import { DayView, MonthView, TodayRedirect, WeekView, YearView } from "./views/Views";
 
 function Layout() {
   return (
@@ -32,6 +34,7 @@ const router = createBrowserRouter([
       { path: "/month/:month", element: <MonthView /> },
       { path: "/year/:year", element: <YearView /> },
       { path: "/tasks", element: <TasksView /> },
+      { path: "/tasks/:id", element: <TaskPage /> },
       { path: "/entries/:id", element: <EntryPage /> },
       { path: "/settings", element: <SettingsPage /> },
       { path: "/settings/persons/:id", element: <PersonPage /> },

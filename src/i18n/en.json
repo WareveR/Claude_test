@@ -189,5 +189,26 @@
     "following": "This and the following",
     "all": "All of them",
     "cancel": "Cancel"
+  },
+  "tasks": {
+    "new": "New task",
+    "title": "Title",
+    "dueDate": "Due date (optional)",
+    "dueTime": "Due time (optional)",
+    "familyWideHint": "With nobody picked, the Task is for the whole Family.",
+    "tick": "Done: {{title}}",
+    "nothingLeft": "Nothing left to do.",
+    "showDone_one": "Show done ({{count}})",
+    "showDone_other": "Show done ({{count}})",
+    "doneAt": "Done {{when}}",
+    "delete": "Delete task",
+    "confirmDelete": "Delete \"{{title}}\" for good? This can't be undone.",
+    "groups": {
+      "overdue": "Overdue",
+      "today": "Today",
+      "upcoming": "Upcoming",
+      "noDate": "No date",
+      "done": "Done"
+    }
   }
 }

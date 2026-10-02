@@ -7,6 +7,7 @@ import { entryRoutes } from "./routes/entries";
 import { entryTypeRoutes } from "./routes/entry-types";
 import { imageRoutes } from "./routes/images";
 import { personRoutes } from "./routes/persons";
+import { taskRoutes } from "./routes/tasks";
 import { apiSecureHeaders, sameOriginOnly } from "./security";
 import type { AppEnv } from "./types";
 
@@ -31,3 +32,4 @@ app.route("/", imageRoutes);
 app.route("/", personRoutes);
 app.route("/", entryTypeRoutes);
 app.route("/", entryRoutes);
+app.route("/", taskRoutes);

@@ -189,5 +189,26 @@
     "following": "Esta e as seguintes",
     "all": "Todas",
     "cancel": "Cancelar"
+  },
+  "tasks": {
+    "new": "Nova tarefa",
+    "title": "Título",
+    "dueDate": "Data limite (opcional)",
+    "dueTime": "Hora limite (opcional)",
+    "familyWideHint": "Sem ninguém escolhido, a Tarefa é para toda a Família.",
+    "tick": "Feita: {{title}}",
+    "nothingLeft": "Não há nada por fazer.",
+    "showDone_one": "Mostrar feitas ({{count}})",
+    "showDone_other": "Mostrar feitas ({{count}})",
+    "doneAt": "Feita {{when}}",
+    "delete": "Apagar tarefa",
+    "confirmDelete": "Apagar \"{{title}}\" de vez? Não dá para desfazer.",
+    "groups": {
+      "overdue": "Atrasadas",
+      "today": "Hoje",
+      "upcoming": "Próximas",
+      "noDate": "Sem data",
+      "done": "Feitas"
+    }
   }
 }
