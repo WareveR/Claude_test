@@ -176,5 +176,13 @@
     "badTime": "O fim tem de ser depois do início.",
     "delete": "Apagar entrada",
     "confirmDelete": "Apagar \"{{title}}\" de vez? Não dá para desfazer."
+  },
+  "scope": {
+    "saveTitle": "Guardar a alteração em…",
+    "deleteTitle": "Apagar…",
+    "this": "Só esta vez",
+    "following": "Esta e as seguintes",
+    "all": "Todas",
+    "cancel": "Cancelar"
   }
 }
