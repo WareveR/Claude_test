@@ -92,6 +92,13 @@
       "when": 1790933814134,
       "tag": "0012_recovery",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1790941789246,
+      "tag": "0013_error_log",
+      "breakpoints": true
     }
   ]
 }

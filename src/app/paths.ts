@@ -9,4 +9,5 @@ export const paths = {
   year: (date: PlainDate) => `/year/${date.slice(0, 4)}`,
   tasks: () => "/tasks",
   settings: () => "/settings",
+  errorLog: () => "/settings/errors",
 };

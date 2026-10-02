@@ -245,3 +245,32 @@ export const recoveryToken = sqliteTable("recovery_token", {
   expiresAt: text("expires_at").notNull(),
   usedAt: text("used_at"),
 });
+
+/**
+ * Failures seen by any device or by the Worker, kept 90 days. Never holds notes or titles:
+ * the action and message are technical (a request path, an error name).
+ */
+export const errorLog = sqliteTable("error_log", {
+  id: text("id").primaryKey(),
+  code: text("code").notNull().unique(),
+  at: text("at").notNull(),
+  source: text("source").$type<"device" | "server">().notNull(),
+  /** A copy of the device's name; devices come and go. */
+  deviceName: text("device_name"),
+  appVersion: text("app_version").notNull(),
+  action: text("action").notNull(),
+  message: text("message").notNull(),
+  comment: text("comment"),
+  reportedAt: text("reported_at"),
+});
+
+/** Which Scheduler jobs already ran for which key (usually a Family-local day). */
+export const schedulerRun = sqliteTable(
+  "scheduler_run",
+  {
+    job: text("job").notNull(),
+    key: text("key").notNull(),
+    at: text("at").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.job, t.key] })],
+);

@@ -59,7 +59,36 @@
   },
   "errors": {
     "network": "No connection. Check the internet and try again.",
-    "unexpected": "Something went wrong. Try again."
+    "unexpected": "Something went wrong. Try again.",
+    "notice": {
+      "load": "Couldn't load this.",
+      "save": "Couldn't save the change.",
+      "offline": "No connection.",
+      "app": "Something went wrong in the app."
+    },
+    "tryAgain": "Try again. If it keeps happening, report it.",
+    "tryOffline": "Check the internet and try again.",
+    "dismiss": "Dismiss",
+    "seeDetails": "See details",
+    "hideDetails": "Hide details",
+    "action": "Action",
+    "time": "Time",
+    "version": "App version",
+    "message": "Message",
+    "report": "Report",
+    "reportComment": "What were you doing? (optional)",
+    "send": "Send",
+    "reported": "Report sent.",
+    "reportFailed": "Couldn't send the report. Try again later.",
+    "tooManyReports": "Too many reports in the last hour. Try again later.",
+    "reload": "Reload",
+    "log": {
+      "title": "Error log",
+      "open": "Error log",
+      "empty": "No errors in the last 90 days.",
+      "server": "Server",
+      "comment": "Comment: {{comment}}"
+    }
   },
   "views": {
     "day": "Day",

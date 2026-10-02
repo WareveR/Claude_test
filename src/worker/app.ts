@@ -11,6 +11,7 @@ import { familyRoutes } from "./routes/family";
 import { personRoutes } from "./routes/persons";
 import { taskRoutes } from "./routes/tasks";
 import { checklistRoutes } from "./routes/checklists";
+import { errorRoutes, unexpectedError } from "./routes/errors";
 import { apiSecureHeaders, sameOriginOnly } from "./security";
 import type { AppEnv } from "./types";
 
@@ -22,6 +23,9 @@ app.use(async (c, next) => {
   c.set("now", new Date());
   await next();
 });
+
+// Any unexpected failure is logged with a code the device shows to the Family.
+app.onError(unexpectedError);
 
 app.get("/health", async (c) => {
   const families = await c.get("db").select({ id: schema.family.id }).from(schema.family).limit(1);
@@ -41,3 +45,4 @@ app.route("/", entryTypeRoutes);
 app.route("/", entryRoutes);
 app.route("/", taskRoutes);
 app.route("/", checklistRoutes);
+app.route("/", errorRoutes);

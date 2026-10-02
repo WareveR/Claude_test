@@ -7,6 +7,7 @@ import { deviceLanguage } from "./i18n";
 import { EntryPage } from "./entries/EntryForm";
 import { EntryTypePage } from "./entry-types/EntryTypeForm";
 import { PersonPage } from "./persons/PersonForm";
+import { ErrorLogPage } from "./settings/ErrorLogPage";
 import { SettingsPage } from "./settings/SettingsPage";
 import { Header } from "./shell/Header";
 import { ChecklistPage } from "./checklists/ChecklistForm";
@@ -39,6 +40,7 @@ const router = createBrowserRouter([
       { path: "/checklists/:id", element: <ChecklistPage /> },
       { path: "/entries/:id", element: <EntryPage /> },
       { path: "/settings", element: <SettingsPage /> },
+      { path: "/settings/errors", element: <ErrorLogPage /> },
       { path: "/settings/persons/:id", element: <PersonPage /> },
       { path: "/settings/entry-types/:id", element: <EntryTypePage /> },
       { path: "*", element: <TodayRedirect /> },

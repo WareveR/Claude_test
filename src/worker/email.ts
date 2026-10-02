@@ -31,6 +31,10 @@ type Texts = {
   passwordChangedText: string;
   emailChangedSubject: string;
   emailChangedText: (address: string) => string;
+  reportSubject: (code: string) => string;
+  reportText: (details: string, comment: string) => string;
+  summarySubject: (count: number) => string;
+  summaryText: (lines: string) => string;
 };
 
 /** Emails are written in the Family Language. */
@@ -48,6 +52,13 @@ export const EMAIL_TEXTS: Record<Language, Texts> = {
     emailChangedSubject: "O email de recuperação mudou",
     emailChangedText: (address) =>
       `O email de recuperação do calendário da Família passou a ser ${address}.\n\nSe não foi ninguém da Família, avisa quem instalou o calendário.`,
+    reportSubject: (code) => `Erro reportado: ${code}`,
+    reportText: (details, comment) =>
+      `Alguém da Família reportou um erro.\n\n${details}\n\nComentário: ${comment || "(nenhum)"}`,
+    summarySubject: (count) =>
+      count === 1 ? "Houve 1 erro no calendário" : `Houve ${count} erros no calendário`,
+    summaryText: (lines) =>
+      `Resumo dos erros desde o último resumo:\n\n${lines}\n\nOs detalhes estão em Definições › Registo de erros.`,
   },
   en: {
     recoverySubject: "Choose a new Family Password",
@@ -62,5 +73,14 @@ export const EMAIL_TEXTS: Record<Language, Texts> = {
     emailChangedSubject: "The recovery email changed",
     emailChangedText: (address) =>
       `The Family calendar's recovery email is now ${address}.\n\nIf it wasn't anyone in the Family, tell whoever installed the calendar.`,
+    reportSubject: (code) => `Error reported: ${code}`,
+    reportText: (details, comment) =>
+      `Someone in the Family reported an error.\n\n${details}\n\nComment: ${comment || "(none)"}`,
+    summarySubject: (count) =>
+      count === 1
+        ? "There was 1 error in the calendar"
+        : `There were ${count} errors in the calendar`,
+    summaryText: (lines) =>
+      `Errors since the last summary:\n\n${lines}\n\nThe details are in Settings › Error log.`,
   },
 };
