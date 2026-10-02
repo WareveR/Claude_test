@@ -88,5 +88,55 @@
     "delete": "Delete",
     "confirmDelete": "Delete {{name}} for good?",
     "inUse": "Entries or Tasks mention this Person. Archive them instead."
+  },
+  "entryTypes": {
+    "title": "Entry Types",
+    "add": "Add type",
+    "name": "Name",
+    "color": "Colour",
+    "icon": "Icon",
+    "thumbnail": "Use an image",
+    "defaults": "Defaults",
+    "defaultsHint": "They pre-fill new Entries of this type. Changing them never changes existing Entries.",
+    "allDay": "All day",
+    "startTime": "Start time",
+    "duration": "Duration (minutes)",
+    "repetition": "Repetition",
+    "importance": "Importance",
+    "location": "Location",
+    "notes": "Notes",
+    "persons": "Persons",
+    "reminders": "Reminders",
+    "delete": "Delete type",
+    "confirmDelete": "Delete the type {{name}}? Its Entries move to General.",
+    "builtin": {
+      "birthday": "Birthday",
+      "holiday": "Holiday",
+      "appointment": "Appointment",
+      "booking": "Booking",
+      "activity": "Activity",
+      "event": "Event",
+      "general": "General"
+    }
+  },
+  "repetition": {
+    "none": "Doesn't repeat",
+    "daily": "Every day",
+    "weekly": "Every week",
+    "monthly": "Every month",
+    "yearly": "Every year"
+  },
+  "importance": {
+    "low": "Low",
+    "normal": "Normal",
+    "high": "High"
+  },
+  "reminders": {
+    "atStart": "At the start (on the day)",
+    "minutesBefore": "{{count}} min before",
+    "hoursBefore_one": "1 hour before",
+    "hoursBefore_other": "{{count}} hours before",
+    "daysBefore_one": "1 day before",
+    "daysBefore_other": "{{count}} days before"
   }
 }

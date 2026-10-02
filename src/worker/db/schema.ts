@@ -1,4 +1,5 @@
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import type { EntryTypeDefaults } from "../../core/entry-type";
 
 /**
  * The one Family of this installation (ADR-0001) and its Family-wide settings.
@@ -62,4 +63,20 @@ export const image = sqliteTable("image", {
   contentType: text("content_type").notNull(),
   createdAt: text("created_at").notNull(),
   lastUsedAt: text("last_used_at").notNull(),
+});
+
+/**
+ * An Entry Type: built-in ones carry a builtinKey and no name until the Family renames them,
+ * so each device shows the name in its own language.
+ */
+export const entryType = sqliteTable("entry_type", {
+  id: text("id").primaryKey(),
+  builtinKey: text("builtin_key"),
+  name: text("name"),
+  color: text("color").notNull(),
+  icon: text("icon"),
+  thumbnailKey: text("thumbnail_key"),
+  defaults: text("defaults", { mode: "json" }).$type<EntryTypeDefaults>().notNull(),
+  createdAt: text("created_at").notNull(),
+  changedAt: text("changed_at").notNull(),
 });

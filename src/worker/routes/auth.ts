@@ -6,6 +6,7 @@ import { currentDevice, endSession, startSession } from "../auth/session";
 import { clearFailures, clientIp, recordFailure, retryAfter } from "../auth/throttle";
 import { schema } from "../db";
 import type { AppEnv } from "../types";
+import { seedBuiltInTypes } from "./entry-types";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -51,17 +52,20 @@ authRoutes.post("/setup", async (c) => {
   if (!isLanguage(body.language)) return c.json({ error: "invalid", field: "language" }, 400);
   if (!isTimeZone(body.timeZone)) return c.json({ error: "invalid", field: "timeZone" }, 400);
 
-  await db.insert(schema.family).values({
-    id: randomId(),
-    name,
-    language: body.language,
-    timeZone: body.timeZone,
-    passwordHash: await hashPassword(body.password),
-    recoveryEmail,
-    setupCodeHash: await sha256(c.env.SETUP_CODE),
-    createdAt: now.toISOString(),
-    changedAt: now.toISOString(),
-  });
+  await db.batch([
+    db.insert(schema.family).values({
+      id: randomId(),
+      name,
+      language: body.language,
+      timeZone: body.timeZone,
+      passwordHash: await hashPassword(body.password),
+      recoveryEmail,
+      setupCodeHash: await sha256(c.env.SETUP_CODE),
+      createdAt: now.toISOString(),
+      changedAt: now.toISOString(),
+    }),
+    ...seedBuiltInTypes(db, now.toISOString()),
+  ]);
   await clearFailures(db, ip);
   await startSession(c, db, now);
   return c.json({ ok: true }, 201);
