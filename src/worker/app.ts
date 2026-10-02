@@ -1,10 +1,23 @@
 import { Hono } from "hono";
 import { getDb, schema } from "./db";
+import { authRoutes } from "./routes/auth";
+import { deviceRoutes } from "./routes/device";
+import { apiSecureHeaders, sameOriginOnly } from "./security";
+import type { AppEnv } from "./types";
 
-export const app = new Hono<{ Bindings: Env }>().basePath("/api");
+export const app = new Hono<AppEnv>().basePath("/api");
+
+app.use(apiSecureHeaders, sameOriginOnly);
+app.use(async (c, next) => {
+  c.set("db", getDb(c.env.DB));
+  c.set("now", new Date());
+  await next();
+});
 
 app.get("/health", async (c) => {
-  const db = getDb(c.env.DB);
-  const families = await db.select({ id: schema.family.id }).from(schema.family).limit(1);
+  const families = await c.get("db").select({ id: schema.family.id }).from(schema.family).limit(1);
   return c.json({ status: "ok", familyExists: families.length > 0 });
 });
+
+app.route("/", authRoutes);
+app.route("/", deviceRoutes);
