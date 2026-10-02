@@ -1,0 +1,1 @@
+ALTER TABLE `family` ADD `last_export_at` text;

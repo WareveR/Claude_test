@@ -183,6 +183,13 @@ describe("events", () => {
     expect(lines.join("\n")).not.toMatch(/Natação|Piscina|touca/);
   });
 
+  it("shows a Private Entry in full in the Family's own Export", () => {
+    const lines = entryEvents(entry({ private: true }), { ...OPTIONS, revealPrivate: true });
+    expect(lines).toContain("SUMMARY:Natação");
+    expect(lines).toContain("LOCATION:Piscina");
+    expect(lines).toContain("CLASS:PRIVATE");
+  });
+
   it("writes skipped Occurrences as EXDATE and edited ones as RECURRENCE-ID", () => {
     const lines = entryEvents(
       entry({

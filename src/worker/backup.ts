@@ -38,18 +38,31 @@ async function claimNight(db: Db, job: string, now: Date): Promise<string | null
   return claimed.length > 0 ? today : null;
 }
 
-/** Every table of the database as rows, column names as stored, for a whole-database restore. */
-export async function snapshot(d1: D1Database, now: Date) {
-  const { results: tables } = await d1
+/** The database's own tables, by name. */
+export async function tableNames(d1: D1Database): Promise<string[]> {
+  const { results } = await d1
     .prepare(
       "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%' ORDER BY name",
     )
     .all<{ name: string }>();
-  const data: Record<string, unknown[]> = {};
-  for (const { name } of tables) {
-    if (SKIPPED_TABLES.has(name)) continue;
-    data[name] = (await d1.prepare(`SELECT * FROM "${name}"`).all()).results;
+  return results.map((r) => r.name);
+}
+
+/** Rows of the given tables, column names as stored. */
+export async function readTables(d1: D1Database, names: string[]) {
+  const data: Record<string, Record<string, unknown>[]> = {};
+  for (const name of names) {
+    data[name] = (
+      await d1.prepare(`SELECT * FROM "${name}"`).all<Record<string, unknown>>()
+    ).results;
   }
+  return data;
+}
+
+/** Every table of the database as rows, column names as stored, for a whole-database restore. */
+export async function snapshot(d1: D1Database, now: Date) {
+  const names = (await tableNames(d1)).filter((name) => !SKIPPED_TABLES.has(name));
+  const data = await readTables(d1, names);
   return {
     format: "family-calendar-backup",
     version: 1,

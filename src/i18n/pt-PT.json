@@ -335,6 +335,15 @@
   "offline": {
     "notice": "Estás sem ligação. Este é o último calendário carregado; as alterações precisam de ligação."
   },
+  "export": {
+    "title": "Exportar",
+    "hint": "Os teus dados também são guardados fora da Cloudflare. Uma Exportação completa inclui os itens Privados.",
+    "download": "Descarregar tudo (ZIP)",
+    "preparing": "A preparar…",
+    "entries": "Descarregar todas as Entradas (.ics)",
+    "last": "Última exportação completa: {{when}}",
+    "never": "Ainda não foi feita nenhuma exportação completa."
+  },
   "weather": {
     "title": "Meteorologia",
     "hint": "O local selecionado é usado em todos os dispositivos.",
