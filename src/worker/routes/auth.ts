@@ -7,6 +7,7 @@ import { clearFailures, clientIp, recordFailure, retryAfter } from "../auth/thro
 import { schema } from "../db";
 import type { AppEnv } from "../types";
 import { seedBuiltInTypes } from "./entry-types";
+import { setupCodeChanged } from "./recovery";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -19,6 +20,7 @@ authRoutes.get("/status", async (c) => {
   const device = family ? await currentDevice(c, db, c.get("now")) : null;
   return c.json({
     familyExists: Boolean(family),
+    newSetupCode: family ? await setupCodeChanged(c.env, family) : false,
     signedIn: Boolean(device),
     family:
       family && device

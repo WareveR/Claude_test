@@ -33,6 +33,30 @@
     "tooMany": "Too many attempts. Try again in {{seconds}} s.",
     "signOut": "Sign out on this device"
   },
+  "recovery": {
+    "forgot": "Forgot password?",
+    "title": "Forgot the password?",
+    "email": "Recovery email",
+    "send": "Send recovery link",
+    "sent": "If that address is registered, a recovery link is on its way. Check your inbox.",
+    "back": "Back to sign in",
+    "newPasswordTitle": "Choose a new password",
+    "newPassword": "New password",
+    "choose": "Choose password",
+    "done": "Your password is changed and every device was signed out. Sign in with the new one.",
+    "invalidLink": "This link is no longer valid. Ask for a new one.",
+    "confirmTitle": "Recovery email",
+    "confirming": "Confirming…",
+    "confirmed": "Recovery email confirmed.",
+    "continue": "Continue",
+    "newSetupCodeTitle": "Set a new password",
+    "newSetupCodeHint": "The recovery email was used up, so this calendar needs a new password. Enter the setup code from the server and choose a new Family Password.",
+    "emailTitle": "Recovery email",
+    "emailHint": "Where we send the link if the Family Password is forgotten. The new address must be confirmed from its inbox.",
+    "emailNew": "New recovery email",
+    "emailChange": "Change recovery email",
+    "emailSent": "We sent a confirmation link to {{email}}. The change applies once you open it."
+  },
   "errors": {
     "network": "No connection. Check the internet and try again.",
     "unexpected": "Something went wrong. Try again."

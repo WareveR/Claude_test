@@ -230,3 +230,18 @@ export const checklistPerson = sqliteTable(
   },
   (t) => [primaryKey({ columns: [t.checklistId, t.personId] })],
 );
+
+/**
+ * A single-use link sent by email: choosing a new Family Password (valid 1 hour) or confirming
+ * a new recovery email (valid 24 hours). Only the token's hash is kept.
+ */
+export const recoveryToken = sqliteTable("recovery_token", {
+  id: text("id").primaryKey(),
+  tokenHash: text("token_hash").notNull().unique(),
+  purpose: text("purpose").$type<"password" | "email">().notNull(),
+  /** The recovery email waiting to be confirmed. */
+  newEmail: text("new_email"),
+  createdAt: text("created_at").notNull(),
+  expiresAt: text("expires_at").notNull(),
+  usedAt: text("used_at"),
+});

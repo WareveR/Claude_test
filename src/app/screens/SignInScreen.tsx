@@ -3,12 +3,14 @@ import { useState, type FormEvent } from "react";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { api, ApiError } from "../api";
+import { ForgotPasswordScreen } from "./ForgotPasswordScreen";
 import { ErrorText, Field, FormCard, SubmitButton, TextInput } from "./form";
 
 export function SignInScreen() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [password, setPassword] = useState("");
+  const [forgot, setForgot] = useState(false);
   const signIn = useMutation({
     mutationFn: () => api("/session", { method: "POST", body: { password } }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["status"] }),
@@ -18,6 +20,8 @@ export function SignInScreen() {
     e.preventDefault();
     signIn.mutate();
   }
+
+  if (forgot) return <ForgotPasswordScreen onBack={() => setForgot(false)} />;
 
   return (
     <FormCard title={t("signIn.title")}>
@@ -34,6 +38,13 @@ export function SignInScreen() {
         {signIn.error && <ErrorText>{signInError(signIn.error, t)}</ErrorText>}
         <SubmitButton busy={signIn.isPending}>{t("signIn.submit")}</SubmitButton>
       </form>
+      <button
+        type="button"
+        className="self-start text-sm underline"
+        onClick={() => setForgot(true)}
+      >
+        {t("recovery.forgot")}
+      </button>
     </FormCard>
   );
 }
