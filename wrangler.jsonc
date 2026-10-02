@@ -17,7 +17,11 @@
       "migrations_dir": "migrations",
     },
   ],
-  "r2_buckets": [{ "binding": "IMAGES", "bucket_name": "family-calendar-images" }],
+  // Backups live in their own bucket, so an image cleanup can never touch them.
+  "r2_buckets": [
+    { "binding": "IMAGES", "bucket_name": "family-calendar-images" },
+    { "binding": "BACKUPS", "bucket_name": "family-calendar-backups" },
+  ],
   // Cloudflare Email Service; the sender address is set with the own domain (#53).
   "send_email": [{ "name": "EMAIL" }],
   "vars": {
