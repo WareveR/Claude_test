@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useParams, useSearchParams } from "react-router";
 import { formatLocale } from "../../core/languages";
@@ -27,6 +28,10 @@ import { usePersons } from "../persons/model";
 import { useNow } from "../shell/useNow";
 import { paths } from "../paths";
 import { ViewNav } from "../shell/ViewNav";
+import { ForecastButton } from "../weather/ForecastButton";
+import { HourlyStrip } from "../weather/HourlyStrip";
+import { useForecastDays } from "../weather/model";
+import { WeatherBadge } from "../weather/WeatherBadge";
 import { TasksAccordion } from "../tasks/TasksAccordion";
 
 function useToday(): PlainDate {
@@ -60,7 +65,9 @@ export function DayView() {
   const { date = "" } = useParams();
   const locale = useLocale();
   const today = useToday();
+  const forecast = useForecastDays();
   if (!isPlainDate(date)) return <Navigate to={paths.day(today)} replace />;
+  const weather = forecast.get(date);
   const title = formatPlainDate(date, locale, { weekday: "long", day: "numeric", month: "long" });
   return (
     <>
@@ -69,7 +76,16 @@ export function DayView() {
         title={title}
         previous={paths.day(addDays(date, -1))}
         next={paths.day(addDays(date, 1))}
+        extra={
+          date !== today &&
+          weather && (
+            <ForecastButton>
+              <WeatherBadge day={weather} faded={weather.faded} />
+            </ForecastButton>
+          )
+        }
       />
+      {date === today && <HourlyStrip />}
       <TasksAccordion from={date} to={date} />
       <CalendarGrid days={[date]} />
     </>
@@ -87,6 +103,7 @@ export function WeekView() {
 function Week({ monday }: { monday: PlainDate }) {
   const locale = useLocale();
   const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i));
+  const forecast = useForecastDays();
   const short = { day: "numeric", month: "short" } as const;
   const title = `${formatPlainDate(monday, locale, short)} – ${formatPlainDate(days[6], locale, short)}`;
   return (
@@ -98,13 +115,38 @@ function Week({ monday }: { monday: PlainDate }) {
         next={paths.week(addDays(monday, 7))}
       />
       <TasksAccordion from={monday} to={days[6]} />
-      <CalendarGrid days={days} />
+      <CalendarGrid
+        days={days}
+        dayExtra={(day) => {
+          const weather = forecast.get(day);
+          return (
+            weather && (
+              <div data-testid={`week-weather-${day}`}>
+                <ForecastButton>
+                  <WeatherBadge
+                    day={weather}
+                    faded={weather.faded}
+                    size={14}
+                    className="text-[10px]"
+                  />
+                </ForecastButton>
+              </div>
+            )
+          );
+        }}
+      />
     </>
   );
 }
 
 /** The time grid for some days, with the Entries, Entry Types and Persons it needs. */
-function CalendarGrid({ days }: { days: PlainDate[] }) {
+function CalendarGrid({
+  days,
+  dayExtra,
+}: {
+  days: PlainDate[];
+  dayExtra?: (day: PlainDate) => ReactNode;
+}) {
   const { family } = useSignedIn();
   const locale = useLocale();
   const now = useNow(60_000);
@@ -121,6 +163,7 @@ function CalendarGrid({ days }: { days: PlainDate[] }) {
       nowMinutes={minutesNowIn(family.timeZone, now)}
       locale={locale}
       holidays={holidays}
+      dayExtra={dayExtra}
     />
   );
 }
@@ -149,6 +192,7 @@ function Month({ first }: { first: PlainDate }) {
   const weeks = monthWeeks(first);
   const { entries, types } = useCalendar(weeks[0][0], weeks[weeks.length - 1][6]);
   const holidays = useHolidays(weeks[0][0], weeks[weeks.length - 1][6]);
+  const forecast = useForecastDays();
   const persons = usePersons();
   const title = formatPlainDate(first, locale, { month: "long", year: "numeric" });
   const dayEntries = entriesOn(entries, selected);
@@ -168,12 +212,20 @@ function Month({ first }: { first: PlainDate }) {
         selected={selected}
         locale={locale}
         holidays={holidays}
+        weather={forecast}
         dayLink={(day) => `${paths.month(day)}?day=${day}`}
       />
       <section className="flex flex-col gap-1 p-4" data-testid="picked-day">
-        <h2 className="font-semibold first-letter:uppercase">
-          {formatPlainDate(selected, locale, { weekday: "long", day: "numeric", month: "long" })}
-        </h2>
+        <div className="flex items-center gap-2">
+          <h2 className="font-semibold first-letter:uppercase">
+            {formatPlainDate(selected, locale, { weekday: "long", day: "numeric", month: "long" })}
+          </h2>
+          {forecast.get(selected) && (
+            <ForecastButton>
+              <WeatherBadge day={forecast.get(selected)!} faded={forecast.get(selected)!.faded} />
+            </ForecastButton>
+          )}
+        </div>
         {holidays.get(selected) && (
           <p className="text-sm text-holiday-ink">{holidays.get(selected)?.join(" · ")}</p>
         )}

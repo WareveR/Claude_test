@@ -3,6 +3,10 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { formatLocale } from "../../core/languages";
 import { useSignedIn } from "../family";
+import { todayIn } from "../../core/plain-date";
+import { ForecastButton } from "../weather/ForecastButton";
+import { useForecastDays } from "../weather/model";
+import { WeatherBadge } from "../weather/WeatherBadge";
 import { useNow } from "./useNow";
 
 /** The fixed header on every view: the time, weekday, day and month in the Family Time Zone. */
@@ -10,6 +14,7 @@ export function Header() {
   const { t } = useTranslation();
   const { family, language } = useSignedIn();
   const now = useNow();
+  const today = useForecastDays().get(todayIn(family.timeZone, now));
   const locale = formatLocale(language);
   const time = new Intl.DateTimeFormat(locale, {
     timeZone: family.timeZone,
@@ -32,6 +37,11 @@ export function Header() {
       <span data-testid="header-date" className="first-letter:uppercase">
         {date}
       </span>
+      {today && (
+        <ForecastButton testId="header-weather" className="rounded-md px-1 py-1 text-sm">
+          <WeatherBadge day={today} />
+        </ForecastButton>
+      )}
       <Link
         to="/settings"
         aria-label={t("settings.title")}

@@ -334,5 +334,34 @@
   },
   "offline": {
     "notice": "Estás sem ligação. Este é o último calendário carregado; as alterações precisam de ligação."
+  },
+  "weather": {
+    "title": "Meteorologia",
+    "hint": "O local selecionado é usado em todos os dispositivos.",
+    "selected": "Selecionado",
+    "use": "Usar",
+    "usePlace": "Usar {{name}}",
+    "remove": "Remover",
+    "removePlace": "Remover {{name}}",
+    "town": "Localidade",
+    "search": "Procurar",
+    "save": "Guardar",
+    "savePlace": "Guardar {{name}}",
+    "full": "Até {{max}} locais.",
+    "noResults": "Nenhum local encontrado.",
+    "searchFailed": "A pesquisa não está disponível neste momento.",
+    "confirm": "Abrir a previsão no {{site}}?",
+    "open": "Abrir",
+    "cancel": "Cancelar",
+    "kind": {
+      "sunny": "Sol",
+      "partlyCloudy": "Pouco nublado",
+      "cloudy": "Nublado",
+      "rain": "Chuva",
+      "showers": "Aguaceiros",
+      "thunder": "Trovoada",
+      "snow": "Neve",
+      "fog": "Nevoeiro"
+    }
   }
 }

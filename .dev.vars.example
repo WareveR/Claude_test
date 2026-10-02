@@ -1,1 +1,4 @@
 SETUP_CODE=local-setup-code
+# The e2e tests' stand-in for Open-Meteo (e2e/fake-open-meteo.mjs); remove both lines for real weather.
+OPEN_METEO_FORECAST_URL=http://localhost:4174
+OPEN_METEO_GEOCODING_URL=http://localhost:4174

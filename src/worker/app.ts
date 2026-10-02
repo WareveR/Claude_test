@@ -13,6 +13,7 @@ import { taskRoutes } from "./routes/tasks";
 import { checklistRoutes } from "./routes/checklists";
 import { errorRoutes, unexpectedError } from "./routes/errors";
 import { feedRoutes, publicFeedRoutes } from "./routes/feeds";
+import { weatherRoutes } from "./routes/weather";
 import { apiSecureHeaders, sameOriginOnly } from "./security";
 import type { AppEnv } from "./types";
 
@@ -49,3 +50,4 @@ app.route("/", taskRoutes);
 app.route("/", checklistRoutes);
 app.route("/", errorRoutes);
 app.route("/", feedRoutes);
+app.route("/", weatherRoutes);

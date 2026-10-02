@@ -20,7 +20,12 @@
   "r2_buckets": [{ "binding": "IMAGES", "bucket_name": "family-calendar-images" }],
   // Cloudflare Email Service; the sender address is set with the own domain (#53).
   "send_email": [{ "name": "EMAIL" }],
-  "vars": { "EMAIL_FROM": "calendar@example.com" },
+  "vars": {
+    "EMAIL_FROM": "calendar@example.com",
+    // Open-Meteo, free and keyless; the e2e tests point these at a local fake.
+    "OPEN_METEO_FORECAST_URL": "https://api.open-meteo.com",
+    "OPEN_METEO_GEOCODING_URL": "https://geocoding-api.open-meteo.com",
+  },
   "triggers": { "crons": ["*/5 * * * *"] },
   "observability": { "enabled": true },
 }

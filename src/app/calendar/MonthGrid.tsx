@@ -4,6 +4,8 @@ import { monthWeeks } from "../../core/layout";
 import { formatPlainDate, weekday, type PlainDate } from "../../core/plain-date";
 import type { EntryType } from "../entry-types/model";
 import type { Shown as Entry } from "../entries/model";
+import type { ShownDay } from "../weather/model";
+import { WeatherBadge } from "../weather/WeatherBadge";
 import { importanceClass } from "./EntryBlock";
 
 export function entriesOn(entries: Entry[], day: PlainDate): Entry[] {
@@ -27,6 +29,7 @@ export function MonthGrid({
   locale,
   dayLink,
   holidays = new Map(),
+  weather = new Map(),
 }: {
   month: PlainDate;
   entries: Entry[];
@@ -37,6 +40,8 @@ export function MonthGrid({
   dayLink: (day: PlainDate) => string;
   /** Public Holiday names by date. */
   holidays?: Map<string, string[]>;
+  /** The forecast by date; shown small in each day, never tappable inside a link. */
+  weather?: Map<string, ShownDay>;
 }) {
   const weeks = monthWeeks(month);
   const colorOf = (e: Entry) => types.find((t) => t.id === e.entryTypeId)?.color ?? "#607d8b";
@@ -57,6 +62,7 @@ export function MonthGrid({
           const inMonth = day.slice(0, 7) === month.slice(0, 7);
           const dayEntries = entriesOn(entries, day);
           const names = holidays.get(day);
+          const forecast = weather.get(day);
           return (
             <Link
               key={day}
@@ -77,6 +83,14 @@ export function MonthGrid({
                 >
                   {names.join(" · ")}
                 </span>
+              )}
+              {forecast && (
+                <WeatherBadge
+                  day={forecast}
+                  faded={forecast.faded}
+                  size={12}
+                  className="text-[10px] leading-tight"
+                />
               )}
               {dayEntries.slice(0, 3).map((e) => (
                 <span
