@@ -59,7 +59,36 @@
   },
   "errors": {
     "network": "Sem ligação. Verifica a internet e tenta de novo.",
-    "unexpected": "Algo correu mal. Tenta de novo."
+    "unexpected": "Algo correu mal. Tenta de novo.",
+    "notice": {
+      "load": "Não foi possível carregar isto.",
+      "save": "Não foi possível guardar a alteração.",
+      "offline": "Sem ligação.",
+      "app": "Algo correu mal na aplicação."
+    },
+    "tryAgain": "Tenta de novo. Se continuar a acontecer, reporta.",
+    "tryOffline": "Verifica a internet e tenta de novo.",
+    "dismiss": "Fechar",
+    "seeDetails": "Ver detalhes",
+    "hideDetails": "Esconder detalhes",
+    "action": "Ação",
+    "time": "Hora",
+    "version": "Versão da aplicação",
+    "message": "Mensagem",
+    "report": "Reportar",
+    "reportComment": "O que estavas a fazer? (opcional)",
+    "send": "Enviar",
+    "reported": "Reporte enviado.",
+    "reportFailed": "Não foi possível enviar o reporte. Tenta mais tarde.",
+    "tooManyReports": "Demasiados reportes na última hora. Tenta mais tarde.",
+    "reload": "Recarregar",
+    "log": {
+      "title": "Registo de erros",
+      "open": "Registo de erros",
+      "empty": "Nenhum erro nos últimos 90 dias.",
+      "server": "Servidor",
+      "comment": "Comentário: {{comment}}"
+    }
   },
   "views": {
     "day": "Dia",

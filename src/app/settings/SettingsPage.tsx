@@ -54,6 +54,9 @@ export function SettingsPage() {
       <DevicesSection />
       <PasswordSection />
       <RecoveryEmailSection />
+      <Link to={paths.errorLog()} className="self-start underline">
+        {t("errors.log.open")}
+      </Link>
       <button type="button" className="self-start underline" onClick={() => signOut.mutate()}>
         {t("signIn.signOut")}
       </button>

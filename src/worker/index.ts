@@ -1,11 +1,27 @@
 import { app } from "./app";
-import { getDb } from "./db";
+import { getDb, type Db } from "./db";
 import { startDueRounds } from "./routes/checklists";
+import { errorSummaryJob, logServerError } from "./routes/errors";
+
+/** Scheduler jobs, in order; a failing job goes to the Error Log and the others still run. */
+const JOBS: Record<string, (db: Db, env: Env, now: Date) => Promise<void>> = {
+  "checklist-rounds": (db, _env, now) => startDueRounds(db, now),
+  "error-summary": errorSummaryJob,
+};
 
 export default {
   fetch: app.fetch,
   /** One Cron Trigger every 5 minutes; each job decides by the clock whether it's due. */
   async scheduled(controller, env) {
-    await startDueRounds(getDb(env.DB), new Date(controller.scheduledTime));
+    const db = getDb(env.DB);
+    const now = new Date(controller.scheduledTime);
+    for (const [name, job] of Object.entries(JOBS)) {
+      try {
+        await job(db, env, now);
+      } catch (error) {
+        console.error(name, error);
+        await logServerError(db, now, `scheduler ${name}`, error);
+      }
+    }
   },
 } satisfies ExportedHandler<Env>;
