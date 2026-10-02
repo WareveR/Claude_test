@@ -1,0 +1,13 @@
+dist
+.wrangler
+migrations/meta
+src/worker/worker-configuration.d.ts
+package-lock.json
+playwright-report
+test-results
+docs
+.claude
+.agents
+skills-lock.json
+CONTEXT.md
+CLAUDE.md
