@@ -8,6 +8,7 @@ import { paths } from "../paths";
 import { EntryTypesSection } from "../entry-types/EntryTypesSection";
 import { HolidaysSection } from "./HolidaysSection";
 import { WeatherSection } from "./WeatherSection";
+import { ExportSection } from "./ExportSection";
 import { FeedsSection } from "./FeedsSection";
 import { PersonsSection } from "../persons/PersonsSection";
 import { DevicesSection } from "./DevicesSection";
@@ -54,6 +55,7 @@ export function SettingsPage() {
       <EntryTypesSection />
       <HolidaysSection />
       <WeatherSection />
+      <ExportSection />
       <FeedsSection />
       <DevicesSection />
       <PasswordSection />

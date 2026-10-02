@@ -26,6 +26,8 @@ export const family = sqliteTable("family", {
     .default([{ country: "PT" }]),
   /** The Weather Location whose forecast every device shows; none shows no weather. */
   selectedWeatherLocationId: text("selected_weather_location_id"),
+  /** When a full Export was last downloaded, shown in Settings. */
+  lastExportAt: text("last_export_at"),
 });
 
 /** A browser that signed in with the Family Password. Only the session token's hash is kept. */

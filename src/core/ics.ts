@@ -24,6 +24,8 @@ export type FeedOptions = {
   timeZone: string;
   /** Shown instead of a Private Entry's title. */
   busy: string;
+  /** The Family's own Export shows Private Entries in full, still marked private. */
+  revealPrivate?: boolean;
   now: Date;
 };
 
@@ -180,12 +182,13 @@ function eventLines(
     ...timeLines(time, options.timeZone),
     ...extra,
   ];
-  if (fields.private) {
+  if (fields.private && !options.revealPrivate) {
     lines.push(`SUMMARY:${escapeText(options.busy)}`, "CLASS:PRIVATE");
   } else {
     lines.push(`SUMMARY:${escapeText(fields.title)}`);
     if (fields.location) lines.push(`LOCATION:${escapeText(fields.location)}`);
     if (fields.notes) lines.push(`DESCRIPTION:${escapeText(fields.notes)}`);
+    if (fields.private) lines.push("CLASS:PRIVATE");
   }
   lines.push("END:VEVENT");
   return lines;

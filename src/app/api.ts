@@ -45,6 +45,7 @@ export type Family = {
   language: string;
   timeZone: string;
   holidayPlaces: HolidayPlace[];
+  lastExportAt: string | null;
 };
 export type Device = { id: string; name: string; language: string | null };
 

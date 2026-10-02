@@ -335,6 +335,15 @@
   "offline": {
     "notice": "You're offline. This is the last loaded calendar; changes need a connection."
   },
+  "export": {
+    "title": "Export",
+    "hint": "Your data is also kept outside Cloudflare. A full Export includes Private items.",
+    "download": "Download everything (ZIP)",
+    "preparing": "Preparing…",
+    "entries": "Download all Entries (.ics)",
+    "last": "Last full Export: {{when}}",
+    "never": "No full Export yet."
+  },
   "weather": {
     "title": "Weather",
     "hint": "The selected place is used on every device.",
