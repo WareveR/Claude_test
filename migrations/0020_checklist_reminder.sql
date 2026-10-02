@@ -1,0 +1,1 @@
+ALTER TABLE `checklist` ADD `remind_at_start` integer DEFAULT true NOT NULL;

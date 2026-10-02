@@ -304,7 +304,8 @@
     "useAgainHint": "Starts a new round now: every Task undone. Only this round's result is kept.",
     "newStart": "New start (optional)",
     "previousRounds": "Previous rounds",
-    "roundResult": "{{label}}: {{done}} of {{total}}"
+    "roundResult": "{{label}}: {{done}} of {{total}}",
+    "remindAtStart": "Remind at 09:00 on the first day"
   },
   "filter": {
     "title": "Person filter",

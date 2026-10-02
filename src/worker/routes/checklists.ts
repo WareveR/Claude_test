@@ -33,6 +33,8 @@ async function parseChecklist(db: Db, body: Record<string, unknown>) {
   if (repetition !== null && (!isRepetition(repetition) || !startDate)) {
     return { field: "repetition" };
   }
+  const remindAtStart = body.remindAtStart ?? true;
+  if (typeof remindAtStart !== "boolean") return { field: "remindAtStart" };
   const personIds = Array.isArray(body.personIds) ? [...new Set(body.personIds)] : [];
   if (!personIds.every((p) => typeof p === "string")) return { field: "personIds" };
   if (personIds.length > 0) {
@@ -48,6 +50,7 @@ async function parseChecklist(db: Db, body: Record<string, unknown>) {
       startDate: startDate as string | null,
       endDate: endDate as string | null,
       repetition: repetition as Repetition | null,
+      remindAtStart,
       personIds: personIds as string[],
     },
   };
@@ -80,6 +83,7 @@ async function present(db: Db, rows: ChecklistRow[]) {
     startDate: row.startDate,
     endDate: row.endDate,
     repetition: row.repetition ?? null,
+    remindAtStart: row.remindAtStart,
     personIds: links.filter((l) => l.checklistId === row.id).map((l) => l.personId),
     rounds: rounds
       .filter((r) => r.checklistId === row.id)

@@ -148,6 +148,50 @@ describe("Reminders", () => {
     expect(to(tabletEndpoint)).toEqual(["Reminder at 11:00"]);
   });
 
+  it("reminds dated Tasks at their due time or 09:00, and Checklists on their first day", async () => {
+    const { phone, rui } = await family();
+    const task = async (body: Record<string, unknown>) =>
+      ((await (await phone.post("/tasks", { personIds: [], ...body })).json()) as { id: string })
+        .id;
+    const pay = await task({ title: "Pay the school", dueDate: "2026-10-03" });
+    await task({ title: "Call the bank", dueDate: "2026-10-03", dueTime: "09:00", private: true });
+    await task({ title: "Undated", dueDate: null });
+    const done = await task({ title: "Done already", dueDate: "2026-10-03" });
+    await phone.post(`/tasks/${done}/done`);
+    const school = (
+      (await (
+        await phone.post("/checklists", {
+          name: "Back to school",
+          startDate: "2026-10-03",
+          endDate: "2026-10-10",
+        })
+      ).json()) as { id: string }
+    ).id;
+    await task({ title: "Pencils", checklistId: school, personIds: [rui] });
+    await phone.post("/checklists", {
+      name: "Quiet one",
+      startDate: "2026-10-03",
+      endDate: "2026-10-10",
+      remindAtStart: false,
+    });
+    const endpoint = await subscribe(phone, "phone");
+
+    await runScheduler("2026-10-03T07:55:00Z");
+    await runScheduler("2026-10-03T08:00:00Z"); // 09:00 in Lisbon
+    expect(sent.map((s) => s.message.title).sort()).toEqual([
+      "Back to school",
+      "Lembrete às 09:00",
+      "Pay the school",
+    ]);
+    expect(sent.find((s) => s.message.title === "Pay the school")?.message.url).toBe(
+      `/tasks/${pay}`,
+    );
+    expect(sent.find((s) => s.message.title === "Back to school")?.message.url).toBe(
+      `/checklists/${school}`,
+    );
+    expect(sent.every((s) => s.endpoint === endpoint)).toBe(true);
+  });
+
   it("removes a subscription the push service says is gone", async () => {
     const { phone, add } = await family();
     await add("Dentist", {

@@ -2,7 +2,9 @@ import { and, eq, isNotNull, lt } from "drizzle-orm";
 import { clockTime } from "../../core/entry-time";
 import { isLanguage } from "../../core/languages";
 import {
+  checklistReminders,
   entryReminders,
+  taskReminders,
   reminderText,
   remindsDevice,
   wallClock,
@@ -27,11 +29,31 @@ function familyWallClock(timeZone: string, at: Date) {
 }
 
 function linkOf(reminder: DueReminder) {
+  if (reminder.kind === "task") return `/tasks/${reminder.id}`;
+  if (reminder.kind === "checklist") return `/checklists/${reminder.id}`;
   return `/entries/${reminder.id}?occurrence=${reminder.date}`;
 }
 
+async function dueBetween(db: Db, from: string, to: string) {
+  const [entries, tasks, links, checklists] = await Promise.all([
+    allEntries(db),
+    db.select().from(schema.task),
+    db.select().from(schema.taskPerson),
+    db.select().from(schema.checklist),
+  ]);
+  const withPersons = tasks.map((t) => ({
+    ...t,
+    personIds: links.filter((l) => l.taskId === t.id).map((l) => l.personId),
+  }));
+  return [
+    ...entryReminders(entries, from, to),
+    ...taskReminders(withPersons, from, to),
+    ...checklistReminders(checklists, withPersons, from, to),
+  ].sort((a, b) => a.at.localeCompare(b.at));
+}
+
 /**
- * Scheduler, every run: sends the Reminders due since the last run to the devices with Reminders
+ * Scheduler, every run: sends the Entry, Task and Checklist Reminders due since the last run to the devices with Reminders
  * on whose Persons match (Family-wide items go to every such device), each only once. Expired
  * push subscriptions are removed.
  */
@@ -61,7 +83,7 @@ export async function reminderJob(db: Db, env: Env, now: Date) {
   const from = familyWallClock(family.timeZone, new Date(since));
   const to = familyWallClock(family.timeZone, now);
   if (from >= to) return;
-  const due = entryReminders(await allEntries(db), from, to);
+  const due = await dueBetween(db, from, to);
   if (due.length === 0) return;
 
   const devices = await db

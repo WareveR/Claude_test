@@ -215,6 +215,8 @@ export const checklist = sqliteTable("checklist", {
   endDate: text("end_date"),
   /** Brings the Checklist back as a new round, its period moving to the next date. */
   repetition: text("repetition", { mode: "json" }).$type<Repetition | null>(),
+  /** A Reminder at 09:00 on the first day of its period. */
+  remindAtStart: integer("remind_at_start", { mode: "boolean" }).notNull().default(true),
   createdAt: text("created_at").notNull(),
   changedAt: text("changed_at").notNull(),
 });
