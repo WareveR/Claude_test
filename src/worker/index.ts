@@ -5,9 +5,11 @@ import { startDueRounds } from "./routes/checklists";
 import { errorSummaryJob, logServerError } from "./routes/errors";
 import { weatherJob } from "./routes/weather";
 import { briefingJob } from "./routes/briefing";
+import { reminderJob } from "./routes/reminders";
 
 /** Scheduler jobs, in order; a failing job goes to the Error Log and the others still run. */
 const JOBS: Record<string, (db: Db, env: Env, now: Date) => Promise<void>> = {
+  reminders: reminderJob,
   "checklist-rounds": (db, _env, now) => startDueRounds(db, now),
   weather: weatherJob,
   briefing: briefingJob,

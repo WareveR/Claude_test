@@ -39,7 +39,15 @@ export const signedInDevice = sqliteTable("signed_in_device", {
   language: text("language"),
   createdAt: text("created_at").notNull(),
   lastUsedAt: text("last_used_at").notNull(),
+  /** The browser's Web Push subscription; none until notifications are allowed in Settings. */
+  pushSubscription: text("push_subscription", { mode: "json" }).$type<PushSubscriptionJson>(),
+  remindersOn: integer("reminders_on", { mode: "boolean" }).notNull().default(true),
+  /** The Persons this device is reminded about; null is everyone. Family-wide items always come. */
+  reminderPersonIds: text("reminder_person_ids", { mode: "json" }).$type<string[]>(),
 });
+
+/** What a browser's PushSubscription.toJSON() gives. */
+export type PushSubscriptionJson = { endpoint: string; keys: { p256dh: string; auth: string } };
 
 /** Wrong sign-in or setup attempts, per client IP ("ip:…") and for the whole Family ("global"). */
 export const signInThrottle = sqliteTable("sign_in_throttle", {
@@ -351,4 +359,10 @@ export const briefing = sqliteTable(
 /** One row while an Entry or Task changed since the Scheduler last checked the Briefings. */
 export const briefingPending = sqliteTable("briefing_pending", {
   id: integer("id").primaryKey(),
+});
+
+/** Each Reminder sent ("entry:<id>:<date>:<offset>"), so none is sent twice. */
+export const reminderSent = sqliteTable("reminder_sent", {
+  key: text("key").primaryKey(),
+  sentAt: text("sent_at").notNull(),
 });

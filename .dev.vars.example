@@ -2,3 +2,8 @@ SETUP_CODE=local-setup-code
 # The e2e tests' stand-in for Open-Meteo (e2e/fake-open-meteo.mjs); remove both lines for real weather.
 OPEN_METEO_FORECAST_URL=http://localhost:4174
 OPEN_METEO_GEOCODING_URL=http://localhost:4174
+# Web Push for Reminders. A key pair for local development only; production gets its own as
+# Worker secrets (npx wrangler secret put VAPID_PRIVATE_KEY, see docs/runbooks/reminders.md).
+VAPID_PUBLIC_KEY=BP-YVRiIWVoBJIPIZA7r8Nw-fdctXup0sb6GNwIctouAvyH2meZz9b8d8AqtMaativsR95XTEy-vnmLBBfyQWeo
+VAPID_PRIVATE_KEY=gdWrDjYbXXjpht4mfRPqOJgErQkmORrr6iubA6JcNz0
+VAPID_SUBJECT=mailto:calendar@example.com
