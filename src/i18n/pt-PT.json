@@ -68,5 +68,25 @@
     "hint": "Todos os dispositivos, incluindo este, vão ter de voltar a entrar.",
     "confirm": "Todos os dispositivos vão ter de voltar a entrar. Continuar?",
     "submit": "Mudar palavra-passe"
+  },
+  "persons": {
+    "title": "Pessoas",
+    "add": "Adicionar pessoa",
+    "archived": "arquivada",
+    "photo": "Escolher foto",
+    "removePhoto": "Tirar foto",
+    "name": "Nome",
+    "color": "Cor",
+    "dateOfBirth": "Data de nascimento (opcional)",
+    "nicknames": "Alcunhas (opcional)",
+    "nicknamesExample": "Mãe, Di",
+    "nicknamesHint": "Separadas por vírgulas. Servem para a entrada por voz e nunca aparecem nas vistas.",
+    "save": "Guardar",
+    "archive": "Arquivar",
+    "unarchive": "Tirar do arquivo",
+    "archiveHint": "Uma pessoa arquivada sai das listas e filtros, mas continua nas entradas e tarefas antigas.",
+    "delete": "Apagar",
+    "confirmDelete": "Apagar {{name}} de vez?",
+    "inUse": "Há entradas ou tarefas com esta pessoa. Arquiva-a em vez de a apagar."
   }
 }

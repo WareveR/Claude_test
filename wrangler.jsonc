@@ -17,6 +17,7 @@
       "migrations_dir": "migrations",
     },
   ],
+  "r2_buckets": [{ "binding": "IMAGES", "bucket_name": "family-calendar-images" }],
   "triggers": { "crons": ["*/5 * * * *"] },
   "observability": { "enabled": true },
 }

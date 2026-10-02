@@ -4,6 +4,7 @@ import { createBrowserRouter, Outlet, RouterProvider } from "react-router";
 import type { Device, Family } from "./api";
 import { SignedInContext } from "./family";
 import { deviceLanguage } from "./i18n";
+import { PersonPage } from "./persons/PersonForm";
 import { SettingsPage } from "./settings/SettingsPage";
 import { Header } from "./shell/Header";
 import { DayView, MonthView, TasksView, TodayRedirect, WeekView, YearView } from "./views/Views";
@@ -28,6 +29,7 @@ const router = createBrowserRouter([
       { path: "/year/:year", element: <YearView /> },
       { path: "/tasks", element: <TasksView /> },
       { path: "/settings", element: <SettingsPage /> },
+      { path: "/settings/persons/:id", element: <PersonPage /> },
       { path: "*", element: <TodayRedirect /> },
     ],
   },

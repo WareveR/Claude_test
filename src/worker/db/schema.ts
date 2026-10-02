@@ -33,3 +33,33 @@ export const signInThrottle = sqliteTable("sign_in_throttle", {
   failures: integer("failures").notNull(),
   lastFailureAt: text("last_failure_at").notNull(),
 });
+
+/** Someone in the Family whom Entries and Tasks can be for. Archived Persons stay on old items. */
+export const person = sqliteTable("person", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  color: text("color").notNull(),
+  /** R2 key of the photo, shrunk in the browser; images are never overwritten. */
+  photoKey: text("photo_key"),
+  dateOfBirth: text("date_of_birth"),
+  archived: integer("archived", { mode: "boolean" }).notNull().default(false),
+  createdAt: text("created_at").notNull(),
+  changedAt: text("changed_at").notNull(),
+});
+
+/** Other names Voice Entry understands for a Person ("Mum", "Di"); never shown in views. */
+export const personNickname = sqliteTable("person_nickname", {
+  id: text("id").primaryKey(),
+  personId: text("person_id")
+    .notNull()
+    .references(() => person.id, { onDelete: "cascade" }),
+  nickname: text("nickname").notNull(),
+});
+
+/** Uploaded images (Person photos, Entry Type thumbnails) and when each was last referenced. */
+export const image = sqliteTable("image", {
+  key: text("key").primaryKey(),
+  contentType: text("content_type").notNull(),
+  createdAt: text("created_at").notNull(),
+  lastUsedAt: text("last_used_at").notNull(),
+});
