@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Repetition } from "./repetition";
-import { familyNow, groupTasks, isOverdue, nextRepeat, type TaskTiming } from "./task";
+import { familyNow, groupTasks, isOverdue, nextRepeat, periodTasks, type TaskTiming } from "./task";
 
 const task = (fields: Partial<TaskTiming> & { id?: string }) => ({
   dueDate: null,
@@ -102,5 +102,28 @@ describe("nextRepeat", () => {
   it("ends after the until date", () => {
     const until: Repetition = { ...weekly, end: { type: "until", date: "2026-10-10" } };
     expect(nextRepeat("2026-10-05", until, "2026-10-05")).toBeNull();
+  });
+});
+
+describe("periodTasks", () => {
+  const tasks = [
+    task({ id: "late", dueDate: "2026-09-30" }),
+    task({ id: "done-in-week", dueDate: "2026-10-06", doneAt: "2026-10-06T09:00:00Z" }),
+    task({ id: "in-week", dueDate: "2026-10-10" }),
+    task({ id: "next-week", dueDate: "2026-10-13" }),
+    task({ id: "undated" }),
+  ];
+  const ids = (list: { id?: string }[]) => list.map((t) => t.id);
+
+  it("holds the period's Tasks and every overdue one when the period includes today", () => {
+    expect(ids(periodTasks(tasks, "2026-10-05", "2026-10-11", now))).toEqual([
+      "late",
+      "done-in-week",
+      "in-week",
+    ]);
+  });
+
+  it("leaves overdue Tasks out of other periods", () => {
+    expect(ids(periodTasks(tasks, "2026-10-12", "2026-10-18", now))).toEqual(["next-week"]);
   });
 });

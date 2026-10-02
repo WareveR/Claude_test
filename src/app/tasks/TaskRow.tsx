@@ -1,4 +1,5 @@
 import { Lock, Repeat } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { formatLocale } from "../../core/languages";
@@ -21,7 +22,9 @@ export function TaskRow({
   const { t } = useTranslation();
   const locale = formatLocale(useSignedIn().language);
   const tick = useTick();
-  const done = Boolean(task.doneAt);
+  // The tick shows the moment it's clicked, before the server answers.
+  const [ticking, setTicking] = useState<boolean | null>(null);
+  const done = ticking ?? Boolean(task.doneAt);
   const due = task.dueDate
     ? [
         formatPlainDate(task.dueDate, locale, { weekday: "short", day: "numeric", month: "short" }),
@@ -38,7 +41,10 @@ export function TaskRow({
         aria-label={t("tasks.tick", { title: task.title })}
         checked={done}
         disabled={tick.isPending}
-        onChange={(e) => tick.mutate({ task, done: e.target.checked })}
+        onChange={(e) => {
+          setTicking(e.target.checked);
+          tick.mutate({ task, done: e.target.checked }, { onSettled: () => setTicking(null) });
+        }}
       />
       <Link to={`/tasks/${task.id}`} className="flex min-w-0 flex-1 flex-col">
         <span className={`break-words ${done ? "text-muted line-through" : ""}`}>

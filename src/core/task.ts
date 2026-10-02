@@ -85,3 +85,23 @@ export function nextRepeat(
     repetition: { ...repetition, end: { type: "count", count: repetition.end.count - used } },
   };
 }
+
+/**
+ * The Tasks a calendar period's accordion holds: those due in the period (done ones too, struck
+ * through) and, when the period includes today, every overdue Task. Ordered by due date.
+ */
+export function periodTasks<T extends TaskTiming>(
+  tasks: T[],
+  from: PlainDate,
+  to: PlainDate,
+  now: FamilyNow,
+): T[] {
+  const includesToday = from <= now.today && now.today <= to;
+  return tasks
+    .filter(
+      (task) =>
+        (task.dueDate !== null && from <= task.dueDate && task.dueDate <= to) ||
+        (includesToday && isOverdue(task, now)),
+    )
+    .sort(byDue);
+}

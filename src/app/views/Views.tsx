@@ -23,6 +23,7 @@ import { usePersons } from "../persons/model";
 import { useNow } from "../shell/useNow";
 import { paths } from "../paths";
 import { ViewNav } from "../shell/ViewNav";
+import { TasksAccordion } from "../tasks/TasksAccordion";
 
 function useToday(): PlainDate {
   return todayIn(useSignedIn().family.timeZone);
@@ -50,6 +51,7 @@ export function DayView() {
         previous={paths.day(addDays(date, -1))}
         next={paths.day(addDays(date, 1))}
       />
+      <TasksAccordion from={date} to={date} />
       <CalendarGrid days={[date]} />
     </>
   );
@@ -76,6 +78,7 @@ function Week({ monday }: { monday: PlainDate }) {
         previous={paths.week(addDays(monday, -7))}
         next={paths.week(addDays(monday, 7))}
       />
+      <TasksAccordion from={monday} to={days[6]} />
       <CalendarGrid days={days} />
     </>
   );
@@ -150,6 +153,9 @@ function Month({ first }: { first: PlainDate }) {
         <h2 className="font-semibold first-letter:uppercase">
           {formatPlainDate(selected, locale, { weekday: "long", day: "numeric", month: "long" })}
         </h2>
+        <div className="-mx-4">
+          <TasksAccordion from={selected} to={selected} />
+        </div>
         {dayEntries.length === 0 && <p className="text-sm text-muted">{t("views.nothing")}</p>}
         {dayEntries.map((e) => (
           <EntryBlock

@@ -212,6 +212,10 @@
     },
     "repeatNeedsDate": "Dá-lhe uma data limite para poder repetir.",
     "repeatHint": "Ao marcá-la como feita aparece a seguinte, para a primeira data depois de hoje.",
-    "repeats": "Repete"
+    "repeats": "Repete",
+    "accordion_one": "Tarefas {{count}}",
+    "accordion_other": "Tarefas {{count}}",
+    "overdueCount_one": "{{count}} atrasada",
+    "overdueCount_other": "{{count}} atrasadas"
   }
 }
