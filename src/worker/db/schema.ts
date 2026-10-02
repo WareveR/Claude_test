@@ -274,3 +274,31 @@ export const schedulerRun = sqliteTable(
   },
   (t) => [primaryKey({ columns: [t.job, t.key] })],
 );
+
+/**
+ * A read-only .ics address other calendar apps subscribe to. Only the secret's hash is kept,
+ * so the full address is shown once, when the Feed is created or replaced.
+ */
+export const calendarFeed = sqliteTable("calendar_feed", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  secretHash: text("secret_hash").notNull().unique(),
+  /** Whether Entries for no Person in particular are included. */
+  familyWide: integer("family_wide", { mode: "boolean" }).notNull().default(true),
+  createdAt: text("created_at").notNull(),
+  replacedAt: text("replaced_at"),
+});
+
+/** The Persons a Feed covers; none means every Person. */
+export const calendarFeedPerson = sqliteTable(
+  "calendar_feed_person",
+  {
+    feedId: text("feed_id")
+      .notNull()
+      .references(() => calendarFeed.id, { onDelete: "cascade" }),
+    personId: text("person_id")
+      .notNull()
+      .references(() => person.id),
+  },
+  (t) => [primaryKey({ columns: [t.feedId, t.personId] })],
+);
