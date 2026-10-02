@@ -242,6 +242,19 @@
   "filter": {
     "title": "Person filter",
     "noneHint": "With nobody picked, everyone shows.",
-    "familyWide": "Include Family-wide"
+    "familyWide": "Include Family-wide",
+    "holidays": "Show Public Holidays"
+  },
+  "holidays": {
+    "title": "Public Holidays",
+    "hint": "Shown on every device; each device can hide them from the Person filter.",
+    "country": "Country",
+    "state": "Region",
+    "region": "Municipality",
+    "none": "Whole country",
+    "add": "Add",
+    "remove": "Remove",
+    "removePlace": "Remove {{name}}",
+    "municipalityHint": "A municipal holiday that isn't listed can be added as a yearly Entry."
   }
 }

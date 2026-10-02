@@ -78,6 +78,13 @@
       "when": 1790932726553,
       "tag": "0010_checklist_rounds",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1790933304996,
+      "tag": "0011_holiday_places",
+      "breakpoints": true
     }
   ]
 }

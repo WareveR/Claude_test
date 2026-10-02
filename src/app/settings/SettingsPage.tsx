@@ -6,6 +6,7 @@ import { api } from "../api";
 import { useSignedIn } from "../family";
 import { paths } from "../paths";
 import { EntryTypesSection } from "../entry-types/EntryTypesSection";
+import { HolidaysSection } from "./HolidaysSection";
 import { PersonsSection } from "../persons/PersonsSection";
 import { DevicesSection } from "./DevicesSection";
 import { PasswordSection } from "./PasswordSection";
@@ -48,6 +49,7 @@ export function SettingsPage() {
       </label>
       <PersonsSection />
       <EntryTypesSection />
+      <HolidaysSection />
       <DevicesSection />
       <PasswordSection />
       <button type="button" className="self-start underline" onClick={() => signOut.mutate()}>

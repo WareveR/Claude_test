@@ -26,6 +26,7 @@ export function MonthGrid({
   selected,
   locale,
   dayLink,
+  holidays = new Map(),
 }: {
   month: PlainDate;
   entries: Entry[];
@@ -34,6 +35,8 @@ export function MonthGrid({
   selected: PlainDate | null;
   locale: string;
   dayLink: (day: PlainDate) => string;
+  /** Public Holiday names by date. */
+  holidays?: Map<string, string[]>;
 }) {
   const weeks = monthWeeks(month);
   const colorOf = (e: Entry) => types.find((t) => t.id === e.entryTypeId)?.color ?? "#607d8b";
@@ -53,19 +56,28 @@ export function MonthGrid({
         {weeks.flat().map((day) => {
           const inMonth = day.slice(0, 7) === month.slice(0, 7);
           const dayEntries = entriesOn(entries, day);
+          const names = holidays.get(day);
           return (
             <Link
               key={day}
               to={dayLink(day)}
               data-testid={`month-day-${day}`}
               aria-current={day === selected ? "date" : undefined}
-              className={`flex min-h-16 flex-col gap-0.5 border-b border-l border-line p-0.5 text-left ${weekday(day) >= 5 ? "bg-weekend" : ""} ${inMonth ? "" : "opacity-40"} ${day === selected ? "outline-2 -outline-offset-2 outline-accent" : ""}`}
+              className={`flex min-h-16 flex-col gap-0.5 border-b border-l border-line p-0.5 text-left ${names ? "bg-holiday" : weekday(day) >= 5 ? "bg-weekend" : ""} ${inMonth ? "" : "opacity-40"} ${day === selected ? "outline-2 -outline-offset-2 outline-accent" : ""}`}
             >
               <span
-                className={`self-start px-1 text-xs tabular-nums ${day === today ? "rounded-full bg-accent text-accent-ink" : weekday(day) >= 5 ? "text-weekend-ink" : ""}`}
+                className={`self-start px-1 text-xs tabular-nums ${day === today ? "rounded-full bg-accent text-accent-ink" : names ? "text-holiday-ink" : weekday(day) >= 5 ? "text-weekend-ink" : ""}`}
               >
                 {Number(day.slice(8))}
               </span>
+              {names && (
+                <span
+                  data-testid={`holiday-${day}`}
+                  className="truncate text-[10px] leading-tight text-holiday-ink"
+                >
+                  {names.join(" · ")}
+                </span>
+              )}
               {dayEntries.slice(0, 3).map((e) => (
                 <span
                   key={e.key}

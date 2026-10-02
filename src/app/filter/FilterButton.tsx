@@ -58,6 +58,14 @@ export function FilterButton() {
           />
           {t("filter.familyWide")}
         </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={filter.holidays}
+            onChange={(e) => setPersonFilter({ ...filter, holidays: e.target.checked })}
+          />
+          {t("filter.holidays")}
+        </label>
       </div>
     </details>
   );

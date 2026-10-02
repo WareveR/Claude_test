@@ -242,6 +242,19 @@
   "filter": {
     "title": "Filtro de Pessoas",
     "noneHint": "Sem ninguém escolhido, aparecem todos.",
-    "familyWide": "Incluir o que é de toda a Família"
+    "familyWide": "Incluir o que é de toda a Família",
+    "holidays": "Mostrar feriados"
+  },
+  "holidays": {
+    "title": "Feriados",
+    "hint": "Aparecem em todos os dispositivos; cada um pode escondê-los no filtro de Pessoas.",
+    "country": "País",
+    "state": "Região",
+    "region": "Município",
+    "none": "País inteiro",
+    "add": "Adicionar",
+    "remove": "Remover",
+    "removePlace": "Remover {{name}}",
+    "municipalityHint": "Um feriado municipal que não apareça pode ser criado como Entrada anual."
   }
 }

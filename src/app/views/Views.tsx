@@ -21,6 +21,7 @@ import { useOccurrences } from "../entries/model";
 import { usePersonFilter } from "../filter/model";
 import { matchesFilter } from "../../core/person-filter";
 import { useEntryTypes } from "../entry-types/model";
+import { useHolidays } from "../holidays/model";
 import { useSignedIn } from "../family";
 import { usePersons } from "../persons/model";
 import { useNow } from "../shell/useNow";
@@ -109,6 +110,7 @@ function CalendarGrid({ days }: { days: PlainDate[] }) {
   const now = useNow(60_000);
   const { entries, types } = useCalendar(days[0], days[days.length - 1]);
   const persons = usePersons();
+  const holidays = useHolidays(days[0], days[days.length - 1]);
   return (
     <TimeGrid
       days={days}
@@ -118,6 +120,7 @@ function CalendarGrid({ days }: { days: PlainDate[] }) {
       today={todayIn(family.timeZone, now)}
       nowMinutes={minutesNowIn(family.timeZone, now)}
       locale={locale}
+      holidays={holidays}
     />
   );
 }
@@ -145,6 +148,7 @@ function Month({ first }: { first: PlainDate }) {
         : first;
   const weeks = monthWeeks(first);
   const { entries, types } = useCalendar(weeks[0][0], weeks[weeks.length - 1][6]);
+  const holidays = useHolidays(weeks[0][0], weeks[weeks.length - 1][6]);
   const persons = usePersons();
   const title = formatPlainDate(first, locale, { month: "long", year: "numeric" });
   const dayEntries = entriesOn(entries, selected);
@@ -163,12 +167,16 @@ function Month({ first }: { first: PlainDate }) {
         today={today}
         selected={selected}
         locale={locale}
+        holidays={holidays}
         dayLink={(day) => `${paths.month(day)}?day=${day}`}
       />
       <section className="flex flex-col gap-1 p-4" data-testid="picked-day">
         <h2 className="font-semibold first-letter:uppercase">
           {formatPlainDate(selected, locale, { weekday: "long", day: "numeric", month: "long" })}
         </h2>
+        {holidays.get(selected) && (
+          <p className="text-sm text-holiday-ink">{holidays.get(selected)?.join(" · ")}</p>
+        )}
         <div className="-mx-4">
           <TasksAccordion from={selected} to={selected} />
         </div>
@@ -200,6 +208,7 @@ function Year({ year }: { year: number }) {
   const today = useToday();
   const date = `${year}-01-01`;
   const { entries, types } = useCalendar(date, `${year}-12-31`);
+  const holidays = useHolidays(date, `${year}-12-31`);
   return (
     <>
       <ViewNav
@@ -208,7 +217,14 @@ function Year({ year }: { year: number }) {
         previous={paths.year(addMonths(date, -12))}
         next={paths.year(addMonths(date, 12))}
       />
-      <YearGrid year={year} entries={entries} types={types} today={today} locale={locale} />
+      <YearGrid
+        year={year}
+        entries={entries}
+        types={types}
+        today={today}
+        locale={locale}
+        holidays={holidays}
+      />
     </>
   );
 }
