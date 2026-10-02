@@ -18,6 +18,8 @@ import { TimeGrid } from "../calendar/TimeGrid";
 import { YearGrid } from "../calendar/YearGrid";
 import { CHECKLIST_BAR_TYPE, useChecklistBars } from "../checklists/bars";
 import { useOccurrences } from "../entries/model";
+import { usePersonFilter } from "../filter/model";
+import { matchesFilter } from "../../core/person-filter";
 import { useEntryTypes } from "../entry-types/model";
 import { useSignedIn } from "../family";
 import { usePersons } from "../persons/model";
@@ -35,8 +37,12 @@ function useCalendar(from: PlainDate, to: PlainDate) {
   const occurrences = useOccurrences(from, to);
   const bars = useChecklistBars(from, to);
   const types = useEntryTypes();
+  const filter = usePersonFilter();
   return {
-    entries: [...bars, ...(occurrences.data ?? [])],
+    entries: [
+      ...bars,
+      ...(occurrences.data ?? []).filter((e) => matchesFilter(e.personIds, filter)),
+    ],
     types: [...(types.data ?? []), CHECKLIST_BAR_TYPE],
   };
 }
