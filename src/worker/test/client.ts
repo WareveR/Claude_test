@@ -30,7 +30,8 @@ export class TestBrowser {
         ...(this.cookie ? { Cookie: this.cookie } : {}),
         ...headers,
       },
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body:
+        body === undefined ? undefined : body instanceof Uint8Array ? body : JSON.stringify(body),
     });
     const setCookie = res.headers.get("Set-Cookie");
     if (setCookie) {
@@ -40,6 +41,9 @@ export class TestBrowser {
     return res;
   }
 
+  upload(path: string, bytes: Uint8Array, contentType: string) {
+    return this.request("POST", path, bytes, { "Content-Type": contentType });
+  }
   get(path: string) {
     return this.request("GET", path);
   }

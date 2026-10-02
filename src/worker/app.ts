@@ -3,6 +3,8 @@ import { getDb, schema } from "./db";
 import { authRoutes } from "./routes/auth";
 import { deviceRoutes } from "./routes/device";
 import { devicesRoutes } from "./routes/devices";
+import { imageRoutes } from "./routes/images";
+import { personRoutes } from "./routes/persons";
 import { apiSecureHeaders, sameOriginOnly } from "./security";
 import type { AppEnv } from "./types";
 
@@ -23,3 +25,5 @@ app.get("/health", async (c) => {
 app.route("/", authRoutes);
 app.route("/", deviceRoutes);
 app.route("/", devicesRoutes);
+app.route("/", imageRoutes);
+app.route("/", personRoutes);

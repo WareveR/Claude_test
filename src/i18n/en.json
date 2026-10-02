@@ -68,5 +68,25 @@
     "hint": "Every device, this one included, will need to sign in again.",
     "confirm": "Every device will need to sign in again. Continue?",
     "submit": "Change password"
+  },
+  "persons": {
+    "title": "Persons",
+    "add": "Add person",
+    "archived": "archived",
+    "photo": "Choose photo",
+    "removePhoto": "Remove photo",
+    "name": "Name",
+    "color": "Colour",
+    "dateOfBirth": "Date of birth (optional)",
+    "nicknames": "Nicknames (optional)",
+    "nicknamesExample": "Mum, Di",
+    "nicknamesHint": "Separated by commas. Used by Voice Entry and never shown in the views.",
+    "save": "Save",
+    "archive": "Archive",
+    "unarchive": "Unarchive",
+    "archiveHint": "An archived Person leaves pickers and filters but stays on past Entries and Tasks.",
+    "delete": "Delete",
+    "confirmDelete": "Delete {{name}} for good?",
+    "inUse": "Entries or Tasks mention this Person. Archive them instead."
   }
 }
