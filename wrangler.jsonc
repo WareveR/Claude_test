@@ -8,12 +8,12 @@
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api/*"],
   },
-  // The real database_id is filled in when production is set up (#53).
+  // Production database, created in the EU jurisdiction (#53).
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "family-calendar",
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "92b00576-8549-4ba5-b9ef-3ae6e9c7ec51",
       "migrations_dir": "migrations",
     },
   ],
