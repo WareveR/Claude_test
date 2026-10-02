@@ -410,6 +410,14 @@
     "failed": "Could not understand that. Try again.",
     "saveFailed": "Could not save. Try again.",
     "hint": "Say or type a sentence to add an Entry or Task. This device only.",
-    "readback": "Read back aloud and ask before saving"
+    "readback": "Read back aloud and ask before saving",
+    "which": "Which one?",
+    "scopeQuestion": "Only this time or from now on?",
+    "onlyThis": "Only this time",
+    "fromNowOn": "From now on",
+    "notFound": "Not found",
+    "oneAtATime": "One thing at a time, please",
+    "refused": "Voice Entry doesn't delete; open the item to delete it",
+    "locked": "A Birthday's date and Person change on the Person"
   }
 }

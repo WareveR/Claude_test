@@ -39,8 +39,18 @@ export function parseVoiceCreate(
   if (typeof value !== "object" || value === null) return null;
   const v = value as Record<string, unknown>;
   if (v.kind !== "entry" && v.kind !== "task") return null;
+  const fields = parseVoiceFields(v, persons, types);
+  if (!fields.title) return null;
+  return { ...fields, kind: v.kind };
+}
+
+/** The fields of the model's answer, each checked on its own; an empty title is "". */
+export function parseVoiceFields(
+  v: Record<string, unknown>,
+  persons: number,
+  types: number,
+): Omit<VoiceCreate, "kind"> {
   const title = typeof v.title === "string" ? v.title.trim().slice(0, 200) : "";
-  if (!title) return null;
   const date = (x: unknown) => (typeof x === "string" && isPlainDate(x) ? x : null);
   const time = (x: unknown) => (typeof x === "string" && isClockTime(x) ? x : null);
   const index = (x: unknown, length: number) =>
@@ -66,7 +76,6 @@ export function parseVoiceCreate(
         }
       : null;
   return {
-    kind: v.kind,
     title,
     type: index(v.type, types),
     persons: Array.isArray(v.persons)

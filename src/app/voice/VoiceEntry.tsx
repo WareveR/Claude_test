@@ -4,20 +4,42 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { api } from "../api";
+import { reportFailure } from "../errors/store";
 import { Field, TextInput } from "../screens/form";
 import {
   canListen,
   getReadback,
   isYes,
   listenOnce,
+  matchOption,
+  matchScope,
   speak,
   stopListening,
   stopSpeaking,
 } from "./speech";
 
 type Create = { outcome: "create"; kind: "entry" | "task"; values: object; summary: string };
-type Answer = Create | { outcome: "failed"; sentence: string };
-type Toast = { kind: "entry" | "task"; id: string };
+type Req = { method: "PUT" | "POST" | "DELETE"; path: string; body?: unknown };
+type Plan = {
+  kind: "entry" | "task";
+  id: string;
+  date: string | null;
+  label: string;
+  summary: string;
+  scope: "all" | "this" | "following" | "ask";
+  apply: { all?: Req[]; this?: Req[]; following?: Req[] };
+  undo: Req[] | null;
+};
+type Notice = "notFound" | "oneAtATime" | "refused" | "locked";
+type Answer =
+  | Create
+  | { outcome: "failed"; sentence: string }
+  | { outcome: "change"; plan: Plan }
+  | { outcome: "choose"; options: Plan[] }
+  | { outcome: Notice };
+type Scope = "this" | "following" | "all";
+/** What the toast's Undo does; null when there is nothing to undo. */
+type Toast = { undo: (() => Promise<void>) | null };
 
 const route = (kind: "entry" | "task") => (kind === "entry" ? "entries" : "tasks");
 
@@ -31,6 +53,10 @@ export function VoiceEntry() {
   const [phase, setPhase] = useState<"idle" | "sending" | "listening" | "readback">("idle");
   const [pending, setPending] = useState<Create | null>(null);
   const [error, setError] = useState(false);
+  const [choices, setChoices] = useState<Plan[] | null>(null);
+  const [plan, setPlan] = useState<Plan | null>(null);
+  const [scope, setScope] = useState<Scope | null>(null);
+  const [notice, setNotice] = useState<Notice | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
   const run = useRef(0);
   const saving = useRef(false);
@@ -52,6 +78,10 @@ export function VoiceEntry() {
     setOpen(false);
     setPhase("idle");
     setPending(null);
+    setChoices(null);
+    setPlan(null);
+    setScope(null);
+    setNotice(null);
     setError(false);
     setText("");
   };
@@ -67,7 +97,11 @@ export function VoiceEntry() {
   const invalidate = () =>
     Promise.all([
       queryClient.invalidateQueries({ queryKey: ["entries"] }),
+      queryClient.invalidateQueries({ queryKey: ["entry"] }),
       queryClient.invalidateQueries({ queryKey: ["tasks"] }),
+      queryClient.invalidateQueries({ queryKey: ["task"] }),
+      queryClient.invalidateQueries({ queryKey: ["checklists"] }),
+      queryClient.invalidateQueries({ queryKey: ["checklist"] }),
     ]);
 
   const openForm = (kind: "entry" | "task", values: object) => {
@@ -87,13 +121,99 @@ export function VoiceEntry() {
       });
       await invalidate();
       close();
-      setToast({ kind: create.kind, id: saved.id });
+      const undo = async () => {
+        try {
+          await api(`/${route(create.kind)}/${saved.id}`, { method: "DELETE" });
+        } finally {
+          await invalidate();
+        }
+      };
+      setToast({ undo });
     } catch {
       setError(true);
       setPhase("readback");
     } finally {
       saving.current = false;
     }
+  }
+
+  async function sendAll(requests: Req[]) {
+    for (const r of requests) await api(r.path, { method: r.method, body: r.body });
+  }
+
+  async function saveChange(chosen: Plan, how: Scope) {
+    if (saving.current) return;
+    saving.current = true;
+    stopAll();
+    setError(false);
+    try {
+      await sendAll(chosen.apply[how] ?? []);
+      await invalidate();
+      close();
+      const back = chosen.undo;
+      const undo = back
+        ? async () => {
+            try {
+              await sendAll(back);
+            } catch (e) {
+              reportFailure(e, "save");
+            } finally {
+              await invalidate();
+            }
+          }
+        : null;
+      setToast({ undo });
+    } catch (e) {
+      reportFailure(e, "save");
+      await invalidate();
+      setError(true);
+    } finally {
+      saving.current = false;
+    }
+  }
+
+  async function confirmPlan(chosen: Plan, how: Scope) {
+    setPlan(chosen);
+    setScope(how);
+    setChoices(null);
+    setPhase("readback");
+    if (!getReadback()) return;
+    const mine = ++run.current;
+    await speak(`${chosen.summary} ${t("voice.saveQuestion")}`, lang);
+    if (run.current !== mine || !canListen()) return;
+    const answer = await listenOnce(lang);
+    if (run.current !== mine) return;
+    if (isYes(answer)) void saveChange(chosen, how);
+  }
+
+  async function startPlan(chosen: Plan) {
+    if (chosen.scope !== "ask") return confirmPlan(chosen, chosen.scope);
+    setPlan(chosen);
+    setScope(null);
+    setChoices(null);
+    setPhase("readback");
+    if (!getReadback()) return;
+    const mine = ++run.current;
+    await speak(t("voice.scopeQuestion"), lang);
+    if (run.current !== mine || !canListen()) return;
+    const how = matchScope(await listenOnce(lang));
+    if (run.current !== mine) return;
+    if (how) void confirmPlan(chosen, how);
+  }
+
+  async function startChoice(options: Plan[]) {
+    setChoices(options);
+    setPlan(null);
+    setPhase("readback");
+    if (!getReadback()) return;
+    const mine = ++run.current;
+    const labels = options.map((o) => o.label);
+    await speak(`${t("voice.which")} ${labels.map((l, i) => `${i + 1}. ${l}`).join(". ")}`, lang);
+    if (run.current !== mine || !canListen()) return;
+    const index = matchOption(await listenOnce(lang), labels);
+    const picked = index === null ? undefined : options[index];
+    if (run.current !== mine || !picked) return;
+    void startPlan(picked);
   }
 
   async function readBack(create: Create) {
@@ -111,6 +231,7 @@ export function VoiceEntry() {
     if (!trimmed) return;
     stopAll();
     setText(trimmed);
+    setNotice(null);
     setError(false);
     setPhase("sending");
     const mine = run.current;
@@ -125,6 +246,14 @@ export function VoiceEntry() {
     }
     if (run.current !== mine) return;
     if (answer.outcome === "failed") return openForm("entry", { title: answer.sentence });
+    if (answer.outcome === "change") return void startPlan(answer.plan);
+    if (answer.outcome === "choose") return void startChoice(answer.options);
+    if (answer.outcome !== "create") {
+      setNotice(answer.outcome);
+      setPhase("idle");
+      if (getReadback()) void speak(t(`voice.${answer.outcome}`), lang);
+      return;
+    }
     if (!getReadback()) return openForm(answer.kind, answer.values);
     setPending(answer);
     setPhase("readback");
@@ -149,13 +278,9 @@ export function VoiceEntry() {
 
   async function undo() {
     if (!toast) return;
-    const { kind, id } = toast;
+    const { undo } = toast;
     setToast(null);
-    try {
-      await api(`/${route(kind)}/${id}`, { method: "DELETE" });
-    } finally {
-      await invalidate();
-    }
+    await undo?.();
   }
 
   return (
@@ -179,7 +304,70 @@ export function VoiceEntry() {
             <h2 id="voice-title" className="font-semibold">
               {t("voice.title")}
             </h2>
-            {phase === "readback" && pending ? (
+            {phase === "readback" && (choices || plan) ? (
+              <>
+                {choices ? (
+                  <>
+                    <p>{t("voice.which")}</p>
+                    <div className="flex flex-col gap-2">
+                      {choices.map((option, i) => (
+                        <button
+                          key={`${option.kind}-${option.id}-${option.date ?? i}`}
+                          type="button"
+                          className="rounded-md border border-line px-4 py-2 text-left"
+                          onClick={() => void startPlan(option)}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                ) : plan && scope === null ? (
+                  <>
+                    <p data-testid="voice-summary">{plan.summary}</p>
+                    <p className="text-sm text-muted">{t("voice.scopeQuestion")}</p>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        className="rounded-md bg-teal-700 px-4 py-2 font-medium text-white"
+                        onClick={() => void confirmPlan(plan, "this")}
+                      >
+                        {t("voice.onlyThis")}
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-md bg-teal-700 px-4 py-2 font-medium text-white"
+                        onClick={() => void confirmPlan(plan, "following")}
+                      >
+                        {t("voice.fromNowOn")}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  plan &&
+                  scope && (
+                    <>
+                      <p data-testid="voice-summary">{plan.summary}</p>
+                      <p className="text-sm text-muted">{t("voice.saveQuestion")}</p>
+                      {error && (
+                        <p role="alert" className="text-sm text-overdue">
+                          {t("voice.saveFailed")}
+                        </p>
+                      )}
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          className="rounded-md bg-teal-700 px-4 py-2 font-medium text-white"
+                          onClick={() => void saveChange(plan, scope)}
+                        >
+                          {t("voice.save")}
+                        </button>
+                      </div>
+                    </>
+                  )
+                )}
+              </>
+            ) : phase === "readback" && pending ? (
               <>
                 <p data-testid="voice-summary">{pending.summary}</p>
                 <p className="text-sm text-muted">{t("voice.saveQuestion")}</p>
@@ -218,6 +406,11 @@ export function VoiceEntry() {
                 {phase === "listening" && (
                   <p role="status" className="text-sm text-muted">
                     {t("voice.listening")}
+                  </p>
+                )}
+                {notice && (
+                  <p data-testid="voice-notice" className="text-sm">
+                    {t(`voice.${notice}`)}
                   </p>
                 )}
                 {error && (
@@ -260,9 +453,11 @@ export function VoiceEntry() {
             className="pointer-events-auto flex items-center gap-3 rounded-lg border border-line bg-surface px-4 py-2 text-sm shadow-lg"
           >
             <span>{t("voice.saved")} ·</span>
-            <button type="button" className="font-medium underline" onClick={() => void undo()}>
-              {t("voice.undo")}
-            </button>
+            {toast.undo && (
+              <button type="button" className="font-medium underline" onClick={() => void undo()}>
+                {t("voice.undo")}
+              </button>
+            )}
           </div>
         </div>
       )}
