@@ -88,5 +88,55 @@
     "delete": "Apagar",
     "confirmDelete": "Apagar {{name}} de vez?",
     "inUse": "Há entradas ou tarefas com esta pessoa. Arquiva-a em vez de a apagar."
+  },
+  "entryTypes": {
+    "title": "Tipos de entrada",
+    "add": "Adicionar tipo",
+    "name": "Nome",
+    "color": "Cor",
+    "icon": "Ícone",
+    "thumbnail": "Usar uma imagem",
+    "defaults": "Valores por omissão",
+    "defaultsHint": "Preenchem as entradas novas deste tipo. Mudá-los não altera entradas que já existem.",
+    "allDay": "Dia inteiro",
+    "startTime": "Hora de início",
+    "duration": "Duração (minutos)",
+    "repetition": "Repetição",
+    "importance": "Importância",
+    "location": "Local",
+    "notes": "Notas",
+    "persons": "Pessoas",
+    "reminders": "Lembretes",
+    "delete": "Apagar tipo",
+    "confirmDelete": "Apagar o tipo {{name}}? As entradas deste tipo passam para Geral.",
+    "builtin": {
+      "birthday": "Aniversário",
+      "holiday": "Férias",
+      "appointment": "Consulta",
+      "booking": "Reserva",
+      "activity": "Atividade",
+      "event": "Evento",
+      "general": "Geral"
+    }
+  },
+  "repetition": {
+    "none": "Não repete",
+    "daily": "Todos os dias",
+    "weekly": "Todas as semanas",
+    "monthly": "Todos os meses",
+    "yearly": "Todos os anos"
+  },
+  "importance": {
+    "low": "Baixa",
+    "normal": "Normal",
+    "high": "Alta"
+  },
+  "reminders": {
+    "atStart": "À hora (no próprio dia)",
+    "minutesBefore": "{{count}} min antes",
+    "hoursBefore_one": "1 hora antes",
+    "hoursBefore_other": "{{count}} horas antes",
+    "daysBefore_one": "1 dia antes",
+    "daysBefore_other": "{{count}} dias antes"
   }
 }

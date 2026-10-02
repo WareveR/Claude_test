@@ -5,6 +5,7 @@ import { LANGUAGES } from "../../core/languages";
 import { api } from "../api";
 import { useSignedIn } from "../family";
 import { paths } from "../paths";
+import { EntryTypesSection } from "../entry-types/EntryTypesSection";
 import { PersonsSection } from "../persons/PersonsSection";
 import { DevicesSection } from "./DevicesSection";
 import { PasswordSection } from "./PasswordSection";
@@ -46,6 +47,7 @@ export function SettingsPage() {
         </select>
       </label>
       <PersonsSection />
+      <EntryTypesSection />
       <DevicesSection />
       <PasswordSection />
       <button type="button" className="self-start underline" onClick={() => signOut.mutate()}>
