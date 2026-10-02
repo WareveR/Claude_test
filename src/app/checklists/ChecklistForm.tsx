@@ -27,7 +27,14 @@ function ChecklistForm({ checklist }: { checklist?: Checklist }) {
   const persons = usePersons();
   const [draft, setDraft] = useState<ChecklistDraft>(
     () =>
-      checklist ?? { name: "", startDate: null, endDate: null, repetition: null, personIds: [] },
+      checklist ?? {
+        name: "",
+        startDate: null,
+        endDate: null,
+        repetition: null,
+        remindAtStart: true,
+        personIds: [],
+      },
   );
   const set = (patch: Partial<ChecklistDraft>) => setDraft((d) => ({ ...d, ...patch }));
   const leave = async () => {
@@ -115,6 +122,14 @@ function ChecklistForm({ checklist }: { checklist?: Checklist }) {
             {draft.repetition && (
               <p className="-mt-2 text-xs text-muted">{t("checklists.repeatHint")}</p>
             )}
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={draft.remindAtStart}
+                onChange={(e) => set({ remindAtStart: e.target.checked })}
+              />
+              {t("checklists.remindAtStart")}
+            </label>
           </>
         )}
 

@@ -304,7 +304,8 @@
     "useAgainHint": "Começa já uma nova ronda: todas as Tarefas por fazer. Só fica o resultado desta ronda.",
     "newStart": "Novo início (opcional)",
     "previousRounds": "Rondas anteriores",
-    "roundResult": "{{label}}: {{done}} de {{total}}"
+    "roundResult": "{{label}}: {{done}} de {{total}}",
+    "remindAtStart": "Lembrar às 09:00 no primeiro dia"
   },
   "filter": {
     "title": "Filtro de Pessoas",

@@ -5,7 +5,7 @@ import { occurrencesOf, type OccurrenceException } from "./occurrences";
 import { addDays, formatPlainDate, type PlainDate } from "./plain-date";
 import type { Repetition } from "./repetition";
 
-/** All-day Entries (and later undated-time Tasks) remind at this time on the day. */
+/** All-day Entries, Tasks without a due time and Checklists remind at this time on the day. */
 export const ALL_DAY_REMINDER_TIME = "09:00";
 
 /** A wall-clock moment in the Family Time Zone, "2026-10-02T09:00"; sorts as a string. */
@@ -27,7 +27,7 @@ export function addMinutes(at: WallClock, minutes: number): WallClock {
 export type DueReminder = {
   /** Unique per item, Occurrence and offset, so `reminder_sent` keeps it from going twice. */
   key: string;
-  kind: "entry";
+  kind: "entry" | "task" | "checklist";
   id: string;
   /** The Occurrence's date, which opens it. */
   date: PlainDate;
@@ -92,6 +92,81 @@ export function entryReminders(
     }
   }
   return out.sort((a, b) => a.at.localeCompare(b.at));
+}
+
+type ReminderTask = {
+  id: string;
+  title: string;
+  dueDate: PlainDate | null;
+  dueTime: ClockTime | null;
+  doneAt: string | null;
+  private: boolean;
+  personIds: string[];
+  checklistId: string | null;
+};
+
+const inWindow = (at: WallClock, from: WallClock, to: WallClock) => at > from && at <= to;
+
+/** A dated Task's one Reminder: at its due time, or 09:00 on its due day. Done Tasks don't remind. */
+export function taskReminders(
+  tasks: ReminderTask[],
+  from: WallClock,
+  to: WallClock,
+): DueReminder[] {
+  return tasks.flatMap((task): DueReminder[] => {
+    if (!task.dueDate || task.doneAt) return [];
+    const at = wallClock(task.dueDate, task.dueTime ?? ALL_DAY_REMINDER_TIME);
+    if (!inWindow(at, from, to)) return [];
+    return [
+      {
+        key: `task:${task.id}:${at}`,
+        kind: "task",
+        id: task.id,
+        date: task.dueDate,
+        at,
+        startDate: task.dueDate,
+        title: task.title,
+        time: task.dueTime,
+        private: task.private,
+        personIds: task.personIds,
+      },
+    ];
+  });
+}
+
+/**
+ * A Checklist with the switch on reminds at 09:00 on the first day of its period, each round
+ * again. It goes to whoever its Tasks are for; with a Family-wide Task, or none, to everyone.
+ */
+export function checklistReminders(
+  checklists: { id: string; name: string; startDate: PlainDate | null; remindAtStart: boolean }[],
+  tasks: ReminderTask[],
+  from: WallClock,
+  to: WallClock,
+): DueReminder[] {
+  return checklists.flatMap((checklist): DueReminder[] => {
+    if (!checklist.remindAtStart || !checklist.startDate) return [];
+    const at = wallClock(checklist.startDate, ALL_DAY_REMINDER_TIME);
+    if (!inWindow(at, from, to)) return [];
+    const own = tasks.filter((t) => t.checklistId === checklist.id);
+    const personIds = own.some((t) => t.personIds.length === 0)
+      ? []
+      : [...new Set(own.flatMap((t) => t.personIds))];
+    return [
+      {
+        key: `checklist:${checklist.id}:${checklist.startDate}`,
+        kind: "checklist",
+        id: checklist.id,
+        date: checklist.startDate,
+        at,
+        startDate: checklist.startDate,
+        title: checklist.name,
+        time: null,
+        private: false,
+        personIds,
+      },
+    ];
+  });
 }
 
 /** Whether a device with these Reminder settings gets a Reminder for these Persons. */

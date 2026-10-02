@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { addMinutes, entryReminders, reminderText, remindsDevice } from "./reminders";
+import {
+  addMinutes,
+  checklistReminders,
+  entryReminders,
+  reminderText,
+  remindsDevice,
+  taskReminders,
+} from "./reminders";
 
 const entry = (patch: Partial<Parameters<typeof entryReminders>[0][number]> = {}) => ({
   id: "e1",
@@ -66,5 +73,50 @@ describe("reminderText and remindsDevice", () => {
     expect(remindsDevice({ remindersOn: true, reminderPersonIds: ["p2"] }, [])).toBe(true);
     expect(remindsDevice({ remindersOn: true, reminderPersonIds: ["p2"] }, ["p1"])).toBe(false);
     expect(remindsDevice({ remindersOn: true, reminderPersonIds: null }, ["p1"])).toBe(true);
+  });
+});
+
+describe("taskReminders and checklistReminders", () => {
+  const task = {
+    id: "t1",
+    title: "Pay the school",
+    dueDate: "2026-10-05",
+    dueTime: null,
+    doneAt: null,
+    private: false,
+    personIds: ["p1"],
+    checklistId: null,
+  };
+
+  it("reminds a dated Task once, at its due time or 09:00; a changed time reminds again", () => {
+    expect(taskReminders([task], "2026-10-05T08:55", "2026-10-05T09:00")).toMatchObject([
+      { key: "task:t1:2026-10-05T09:00", kind: "task", time: null },
+    ]);
+    const moved = { ...task, dueTime: "18:30" };
+    expect(taskReminders([moved], "2026-10-05T18:25", "2026-10-05T18:30")[0].key).toBe(
+      "task:t1:2026-10-05T18:30",
+    );
+    expect(
+      taskReminders([{ ...task, doneAt: "x" }], "2026-10-05T08:55", "2026-10-05T09:00"),
+    ).toEqual([]);
+    expect(
+      taskReminders([{ ...task, dueDate: null }], "2026-10-05T08:55", "2026-10-05T09:00"),
+    ).toEqual([]);
+  });
+
+  it("reminds a Checklist at 09:00 on its first day when switched on, for its Tasks' Persons", () => {
+    const checklist = { id: "c1", name: "School", startDate: "2026-10-05", remindAtStart: true };
+    const tasks = [{ ...task, checklistId: "c1" }];
+    expect(
+      checklistReminders([checklist], tasks, "2026-10-05T08:55", "2026-10-05T09:00"),
+    ).toMatchObject([{ key: "checklist:c1:2026-10-05", personIds: ["p1"] }]);
+    expect(
+      checklistReminders(
+        [{ ...checklist, remindAtStart: false }],
+        tasks,
+        "2026-10-05T08:55",
+        "2026-10-05T09:00",
+      ),
+    ).toEqual([]);
   });
 });
