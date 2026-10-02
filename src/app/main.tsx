@@ -1,11 +1,14 @@
-import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { Component, StrictMode, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
-import { ApiError } from "./api";
+import { ApiError, NetworkError } from "./api";
 import { ErrorNotices } from "./errors/ErrorNotices";
 import { reportFailure, watchForErrors } from "./errors/store";
 import i18n from "./i18n";
+import { persistOptions, wipeOfflineCopy } from "./offline/persist";
+import { registerServiceWorker } from "./offline/service-worker";
 import "./index.css";
 
 const queryClient: QueryClient = new QueryClient({
@@ -14,14 +17,26 @@ const queryClient: QueryClient = new QueryClient({
       // An answer like 401 or 404 won't change by asking again.
       retry: (failures, error) =>
         !(error instanceof ApiError && error.status < 500) && failures < 3,
+      // Refresh every minute and on focus; there is no live connection.
+      refetchInterval: 60_000,
+      refetchOnWindowFocus: true,
+      // Kept as long as the offline copy, so it can be read without a connection.
+      gcTime: persistOptions.maxAge,
+    },
+    mutations: {
+      // An edit tried offline fails at once with "No connection" instead of waiting.
+      networkMode: "always",
     },
   },
   queryCache: new QueryCache({
     onError: (error, query) => {
-      // A rejected session sends the browser back to sign-in.
+      // A rejected session wipes the offline copy and sends the browser back to sign-in.
       if (error instanceof ApiError && error.status === 401) {
+        wipeOfflineCopy(queryClient);
         void queryClient.invalidateQueries({ queryKey: ["status"] });
       }
+      // Offline the banner already says so; a refresh that can't connect isn't news.
+      if (error instanceof NetworkError && !navigator.onLine) return;
       reportFailure(error, "load", `load ${JSON.stringify(query.queryKey)}`);
     },
   }),
@@ -53,14 +68,15 @@ class CrashBoundary extends Component<{ children: ReactNode }, { crashed: boolea
 }
 
 watchForErrors();
+registerServiceWorker();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
       <CrashBoundary>
         <App />
       </CrashBoundary>
       <ErrorNotices />
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   </StrictMode>,
 );

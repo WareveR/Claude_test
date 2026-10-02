@@ -1,3 +1,4 @@
+import { useOnline } from "../offline/online";
 import { Lock, Repeat } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -25,6 +26,7 @@ export function TaskRow({
   const { t } = useTranslation();
   const locale = formatLocale(useSignedIn().language);
   const tick = useTick();
+  const online = useOnline();
   // The tick shows the moment it's clicked, before the server answers.
   const [ticking, setTicking] = useState<boolean | null>(null);
   const done = ticking ?? Boolean(task.doneAt);
@@ -43,7 +45,7 @@ export function TaskRow({
         className="size-5"
         aria-label={t("tasks.tick", { title: task.title })}
         checked={done}
-        disabled={tick.isPending}
+        disabled={tick.isPending || !online}
         onChange={(e) => {
           setTicking(e.target.checked);
           tick.mutate({ task, done: e.target.checked }, { onSettled: () => setTicking(null) });

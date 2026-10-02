@@ -10,6 +10,7 @@ import { PersonPage } from "./persons/PersonForm";
 import { ErrorLogPage } from "./settings/ErrorLogPage";
 import { SettingsPage } from "./settings/SettingsPage";
 import { Header } from "./shell/Header";
+import { OfflineBanner } from "./offline/OfflineBanner";
 import { ChecklistPage } from "./checklists/ChecklistForm";
 import { TaskPage } from "./tasks/TaskForm";
 import { TasksView } from "./tasks/TasksView";
@@ -19,6 +20,7 @@ function Layout() {
   return (
     <div className="flex h-dvh flex-col">
       <Header />
+      <OfflineBanner />
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
         <Outlet />
       </div>
