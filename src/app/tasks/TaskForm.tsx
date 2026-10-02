@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate, useParams, useSearchParams } from "react-router";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router";
 import { isPlainDate } from "../../core/plain-date";
 import { api } from "../api";
 import { useChecklist, type Checklist } from "../checklists/model";
@@ -19,12 +19,19 @@ export function TaskPage() {
   const { id } = useParams();
   const isNew = id === "new";
   const [search] = useSearchParams();
+  const location = useLocation();
   const task = useTask(isNew ? undefined : id);
   const checklistId = isNew ? search.get("checklist") : task.data?.checklistId;
   const checklist = useChecklist(checklistId ?? undefined);
   if (!isNew && !readyToEdit(task)) return null;
   if (checklistId && !checklist.data) return null;
-  return <TaskForm key={id} task={isNew ? undefined : task.data} checklist={checklist.data} />;
+  return (
+    <TaskForm
+      key={isNew ? `new:${location.key}` : id}
+      task={isNew ? undefined : task.data}
+      checklist={checklist.data}
+    />
+  );
 }
 
 function TaskForm({ task, checklist }: { task?: Task; checklist?: Checklist }) {
@@ -34,6 +41,7 @@ function TaskForm({ task, checklist }: { task?: Task; checklist?: Checklist }) {
   const [search] = useSearchParams();
   const persons = usePersons();
   const date = search.get("date");
+  const given = (useLocation().state as { values?: Partial<TaskDraft> } | null)?.values;
   const [draft, setDraft] = useState<TaskDraft>(
     () =>
       task ?? {
@@ -46,6 +54,7 @@ function TaskForm({ task, checklist }: { task?: Task; checklist?: Checklist }) {
         private: false,
         repetition: null,
         checklistId: checklist?.id ?? null,
+        ...given,
       },
   );
   const set = (patch: Partial<TaskDraft>) => setDraft((d) => ({ ...d, ...patch }));

@@ -393,5 +393,23 @@
       "snow": "Snow",
       "fog": "Fog"
     }
+  },
+  "voice": {
+    "title": "Voice Entry",
+    "open": "Voice Entry",
+    "sentence": "Say or type one sentence",
+    "send": "Send",
+    "listen": "Speak",
+    "listening": "Listening…",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "saveQuestion": "Save?",
+    "saved": "Saved",
+    "undo": "Undo",
+    "failed": "Could not understand that. Try again.",
+    "saveFailed": "Could not save. Try again.",
+    "hint": "Say or type a sentence to add an Entry or Task. This device only.",
+    "readback": "Read back aloud and ask before saving"
   }
 }

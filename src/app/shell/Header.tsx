@@ -7,10 +7,15 @@ import { todayIn } from "../../core/plain-date";
 import { ForecastButton } from "../weather/ForecastButton";
 import { useForecastDays } from "../weather/model";
 import { WeatherBadge } from "../weather/WeatherBadge";
+import { VoiceEntry } from "../voice/VoiceEntry";
 import { useNow } from "./useNow";
 
 /** The fixed header on every view: the time, weekday, day and month in the Family Time Zone. */
-export function Header() {
+export function Header({
+  showVoice = true,
+}: {
+  /** Display Mode hides the microphone. */ showVoice?: boolean;
+}) {
   const { t } = useTranslation();
   const { family, language } = useSignedIn();
   const now = useNow();
@@ -42,10 +47,11 @@ export function Header() {
           <WeatherBadge day={today} />
         </ForecastButton>
       )}
+      {showVoice && <VoiceEntry />}
       <Link
         to="/settings"
         aria-label={t("settings.title")}
-        className="ml-auto rounded-md p-2 hover:bg-stone-200 dark:hover:bg-stone-800"
+        className={`${showVoice ? "" : "ml-auto "}rounded-md p-2 hover:bg-stone-200 dark:hover:bg-stone-800`}
       >
         <Settings aria-hidden size={20} strokeWidth={1.75} />
       </Link>

@@ -16,6 +16,7 @@ import { feedRoutes, publicFeedRoutes } from "./routes/feeds";
 import { weatherRoutes } from "./routes/weather";
 import { exportRoutes } from "./routes/export";
 import { briefingRoutes, markBriefingsStale } from "./routes/briefing";
+import { voiceRoutes } from "./routes/voice";
 import { apiSecureHeaders, sameOriginOnly } from "./security";
 import type { AppEnv } from "./types";
 
@@ -58,3 +59,4 @@ app.route("/", feedRoutes);
 app.route("/", weatherRoutes);
 app.route("/", exportRoutes);
 app.route("/", briefingRoutes);
+app.route("/", voiceRoutes);
