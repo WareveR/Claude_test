@@ -1,5 +1,6 @@
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
-import type { EntryTypeDefaults } from "../../core/entry-type";
+import { integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import type { EntryTypeDefaults, Importance, ReminderOffset } from "../../core/entry-type";
+import type { Repetition } from "../../core/repetition";
 
 /**
  * The one Family of this installation (ADR-0001) and its Family-wide settings.
@@ -80,3 +81,44 @@ export const entryType = sqliteTable("entry_type", {
   createdAt: text("created_at").notNull(),
   changedAt: text("changed_at").notNull(),
 });
+
+/**
+ * Something on the calendar. Times are wall-clock in the Family Time Zone (ADR-0002): a Timed
+ * Entry has start date + time and an optional end; an All-day Entry has an inclusive date range.
+ */
+export const entry = sqliteTable("entry", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  entryTypeId: text("entry_type_id")
+    .notNull()
+    .references(() => entryType.id),
+  allDay: integer("all_day", { mode: "boolean" }).notNull(),
+  startDate: text("start_date").notNull(),
+  startTime: text("start_time"),
+  endDate: text("end_date"),
+  endTime: text("end_time"),
+  importance: text("importance").$type<Importance>().notNull().default("normal"),
+  location: text("location").notNull().default(""),
+  notes: text("notes").notNull().default(""),
+  /** Overrides the Entry Type's icon; from the app's fixed set. */
+  icon: text("icon"),
+  private: integer("private", { mode: "boolean" }).notNull().default(false),
+  reminders: text("reminders", { mode: "json" }).$type<ReminderOffset[]>().notNull(),
+  repetition: text("repetition", { mode: "json" }).$type<Repetition | null>(),
+  createdAt: text("created_at").notNull(),
+  changedAt: text("changed_at").notNull(),
+});
+
+/** The Persons an Entry is for; none means Family-wide. */
+export const entryPerson = sqliteTable(
+  "entry_person",
+  {
+    entryId: text("entry_id")
+      .notNull()
+      .references(() => entry.id, { onDelete: "cascade" }),
+    personId: text("person_id")
+      .notNull()
+      .references(() => person.id),
+  },
+  (t) => [primaryKey({ columns: [t.entryId, t.personId] })],
+);

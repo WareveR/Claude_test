@@ -29,6 +29,13 @@
       "when": 1790928991999,
       "tag": "0003_entry_types",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1790929248914,
+      "tag": "0004_entries",
+      "breakpoints": true
     }
   ]
 }

@@ -1,11 +1,28 @@
-import type { InputHTMLAttributes, ReactNode } from "react";
+import {
+  cloneElement,
+  isValidElement,
+  useId,
+  type InputHTMLAttributes,
+  type ReactElement,
+  type ReactNode,
+} from "react";
 
-export function Field({ label, children }: { label: string; children: ReactNode }) {
+/** A labelled control; the label points at the control so its name is just the label. */
+export function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactElement<{ id?: string }>;
+}) {
+  const id = useId();
   return (
-    <label className="flex flex-col gap-1 text-sm">
-      <span className="font-medium">{label}</span>
-      {children}
-    </label>
+    <div className="flex flex-col gap-1 text-sm">
+      <label htmlFor={id} className="font-medium">
+        {label}
+      </label>
+      {isValidElement(children) ? cloneElement(children, { id }) : children}
+    </div>
   );
 }
 

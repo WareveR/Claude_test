@@ -108,7 +108,6 @@
     "persons": "Pessoas",
     "reminders": "Lembretes",
     "delete": "Apagar tipo",
-    "confirmDelete": "Apagar o tipo {{name}}? As entradas deste tipo passam para Geral.",
     "builtin": {
       "birthday": "Aniversário",
       "holiday": "Férias",
@@ -117,7 +116,11 @@
       "activity": "Atividade",
       "event": "Evento",
       "general": "Geral"
-    }
+    },
+    "moveEntries": "Escolhe para onde vai cada entrada de {{name}}. As que não mudares vão para Geral.",
+    "noEntries": "Este tipo não tem entradas.",
+    "moveTo": "Novo tipo de {{title}}",
+    "confirmDeleteButton": "Apagar {{name}}"
   },
   "repetition": {
     "none": "Não repete",
@@ -138,5 +141,31 @@
     "hoursBefore_other": "{{count}} horas antes",
     "daysBefore_one": "1 dia antes",
     "daysBefore_other": "{{count}} dias antes"
+  },
+  "entries": {
+    "new": "Nova entrada",
+    "title": "Título",
+    "type": "Tipo",
+    "allDay": "Dia inteiro",
+    "from": "De",
+    "to": "Até (inclusive)",
+    "startDate": "Data",
+    "startTime": "Hora",
+    "hasEnd": "Tem fim",
+    "endDate": "Data de fim",
+    "endTime": "Hora de fim",
+    "persons": "Para quem",
+    "familyWideHint": "Sem ninguém escolhido, a entrada é para toda a família.",
+    "importance": "Importância",
+    "location": "Local",
+    "notes": "Notas",
+    "icon": "Ícone",
+    "typeIcon": "O do tipo",
+    "reminders": "Lembretes",
+    "private": "Privada",
+    "privateHint": "Fica discreta no ecrã da parede, nos lembretes, no feed e no resumo.",
+    "badTime": "O fim tem de ser depois do início.",
+    "delete": "Apagar entrada",
+    "confirmDelete": "Apagar \"{{title}}\" de vez? Não dá para desfazer."
   }
 }

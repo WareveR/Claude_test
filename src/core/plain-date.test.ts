@@ -7,6 +7,7 @@ import {
   isPlainDate,
   startOfMonth,
   startOfWeek,
+  minutesNowIn,
   todayIn,
   weekday,
 } from "./plain-date";
@@ -48,6 +49,10 @@ describe("PlainDate", () => {
     const lateEvening = new Date("2026-10-02T23:30:00Z");
     expect(todayIn("Europe/Lisbon", lateEvening)).toBe("2026-10-03");
     expect(todayIn("America/New_York", lateEvening)).toBe("2026-10-02");
+  });
+
+  it("reads the time of day on the Family Time Zone's clocks", () => {
+    expect(minutesNowIn("Europe/Lisbon", new Date("2026-07-01T09:15:00Z"))).toBe(10 * 60 + 15);
   });
 
   it("formats a date the same in every time zone", () => {

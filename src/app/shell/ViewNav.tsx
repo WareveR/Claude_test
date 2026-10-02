@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link, NavLink } from "react-router";
 import type { PlainDate } from "../../core/plain-date";
@@ -48,6 +48,13 @@ export function ViewNav({
         </div>
       )}
       {title && <h1 className="text-lg font-semibold first-letter:uppercase">{title}</h1>}
+      <Link
+        to={`/entries/new?date=${date}`}
+        aria-label={t("entries.new")}
+        className="ml-auto rounded-full bg-accent p-2 text-accent-ink"
+      >
+        <Plus aria-hidden size={20} strokeWidth={2} />
+      </Link>
     </nav>
   );
 }

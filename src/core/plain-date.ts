@@ -75,3 +75,15 @@ export function formatPlainDate(
 ): string {
   return new Intl.DateTimeFormat(language, { ...options, timeZone: "UTC" }).format(toUtc(date));
 }
+
+/** Minutes since midnight on the wall clocks of the given time zone. */
+export function minutesNowIn(timeZone: string, now: Date = new Date()): number {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(now);
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value);
+  return get("hour") * 60 + get("minute");
+}

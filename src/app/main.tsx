@@ -7,6 +7,13 @@ import "./i18n";
 import "./index.css";
 
 const queryClient: QueryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // An answer like 401 or 404 won't change by asking again.
+      retry: (failures, error) =>
+        !(error instanceof ApiError && error.status < 500) && failures < 3,
+    },
+  },
   queryCache: new QueryCache({
     // A rejected session sends the browser back to sign-in.
     onError: (error) => {

@@ -108,7 +108,6 @@
     "persons": "Persons",
     "reminders": "Reminders",
     "delete": "Delete type",
-    "confirmDelete": "Delete the type {{name}}? Its Entries move to General.",
     "builtin": {
       "birthday": "Birthday",
       "holiday": "Holiday",
@@ -117,7 +116,11 @@
       "activity": "Activity",
       "event": "Event",
       "general": "General"
-    }
+    },
+    "moveEntries": "Choose where each {{name}} Entry goes. Those you leave move to General.",
+    "noEntries": "This type has no Entries.",
+    "moveTo": "New type for {{title}}",
+    "confirmDeleteButton": "Delete {{name}}"
   },
   "repetition": {
     "none": "Doesn't repeat",
@@ -138,5 +141,31 @@
     "hoursBefore_other": "{{count}} hours before",
     "daysBefore_one": "1 day before",
     "daysBefore_other": "{{count}} days before"
+  },
+  "entries": {
+    "new": "New entry",
+    "title": "Title",
+    "type": "Type",
+    "allDay": "All day",
+    "from": "From",
+    "to": "To (included)",
+    "startDate": "Date",
+    "startTime": "Time",
+    "hasEnd": "Has an end",
+    "endDate": "End date",
+    "endTime": "End time",
+    "persons": "For whom",
+    "familyWideHint": "With nobody picked, the Entry is for the whole Family.",
+    "importance": "Importance",
+    "location": "Location",
+    "notes": "Notes",
+    "icon": "Icon",
+    "typeIcon": "The type's",
+    "reminders": "Reminders",
+    "private": "Private",
+    "privateHint": "Stays discreet on the wall, in Reminders, in the Feed and in the Briefing.",
+    "badTime": "The end must come after the start.",
+    "delete": "Delete entry",
+    "confirmDelete": "Delete \"{{title}}\" for good? This can't be undone."
   }
 }

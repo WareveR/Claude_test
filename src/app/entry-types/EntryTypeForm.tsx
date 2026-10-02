@@ -1,10 +1,11 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useParams } from "react-router";
 import { ICONS, IMPORTANCES, type EntryTypeDefaults } from "../../core/entry-type";
 import type { Repetition } from "../../core/repetition";
 import { api } from "../api";
+import type { Entry } from "../entries/model";
 import { PERSON_COLORS, uploadPhoto, usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
 import { ErrorText, Field, SubmitButton, TextInput } from "../screens/form";
@@ -24,6 +25,7 @@ export function EntryTypePage() {
 }
 
 function EntryTypeForm({ type }: { type?: EntryType }) {
+  const types = useEntryTypes();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -56,10 +58,22 @@ function EntryTypeForm({ type }: { type?: EntryType }) {
     },
     onSuccess: done,
   });
-  const remove = useMutation({
-    mutationFn: () => api(`/entry-types/${type!.id}`, { method: "DELETE", body: {} }),
-    onSuccess: done,
+  const [deleting, setDeleting] = useState(false);
+  const [moves, setMoves] = useState<Record<string, string>>({});
+  const typeEntries = useQuery({
+    queryKey: ["entries", "type", type?.id],
+    queryFn: () => api<Entry[]>(`/entries?entryTypeId=${type!.id}`),
+    enabled: deleting,
   });
+  const remove = useMutation({
+    mutationFn: () => api(`/entry-types/${type!.id}`, { method: "DELETE", body: { moves } }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["entries"] });
+      await done();
+    },
+  });
+  const otherTypes = (types.data ?? []).filter((other) => other.id !== type?.id);
+  const general = otherTypes.find((other) => other.builtinKey === "general");
 
   const repetition = defaults.repetition;
   function setFrequency(frequency: (typeof FREQUENCIES)[number]) {
@@ -271,18 +285,52 @@ function EntryTypeForm({ type }: { type?: EntryType }) {
         <SubmitButton busy={save.isPending}>{t("persons.save")}</SubmitButton>
       </form>
       {type?.deletable && (
-        <div className="border-t border-stone-200 pt-4 dark:border-stone-800">
-          <button
-            type="button"
-            className="text-red-700 underline dark:text-red-400"
-            onClick={() => {
-              if (window.confirm(t("entryTypes.confirmDelete", { name: typeName(type, t) }))) {
-                remove.mutate();
-              }
-            }}
-          >
-            {t("entryTypes.delete")}
-          </button>
+        <div className="flex flex-col gap-3 border-t border-line pt-4">
+          {!deleting ? (
+            <button
+              type="button"
+              className="self-start text-overdue underline"
+              onClick={() => setDeleting(true)}
+            >
+              {t("entryTypes.delete")}
+            </button>
+          ) : (
+            <>
+              <p className="text-sm">
+                {typeEntries.data?.length
+                  ? t("entryTypes.moveEntries", { name: typeName(type, t) })
+                  : t("entryTypes.noEntries")}
+              </p>
+              <ul className="flex flex-col gap-2">
+                {typeEntries.data?.map((e) => (
+                  <li key={e.id} className="flex items-center gap-2 text-sm">
+                    <span className="flex-1">
+                      {e.title} · {e.time.startDate}
+                    </span>
+                    <select
+                      aria-label={t("entryTypes.moveTo", { title: e.title })}
+                      className={SELECT}
+                      value={moves[e.id] ?? general?.id}
+                      onChange={(ev) => setMoves({ ...moves, [e.id]: ev.target.value })}
+                    >
+                      {otherTypes.map((other) => (
+                        <option key={other.id} value={other.id}>
+                          {typeName(other, t)}
+                        </option>
+                      ))}
+                    </select>
+                  </li>
+                ))}
+              </ul>
+              <button
+                type="button"
+                className="self-start rounded-md bg-overdue px-4 py-2 font-medium text-white"
+                onClick={() => remove.mutate()}
+              >
+                {t("entryTypes.confirmDeleteButton", { name: typeName(type, t) })}
+              </button>
+            </>
+          )}
         </div>
       )}
     </main>

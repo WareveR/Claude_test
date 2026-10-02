@@ -1,11 +1,60 @@
 @import "tailwindcss";
 
-/* Light and dark follow the device setting (Tailwind's default `dark:` media strategy). */
-@layer base {
-  html {
-    color-scheme: light dark;
+/* Calendar palette from the reference design (prototype/16-calendar-views, variant B). */
+:root {
+  --bg: #eef0ec;
+  --frame: #fbfbf8;
+  --surface: #ffffff;
+  --ink: #151a17;
+  --muted: #56605a;
+  --line: #cfd6cf;
+  --accent: #20624a;
+  --accent-ink: #ffffff;
+  --weekend: #d6e6f5;
+  --weekend-ink: #1d4f80;
+  --holiday: #fbeee3;
+  --holiday-ink: #9a4a16;
+  --overdue: #b3261e;
+  color-scheme: light dark;
+}
+
+/* Light and dark follow the device setting. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1f1c;
+    --frame: #252b27;
+    --surface: #323a35;
+    --ink: #f4f7f3;
+    --muted: #bcc6bf;
+    --line: #4a544d;
+    --accent: #7fd6ae;
+    --accent-ink: #0d1a14;
+    --weekend: #28425e;
+    --weekend-ink: #cfe4fa;
+    --holiday: #33241a;
+    --holiday-ink: #f0a877;
+    --overdue: #ff8a80;
   }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-frame: var(--frame);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-weekend: var(--weekend);
+  --color-weekend-ink: var(--weekend-ink);
+  --color-holiday: var(--holiday);
+  --color-holiday-ink: var(--holiday-ink);
+  --color-overdue: var(--overdue);
+}
+
+@layer base {
   body {
-    @apply bg-stone-50 text-stone-900 dark:bg-stone-950 dark:text-stone-100;
+    @apply bg-bg text-ink;
   }
 }
