@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { layoutBars, layoutLanes } from "./layout";
+import { layoutBars, layoutLanes, monthWeeks } from "./layout";
 
 describe("layoutLanes", () => {
   it("puts overlapping blocks side by side and lone ones full width", () => {
@@ -41,5 +41,14 @@ describe("layoutBars", () => {
       { id: "trip", column: 1, span: 3, row: 1 },
       { id: "later", column: 5, span: 1, row: 0 },
     ]);
+  });
+});
+
+describe("monthWeeks", () => {
+  it("covers the month in Monday-first weeks", () => {
+    const weeks = monthWeeks("2026-10-01");
+    expect(weeks).toHaveLength(5);
+    expect(weeks[0][0]).toBe("2026-09-28");
+    expect(weeks[4][6]).toBe("2026-11-01");
   });
 });

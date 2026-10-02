@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Navigate, useParams } from "react-router";
+import { Navigate, useParams, useSearchParams } from "react-router";
 import { formatLocale } from "../../core/languages";
 import {
   addDays,
@@ -11,6 +11,9 @@ import {
   todayIn,
   type PlainDate,
 } from "../../core/plain-date";
+import { EntryBlock } from "../calendar/EntryBlock";
+import { monthWeeks } from "../../core/layout";
+import { entriesOn, MonthGrid } from "../calendar/MonthGrid";
 import { TimeGrid } from "../calendar/TimeGrid";
 import { useEntries } from "../entries/model";
 import { useEntryTypes } from "../entry-types/model";
@@ -39,12 +42,15 @@ export function DayView() {
   if (!isPlainDate(date)) return <Navigate to={paths.day(today)} replace />;
   const title = formatPlainDate(date, locale, { weekday: "long", day: "numeric", month: "long" });
   return (
-    <ViewNav
-      date={date}
-      title={title}
-      previous={paths.day(addDays(date, -1))}
-      next={paths.day(addDays(date, 1))}
-    />
+    <>
+      <ViewNav
+        date={date}
+        title={title}
+        previous={paths.day(addDays(date, -1))}
+        next={paths.day(addDays(date, 1))}
+      />
+      <CalendarGrid days={[date]} />
+    </>
   );
 }
 
@@ -97,19 +103,65 @@ function CalendarGrid({ days }: { days: PlainDate[] }) {
 
 export function MonthView() {
   const { month = "" } = useParams();
-  const locale = useLocale();
   const today = useToday();
   const date = `${month}-01`;
   if (!/^\d{4}-\d{2}$/.test(month) || !isPlainDate(date))
     return <Navigate to={paths.month(today)} replace />;
-  const title = formatPlainDate(date, locale, { month: "long", year: "numeric" });
+  return <Month first={date} />;
+}
+
+function Month({ first }: { first: PlainDate }) {
+  const locale = useLocale();
+  const today = useToday();
+  const { t } = useTranslation();
+  const [search] = useSearchParams();
+  const picked = search.get("day");
+  const selected =
+    picked && isPlainDate(picked) && picked.startsWith(first.slice(0, 7))
+      ? picked
+      : today.startsWith(first.slice(0, 7))
+        ? today
+        : first;
+  const weeks = monthWeeks(first);
+  const entries = useEntries(weeks[0][0], weeks[weeks.length - 1][6]);
+  const types = useEntryTypes();
+  const persons = usePersons();
+  const title = formatPlainDate(first, locale, { month: "long", year: "numeric" });
+  const dayEntries = entriesOn(entries.data ?? [], selected);
   return (
-    <ViewNav
-      date={date}
-      title={title}
-      previous={paths.month(addMonths(date, -1))}
-      next={paths.month(addMonths(date, 1))}
-    />
+    <>
+      <ViewNav
+        date={first}
+        title={title}
+        previous={paths.month(addMonths(first, -1))}
+        next={paths.month(addMonths(first, 1))}
+      />
+      <MonthGrid
+        month={first}
+        entries={entries.data ?? []}
+        types={types.data ?? []}
+        today={today}
+        selected={selected}
+        locale={locale}
+        dayLink={(day) => `${paths.month(day)}?day=${day}`}
+      />
+      <section className="flex flex-col gap-1 p-4" data-testid="picked-day">
+        <h2 className="font-semibold first-letter:uppercase">
+          {formatPlainDate(selected, locale, { weekday: "long", day: "numeric", month: "long" })}
+        </h2>
+        {dayEntries.length === 0 && <p className="text-sm text-muted">{t("views.nothing")}</p>}
+        {dayEntries.map((e) => (
+          <EntryBlock
+            key={e.id}
+            entry={e}
+            type={types.data?.find((ty) => ty.id === e.entryTypeId)}
+            persons={persons.data ?? []}
+            label={e.time.allDay ? t("entries.allDay") : e.time.startTime}
+            className="py-1 text-sm"
+          />
+        ))}
+      </section>
+    </>
   );
 }
 

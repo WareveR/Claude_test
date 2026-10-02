@@ -45,7 +45,8 @@
     "tasks": "Tasks",
     "today": "Today",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "nothing": "Nothing on this day."
   },
   "settings": {
     "title": "Settings",
