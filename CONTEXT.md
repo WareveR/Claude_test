@@ -61,7 +61,7 @@ An Entry with no Persons attached: it is for the whole Family. There is no separ
 _Avoid_: Shared entry, general entry (General is an Entry Type)
 
 **Person Filter**:
-The selection of Persons the views are narrowed to. It shows Entries for any selected Person, plus Family-wide Entries unless those are switched off, and each device remembers its last selection.
+The selection of Persons the views are narrowed to. It shows Entries and Tasks for any selected Person, plus Family-wide ones (no Persons) unless those are switched off, and each device remembers its last selection. The same panel lets a device hide Public Holidays.
 _Avoid_: View filter, member filter
 
 **Birthday Entry**:
