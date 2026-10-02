@@ -419,5 +419,16 @@
     "oneAtATime": "One thing at a time, please",
     "refused": "Voice Entry doesn't delete; open the item to delete it",
     "locked": "A Birthday's date and Person change on the Person"
+  },
+  "display": {
+    "title": "Display Mode",
+    "hint": "Turn this tablet into a wall calendar: today on the left, a week on the right. Reminders are switched off for this device. Press and hold the header to leave.",
+    "turnOn": "Use this device as a wall calendar",
+    "today": "Today",
+    "otherWeek": "Another week is shown · Back to today",
+    "leaveTitle": "Leave Display Mode?",
+    "leave": "Leave",
+    "stay": "Stay",
+    "backToBoard": "Back to the board"
   }
 }

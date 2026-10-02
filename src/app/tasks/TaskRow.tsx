@@ -1,10 +1,11 @@
 import { useOnline } from "../offline/online";
 import { Lock, Repeat } from "lucide-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { formatLocale } from "../../core/languages";
 import { formatPlainDate } from "../../core/plain-date";
+import { useDisplayMode } from "../display/mode";
 import { useSignedIn } from "../family";
 import type { Person } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
@@ -27,6 +28,8 @@ export function TaskRow({
   const locale = formatLocale(useSignedIn().language);
   const tick = useTick();
   const online = useOnline();
+  // On the wall a Task can be ticked, not opened, and a Private one shows only "Private".
+  const wall = useDisplayMode();
   // The tick shows the moment it's clicked, before the server answers.
   const [ticking, setTicking] = useState<boolean | null>(null);
   const done = ticking ?? Boolean(task.doneAt);
@@ -51,9 +54,9 @@ export function TaskRow({
           tick.mutate({ task, done: e.target.checked }, { onSettled: () => setTicking(null) });
         }}
       />
-      <Link to={`/tasks/${task.id}`} className="flex min-w-0 flex-1 flex-col">
+      <Wrapper wall={wall} id={task.id}>
         <span className={`break-words ${done ? "text-muted line-through" : ""}`}>
-          {task.title}
+          {wall && task.private ? t("entries.private") : task.title}
           {task.repetition && (
             <Repeat aria-label={t("tasks.repeats")} className="ml-1 inline" size={14} />
           )}
@@ -61,13 +64,13 @@ export function TaskRow({
             <Lock aria-label={t("entries.private")} className="ml-1 inline" size={14} />
           )}
         </span>
-        {label && <span className="text-xs text-muted">{label}</span>}
+        {label && !(wall && task.private) && <span className="text-xs text-muted">{label}</span>}
         {due && (
           <span className={`text-xs ${overdue ? "font-medium text-overdue" : "text-muted"}`}>
             {due}
           </span>
         )}
-      </Link>
+      </Wrapper>
       <span className="flex -space-x-1">
         {task.personIds.map((id) => {
           const person = persons.find((p) => p.id === id);
@@ -75,5 +78,16 @@ export function TaskRow({
         })}
       </span>
     </li>
+  );
+}
+
+function Wrapper({ wall, id, children }: { wall: boolean; id: string; children: ReactNode }) {
+  const className = "flex min-w-0 flex-1 flex-col";
+  return wall ? (
+    <div className={className}>{children}</div>
+  ) : (
+    <Link to={`/tasks/${id}`} className={className}>
+      {children}
+    </Link>
   );
 }

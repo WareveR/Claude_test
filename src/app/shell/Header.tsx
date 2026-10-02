@@ -1,7 +1,11 @@
 import { Settings } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useState } from "react";
 import { Link } from "react-router";
 import { formatLocale } from "../../core/languages";
+import { LeaveDisplayDialog } from "../display/LeaveDisplayDialog";
+import { useLongPress } from "../display/hooks";
+import { useDisplayMode } from "../display/mode";
 import { useSignedIn } from "../family";
 import { todayIn } from "../../core/plain-date";
 import { ForecastButton } from "../weather/ForecastButton";
@@ -19,6 +23,10 @@ export function Header({
   const { t } = useTranslation();
   const { family, language } = useSignedIn();
   const now = useNow();
+  // On the wall there is no Settings link and no microphone; a long press leaves.
+  const wall = useDisplayMode();
+  const [leaving, setLeaving] = useState(false);
+  const longPress = useLongPress(() => setLeaving(true));
   const today = useForecastDays().get(todayIn(family.timeZone, now));
   const locale = formatLocale(language);
   const time = new Intl.DateTimeFormat(locale, {
@@ -35,7 +43,10 @@ export function Header({
   }).format(now);
 
   return (
-    <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-stone-200 bg-stone-50/95 px-4 py-2 backdrop-blur dark:border-stone-800 dark:bg-stone-950/95">
+    <header
+      {...(wall ? longPress : {})}
+      className="sticky top-0 z-10 flex items-center gap-3 border-b border-stone-200 bg-stone-50/95 px-4 py-2 backdrop-blur dark:border-stone-800 dark:bg-stone-950/95"
+    >
       <time data-testid="header-time" className="text-2xl font-semibold tabular-nums">
         {time}
       </time>
@@ -47,14 +58,19 @@ export function Header({
           <WeatherBadge day={today} />
         </ForecastButton>
       )}
-      {showVoice && <VoiceEntry />}
-      <Link
-        to="/settings"
-        aria-label={t("settings.title")}
-        className={`${showVoice ? "" : "ml-auto "}rounded-md p-2 hover:bg-stone-200 dark:hover:bg-stone-800`}
-      >
-        <Settings aria-hidden size={20} strokeWidth={1.75} />
-      </Link>
+      {showVoice && !wall && <VoiceEntry />}
+      {wall ? (
+        <span className="ml-auto" />
+      ) : (
+        <Link
+          to="/settings"
+          aria-label={t("settings.title")}
+          className={`${showVoice ? "" : "ml-auto "}rounded-md p-2 hover:bg-stone-200 dark:hover:bg-stone-800`}
+        >
+          <Settings aria-hidden size={20} strokeWidth={1.75} />
+        </Link>
+      )}
+      {leaving && <LeaveDisplayDialog onClose={() => setLeaving(false)} />}
     </header>
   );
 }

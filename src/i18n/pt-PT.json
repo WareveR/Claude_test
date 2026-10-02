@@ -419,5 +419,16 @@
     "oneAtATime": "Uma coisa de cada vez, por favor",
     "refused": "A entrada por voz não apaga; abra o item para o apagar",
     "locked": "A data e a pessoa de um aniversário mudam na pessoa"
+  },
+  "display": {
+    "title": "Modo de ecrã",
+    "hint": "Transforma este tablet num calendário de parede: o dia de hoje à esquerda, uma semana à direita. Os Lembretes ficam desligados neste dispositivo. Mantém o cabeçalho premido para sair.",
+    "turnOn": "Usar este dispositivo como calendário de parede",
+    "today": "Hoje",
+    "otherWeek": "Está a ver outra semana · Voltar a hoje",
+    "leaveTitle": "Sair do Modo de ecrã?",
+    "leave": "Sair",
+    "stay": "Ficar",
+    "backToBoard": "Voltar ao painel"
   }
 }
