@@ -69,3 +69,12 @@ export function monthWeeks(month: PlainDate): PlainDate[][] {
   }
   return weeks;
 }
+
+/** The year view's 37 columns always run Saturday to Sunday, the one exception to Monday first. */
+export const YEAR_COLUMNS = 37;
+
+/** Which of the 37 columns a month's 1st falls in: 0 when it is a Saturday. */
+export function yearRowOffset(firstOfMonth: PlainDate): number {
+  const monday0 = (Date.parse(firstOfMonth) / 86_400_000 + 3) % 7; // 1970-01-01 was a Thursday
+  return (Math.round(monday0) - 5 + 7) % 7;
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { layoutBars, layoutLanes, monthWeeks } from "./layout";
+import { layoutBars, layoutLanes, monthWeeks, yearRowOffset } from "./layout";
 
 describe("layoutLanes", () => {
   it("puts overlapping blocks side by side and lone ones full width", () => {
@@ -50,5 +50,13 @@ describe("monthWeeks", () => {
     expect(weeks).toHaveLength(5);
     expect(weeks[0][0]).toBe("2026-09-28");
     expect(weeks[4][6]).toBe("2026-11-01");
+  });
+});
+
+describe("yearRowOffset", () => {
+  it("puts each month's 1st under its weekday in a Saturday-first row", () => {
+    expect(yearRowOffset("2026-08-01")).toBe(0); // a Saturday
+    expect(yearRowOffset("2026-11-01")).toBe(1); // a Sunday
+    expect(yearRowOffset("2026-10-01")).toBe(5); // a Thursday
   });
 });

@@ -15,6 +15,7 @@ import { EntryBlock } from "../calendar/EntryBlock";
 import { monthWeeks } from "../../core/layout";
 import { entriesOn, MonthGrid } from "../calendar/MonthGrid";
 import { TimeGrid } from "../calendar/TimeGrid";
+import { YearGrid } from "../calendar/YearGrid";
 import { useEntries } from "../entries/model";
 import { useEntryTypes } from "../entry-types/model";
 import { useSignedIn } from "../family";
@@ -169,14 +170,31 @@ export function YearView() {
   const { year = "" } = useParams();
   const today = useToday();
   if (!/^\d{4}$/.test(year)) return <Navigate to={paths.year(today)} replace />;
+  return <Year year={Number(year)} />;
+}
+
+function Year({ year }: { year: number }) {
+  const locale = useLocale();
+  const today = useToday();
   const date = `${year}-01-01`;
+  const entries = useEntries(date, `${year}-12-31`);
+  const types = useEntryTypes();
   return (
-    <ViewNav
-      date={date}
-      title={year}
-      previous={paths.year(addMonths(date, -12))}
-      next={paths.year(addMonths(date, 12))}
-    />
+    <>
+      <ViewNav
+        date={date}
+        title={String(year)}
+        previous={paths.year(addMonths(date, -12))}
+        next={paths.year(addMonths(date, 12))}
+      />
+      <YearGrid
+        year={year}
+        entries={entries.data ?? []}
+        types={types.data ?? []}
+        today={today}
+        locale={locale}
+      />
+    </>
   );
 }
 
