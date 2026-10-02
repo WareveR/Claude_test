@@ -4,6 +4,7 @@ import { createBrowserRouter, Outlet, RouterProvider } from "react-router";
 import type { Device, Family } from "./api";
 import { SignedInContext } from "./family";
 import { deviceLanguage } from "./i18n";
+import { EntryPage } from "./entries/EntryForm";
 import { EntryTypePage } from "./entry-types/EntryTypeForm";
 import { PersonPage } from "./persons/PersonForm";
 import { SettingsPage } from "./settings/SettingsPage";
@@ -12,9 +13,11 @@ import { DayView, MonthView, TasksView, TodayRedirect, WeekView, YearView } from
 
 function Layout() {
   return (
-    <div className="min-h-dvh">
+    <div className="flex h-dvh flex-col">
       <Header />
-      <Outlet />
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <Outlet />
+      </div>
     </div>
   );
 }
@@ -29,6 +32,7 @@ const router = createBrowserRouter([
       { path: "/month/:month", element: <MonthView /> },
       { path: "/year/:year", element: <YearView /> },
       { path: "/tasks", element: <TasksView /> },
+      { path: "/entries/:id", element: <EntryPage /> },
       { path: "/settings", element: <SettingsPage /> },
       { path: "/settings/persons/:id", element: <PersonPage /> },
       { path: "/settings/entry-types/:id", element: <EntryTypePage /> },

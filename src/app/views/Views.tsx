@@ -6,11 +6,17 @@ import {
   addMonths,
   formatPlainDate,
   isPlainDate,
+  minutesNowIn,
   startOfWeek,
   todayIn,
   type PlainDate,
 } from "../../core/plain-date";
+import { TimeGrid } from "../calendar/TimeGrid";
+import { useEntries } from "../entries/model";
+import { useEntryTypes } from "../entry-types/model";
 import { useSignedIn } from "../family";
+import { usePersons } from "../persons/model";
+import { useNow } from "../shell/useNow";
 import { paths } from "../paths";
 import { ViewNav } from "../shell/ViewNav";
 
@@ -44,18 +50,47 @@ export function DayView() {
 
 export function WeekView() {
   const { date = "" } = useParams();
-  const locale = useLocale();
   const today = useToday();
   if (!isPlainDate(date)) return <Navigate to={paths.week(today)} replace />;
   if (startOfWeek(date) !== date) return <Navigate to={paths.week(date)} replace />;
+  return <Week monday={date} />;
+}
+
+function Week({ monday }: { monday: PlainDate }) {
+  const locale = useLocale();
+  const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i));
   const short = { day: "numeric", month: "short" } as const;
-  const title = `${formatPlainDate(date, locale, short)} – ${formatPlainDate(addDays(date, 6), locale, short)}`;
+  const title = `${formatPlainDate(monday, locale, short)} – ${formatPlainDate(days[6], locale, short)}`;
   return (
-    <ViewNav
-      date={date}
-      title={title}
-      previous={paths.week(addDays(date, -7))}
-      next={paths.week(addDays(date, 7))}
+    <>
+      <ViewNav
+        date={monday}
+        title={title}
+        previous={paths.week(addDays(monday, -7))}
+        next={paths.week(addDays(monday, 7))}
+      />
+      <CalendarGrid days={days} />
+    </>
+  );
+}
+
+/** The time grid for some days, with the Entries, Entry Types and Persons it needs. */
+function CalendarGrid({ days }: { days: PlainDate[] }) {
+  const { family } = useSignedIn();
+  const locale = useLocale();
+  const now = useNow(60_000);
+  const entries = useEntries(days[0], days[days.length - 1]);
+  const types = useEntryTypes();
+  const persons = usePersons();
+  return (
+    <TimeGrid
+      days={days}
+      entries={entries.data ?? []}
+      types={types.data ?? []}
+      persons={persons.data ?? []}
+      today={todayIn(family.timeZone, now)}
+      nowMinutes={minutesNowIn(family.timeZone, now)}
+      locale={locale}
     />
   );
 }

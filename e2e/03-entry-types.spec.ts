@@ -21,7 +21,7 @@ test("built-in Entry Types translate until renamed, and custom ones can be added
 
   await page.getByRole("link", { name: "Add type" }).click();
   await page.getByLabel("Name", { exact: true }).fill("Swimming");
-  await page.getByLabel("trophy").check({ force: true });
+  await page.getByLabel("trophy").dispatchEvent("click");
   await page.getByLabel("Repetition").selectOption("weekly");
   await page.getByLabel("1 hour before").check();
   await page.getByRole("button", { name: "Save" }).click();

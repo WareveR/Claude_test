@@ -8,5 +8,8 @@ beforeEach(async () => {
   const tables = await env.DB.prepare(
     "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%' AND name != 'd1_migrations'",
   ).all<{ name: string }>();
-  await env.DB.batch(tables.results.map(({ name }) => env.DB.prepare(`DELETE FROM "${name}"`)));
+  await env.DB.batch([
+    env.DB.prepare("PRAGMA defer_foreign_keys = on"),
+    ...tables.results.map(({ name }) => env.DB.prepare(`DELETE FROM "${name}"`)),
+  ]);
 });
