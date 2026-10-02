@@ -1,5 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { api, type Status } from "./api";
+import { wipeOfflineCopy } from "./offline/persist";
 import { ConfirmEmailScreen } from "./screens/ConfirmEmailScreen";
 import { NewSetupCodeScreen } from "./screens/NewSetupCodeScreen";
 import { RecoverScreen } from "./screens/RecoverScreen";
@@ -9,7 +11,13 @@ import { SignedInApp } from "./SignedInApp";
 
 /** Sends a browser to setup, sign-in or the calendar, depending on where it stands. */
 export function App() {
+  const queryClient = useQueryClient();
   const status = useQuery({ queryKey: ["status"], queryFn: () => api<Status>("/status") });
+  const signedOut = status.data !== undefined && !status.data.signedIn;
+  // A device that finds itself signed out keeps nothing of the calendar.
+  useEffect(() => {
+    if (signedOut) wipeOfflineCopy(queryClient);
+  }, [signedOut, queryClient]);
 
   const token = new URLSearchParams(window.location.search).get("token");
   const path = window.location.pathname;

@@ -331,5 +331,8 @@
     "copy": "Copy",
     "open": "Open in calendar app",
     "done": "Done"
+  },
+  "offline": {
+    "notice": "You're offline. This is the last loaded calendar; changes need a connection."
   }
 }

@@ -1,3 +1,4 @@
+import { useOnline } from "../offline/online";
 import {
   cloneElement,
   isValidElement,
@@ -36,10 +37,12 @@ export function TextInput(props: InputHTMLAttributes<HTMLInputElement>) {
 }
 
 export function SubmitButton({ children, busy }: { children: ReactNode; busy: boolean }) {
+  // Saving needs a connection.
+  const online = useOnline();
   return (
     <button
       type="submit"
-      disabled={busy}
+      disabled={busy || !online}
       className="rounded-md bg-teal-700 px-4 py-2 font-medium text-white disabled:opacity-60"
     >
       {children}

@@ -331,5 +331,8 @@
     "copy": "Copiar",
     "open": "Abrir na aplicação de calendário",
     "done": "Concluído"
+  },
+  "offline": {
+    "notice": "Estás sem ligação. Este é o último calendário carregado; as alterações precisam de ligação."
   }
 }
