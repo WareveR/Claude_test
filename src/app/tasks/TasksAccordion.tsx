@@ -1,7 +1,9 @@
 import { ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { PlainDate } from "../../core/plain-date";
+import { matchesFilter } from "../../core/person-filter";
 import { familyNow, isOverdue, periodTasks } from "../../core/task";
+import { usePersonFilter } from "../filter/model";
 import { useSignedIn } from "../family";
 import { usePersons } from "../persons/model";
 import { useNow } from "../shell/useNow";
@@ -16,7 +18,13 @@ export function TasksAccordion({ from, to }: { from: PlainDate; to: PlainDate })
   const { t } = useTranslation();
   const { family } = useSignedIn();
   const now = familyNow(family.timeZone, useNow(60_000));
-  const tasks = periodTasks(useTasks().data ?? [], from, to, now);
+  const filter = usePersonFilter();
+  const tasks = periodTasks(
+    (useTasks().data ?? []).filter((task) => matchesFilter(task.personIds, filter)),
+    from,
+    to,
+    now,
+  );
   const persons = usePersons().data ?? [];
   if (tasks.length === 0) return null;
   const overdue = tasks.filter((task) => isOverdue(task, now)).length;

@@ -238,5 +238,10 @@
     "newStart": "New start (optional)",
     "previousRounds": "Previous rounds",
     "roundResult": "{{label}}: {{done}} of {{total}}"
+  },
+  "filter": {
+    "title": "Person filter",
+    "noneHint": "With nobody picked, everyone shows.",
+    "familyWide": "Include Family-wide"
   }
 }

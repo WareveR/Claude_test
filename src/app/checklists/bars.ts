@@ -1,8 +1,10 @@
 import { useMemo } from "react";
 import { checklistProgress } from "../../core/checklist";
+import { checklistMatches } from "../../core/person-filter";
 import type { PlainDate } from "../../core/plain-date";
 import type { Shown } from "../entries/model";
 import type { EntryType } from "../entry-types/model";
+import { usePersonFilter } from "../filter/model";
 import { useTasks } from "../tasks/model";
 import { useChecklists } from "./model";
 
@@ -22,14 +24,20 @@ export const CHECKLIST_BAR_TYPE: EntryType = {
 export function useChecklistBars(from: PlainDate, to: PlainDate): Shown[] {
   const checklists = useChecklists().data;
   const tasks = useTasks().data;
+  const filter = usePersonFilter();
   return useMemo(
     () =>
       (checklists ?? [])
         .filter((c) => c.startDate && c.endDate && c.startDate <= to && c.endDate >= from)
-        .map((c) => {
-          const { done, total } = checklistProgress(
-            (tasks ?? []).filter((t) => t.checklistId === c.id),
-          );
+        .map((c) => ({ c, own: (tasks ?? []).filter((t) => t.checklistId === c.id) }))
+        .filter(({ own }) =>
+          checklistMatches(
+            own.map((t) => t.personIds),
+            filter,
+          ),
+        )
+        .map(({ c, own }) => {
+          const { done, total } = checklistProgress(own);
           return {
             id: c.id,
             key: `checklist:${c.id}`,
@@ -48,6 +56,6 @@ export function useChecklistBars(from: PlainDate, to: PlainDate): Shown[] {
             repetition: null,
           } satisfies Shown;
         }),
-    [checklists, tasks, from, to],
+    [checklists, tasks, filter, from, to],
   );
 }

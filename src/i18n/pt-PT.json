@@ -238,5 +238,10 @@
     "newStart": "Novo início (opcional)",
     "previousRounds": "Rondas anteriores",
     "roundResult": "{{label}}: {{done}} de {{total}}"
+  },
+  "filter": {
+    "title": "Filtro de Pessoas",
+    "noneHint": "Sem ninguém escolhido, aparecem todos.",
+    "familyWide": "Incluir o que é de toda a Família"
   }
 }

@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link, NavLink } from "react-router";
 import type { PlainDate } from "../../core/plain-date";
+import { FilterButton } from "../filter/FilterButton";
 import { paths } from "../paths";
 
 const VIEWS = ["day", "week", "month", "year", "tasks"] as const;
@@ -51,10 +52,13 @@ export function ViewNav({
         </div>
       )}
       {title && <h1 className="text-lg font-semibold first-letter:uppercase">{title}</h1>}
+      <div className="ml-auto">
+        <FilterButton />
+      </div>
       <Link
         to={newPath ?? `/entries/new?date=${date}`}
         aria-label={newPath ? t("tasks.new") : t("entries.new")}
-        className="ml-auto rounded-full bg-accent p-2 text-accent-ink"
+        className="rounded-full bg-accent p-2 text-accent-ink"
       >
         <Plus aria-hidden size={20} strokeWidth={2} />
       </Link>

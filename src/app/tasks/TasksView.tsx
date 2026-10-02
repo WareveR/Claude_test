@@ -2,10 +2,12 @@ import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { checklistGroup, isChecklistTaskOverdue } from "../../core/checklist";
+import { checklistMatches, matchesFilter } from "../../core/person-filter";
 import { familyNow, groupTasks, isOverdue, type TaskGroups } from "../../core/task";
 import { ChecklistRow } from "../checklists/ChecklistRow";
 import { useChecklists, type Checklist } from "../checklists/model";
 import { useSignedIn } from "../family";
+import { usePersonFilter } from "../filter/model";
 import { usePersons } from "../persons/model";
 import { useNow } from "../shell/useNow";
 import { ViewNav } from "../shell/ViewNav";
@@ -29,8 +31,11 @@ export function TasksView() {
   const [showDone, setShowDone] = useState(false);
   const all = tasks.data ?? [];
   const checklistOf = (task: Task) => checklists.find((c) => c.id === task.checklistId);
+  const filter = usePersonFilter();
   const groups = groupTasks(
-    all.filter((task) => !task.checklistId || task.dueDate),
+    all.filter(
+      (task) => (!task.checklistId || task.dueDate) && matchesFilter(task.personIds, filter),
+    ),
     now,
   );
   const listsIn: Record<Group, Checklist[]> = {
@@ -42,6 +47,13 @@ export function TasksView() {
   };
   for (const checklist of checklists) {
     const own = all.filter((task) => task.checklistId === checklist.id);
+    if (
+      !checklistMatches(
+        own.map((task) => task.personIds),
+        filter,
+      )
+    )
+      continue;
     listsIn[checklistGroup(checklist, own, now)].push(checklist);
   }
 
