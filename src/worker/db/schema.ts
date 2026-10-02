@@ -1,7 +1,8 @@
-import { integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { integer, primaryKey, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import type { EntryTypeDefaults, Importance, ReminderOffset } from "../../core/entry-type";
 import type { HolidayPlace } from "../../core/holidays";
 import type { Repetition } from "../../core/repetition";
+import type { Forecast } from "../../core/weather";
 
 /**
  * The one Family of this installation (ADR-0001) and its Family-wide settings.
@@ -23,6 +24,8 @@ export const family = sqliteTable("family", {
     .$type<HolidayPlace[]>()
     .notNull()
     .default([{ country: "PT" }]),
+  /** The Weather Location whose forecast every device shows; none shows no weather. */
+  selectedWeatherLocationId: text("selected_weather_location_id"),
 });
 
 /** A browser that signed in with the Family Password. Only the session token's hash is kept. */
@@ -302,3 +305,26 @@ export const calendarFeedPerson = sqliteTable(
   },
   (t) => [primaryKey({ columns: [t.feedId, t.personId] })],
 );
+
+/** A place saved for the weather, found with Open-Meteo's geocoding search; up to 10. */
+export const weatherLocation = sqliteTable("weather_location", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  /** The region, like a district; may be empty. */
+  admin: text("admin").notNull(),
+  country: text("country").notNull(),
+  countryCode: text("country_code").notNull(),
+  latitude: real("latitude").notNull(),
+  longitude: real("longitude").notNull(),
+  createdAt: text("created_at").notNull(),
+});
+
+/** The last Open-Meteo forecast fetched for a Weather Location, and when fetching last ran. */
+export const weatherCache = sqliteTable("weather_cache", {
+  locationId: text("location_id")
+    .primaryKey()
+    .references(() => weatherLocation.id, { onDelete: "cascade" }),
+  forecast: text("forecast", { mode: "json" }).$type<Forecast>(),
+  fetchedAt: text("fetched_at"),
+  attemptedAt: text("attempted_at").notNull(),
+});

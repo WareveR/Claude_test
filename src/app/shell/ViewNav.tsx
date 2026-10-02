@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, NavLink } from "react-router";
 import type { PlainDate } from "../../core/plain-date";
@@ -14,6 +15,7 @@ export function ViewNav({
   previous,
   next,
   newPath,
+  extra,
 }: {
   date: PlainDate;
   title?: string;
@@ -21,6 +23,8 @@ export function ViewNav({
   next?: string;
   /** Where "+" leads; a new Entry on the view's date unless given. */
   newPath?: string;
+  /** Shown beside the title. */
+  extra?: ReactNode;
 }) {
   const { t } = useTranslation();
   return (
@@ -52,6 +56,7 @@ export function ViewNav({
         </div>
       )}
       {title && <h1 className="text-lg font-semibold first-letter:uppercase">{title}</h1>}
+      {extra}
       <div className="ml-auto">
         <FilterButton />
       </div>

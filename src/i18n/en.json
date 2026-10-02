@@ -334,5 +334,34 @@
   },
   "offline": {
     "notice": "You're offline. This is the last loaded calendar; changes need a connection."
+  },
+  "weather": {
+    "title": "Weather",
+    "hint": "The selected place is used on every device.",
+    "selected": "Selected",
+    "use": "Use",
+    "usePlace": "Use {{name}}",
+    "remove": "Remove",
+    "removePlace": "Remove {{name}}",
+    "town": "Town",
+    "search": "Search",
+    "save": "Save",
+    "savePlace": "Save {{name}}",
+    "full": "Up to {{max}} places.",
+    "noResults": "No places found.",
+    "searchFailed": "The search is not available right now.",
+    "confirm": "Open the forecast on {{site}}?",
+    "open": "Open",
+    "cancel": "Cancel",
+    "kind": {
+      "sunny": "Sunny",
+      "partlyCloudy": "Partly cloudy",
+      "cloudy": "Cloudy",
+      "rain": "Rain",
+      "showers": "Showers",
+      "thunder": "Thunder",
+      "snow": "Snow",
+      "fog": "Fog"
+    }
   }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 import { daySpan } from "../../core/entry-time";
 import { layoutBars, layoutLanes } from "../../core/layout";
@@ -22,6 +22,8 @@ export type TimeGridProps = {
   locale: string;
   /** Public Holiday names by date. */
   holidays?: Map<string, string[]>;
+  /** Something to show under a day's name, like its weather. */
+  dayExtra?: (day: PlainDate) => ReactNode;
 };
 
 function isWeekend(date: PlainDate) {
@@ -41,6 +43,7 @@ export function TimeGrid({
   nowMinutes,
   locale,
   holidays = new Map(),
+  dayExtra,
 }: TimeGridProps) {
   const navigate = useNavigate();
   const scroller = useRef<HTMLDivElement>(null);
@@ -71,6 +74,7 @@ export function TimeGrid({
             className={`py-1 text-center text-xs font-semibold first-letter:uppercase ${holidays.has(day) ? "bg-holiday text-holiday-ink" : isWeekend(day) ? "bg-weekend text-weekend-ink" : ""} ${day === today ? "text-accent" : ""}`}
           >
             {formatPlainDate(day, locale, { weekday: "short", day: "numeric" })}
+            {dayExtra?.(day)}
           </div>
         ))}
       </div>
