@@ -45,7 +45,8 @@
     "tasks": "Tarefas",
     "today": "Hoje",
     "previous": "Anterior",
-    "next": "Seguinte"
+    "next": "Seguinte",
+    "nothing": "Nada neste dia."
   },
   "settings": {
     "title": "Definições",

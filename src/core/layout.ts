@@ -1,4 +1,4 @@
-import { addDays, type PlainDate } from "./plain-date";
+import { addDays, daysInMonth, startOfWeek, type PlainDate } from "./plain-date";
 
 /** Places overlapping blocks of one day side by side: each gets a lane and the lane count. */
 export function layoutLanes<T extends { start: number; end: number }>(
@@ -56,4 +56,16 @@ export function layoutBars<T extends { startDate: PlainDate; endDate: PlainDate 
 
 function dayIndex(from: PlainDate, to: PlainDate): number {
   return Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000);
+}
+
+/** The Monday-first weeks covering a month, as dates. */
+export function monthWeeks(month: PlainDate): PlainDate[][] {
+  const [y, m] = month.split("-").map(Number);
+  const first = startOfWeek(month);
+  const last = `${month.slice(0, 7)}-${String(daysInMonth(y, m)).padStart(2, "0")}`;
+  const weeks: PlainDate[][] = [];
+  for (let monday = first; monday <= last; monday = addDays(monday, 7)) {
+    weeks.push(Array.from({ length: 7 }, (_, i) => addDays(monday, i)));
+  }
+  return weeks;
 }
