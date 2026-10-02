@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import type { Segment } from "../../core/briefing";
 import { api } from "../api";
+import { usePersonFilter } from "../filter/model";
 
 type Briefing = { segments: Segment[]; fallback: boolean; writtenAt: string } | null;
 
@@ -49,18 +50,25 @@ function SegmentText({ segment }: { segment: Segment }) {
   );
 }
 
-/** The AI-written Briefing atop today's day view; never written on load, only by Refresh. */
+/**
+ * The AI-written Briefing atop today's day view; never written on load, only by Refresh. With
+ * exactly one Person filtered it is that Person's, otherwise the Family's.
+ */
 export function BriefingBand() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const client = useQueryClient();
   const [collapsed, setCollapsed] = useState(readCollapsed);
+  const { personIds } = usePersonFilter();
+  const person = personIds.length === 1 ? personIds[0] : null;
+  const query = person ? `?person=${encodeURIComponent(person)}` : "";
+  const key = ["briefing", person ?? "family", i18n.language];
   const briefing = useQuery({
-    queryKey: ["briefing"],
-    queryFn: () => api<Briefing>("/briefing"),
+    queryKey: key,
+    queryFn: () => api<Briefing>(`/briefing${query}`),
   });
   const refresh = useMutation({
-    mutationFn: () => api<Briefing>("/briefing/refresh", { method: "POST" }),
-    onSuccess: (data) => client.setQueryData(["briefing"], data),
+    mutationFn: () => api<Briefing>(`/briefing/refresh${query}`, { method: "POST" }),
+    onSuccess: (data) => client.setQueryData(key, data),
   });
   const data = briefing.data;
   return (

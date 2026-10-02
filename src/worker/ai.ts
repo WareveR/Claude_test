@@ -54,7 +54,12 @@ function describe(c: Candidate, i: number, language: Language) {
 }
 
 /** The prompt for one Briefing; candidates are already free of notes and Private items. */
-export function briefingPrompt(candidates: Candidate[], today: PlainDate, language: Language) {
+export function briefingPrompt(
+  candidates: Candidate[],
+  today: PlainDate,
+  language: Language,
+  personName?: string,
+) {
   const locale = language === "en" ? "en-GB" : "pt-PT";
   const day = formatPlainDate(today, locale, {
     weekday: "long",
@@ -67,6 +72,9 @@ export function briefingPrompt(candidates: Candidate[], today: PlainDate, langua
       role: "system",
       content: [
         `You write the short morning briefing of a family calendar, in ${LANGUAGE_NAMES[language]}.`,
+        personName
+          ? `This briefing is for ${personName}: speak to them, about what is theirs and what the whole family does.`
+          : "This briefing is for the whole family.",
         "Pick 3 to 5 items from the numbered list, favouring HIGH importance, overdue items and the nearest dates.",
         "Write 2 to 4 short, warm, plain sentences saying what is coming up and what deserves attention. Say dates relative to today (today, tomorrow, on Friday, in 10 days).",
         "You may end with one practical suggestion or question. Use only facts from the list; never invent events.",
@@ -115,13 +123,16 @@ export async function writeBriefing(
   candidates: Candidate[],
   today: PlainDate,
   language: Language,
+  personName?: string,
 ): Promise<Segment[] | null> {
   if (candidates.length === 0) return null;
   try {
     const result = await model.run(env, {
-      messages: briefingPrompt(candidates, today, language),
+      messages: briefingPrompt(candidates, today, language, personName),
       response_format: { type: "json_schema", json_schema: BRIEFING_SCHEMA },
     });
+    // Token counts, to check real use against the free daily allowance (docs/runbooks/workers-ai.md).
+    if (result && "usage" in result) console.log("briefing usage", JSON.stringify(result.usage));
     return parseBriefing(result?.response, candidates);
   } catch (error) {
     console.warn("briefing model", error);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { briefingCandidates, countdown, type BriefingInput } from "./briefing";
+import { briefingCandidates, countdown, forPerson, weekOf, type BriefingInput } from "./briefing";
 
 const TODAY = "2026-10-02";
 
@@ -154,5 +154,37 @@ describe("countdown", () => {
     expect(countdown([], TODAY, "pt-PT")).toEqual([
       { text: "Nada marcado para os próximos dias." },
     ]);
+  });
+});
+
+describe("forPerson and weekOf", () => {
+  it("gives a Person what is theirs and Family-wide; a Checklist when any Task is", () => {
+    const candidates = briefingCandidates(
+      input({
+        entries: [entry(), entry({ id: "e2", title: "Bia's party", personIds: ["p2"] })],
+        tasks: [
+          task({ personIds: [] }),
+          task({ id: "t2", checklistId: "c1", personIds: ["p2"] }),
+          task({ id: "t3", checklistId: "c1", personIds: ["p1"] }),
+        ],
+        checklists: [{ id: "c1", name: "School", startDate: null, endDate: "2026-10-04" }],
+      }),
+    );
+    expect(forPerson(candidates, "p1").map((c) => c.title)).toEqual([
+      "Pay the school",
+      "School",
+      "Dentist",
+    ]);
+    expect(forPerson(candidates, "p3").map((c) => c.title)).toEqual(["Pay the school"]);
+  });
+
+  it("changes only when the next 7 days do", () => {
+    const week = (date: string) =>
+      weekOf(
+        briefingCandidates(input({ tasks: [task(), task({ id: "t2", dueDate: date })] })),
+        TODAY,
+      );
+    expect(week("2026-11-20")).toBe(week("2026-12-01"));
+    expect(week("2026-10-08")).not.toBe(week("2026-11-20"));
   });
 });

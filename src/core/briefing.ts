@@ -4,13 +4,16 @@ import type { Importance } from "./entry-type";
 import type { EntryTime } from "./entry-time";
 import type { Language } from "./languages";
 import { occurrencesOf, type OccurrenceException } from "./occurrences";
+import { matchesFilter } from "./person-filter";
 import { addDays, daysBetween, formatPlainDate, type PlainDate } from "./plain-date";
 import type { Repetition } from "./repetition";
 
 /** How far ahead the Briefing looks. */
 export const BRIEFING_DAYS = 60;
 /** At most this many candidates go to the model, the most pressing first. */
-const MAX_CANDIDATES = 40;
+export const MAX_CANDIDATES = 40;
+/** A change this close makes the Briefing out of date. */
+export const REWRITE_DAYS = 7;
 const FALLBACK_ITEMS = 5;
 
 /** Something the Briefing may mention: only titles, dates, Persons' names and Importance. */
@@ -22,6 +25,8 @@ export type Candidate = {
   time: string | null;
   title: string;
   persons: string[];
+  /** Who it is for, to pick a Person's Briefing; never sent to the model. Empty is Family-wide. */
+  personIds: string[];
   importance: Importance;
   /** A Task past its due date, or a Checklist's "3/8". */
   detail?: "overdue" | `${number}/${number}`;
@@ -81,7 +86,7 @@ const RANK: Record<Importance, number> = { high: 0, normal: 1, low: 2 };
  * their progress, and Public Holidays. The most pressing first: overdue, then by date, then
  * High Importance.
  */
-export function briefingCandidates(input: BriefingInput): Candidate[] {
+export function briefingCandidates(input: BriefingInput, max = MAX_CANDIDATES): Candidate[] {
   const { today } = input;
   const last = addDays(today, BRIEFING_DAYS - 1);
   const names = (ids: string[]) =>
@@ -103,6 +108,7 @@ export function briefingCandidates(input: BriefingInput): Candidate[] {
         time: o.time.allDay || date !== o.time.startDate ? null : o.time.startTime,
         title: birthdayTitle(fields.title, age),
         persons: names(fields.personIds),
+        personIds: fields.personIds,
         importance: entry.importance,
       });
     }
@@ -119,6 +125,7 @@ export function briefingCandidates(input: BriefingInput): Candidate[] {
       time: task.dueTime,
       title: task.title,
       persons: names(task.personIds),
+      personIds: task.personIds,
       importance: overdue ? "high" : "normal",
       ...(overdue ? { detail: "overdue" as const } : {}),
     });
@@ -137,6 +144,10 @@ export function briefingCandidates(input: BriefingInput): Candidate[] {
       time: null,
       title: checklist.name,
       persons: [],
+      // Shown to a Person when any of its Tasks is theirs or Family-wide.
+      personIds: tasks.some((t) => t.personIds.length === 0)
+        ? []
+        : [...new Set(tasks.flatMap((t) => t.personIds))],
       importance: "normal",
       detail: `${done}/${total}`,
     });
@@ -152,6 +163,7 @@ export function briefingCandidates(input: BriefingInput): Candidate[] {
         time: null,
         title,
         persons: [],
+        personIds: [],
         importance: "low",
       });
     }
@@ -165,7 +177,23 @@ export function briefingCandidates(input: BriefingInput): Candidate[] {
         RANK[a.importance] - RANK[b.importance] ||
         (a.time ?? "").localeCompare(b.time ?? ""),
     )
-    .slice(0, MAX_CANDIDATES);
+    .slice(0, max);
+}
+
+/** A Person's Briefing: what is theirs and what is Family-wide. */
+export function forPerson(candidates: Candidate[], personId: string): Candidate[] {
+  const filter = { personIds: [personId], familyWide: true, holidays: true };
+  return candidates.filter((c) => matchesFilter(c.personIds, filter));
+}
+
+/** The next 7 days (and anything overdue) as a string; when it changes, the Briefing is rewritten. */
+export function weekOf(candidates: Candidate[], today: PlainDate): string {
+  const last = addDays(today, REWRITE_DAYS - 1);
+  return JSON.stringify(
+    candidates
+      .filter((c) => c.date <= last)
+      .map((c) => [c.kind, c.id, c.date, c.time, c.title, c.persons, c.importance, c.detail]),
+  );
 }
 
 /** The link a candidate's phrase opens, if any. */

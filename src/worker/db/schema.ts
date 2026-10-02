@@ -332,7 +332,7 @@ export const weatherCache = sqliteTable("weather_cache", {
   attemptedAt: text("attempted_at").notNull(),
 });
 
-/** The latest Briefing per scope ("family", later a Person) and language. */
+/** The latest Briefing per scope ("family" or a Person's id) and language. */
 export const briefing = sqliteTable(
   "briefing",
   {
@@ -342,6 +342,13 @@ export const briefing = sqliteTable(
     /** Written as the countdown list because the model failed. */
     fallback: integer("fallback", { mode: "boolean" }).notNull(),
     writtenAt: text("written_at").notNull(),
+    /** What the next 7 days looked like when written; a change means a rewrite. */
+    week: text("week").notNull().default(""),
   },
   (t) => [primaryKey({ columns: [t.scope, t.language] })],
 );
+
+/** One row while an Entry or Task changed since the Scheduler last checked the Briefings. */
+export const briefingPending = sqliteTable("briefing_pending", {
+  id: integer("id").primaryKey(),
+});

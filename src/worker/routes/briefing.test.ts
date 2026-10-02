@@ -128,4 +128,103 @@ describe("Briefing", () => {
     await setUpFamily();
     expect((await new TestBrowser("192.0.2.92").get("/briefing")).status).toBe(401);
   });
+
+  describe("per Person, language and rewrites", () => {
+    const at = (iso: string) => runScheduler(new Date(iso));
+    const NOON = "2026-10-02T11:00:00Z";
+
+    async function family() {
+      const browser = await setUpFamily();
+      const person = async (name: string) =>
+        (
+          (await (await browser.post("/persons", { name, color: "#e07a5f" })).json()) as {
+            id: string;
+          }
+        ).id;
+      const ana = await person("Ana");
+      const rui = await person("Rui");
+      const types = (await (await browser.get("/entry-types")).json()) as {
+        id: string;
+        builtinKey: string;
+      }[];
+      const typeId = types.find((t) => t.builtinKey === "appointment")!.id;
+      const entry = (title: string, date: string, personIds: string[]) => ({
+        title,
+        entryTypeId: typeId,
+        time: { allDay: true, startDate: date, endDate: date },
+        personIds,
+      });
+      const add = async (title: string, date: string, personIds: string[] = []) =>
+        (
+          (await (await browser.post("/entries", entry(title, date, personIds))).json()) as {
+            id: string;
+          }
+        ).id;
+      await add("Swimming", "2026-10-03", [ana]);
+      await add("Football", "2026-10-03", [rui]);
+      await add("Picnic", "2026-10-04");
+      return { browser, ana, rui, add, entry };
+    }
+
+    const rows = async () =>
+      (
+        await env.DB.prepare(
+          "SELECT scope, language, written_at AS writtenAt FROM briefing ORDER BY scope, language",
+        ).all<{ scope: string; language: string; writtenAt: string }>()
+      ).results;
+
+    it("keeps one per Family and Person; a Person's has theirs and the Family-wide", async () => {
+      const { browser, ana } = await family();
+      await browser.request("PATCH", "/device", { language: "en" });
+      await at(NOON);
+      // Family and two Persons, in the Family Language and the device's.
+      expect(await rows()).toHaveLength(6);
+      const forAna = prompts.find((p) => JSON.stringify(p).includes("briefing is for Ana"));
+      expect(JSON.stringify(forAna)).toContain("Swimming");
+      expect(JSON.stringify(forAna)).toContain("Picnic");
+      expect(JSON.stringify(forAna)).not.toContain("Football");
+
+      answer = (p) => ({
+        segments: [
+          {
+            text: JSON.stringify(p).includes("briefing is for Ana") ? "Ana's" : "Family's",
+            item: null,
+          },
+        ],
+      });
+      await env.DB.prepare("UPDATE briefing SET written_at = '2000-01-01T00:00:00.000Z'").run();
+      const mine = (await (
+        await browser.post(`/briefing/refresh?person=${ana}`)
+      ).json()) as Briefing;
+      expect(mine?.segments[0].text).toBe("Ana's");
+      const got = (await (await browser.get(`/briefing?person=${ana}`)).json()) as Briefing;
+      expect(got).toEqual(mine);
+      const unknown = (await (await browser.get("/briefing?person=nobody")).json()) as Briefing;
+      expect(unknown?.segments[0].text).toBe("A quiet week.");
+    });
+
+    it("rewrites on the next run only the Briefings whose next 7 days changed", async () => {
+      const { ana, add } = await family();
+      await at(NOON);
+      const first = await rows();
+      prompts = [];
+
+      // Far away: nothing to rewrite.
+      await add("Dentist", "2026-11-20", [ana]);
+      await at("2026-10-02T11:05:00Z");
+      expect(prompts).toHaveLength(0);
+
+      // A burst of edits close by: one rewrite, of the Family's and Ana's only.
+      await add("Vet", "2026-10-05", [ana]);
+      await add("Haircut", "2026-10-06", [ana]);
+      await at("2026-10-02T11:10:00Z");
+      await at("2026-10-02T11:15:00Z");
+      expect(prompts).toHaveLength(2);
+      const after = await rows();
+      const changed = after
+        .filter((r, i) => r.writtenAt !== first[i].writtenAt)
+        .map((r) => r.scope);
+      expect(changed.sort()).toEqual(["family", ana].sort());
+    });
+  });
 });

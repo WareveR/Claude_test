@@ -15,7 +15,7 @@ import { errorRoutes, unexpectedError } from "./routes/errors";
 import { feedRoutes, publicFeedRoutes } from "./routes/feeds";
 import { weatherRoutes } from "./routes/weather";
 import { exportRoutes } from "./routes/export";
-import { briefingRoutes } from "./routes/briefing";
+import { briefingRoutes, markBriefingsStale } from "./routes/briefing";
 import { apiSecureHeaders, sameOriginOnly } from "./security";
 import type { AppEnv } from "./types";
 
@@ -35,6 +35,9 @@ app.get("/health", async (c) => {
   const families = await c.get("db").select({ id: schema.family.id }).from(schema.family).limit(1);
   return c.json({ status: "ok", familyExists: families.length > 0 });
 });
+
+// A change to an Entry or Task may make the Briefings out of date.
+for (const path of ["/entries/*", "/tasks/*", "/checklists/*"]) app.use(path, markBriefingsStale);
 
 app.route("/", authRoutes);
 // Before any route group that requires a signed-in device.
