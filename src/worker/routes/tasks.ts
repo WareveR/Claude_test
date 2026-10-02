@@ -21,6 +21,7 @@ export type TaskInput = {
   personIds: string[];
   private: boolean;
   repetition: Repetition | null;
+  checklistId: string | null;
 };
 
 /** Validates a whole Task; returns the bad field's name or the clean values. */
@@ -33,8 +34,21 @@ async function parseTask(db: Db, body: Record<string, unknown>) {
   }
   const dueTime = body.dueTime ?? null;
   if (dueTime !== null && (!isClockTime(dueTime) || dueDate === null)) return { field: "dueTime" };
+  const checklistId = body.checklistId ?? null;
+  if (checklistId !== null) {
+    if (typeof checklistId !== "string") return { field: "checklistId" };
+    const [found] = await db
+      .select({ id: schema.checklist.id })
+      .from(schema.checklist)
+      .where(eq(schema.checklist.id, checklistId));
+    if (!found) return { field: "checklistId" };
+  }
+  // A Checklist's Tasks come back with the Checklist's rounds, never on their own.
   const repetition = body.repetition ?? null;
-  if (repetition !== null && (!isRepetition(repetition) || dueDate === null)) {
+  if (
+    repetition !== null &&
+    (!isRepetition(repetition) || dueDate === null || checklistId !== null)
+  ) {
     return { field: "repetition" };
   }
   const personIds = Array.isArray(body.personIds) ? [...new Set(body.personIds)] : [];
@@ -55,6 +69,7 @@ async function parseTask(db: Db, body: Record<string, unknown>) {
       personIds: personIds as string[],
       private: Boolean(body.private),
       repetition: repetition as Repetition | null,
+      checklistId: checklistId as string | null,
     } satisfies TaskInput,
   };
 }
@@ -81,6 +96,7 @@ async function present(db: Db, rows: TaskRow[]) {
     doneAt: row.doneAt,
     repetition: row.repetition ?? null,
     seriesId: row.seriesId,
+    checklistId: row.checklistId,
     createdAt: row.createdAt,
     changedAt: row.changedAt,
   }));

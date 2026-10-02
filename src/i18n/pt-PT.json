@@ -217,5 +217,20 @@
     "accordion_other": "Tarefas {{count}}",
     "overdueCount_one": "{{count}} atrasada",
     "overdueCount_other": "{{count}} atrasadas"
+  },
+  "checklists": {
+    "new": "Nova checklist",
+    "name": "Nome",
+    "start": "Começa (opcional)",
+    "end": "Acaba",
+    "periodHint": "Antes do início não está pendente; no fim, as Tarefas por fazer ficam atrasadas, incluindo as sem data.",
+    "persons": "Para quem (por omissão nas novas Tarefas)",
+    "personsHint": "Cada Tarefa mantém as suas Pessoas.",
+    "progress": "{{done}} de {{total}}",
+    "addTask": "Adicionar tarefa",
+    "edit": "Editar checklist",
+    "delete": "Apagar checklist",
+    "confirmDelete": "Apagar \"{{name}}\" e as suas Tarefas de vez?",
+    "inChecklist": "Na checklist \"{{name}}\"."
   }
 }

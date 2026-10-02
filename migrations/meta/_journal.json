@@ -64,6 +64,13 @@
       "when": 1790931657755,
       "tag": "0008_repeating_tasks",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1790932286236,
+      "tag": "0009_checklists",
+      "breakpoints": true
     }
   ]
 }

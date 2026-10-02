@@ -1,6 +1,10 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { familyNow, groupTasks, isOverdue } from "../../core/task";
+import { Link } from "react-router";
+import { checklistGroup, isChecklistTaskOverdue } from "../../core/checklist";
+import { familyNow, groupTasks, isOverdue, type TaskGroups } from "../../core/task";
+import { ChecklistRow } from "../checklists/ChecklistRow";
+import { useChecklists, type Checklist } from "../checklists/model";
 import { useSignedIn } from "../family";
 import { usePersons } from "../persons/model";
 import { useNow } from "../shell/useNow";
@@ -9,49 +13,99 @@ import { useTasks, type Task } from "./model";
 import { TaskRow } from "./TaskRow";
 
 const GROUPS = ["overdue", "today", "upcoming", "noDate"] as const;
+type Group = keyof TaskGroups<Task>;
 
-/** Overdue, Today, Upcoming and No date, with done Tasks behind "Show done". */
+/**
+ * Overdue, Today, Upcoming and No date, with done Tasks behind "Show done". A Checklist is one
+ * row in the group of its end; its dated Tasks also show alone, its undated ones only inside it.
+ */
 export function TasksView() {
   const { t } = useTranslation();
   const { family } = useSignedIn();
   const now = familyNow(family.timeZone, useNow());
   const tasks = useTasks();
+  const checklists = useChecklists().data ?? [];
   const persons = usePersons().data ?? [];
   const [showDone, setShowDone] = useState(false);
-  const groups = groupTasks(tasks.data ?? [], now);
-  const row = (task: Task) => (
-    <TaskRow key={task.id} task={task} overdue={isOverdue(task, now)} persons={persons} />
+  const all = tasks.data ?? [];
+  const checklistOf = (task: Task) => checklists.find((c) => c.id === task.checklistId);
+  const groups = groupTasks(
+    all.filter((task) => !task.checklistId || task.dueDate),
+    now,
   );
-  const empty = GROUPS.every((g) => groups[g].length === 0);
+  const listsIn: Record<Group, Checklist[]> = {
+    overdue: [],
+    today: [],
+    upcoming: [],
+    noDate: [],
+    done: [],
+  };
+  for (const checklist of checklists) {
+    const own = all.filter((task) => task.checklistId === checklist.id);
+    listsIn[checklistGroup(checklist, own, now)].push(checklist);
+  }
+
+  const row = (task: Task) => {
+    const checklist = checklistOf(task);
+    return (
+      <TaskRow
+        key={task.id}
+        task={task}
+        overdue={checklist ? isChecklistTaskOverdue(task, checklist, now) : isOverdue(task, now)}
+        persons={persons}
+        label={checklist?.name}
+      />
+    );
+  };
+  const listRow = (checklist: Checklist) => (
+    <ChecklistRow
+      key={checklist.id}
+      checklist={checklist}
+      tasks={all.filter((task) => task.checklistId === checklist.id)}
+      persons={persons}
+      now={now}
+    />
+  );
+  const count = (g: Group) => groups[g].length + listsIn[g].length;
+  const section = (g: Group, title: ReactNode) => (
+    <section key={g} aria-label={t(`tasks.groups.${g}`)}>
+      {title}
+      <ul className="divide-y divide-line">
+        {listsIn[g].map(listRow)}
+        {groups[g].map(row)}
+      </ul>
+    </section>
+  );
 
   return (
     <>
       <ViewNav date={now.today} title={t("views.tasks")} newPath="/tasks/new" />
       <main className="mx-auto flex w-full max-w-xl flex-col gap-4 px-4 pb-6">
-        {tasks.data && empty && <p className="text-muted">{t("tasks.nothingLeft")}</p>}
-        {GROUPS.filter((g) => groups[g].length > 0).map((g) => (
-          <section key={g} aria-label={t(`tasks.groups.${g}`)}>
+        <Link to="/checklists/new" className="self-end text-sm underline">
+          {t("checklists.new")}
+        </Link>
+        {tasks.data && GROUPS.every((g) => count(g) === 0) && (
+          <p className="text-muted">{t("tasks.nothingLeft")}</p>
+        )}
+        {GROUPS.filter((g) => count(g) > 0).map((g) =>
+          section(
+            g,
             <h2
               className={`text-sm font-semibold uppercase tracking-wide ${g === "overdue" ? "text-overdue" : "text-muted"}`}
             >
-              {t(`tasks.groups.${g}`)} · {groups[g].length}
-            </h2>
-            <ul className="divide-y divide-line">{groups[g].map(row)}</ul>
-          </section>
-        ))}
+              {t(`tasks.groups.${g}`)} · {count(g)}
+            </h2>,
+          ),
+        )}
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
             checked={showDone}
             onChange={(e) => setShowDone(e.target.checked)}
           />
-          {t("tasks.showDone", { count: groups.done.length })}
+          {t("tasks.showDone", { count: count("done") })}
         </label>
-        {showDone && groups.done.length > 0 && (
-          <section aria-label={t("tasks.groups.done")}>
-            <ul className="divide-y divide-line">{groups.done.map(row)}</ul>
-          </section>
-        )}
+        {showDone && count("done") > 0 && section("done", null)}
       </main>
     </>
   );

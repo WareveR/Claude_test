@@ -217,5 +217,20 @@
     "accordion_other": "Tasks {{count}}",
     "overdueCount_one": "{{count}} overdue",
     "overdueCount_other": "{{count}} overdue"
+  },
+  "checklists": {
+    "new": "New checklist",
+    "name": "Name",
+    "start": "Starts (optional)",
+    "end": "Ends",
+    "periodHint": "Before its start it isn't pending; at its end its undone Tasks are overdue, undated ones included.",
+    "persons": "For whom (default for new Tasks)",
+    "personsHint": "Each Task keeps its own Persons.",
+    "progress": "{{done}} of {{total}}",
+    "addTask": "Add a task",
+    "edit": "Edit checklist",
+    "delete": "Delete checklist",
+    "confirmDelete": "Delete \"{{name}}\" and its Tasks for good?",
+    "inChecklist": "In the checklist \"{{name}}\"."
   }
 }

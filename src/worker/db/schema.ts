@@ -164,6 +164,8 @@ export const task = sqliteTable("task", {
   seriesId: text("series_id"),
   /** The Task whose tick created this one; undoing that tick removes it if still untouched. */
   repeatOf: text("repeat_of"),
+  /** The Checklist this Task belongs to, if any; such a Task doesn't repeat on its own. */
+  checklistId: text("checklist_id").references(() => checklist.id, { onDelete: "cascade" }),
   createdAt: text("created_at").notNull(),
   changedAt: text("changed_at").notNull(),
 });
@@ -180,4 +182,31 @@ export const taskPerson = sqliteTable(
       .references(() => person.id),
   },
   (t) => [primaryKey({ columns: [t.taskId, t.personId] })],
+);
+
+/**
+ * A group of ordinary Tasks with progress, such as summer cleaning. Its optional period makes it
+ * not pending before the start and its undone Tasks overdue at the end. No Private switch.
+ */
+export const checklist = sqliteTable("checklist", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  startDate: text("start_date"),
+  endDate: text("end_date"),
+  createdAt: text("created_at").notNull(),
+  changedAt: text("changed_at").notNull(),
+});
+
+/** A Checklist's Persons: only the default for its new Tasks, each Task keeps its own. */
+export const checklistPerson = sqliteTable(
+  "checklist_person",
+  {
+    checklistId: text("checklist_id")
+      .notNull()
+      .references(() => checklist.id, { onDelete: "cascade" }),
+    personId: text("person_id")
+      .notNull()
+      .references(() => person.id),
+  },
+  (t) => [primaryKey({ columns: [t.checklistId, t.personId] })],
 );
