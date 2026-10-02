@@ -88,7 +88,8 @@
     "archiveHint": "An archived Person leaves pickers and filters but stays on past Entries and Tasks.",
     "delete": "Delete",
     "confirmDelete": "Delete {{name}} for good?",
-    "inUse": "Entries or Tasks mention this Person. Archive them instead."
+    "inUse": "Entries or Tasks mention this Person. Archive them instead.",
+    "keepBirthday": "Keep {{name}}'s Birthday on the calendar, for the whole Family? Cancel removes it."
   },
   "entryTypes": {
     "title": "Entry Types",
@@ -175,7 +176,11 @@
     "privateHint": "Stays discreet on the wall, in Reminders, in the Feed and in the Briefing.",
     "badTime": "The end must come after the start.",
     "delete": "Delete entry",
-    "confirmDelete": "Delete \"{{title}}\" for good? This can't be undone."
+    "confirmDelete": "Delete \"{{title}}\" for good? This can't be undone.",
+    "birthdaySynced": "This Birthday follows {{name}}'s date of birth: change its date or Person on the Person.",
+    "openPerson": "Open the Person",
+    "birthYearKnown": "Birth year known (the date above is the date of birth, so the age shows)",
+    "birthdayLocked": "This Birthday's date and Person change only on its Person."
   },
   "scope": {
     "saveTitle": "Save the change for…",

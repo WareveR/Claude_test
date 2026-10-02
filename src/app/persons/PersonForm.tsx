@@ -29,6 +29,8 @@ function PersonForm({ person }: { person?: Person }) {
   const [uploading, setUploading] = useState(false);
   const done = async () => {
     await queryClient.invalidateQueries({ queryKey: ["persons"] });
+    // A date of birth keeps the Person's Birthday Entry in sync.
+    await queryClient.invalidateQueries({ queryKey: ["entries"] });
     navigate("/settings");
   };
   const save = useMutation({
@@ -47,8 +49,8 @@ function PersonForm({ person }: { person?: Person }) {
     onSuccess: done,
   });
   const archive = useMutation({
-    mutationFn: (archived: boolean) =>
-      api(`/persons/${person!.id}`, { method: "PATCH", body: { archived } }),
+    mutationFn: (body: { archived: boolean; keepBirthday?: boolean }) =>
+      api(`/persons/${person!.id}`, { method: "PATCH", body }),
     onSuccess: done,
   });
   const remove = useMutation({
@@ -154,7 +156,19 @@ function PersonForm({ person }: { person?: Person }) {
           <button
             type="button"
             className="self-start underline"
-            onClick={() => archive.mutate(!person.archived)}
+            onClick={() =>
+              archive.mutate(
+                person.archived
+                  ? { archived: false }
+                  : {
+                      archived: true,
+                      // A separation or a death: ask whether the Birthday stays on the calendar.
+                      keepBirthday:
+                        Boolean(person.dateOfBirth) &&
+                        window.confirm(t("persons.keepBirthday", { name: person.name })),
+                    },
+              )
+            }
           >
             {person.archived ? t("persons.unarchive") : t("persons.archive")}
           </button>
