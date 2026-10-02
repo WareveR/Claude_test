@@ -158,3 +158,40 @@ describe("Entries", () => {
     );
   });
 });
+
+describe("repeating Entries", () => {
+  it("stores the Repetition and returns the Entry for any later window", async () => {
+    const { browser } = await family();
+    const activity = await typeId(browser, "activity");
+    const karate = await browser.post("/entries", {
+      title: "Karate",
+      entryTypeId: activity,
+      time: {
+        allDay: false,
+        startDate: "2026-10-06",
+        startTime: "18:00",
+        endDate: "2026-10-06",
+        endTime: "19:00",
+      },
+      repetition: { frequency: "weekly", interval: 1, weekdays: [1, 3], end: { type: "never" } },
+    });
+    expect(karate.status).toBe(201);
+    const later = (await (
+      await browser.get("/entries?from=2027-03-01&to=2027-03-07")
+    ).json()) as Entry[];
+    expect(later.map((e) => e.title)).toEqual(["Karate"]);
+    const before = (await (
+      await browser.get("/entries?from=2026-09-01&to=2026-09-07")
+    ).json()) as Entry[];
+    expect(before).toEqual([]);
+  });
+
+  it("refuses a broken Repetition", async () => {
+    const { browser, appointment } = await family();
+    const res = await browser.post("/entries", {
+      ...dentist(appointment, []),
+      repetition: { frequency: "weekly", interval: 0, end: { type: "never" } },
+    });
+    expect(res.status).toBe(400);
+  });
+});

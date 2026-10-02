@@ -1,4 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
+import { occurrencesOf } from "../../core/occurrences";
 import type { EntryTime } from "../../core/entry-time";
 import type { Importance } from "../../core/entry-type";
 import type { PlainDate } from "../../core/plain-date";
@@ -20,7 +22,10 @@ export type Entry = {
   repetition: Repetition | null;
 };
 
-export type EntryDraft = Omit<Entry, "id" | "repetition">;
+export type EntryDraft = Omit<Entry, "id">;
+
+/** One Occurrence of an Entry, drawn like an Entry but at its own time. */
+export type Shown = Entry & { occurrenceDate: string; key: string };
 
 /** Entries overlapping the window, both ends included. */
 export function useEntries(from: PlainDate, to: PlainDate) {
@@ -36,4 +41,29 @@ export function useEntry(id: string | undefined) {
     queryFn: () => api<Entry>(`/entries/${id}`),
     enabled: Boolean(id),
   });
+}
+
+/** The Occurrences of every Entry touching the window, expanded in the browser. */
+export function useOccurrences(from: PlainDate, to: PlainDate) {
+  const entries = useEntries(from, to);
+  const shown = useMemo(
+    () =>
+      (entries.data ?? []).flatMap((entry) =>
+        occurrencesOf(entry, from, to).map((o): Shown => ({
+          ...entry,
+          time: o.time,
+          occurrenceDate: o.date,
+          key: `${entry.id}:${o.date}`,
+        })),
+      ),
+    [entries.data, from, to],
+  );
+  return { ...entries, data: entries.data ? shown : undefined };
+}
+
+/** Where an Entry opens: a repeating one names its Occurrence. */
+export function entryPath(entry: Entry | Shown): string {
+  return entry.repetition && "occurrenceDate" in entry
+    ? `/entries/${entry.id}?occurrence=${entry.occurrenceDate}`
+    : `/entries/${entry.id}`;
 }

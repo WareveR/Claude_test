@@ -21,6 +21,7 @@ import { PersonAvatar } from "../persons/PersonAvatar";
 import { ErrorText, Field, SubmitButton, TextInput } from "../screens/form";
 import { Icon } from "../ui/Icon";
 import { useEntry, type Entry, type EntryDraft } from "./model";
+import { RepetitionFields } from "./RepetitionFields";
 
 const INPUT =
   "rounded-md border border-line bg-surface px-3 py-2 text-base text-ink dark:border-line";
@@ -56,6 +57,7 @@ function newDraft(type: EntryType, date: string, time: string | null): EntryDraf
       icon: null,
       private: false,
       reminders: [],
+      repetition: null,
     },
     type.defaults,
     time !== null,
@@ -87,6 +89,7 @@ function applyDefaults(draft: EntryDraft, d: EntryTypeDefaults, keepTime: boolea
     notes: d.notes ?? "",
     personIds: d.personIds ?? [],
     reminders: d.reminders ?? [],
+    repetition: d.repetition ?? null,
   };
 }
 
@@ -292,6 +295,12 @@ function EntryForm({ entry, types }: { entry?: Entry; types: EntryType[] }) {
             )}
           </>
         )}
+
+        <RepetitionFields
+          value={draft.repetition}
+          start={draft.time.startDate}
+          onChange={(repetition) => set({ repetition })}
+        />
 
         <fieldset className="flex flex-col gap-1 text-sm">
           <legend className="mb-1 font-medium">{t("entries.persons")}</legend>
