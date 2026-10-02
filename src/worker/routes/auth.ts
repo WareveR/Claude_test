@@ -22,7 +22,12 @@ authRoutes.get("/status", async (c) => {
     signedIn: Boolean(device),
     family:
       family && device
-        ? { name: family.name, language: family.language, timeZone: family.timeZone }
+        ? {
+            name: family.name,
+            language: family.language,
+            timeZone: family.timeZone,
+            holidayPlaces: family.holidayPlaces,
+          }
         : null,
     device: device ? { id: device.id, name: device.name, language: device.language } : null,
   });

@@ -1,5 +1,6 @@
 import { integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import type { EntryTypeDefaults, Importance, ReminderOffset } from "../../core/entry-type";
+import type { HolidayPlace } from "../../core/holidays";
 import type { Repetition } from "../../core/repetition";
 
 /**
@@ -17,6 +18,11 @@ export const family = sqliteTable("family", {
   recoveryEmail: text("recovery_email").notNull().default(""),
   /** SHA-256 of the setup code last used, to notice when the installer sets a new one. */
   setupCodeHash: text("setup_code_hash").notNull().default(""),
+  /** Countries with optional regions and municipality whose Public Holidays show. */
+  holidayPlaces: text("holiday_places", { mode: "json" })
+    .$type<HolidayPlace[]>()
+    .notNull()
+    .default([{ country: "PT" }]),
 });
 
 /** A browser that signed in with the Family Password. Only the session token's hash is kept. */

@@ -20,6 +20,8 @@ export type TimeGridProps = {
   /** Minutes since midnight in the Family Time Zone, for the "now" line. */
   nowMinutes: number;
   locale: string;
+  /** Public Holiday names by date. */
+  holidays?: Map<string, string[]>;
 };
 
 function isWeekend(date: PlainDate) {
@@ -38,6 +40,7 @@ export function TimeGrid({
   today,
   nowMinutes,
   locale,
+  holidays = new Map(),
 }: TimeGridProps) {
   const navigate = useNavigate();
   const scroller = useRef<HTMLDivElement>(null);
@@ -55,6 +58,8 @@ export function TimeGrid({
     days.length,
   );
   const barRows = Math.max(1, ...bars.map((b) => b.row + 1));
+  // Holiday names take their own first line of the all-day row, so bars start below it.
+  const holidayRows = days.some((day) => holidays.has(day)) ? 1 : 0;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-surface">
@@ -63,7 +68,7 @@ export function TimeGrid({
         {days.map((day) => (
           <div
             key={day}
-            className={`py-1 text-center text-xs font-semibold first-letter:uppercase ${isWeekend(day) ? "bg-weekend text-weekend-ink" : ""} ${day === today ? "text-accent" : ""}`}
+            className={`py-1 text-center text-xs font-semibold first-letter:uppercase ${holidays.has(day) ? "bg-holiday text-holiday-ink" : isWeekend(day) ? "bg-weekend text-weekend-ink" : ""} ${day === today ? "text-accent" : ""}`}
           >
             {formatPlainDate(day, locale, { weekday: "short", day: "numeric" })}
           </div>
@@ -72,15 +77,34 @@ export function TimeGrid({
       <div
         data-testid="all-day-row"
         className="grid gap-0.5 border-b border-line py-1"
-        style={{ gridTemplateColumns: columns, gridTemplateRows: `repeat(${barRows}, auto)` }}
+        style={{
+          gridTemplateColumns: columns,
+          gridTemplateRows: `repeat(${barRows + holidayRows}, auto)`,
+        }}
       >
+        {days.map((day, i) => {
+          const names = holidays.get(day);
+          return names ? (
+            <div
+              key={day}
+              data-testid={`holiday-${day}`}
+              className="truncate px-1 text-xs text-holiday-ink"
+              style={{ gridColumn: i + 2, gridRow: 1 }}
+            >
+              {names.join(" · ")}
+            </div>
+          ) : null;
+        })}
         {bars.map((bar) => (
           <EntryBlock
             key={bar.entry.key}
             entry={bar.entry}
             type={typeOf(bar.entry)}
             persons={persons}
-            style={{ gridColumn: `${bar.column + 2} / span ${bar.span}`, gridRow: bar.row + 1 }}
+            style={{
+              gridColumn: `${bar.column + 2} / span ${bar.span}`,
+              gridRow: bar.row + 1 + holidayRows,
+            }}
           />
         ))}
       </div>
@@ -112,7 +136,7 @@ export function TimeGrid({
               <div
                 key={day}
                 data-testid={`day-column-${day}`}
-                className={`relative border-l border-line ${isWeekend(day) ? "bg-weekend/40" : ""}`}
+                className={`relative border-l border-line ${holidays.has(day) ? "bg-holiday/40" : isWeekend(day) ? "bg-weekend/40" : ""}`}
                 onClick={(e) => {
                   if (e.target !== e.currentTarget) return;
                   const y = e.nativeEvent.offsetY;

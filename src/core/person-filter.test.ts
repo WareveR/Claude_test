@@ -8,7 +8,7 @@ import {
 } from "./person-filter";
 
 describe("Person Filter", () => {
-  const kids = { personIds: ["ana", "bia"], familyWide: true };
+  const kids = { personIds: ["ana", "bia"], familyWide: true, holidays: true };
 
   it("shows everything when nothing is picked", () => {
     expect(matchesFilter(["dad"], NO_FILTER)).toBe(true);
@@ -25,7 +25,7 @@ describe("Person Filter", () => {
   it("includes Family-wide items unless switched off", () => {
     expect(matchesFilter([], kids)).toBe(true);
     expect(matchesFilter([], { ...kids, familyWide: false })).toBe(false);
-    expect(matchesFilter(["dad"], { personIds: [], familyWide: false })).toBe(true);
+    expect(matchesFilter(["dad"], { ...NO_FILTER, familyWide: false })).toBe(true);
   });
 
   it("shows a Checklist when any of its Tasks matches", () => {
@@ -39,6 +39,7 @@ describe("Person Filter", () => {
     expect(parseFilter({ personIds: ["ana", 3], familyWide: false })).toEqual({
       personIds: ["ana"],
       familyWide: false,
+      holidays: true,
     });
   });
 });

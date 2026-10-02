@@ -1,3 +1,4 @@
+import type { HolidayPlace } from "../core/holidays";
 export class ApiError extends Error {
   constructor(
     readonly status: number,
@@ -19,7 +20,12 @@ export async function api<T>(path: string, options: { method?: string; body?: un
   return body as T;
 }
 
-export type Family = { name: string; language: string; timeZone: string };
+export type Family = {
+  name: string;
+  language: string;
+  timeZone: string;
+  holidayPlaces: HolidayPlace[];
+};
 export type Device = { id: string; name: string; language: string | null };
 
 export type Status = {

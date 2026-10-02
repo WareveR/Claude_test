@@ -1,10 +1,10 @@
 /**
- * A device's Person Filter: the Persons picked (none picked shows everyone) and whether
- * Family-wide items, those for no Person in particular, are included.
+ * A device's Person Filter: the Persons picked (none picked shows everyone), whether Family-wide
+ * items, those for no Person in particular, are included, and whether Public Holidays show.
  */
-export type PersonFilter = { personIds: string[]; familyWide: boolean };
+export type PersonFilter = { personIds: string[]; familyWide: boolean; holidays: boolean };
 
-export const NO_FILTER: PersonFilter = { personIds: [], familyWide: true };
+export const NO_FILTER: PersonFilter = { personIds: [], familyWide: true, holidays: true };
 
 /** Whether an Entry or Task for these Persons shows: any-of the picked, or Family-wide. */
 export function matchesFilter(itemPersonIds: string[], filter: PersonFilter): boolean {
@@ -29,5 +29,5 @@ export function parseFilter(value: unknown): PersonFilter {
   const personIds = Array.isArray(v.personIds)
     ? v.personIds.filter((id): id is string => typeof id === "string")
     : [];
-  return { personIds, familyWide: v.familyWide !== false };
+  return { personIds, familyWide: v.familyWide !== false, holidays: v.holidays !== false };
 }

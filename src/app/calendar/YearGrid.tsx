@@ -17,12 +17,15 @@ export function YearGrid({
   types,
   today,
   locale,
+  holidays = new Map(),
 }: {
   year: number;
   entries: Entry[];
   types: EntryType[];
   today: PlainDate;
   locale: string;
+  /** Public Holiday names by date. */
+  holidays?: Map<string, string[]>;
 }) {
   const colorOf = (e: Entry) => types.find((t) => t.id === e.entryTypeId)?.color ?? "#607d8b";
   const weekdayLetters = Array.from({ length: 7 }, (_, i) =>
@@ -64,16 +67,21 @@ export function YearGrid({
                   const day = addDays(first, dayNumber - 1);
                   const dayEntries = entriesOn(entries, day);
                   const high = dayEntries.find((e) => e.importance === "high");
+                  const names = holidays.get(day);
                   return (
-                    <td key={c} className={`p-px ${isWeekendColumn(c) ? "bg-weekend" : ""}`}>
+                    <td
+                      key={c}
+                      className={`p-px ${names ? "bg-holiday" : isWeekendColumn(c) ? "bg-weekend" : ""}`}
+                    >
                       <Link
                         to={`/month/${day.slice(0, 7)}?day=${day}`}
                         data-testid={`year-day-${day}`}
+                        title={names?.join(", ")}
                         data-high={high ? "true" : undefined}
                         style={
                           high ? { backgroundColor: colorOf(high), color: "white" } : undefined
                         }
-                        className={`relative flex aspect-square items-center justify-center rounded-sm tabular-nums ${day === today ? "outline-2 outline-accent" : ""} ${isWeekendColumn(c) && !high ? "font-semibold text-weekend-ink" : ""}`}
+                        className={`relative flex aspect-square items-center justify-center rounded-sm tabular-nums ${day === today ? "outline-2 outline-accent" : ""} ${!high && names ? "font-semibold text-holiday-ink" : !high && isWeekendColumn(c) ? "font-semibold text-weekend-ink" : ""}`}
                       >
                         {dayNumber}
                         {!high && dayEntries.length > 0 && (

@@ -1,0 +1,1 @@
+ALTER TABLE `family` ADD `holiday_places` text DEFAULT '[{"country":"PT"}]' NOT NULL;
