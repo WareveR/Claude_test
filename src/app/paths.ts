@@ -7,6 +7,7 @@ export const paths = {
   week: (date: PlainDate) => `/week/${startOfWeek(date)}`,
   month: (date: PlainDate) => `/month/${date.slice(0, 7)}`,
   year: (date: PlainDate) => `/year/${date.slice(0, 4)}`,
+  display: () => "/display",
   tasks: () => "/tasks",
   settings: () => "/settings",
   errorLog: () => "/settings/errors",

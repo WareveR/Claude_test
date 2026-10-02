@@ -40,7 +40,7 @@ function useToday(): PlainDate {
 }
 
 /** A window's Occurrences and Checklist period bars, with the Entry Types to draw them. */
-function useCalendar(from: PlainDate, to: PlainDate) {
+export function useCalendar(from: PlainDate, to: PlainDate) {
   const occurrences = useOccurrences(from, to);
   const bars = useChecklistBars(from, to);
   const types = useEntryTypes();
@@ -142,12 +142,14 @@ function Week({ monday }: { monday: PlainDate }) {
 }
 
 /** The time grid for some days, with the Entries, Entry Types and Persons it needs. */
-function CalendarGrid({
+export function CalendarGrid({
   days,
   dayExtra,
+  readOnly,
 }: {
   days: PlainDate[];
   dayExtra?: (day: PlainDate) => ReactNode;
+  readOnly?: boolean;
 }) {
   const { family } = useSignedIn();
   const locale = useLocale();
@@ -166,6 +168,7 @@ function CalendarGrid({
       locale={locale}
       holidays={holidays}
       dayExtra={dayExtra}
+      readOnly={readOnly}
     />
   );
 }

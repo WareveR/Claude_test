@@ -54,10 +54,12 @@ function SegmentText({ segment }: { segment: Segment }) {
  * The AI-written Briefing atop today's day view; never written on load, only by Refresh. With
  * exactly one Person filtered it is that Person's, otherwise the Family's.
  */
-export function BriefingBand() {
+export function BriefingBand({ readOnly = false }: { readOnly?: boolean }) {
   const { t, i18n } = useTranslation();
   const client = useQueryClient();
-  const [collapsed, setCollapsed] = useState(readCollapsed);
+  const [storedCollapsed, setCollapsed] = useState(readCollapsed);
+  // On the wall the band stays open and cannot be refreshed.
+  const collapsed = !readOnly && storedCollapsed;
   const { personIds } = usePersonFilter();
   const person = personIds.length === 1 ? personIds[0] : null;
   const query = person ? `?person=${encodeURIComponent(person)}` : "";
@@ -79,21 +81,25 @@ export function BriefingBand() {
     >
       <div className="flex items-center gap-2">
         <h2 id="briefing-title" className="flex-1 font-semibold">
-          <button
-            type="button"
-            aria-expanded={!collapsed}
-            aria-controls="briefing-body"
-            className="flex w-full items-center gap-2 text-left"
-            onClick={() => {
-              writeCollapsed(!collapsed);
-              setCollapsed(!collapsed);
-            }}
-          >
-            <span aria-hidden="true">{collapsed ? "▸" : "▾"}</span>
-            {t("briefing.title")}
-          </button>
+          {readOnly ? (
+            t("briefing.title")
+          ) : (
+            <button
+              type="button"
+              aria-expanded={!collapsed}
+              aria-controls="briefing-body"
+              className="flex w-full items-center gap-2 text-left"
+              onClick={() => {
+                writeCollapsed(!collapsed);
+                setCollapsed(!collapsed);
+              }}
+            >
+              <span aria-hidden="true">{collapsed ? "▸" : "▾"}</span>
+              {t("briefing.title")}
+            </button>
+          )}
         </h2>
-        {!collapsed && (
+        {!collapsed && !readOnly && (
           <button
             type="button"
             className="rounded-md border border-line px-3 py-1 text-sm disabled:opacity-50"

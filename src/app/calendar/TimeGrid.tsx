@@ -24,6 +24,8 @@ export type TimeGridProps = {
   holidays?: Map<string, string[]>;
   /** Something to show under a day's name, like its weather. */
   dayExtra?: (day: PlainDate) => ReactNode;
+  /** Display Mode: tapping an empty spot starts nothing. */
+  readOnly?: boolean;
 };
 
 function isWeekend(date: PlainDate) {
@@ -32,7 +34,7 @@ function isWeekend(date: PlainDate) {
 
 /**
  * Day columns with an all-day row on top and a 24-hour time grid below: the body of the
- * day and week views (and of Display Mode later).
+ * day and week views and of the Display Mode board.
  */
 export function TimeGrid({
   days,
@@ -44,6 +46,7 @@ export function TimeGrid({
   locale,
   holidays = new Map(),
   dayExtra,
+  readOnly = false,
 }: TimeGridProps) {
   const navigate = useNavigate();
   const scroller = useRef<HTMLDivElement>(null);
@@ -142,7 +145,7 @@ export function TimeGrid({
                 data-testid={`day-column-${day}`}
                 className={`relative border-l border-line ${holidays.has(day) ? "bg-holiday/40" : isWeekend(day) ? "bg-weekend/40" : ""}`}
                 onClick={(e) => {
-                  if (e.target !== e.currentTarget) return;
+                  if (readOnly || e.target !== e.currentTarget) return;
                   const y = e.nativeEvent.offsetY;
                   const hour = Math.min(23, Math.floor(y / HOUR_PX));
                   navigate(`/entries/new?date=${day}&time=${String(hour).padStart(2, "0")}:00`);

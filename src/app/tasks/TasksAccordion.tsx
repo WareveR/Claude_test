@@ -14,7 +14,16 @@ import { TaskRow } from "./TaskRow";
  * "Tasks 7 · 2 overdue": one collapsible line with the period's dated Tasks and, when the period
  * includes today, every overdue Task. Dated Tasks are never drawn inside the time grid.
  */
-export function TasksAccordion({ from, to }: { from: PlainDate; to: PlainDate }) {
+export function TasksAccordion({
+  from,
+  to,
+  open = false,
+}: {
+  from: PlainDate;
+  to: PlainDate;
+  /** Starts open, as on the Display Mode board. */
+  open?: boolean;
+}) {
   const { t } = useTranslation();
   const { family } = useSignedIn();
   const now = familyNow(family.timeZone, useNow(60_000));
@@ -29,7 +38,11 @@ export function TasksAccordion({ from, to }: { from: PlainDate; to: PlainDate })
   if (tasks.length === 0) return null;
   const overdue = tasks.filter((task) => isOverdue(task, now)).length;
   return (
-    <details className="group mx-4 rounded-md border border-line" data-testid="tasks-accordion">
+    <details
+      className="group mx-4 rounded-md border border-line"
+      data-testid="tasks-accordion"
+      open={open || undefined}
+    >
       <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2 text-sm font-medium">
         <ChevronDown
           aria-hidden
