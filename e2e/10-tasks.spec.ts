@@ -45,3 +45,19 @@ test("the Tasks view groups Tasks and ticks them done", async ({ page }) => {
   await expect(page).toHaveURL(/\/tasks$/);
   await expect(page.getByText("Buy school books")).toHaveCount(0);
 });
+
+test("ticking a repeating Task brings up the next one", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/tasks");
+  await page.getByRole("link", { name: "New task" }).click();
+  await page.getByLabel("Title").fill("Water the plants");
+  await page.getByLabel("Due date (optional)").fill(lisbonDate(-3));
+  await page.getByLabel("Repeats").selectOption("weekly");
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page).toHaveURL(/\/tasks$/);
+
+  await page.getByRole("checkbox", { name: "Done: Water the plants" }).click();
+  // The next one is due on the first weekly date after today, so it is not overdue.
+  await expect(page.getByRole("region", { name: "Upcoming" })).toContainText("Water the plants");
+  await expect(page.getByRole("region", { name: "Overdue" })).not.toContainText("Water the plants");
+});

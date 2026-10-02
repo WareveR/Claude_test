@@ -1,5 +1,6 @@
 import { minutesOf, type ClockTime } from "./entry-time";
-import { minutesNowIn, todayIn, type PlainDate } from "./plain-date";
+import { addDays, minutesNowIn, todayIn, type PlainDate } from "./plain-date";
+import { occurrenceDates, type Repetition } from "./repetition";
 
 /** What the calendar core needs of a Task. */
 export type TaskTiming = {
@@ -58,4 +59,29 @@ export function groupTasks<T extends TaskTiming>(tasks: T[], now: FamilyNow): Ta
   groups.noDate.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   groups.done.sort((a, b) => b.doneAt!.localeCompare(a.doneAt!));
   return groups;
+}
+
+const UNIT_DAYS = { daily: 1, weekly: 7, monthly: 31, yearly: 366 };
+
+/**
+ * The next Task of a repeating series when one is ticked: due on the first Repetition date after
+ * today (and after its own due date), so an overdue chore never comes back already overdue.
+ * A series that ends by a number of times carries on with the times that are left. Null when the
+ * series has ended.
+ */
+export function nextRepeat(
+  dueDate: PlainDate,
+  repetition: Repetition,
+  today: PlainDate,
+): { dueDate: PlainDate; repetition: Repetition } | null {
+  const after = addDays(dueDate > today ? dueDate : today, 1);
+  const reach = addDays(after, repetition.interval * UNIT_DAYS[repetition.frequency] + 31);
+  const [next] = occurrenceDates(dueDate, repetition, after, reach);
+  if (!next) return null;
+  if (repetition.end.type !== "count") return { dueDate: next, repetition };
+  const used = occurrenceDates(dueDate, repetition, dueDate, addDays(next, -1)).length;
+  return {
+    dueDate: next,
+    repetition: { ...repetition, end: { type: "count", count: repetition.end.count - used } },
+  };
 }

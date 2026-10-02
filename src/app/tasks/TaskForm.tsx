@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { isPlainDate } from "../../core/plain-date";
 import { api } from "../api";
+import { RepetitionFields } from "../entries/RepetitionFields";
 import { usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
 import { ErrorText, Field, SubmitButton, TextInput } from "../screens/form";
@@ -36,6 +37,7 @@ function TaskForm({ task }: { task?: Task }) {
         dueTime: null,
         personIds: [],
         private: false,
+        repetition: null,
       },
   );
   const set = (patch: Partial<TaskDraft>) => setDraft((d) => ({ ...d, ...patch }));
@@ -96,7 +98,11 @@ function TaskForm({ task }: { task?: Task }) {
               type="date"
               value={draft.dueDate ?? ""}
               onChange={(e) =>
-                set(e.target.value ? { dueDate: e.target.value } : { dueDate: null, dueTime: null })
+                set(
+                  e.target.value
+                    ? { dueDate: e.target.value }
+                    : { dueDate: null, dueTime: null, repetition: null },
+                )
               }
             />
           </Field>
@@ -109,6 +115,17 @@ function TaskForm({ task }: { task?: Task }) {
             />
           </Field>
         </div>
+
+        {draft.dueDate ? (
+          <RepetitionFields
+            value={draft.repetition}
+            start={draft.dueDate}
+            onChange={(repetition) => set({ repetition })}
+          />
+        ) : (
+          <p className="text-xs text-muted">{t("tasks.repeatNeedsDate")}</p>
+        )}
+        {draft.repetition && <p className="-mt-2 text-xs text-muted">{t("tasks.repeatHint")}</p>}
 
         <fieldset className="flex flex-col gap-1 text-sm">
           <legend className="mb-1 font-medium">{t("entries.persons")}</legend>

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { setUpFamily } from "../test/client";
+import { todayIn, weekday } from "../../core/plain-date";
+import { setUpFamily, type TestBrowser } from "../test/client";
 
 type Task = {
   id: string;
@@ -9,6 +10,8 @@ type Task = {
   personIds: string[];
   private: boolean;
   doneAt: string | null;
+  repetition: unknown;
+  seriesId: string | null;
 };
 
 async function family() {
@@ -87,5 +90,80 @@ describe("Tasks", () => {
     const { browser } = await family();
     await browser.delete("/session");
     expect((await browser.get("/tasks")).status).toBe(401);
+  });
+});
+
+describe("repeating Tasks", () => {
+  const weekly = { frequency: "weekly", interval: 1, end: { type: "never" } };
+  const all = async (browser: TestBrowser) =>
+    (await (await browser.get("/tasks")).json()) as Task[];
+
+  async function bins() {
+    const { browser, ana } = await family();
+    // Due on a Monday long ago: ticking it must not bring up another overdue Task.
+    const task = (await (
+      await browser.post("/tasks", {
+        title: "Take out the bins",
+        dueDate: "2026-01-05",
+        dueTime: "20:00",
+        personIds: [ana.id],
+        repetition: weekly,
+      })
+    ).json()) as Task;
+    return { browser, ana, task };
+  }
+
+  it("needs a due date to repeat", async () => {
+    const { browser } = await family();
+    const res = await browser.post("/tasks", { title: "Bins", repetition: weekly });
+    expect(await res.json()).toMatchObject({ field: "repetition" });
+  });
+
+  it("brings up the next Task on the first Repetition date after today", async () => {
+    const { browser, ana, task } = await bins();
+    const done = (await (await browser.post(`/tasks/${task.id}/done`)).json()) as Task;
+    expect(done.doneAt).not.toBeNull();
+    const next = (await all(browser)).find((t) => t.id !== task.id)!;
+    const today = todayIn("Europe/Lisbon");
+    expect(next).toMatchObject({
+      title: "Take out the bins",
+      dueTime: "20:00",
+      personIds: [ana.id],
+      repetition: weekly,
+      seriesId: task.id,
+      doneAt: null,
+    });
+    expect(next.dueDate! > today).toBe(true);
+    expect(weekday(next.dueDate!)).toBe(0);
+
+    // Ticking again changes nothing: one undone Task at a time.
+    await browser.post(`/tasks/${task.id}/done`);
+    expect(await all(browser)).toHaveLength(2);
+  });
+
+  it("removes the untouched next Task when the tick is undone", async () => {
+    const { browser, task } = await bins();
+    await browser.post(`/tasks/${task.id}/done`);
+    await browser.delete(`/tasks/${task.id}/done`);
+    const tasks = await all(browser);
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].doneAt).toBeNull();
+  });
+
+  it("keeps a next Task someone already edited", async () => {
+    const { browser, task } = await bins();
+    await browser.post(`/tasks/${task.id}/done`);
+    const next = (await all(browser)).find((t) => t.id !== task.id)!;
+    await browser.request("PUT", `/tasks/${next.id}`, { ...next, dueTime: "21:00" });
+    await browser.delete(`/tasks/${task.id}/done`);
+    expect(await all(browser)).toHaveLength(2);
+  });
+
+  it("carries an edit on to the following Tasks", async () => {
+    const { browser, task } = await bins();
+    await browser.request("PUT", `/tasks/${task.id}`, { ...task, title: "Bins and recycling" });
+    await browser.post(`/tasks/${task.id}/done`);
+    const next = (await all(browser)).find((t) => t.id !== task.id)!;
+    expect(next.title).toBe("Bins and recycling");
   });
 });
