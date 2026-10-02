@@ -410,6 +410,14 @@
     "failed": "Não consegui perceber. Tente outra vez.",
     "saveFailed": "Não foi possível guardar. Tente outra vez.",
     "hint": "Diga ou escreva uma frase para adicionar uma entrada ou tarefa. Só neste dispositivo.",
-    "readback": "Ler em voz alta e perguntar antes de guardar"
+    "readback": "Ler em voz alta e perguntar antes de guardar",
+    "which": "Qual deles?",
+    "scopeQuestion": "Só desta vez ou daqui em diante?",
+    "onlyThis": "Só desta vez",
+    "fromNowOn": "Daqui em diante",
+    "notFound": "Não encontrado",
+    "oneAtATime": "Uma coisa de cada vez, por favor",
+    "refused": "A entrada por voz não apaga; abra o item para o apagar",
+    "locked": "A data e a pessoa de um aniversário mudam na pessoa"
   }
 }

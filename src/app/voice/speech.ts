@@ -126,3 +126,39 @@ export function isYes(answer: string | null): boolean {
   if (/\b(no|nao|not|nope)\b/.test(s)) return false;
   return /\b(yes|sim|guarda|guardar|save)\b/.test(s);
 }
+
+const NUMBERS: [number, RegExp][] = [
+  [0, /\b(1|one|first|um|uma|primeiro|primeira)\b/],
+  [1, /\b(2|two|second|dois|duas|segundo|segunda)\b/],
+  [2, /\b(3|three|third|tres|terceiro|terceira)\b/],
+];
+
+/** Reads a spoken answer to "Which one?": a number or ordinal, else the option's title words. */
+export function matchOption(answer: string | null, labels: string[]): number | null {
+  if (!answer) return null;
+  const s = plain(answer);
+  const numbered = NUMBERS.filter(([i, re]) => i < labels.length && re.test(s)).map(([i]) => i);
+  if (numbered.length === 1) return numbered[0] ?? null;
+  if (numbered.length > 1) return null;
+  const words = new Set(s.split(/[^\p{L}\p{N}]+/u).filter((w) => w.length > 2));
+  const scores = labels.map(
+    (label) =>
+      plain(label)
+        .split(/[^\p{L}\p{N}]+/u)
+        .filter((w) => words.has(w)).length,
+  );
+  const best = Math.max(...scores);
+  if (best === 0 || scores.filter((n) => n === best).length > 1) return null;
+  return scores.indexOf(best);
+}
+
+/** Reads a spoken answer to "Only this time or from now on?"; null when unclear. */
+export function matchScope(answer: string | null): "this" | "following" | null {
+  if (!answer) return null;
+  const s = plain(answer);
+  const following =
+    /\b(from now on|daqui em diante|a partir de agora|always|sempre|following)\b/.test(s);
+  const only = /\b(only this|just this|this time|so esta|so este|esta vez|desta vez)\b/.test(s);
+  if (following === only) return null;
+  return following ? "following" : "this";
+}

@@ -153,3 +153,221 @@ describe("Voice Entry: create", () => {
     );
   });
 });
+
+type Req = { method: string; path: string; body?: unknown };
+type Plan = {
+  kind: string;
+  id: string;
+  date: string | null;
+  label: string;
+  summary: string;
+  scope: string;
+  apply: Record<string, Req[]>;
+  undo: Req[] | null;
+};
+
+/** The number the prompt gave an existing item with this title. */
+function targetOf(prompt: Prompt, title: string) {
+  const items = prompt.messages[1].content.split("Existing items:\n")[1].split("\n\n")[0];
+  const line = items.split("\n").find((l) => l.includes(`"${title}"`))!;
+  return Number(line.split(".")[0]);
+}
+
+const change = (patch: Record<string, unknown>) => ({
+  action: "change",
+  kind: null,
+  title: null,
+  type: null,
+  persons: [],
+  date: null,
+  time: null,
+  allDay: null,
+  targets: [],
+  several: false,
+  ...patch,
+});
+
+async function send(browser: TestBrowser, requests: Req[]) {
+  for (const r of requests) {
+    const res = await browser.request(r.method, r.path, r.body);
+    expect(res.status).toBeLessThan(300);
+  }
+}
+
+describe("Voice Entry: change", () => {
+  async function withPlans() {
+    const { browser, ana, types } = await family();
+    const typeId = types.find((t) => t.builtinKey === "general")!.id;
+    const add = async (title: string, time: Record<string, unknown>, extra = {}) =>
+      (
+        (await (
+          await browser.post("/entries", {
+            title,
+            entryTypeId: typeId,
+            time,
+            personIds: [],
+            ...extra,
+          })
+        ).json()) as { id: string }
+      ).id;
+    const dinner = await add("Dinner", {
+      allDay: false,
+      startDate: "2026-10-05",
+      startTime: "20:00",
+      endDate: "2026-10-05",
+      endTime: "22:00",
+    });
+    const swimming = await add(
+      "Swimming",
+      {
+        allDay: false,
+        startDate: "2026-09-07",
+        startTime: "18:00",
+        endDate: "2026-09-07",
+        endTime: "19:00",
+      },
+      { repetition: { frequency: "weekly", interval: 1, end: { type: "never" } } },
+    );
+    const bins = (
+      (await (
+        await browser.post("/tasks", { title: "Take out the bins", personIds: [] })
+      ).json()) as {
+        id: string;
+      }
+    ).id;
+    return { browser, ana, dinner, swimming, bins };
+  }
+
+  it("ticks a Task done, and Undo unticks it", async () => {
+    const { browser, bins } = await withPlans();
+    answer = (p) => change({ targets: [targetOf(p, "Take out the bins")], done: true });
+    const res = (await (
+      await browser.post("/voice", { sentence: "the bins are done" })
+    ).json()) as { outcome: string; plan: Plan };
+    expect(res.outcome).toBe("change");
+    expect(res.plan.apply.all).toEqual([{ method: "POST", path: `/tasks/${bins}/done` }]);
+    await send(browser, res.plan.apply.all);
+    const done = (await (await browser.get(`/tasks/${bins}`)).json()) as { doneAt: string | null };
+    expect(done.doneAt).not.toBeNull();
+    await send(browser, res.plan.undo!);
+    const undone = (await (await browser.get(`/tasks/${bins}`)).json()) as {
+      doneAt: string | null;
+    };
+    expect(undone.doneAt).toBeNull();
+  });
+
+  it("moves an Entry keeping its length, and Undo moves it back", async () => {
+    const { browser, ana, dinner } = await withPlans();
+    answer = (p) =>
+      change({
+        targets: [targetOf(p, "Dinner")],
+        date: "2026-10-09",
+        persons: [numberOf(p, "Ana")],
+      });
+    const res = (await (
+      await browser.post("/voice", { sentence: "dinner moves to Friday, with Ana" })
+    ).json()) as { plan: Plan };
+    expect(res.plan.summary).toBe("Alterar Dinner: para Ana, sexta-feira, 9 de outubro");
+    await send(browser, res.plan.apply.all);
+    const moved = (await (await browser.get(`/entries/${dinner}`)).json()) as {
+      time: unknown;
+      personIds: string[];
+    };
+    expect(moved.time).toEqual({
+      allDay: false,
+      startDate: "2026-10-09",
+      startTime: "20:00",
+      endDate: "2026-10-09",
+      endTime: "22:00",
+    });
+    expect(moved.personIds).toEqual([ana]);
+    await send(browser, res.plan.undo!);
+    const back = (await (await browser.get(`/entries/${dinner}`)).json()) as {
+      time: { startDate: string };
+    };
+    expect(back.time.startDate).toBe("2026-10-05");
+  });
+
+  it("asks this time or from now on for a repeating Entry; a new Repetition is from now on", async () => {
+    const { browser, swimming } = await withPlans();
+    answer = (p) => change({ targets: [targetOf(p, "Swimming")], on: "2026-10-12", time: "17:00" });
+    const res = (await (
+      await browser.post("/voice", { sentence: "swimming on the 12th is at 5" })
+    ).json()) as { plan: Plan };
+    expect(res.plan).toMatchObject({ scope: "ask", date: "2026-10-12", undo: null });
+    await send(browser, res.plan.apply.this);
+    const entry = (await (await browser.get(`/entries/${swimming}`)).json()) as {
+      exceptions: { date: string; override: { time: { startTime: string } } }[];
+    };
+    expect(entry.exceptions).toMatchObject([
+      { date: "2026-10-12", override: { time: { startTime: "17:00", endTime: "18:00" } } },
+    ]);
+
+    answer = (p) =>
+      change({
+        targets: [targetOf(p, "Swimming")],
+        repeat: { frequency: "weekly", interval: 2, weekdays: null },
+        scope: "this",
+      });
+    const every = (await (
+      await browser.post("/voice", { sentence: "make swimming every two weeks" })
+    ).json()) as { plan: Plan };
+    expect(every.plan.scope).toBe("following");
+    expect(Object.keys(every.plan.apply)).toEqual(["following"]);
+    await send(browser, every.plan.apply.following);
+  });
+
+  it("says which one, not found, one at a time, and never deletes", async () => {
+    const { browser } = await withPlans();
+    answer = (p) =>
+      change({
+        targets: [
+          targetOf(p, "Dinner"),
+          targetOf(p, "Swimming"),
+          targetOf(p, "Take out the bins"),
+          0,
+        ],
+        time: "19:00",
+      });
+    const choose = (await (await browser.post("/voice", { sentence: "move it to 7" })).json()) as {
+      outcome: string;
+      options: Plan[];
+    };
+    expect(choose.outcome).toBe("choose");
+    expect(choose.options.map((o) => o.label)).toEqual([
+      "Dinner · segunda-feira, 5 de outubro",
+      expect.stringContaining("Swimming"),
+      "Take out the bins",
+    ]);
+
+    answer = () => change({ targets: [], time: "19:00" });
+    expect(await (await browser.post("/voice", { sentence: "x" })).json()).toEqual({
+      outcome: "notFound",
+    });
+    answer = (p) => change({ targets: [targetOf(p, "Dinner")], several: true, time: "19:00" });
+    expect(await (await browser.post("/voice", { sentence: "x" })).json()).toEqual({
+      outcome: "oneAtATime",
+    });
+    answer = (p) => ({ ...change({ targets: [targetOf(p, "Dinner")] }), action: "delete" });
+    expect(await (await browser.post("/voice", { sentence: "cancel dinner" })).json()).toEqual({
+      outcome: "refused",
+    });
+  });
+
+  it("keeps a synced Birthday's date and Person", async () => {
+    const { browser } = await withPlans();
+    await browser.post("/persons", { name: "Bia", color: "#3d405b", dateOfBirth: "2016-10-20" });
+    answer = (p) => change({ targets: [targetOf(p, "Bia")], date: "2026-10-21" });
+    expect(
+      await (await browser.post("/voice", { sentence: "Bia's birthday is the 21st" })).json(),
+    ).toEqual({
+      outcome: "locked",
+    });
+    answer = (p) => change({ targets: [targetOf(p, "Bia")], importance: "high" });
+    const res = (await (
+      await browser.post("/voice", { sentence: "Bia's birthday is important" })
+    ).json()) as { outcome: string; plan: Plan };
+    expect(res.outcome).toBe("change");
+    await send(browser, res.plan.apply.all);
+  });
+});
