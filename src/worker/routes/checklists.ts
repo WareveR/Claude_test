@@ -1,6 +1,9 @@
-import { asc, eq, inArray } from "drizzle-orm";
+import { asc, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { Hono } from "hono";
-import { isPlainDate } from "../../core/plain-date";
+import { dueRoundStart, roundLabel, shiftRound } from "../../core/checklist";
+import { addDays, isPlainDate } from "../../core/plain-date";
+import { isRepetition, type Repetition } from "../../core/repetition";
+import { familyNow } from "../../core/task";
 import { randomId } from "../auth/crypto";
 import type { Db } from "../db";
 import { schema } from "../db";
@@ -26,6 +29,10 @@ async function parseChecklist(db: Db, body: Record<string, unknown>) {
   if (startDate && (!endDate || (endDate as string) < (startDate as string))) {
     return { field: "endDate" };
   }
+  const repetition = body.repetition ?? null;
+  if (repetition !== null && (!isRepetition(repetition) || !startDate)) {
+    return { field: "repetition" };
+  }
   const personIds = Array.isArray(body.personIds) ? [...new Set(body.personIds)] : [];
   if (!personIds.every((p) => typeof p === "string")) return { field: "personIds" };
   if (personIds.length > 0) {
@@ -40,6 +47,7 @@ async function parseChecklist(db: Db, body: Record<string, unknown>) {
       name,
       startDate: startDate as string | null,
       endDate: endDate as string | null,
+      repetition: repetition as Repetition | null,
       personIds: personIds as string[],
     },
   };
@@ -56,12 +64,26 @@ async function present(db: Db, rows: ChecklistRow[]) {
         rows.map((r) => r.id),
       ),
     );
+  const rounds = await db
+    .select()
+    .from(schema.checklistRound)
+    .where(
+      inArray(
+        schema.checklistRound.checklistId,
+        rows.map((r) => r.id),
+      ),
+    )
+    .orderBy(desc(schema.checklistRound.closedAt));
   return rows.map((row) => ({
     id: row.id,
     name: row.name,
     startDate: row.startDate,
     endDate: row.endDate,
+    repetition: row.repetition ?? null,
     personIds: links.filter((l) => l.checklistId === row.id).map((l) => l.personId),
+    rounds: rounds
+      .filter((r) => r.checklistId === row.id)
+      .map((r) => ({ label: r.label, done: r.done, total: r.total })),
     createdAt: row.createdAt,
     changedAt: row.changedAt,
   }));
@@ -87,10 +109,63 @@ personMentionChecks.push(async (db, personId) => {
   return Boolean(link);
 });
 
+/**
+ * Closes the current round, keeping only its result, and starts the next: every Task undone,
+ * the period and the Tasks' dates moved to the new start.
+ */
+async function startRound(db: Db, checklist: ChecklistRow, newStart: string | null, now: Date) {
+  const tasks = await db
+    .select()
+    .from(schema.task)
+    .where(eq(schema.task.checklistId, checklist.id));
+  const at = now.toISOString();
+  const { startDate, endDate, days } = shiftRound(checklist, newStart);
+  await db.batch([
+    db.insert(schema.checklistRound).values({
+      id: randomId(),
+      checklistId: checklist.id,
+      label: roundLabel(checklist, at.slice(0, 10)),
+      done: tasks.filter((t) => t.doneAt).length,
+      total: tasks.length,
+      closedAt: at,
+    }),
+    db
+      .update(schema.checklist)
+      .set({ startDate, endDate, changedAt: at })
+      .where(eq(schema.checklist.id, checklist.id)),
+    ...tasks.map((t) =>
+      db
+        .update(schema.task)
+        .set({
+          doneAt: null,
+          dueDate: t.dueDate && days ? addDays(t.dueDate, days) : t.dueDate,
+          changedAt: at,
+        })
+        .where(eq(schema.task.id, t.id)),
+    ),
+  ]);
+}
+
+/** Starts the rounds that repeating Checklists are due for; the Scheduler can call it too. */
+export async function startDueRounds(db: Db, now: Date) {
+  const repeating = await db
+    .select()
+    .from(schema.checklist)
+    .where(isNotNull(schema.checklist.repetition));
+  if (repeating.length === 0) return;
+  const [family] = await db.select({ timeZone: schema.family.timeZone }).from(schema.family);
+  const today = familyNow(family.timeZone, now).today;
+  for (const checklist of repeating) {
+    const start = dueRoundStart(checklist, today);
+    if (start) await startRound(db, checklist, start, now);
+  }
+}
+
 export const checklistRoutes = new Hono<AppEnv>().use(requireDevice);
 
 checklistRoutes.get("/checklists", async (c) => {
   const db = c.get("db");
+  await startDueRounds(db, c.get("now"));
   const rows = await db.select().from(schema.checklist).orderBy(asc(schema.checklist.name));
   return c.json(await present(db, rows));
 });
@@ -147,4 +222,19 @@ checklistRoutes.delete("/checklists/:id", async (c) => {
   ]);
   if (deleted.length === 0) return c.json({ error: "not_found" }, 404);
   return c.body(null, 204);
+});
+
+/** "Use again": a new round by hand, optionally moved to a new start date. */
+checklistRoutes.post("/checklists/:id/rounds", async (c) => {
+  const db = c.get("db");
+  const id = c.req.param("id");
+  const [checklist] = await db.select().from(schema.checklist).where(eq(schema.checklist.id, id));
+  if (!checklist) return c.json({ error: "not_found" }, 404);
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
+  const startDate = body.startDate ?? null;
+  if (startDate !== null && (typeof startDate !== "string" || !isPlainDate(startDate))) {
+    return c.json({ error: "invalid", field: "startDate" }, 400);
+  }
+  await startRound(db, checklist, startDate as string | null, c.get("now"));
+  return c.json(await presentOne(db, id), 201);
 });

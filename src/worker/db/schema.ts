@@ -193,8 +193,22 @@ export const checklist = sqliteTable("checklist", {
   name: text("name").notNull(),
   startDate: text("start_date"),
   endDate: text("end_date"),
+  /** Brings the Checklist back as a new round, its period moving to the next date. */
+  repetition: text("repetition", { mode: "json" }).$type<Repetition | null>(),
   createdAt: text("created_at").notNull(),
   changedAt: text("changed_at").notNull(),
+});
+
+/** A closed round of a Checklist: only its result is kept ("2025: 7 of 8"). */
+export const checklistRound = sqliteTable("checklist_round", {
+  id: text("id").primaryKey(),
+  checklistId: text("checklist_id")
+    .notNull()
+    .references(() => checklist.id, { onDelete: "cascade" }),
+  label: text("label").notNull(),
+  done: integer("done").notNull(),
+  total: integer("total").notNull(),
+  closedAt: text("closed_at").notNull(),
 });
 
 /** A Checklist's Persons: only the default for its new Tasks, each Task keeps its own. */

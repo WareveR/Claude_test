@@ -32,7 +32,12 @@ export type Entry = {
 export type EntryDraft = Omit<Entry, "id" | "seriesId" | "exceptions" | "birthdayPersonId">;
 
 /** One Occurrence of an Entry, drawn like an Entry but at its own time. */
-export type Shown = Entry & { occurrenceDate: string; key: string };
+export type Shown = Entry & {
+  occurrenceDate: string;
+  key: string;
+  /** Where it opens when it isn't an Entry, such as a Checklist's period bar. */
+  href?: string;
+};
 
 /** Entries overlapping the window, both ends included. */
 export function useEntries(from: PlainDate, to: PlainDate) {
@@ -74,6 +79,7 @@ export function useOccurrences(from: PlainDate, to: PlainDate) {
 
 /** Where an Entry opens: a repeating one names its Occurrence. */
 export function entryPath(entry: Entry | Shown): string {
+  if ("href" in entry && entry.href) return entry.href;
   return entry.repetition && "occurrenceDate" in entry
     ? `/entries/${entry.id}?occurrence=${entry.occurrenceDate}`
     : `/entries/${entry.id}`;

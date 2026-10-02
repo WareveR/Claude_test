@@ -231,6 +231,12 @@
     "edit": "Editar checklist",
     "delete": "Apagar checklist",
     "confirmDelete": "Apagar \"{{name}}\" e as suas Tarefas de vez?",
-    "inChecklist": "Na checklist \"{{name}}\"."
+    "inChecklist": "Na checklist \"{{name}}\".",
+    "repeatHint": "Quando chega a próxima data, começa uma nova ronda: todas as Tarefas por fazer, datas movidas com o período.",
+    "useAgain": "Usar outra vez",
+    "useAgainHint": "Começa já uma nova ronda: todas as Tarefas por fazer. Só fica o resultado desta ronda.",
+    "newStart": "Novo início (opcional)",
+    "previousRounds": "Rondas anteriores",
+    "roundResult": "{{label}}: {{done}} de {{total}}"
   }
 }

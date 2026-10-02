@@ -16,6 +16,7 @@ import { monthWeeks } from "../../core/layout";
 import { entriesOn, MonthGrid } from "../calendar/MonthGrid";
 import { TimeGrid } from "../calendar/TimeGrid";
 import { YearGrid } from "../calendar/YearGrid";
+import { CHECKLIST_BAR_TYPE, useChecklistBars } from "../checklists/bars";
 import { useOccurrences } from "../entries/model";
 import { useEntryTypes } from "../entry-types/model";
 import { useSignedIn } from "../family";
@@ -27,6 +28,17 @@ import { TasksAccordion } from "../tasks/TasksAccordion";
 
 function useToday(): PlainDate {
   return todayIn(useSignedIn().family.timeZone);
+}
+
+/** A window's Occurrences and Checklist period bars, with the Entry Types to draw them. */
+function useCalendar(from: PlainDate, to: PlainDate) {
+  const occurrences = useOccurrences(from, to);
+  const bars = useChecklistBars(from, to);
+  const types = useEntryTypes();
+  return {
+    entries: [...bars, ...(occurrences.data ?? [])],
+    types: [...(types.data ?? []), CHECKLIST_BAR_TYPE],
+  };
 }
 
 function useLocale() {
@@ -89,14 +101,13 @@ function CalendarGrid({ days }: { days: PlainDate[] }) {
   const { family } = useSignedIn();
   const locale = useLocale();
   const now = useNow(60_000);
-  const entries = useOccurrences(days[0], days[days.length - 1]);
-  const types = useEntryTypes();
+  const { entries, types } = useCalendar(days[0], days[days.length - 1]);
   const persons = usePersons();
   return (
     <TimeGrid
       days={days}
-      entries={entries.data ?? []}
-      types={types.data ?? []}
+      entries={entries}
+      types={types}
       persons={persons.data ?? []}
       today={todayIn(family.timeZone, now)}
       nowMinutes={minutesNowIn(family.timeZone, now)}
@@ -127,11 +138,10 @@ function Month({ first }: { first: PlainDate }) {
         ? today
         : first;
   const weeks = monthWeeks(first);
-  const entries = useOccurrences(weeks[0][0], weeks[weeks.length - 1][6]);
-  const types = useEntryTypes();
+  const { entries, types } = useCalendar(weeks[0][0], weeks[weeks.length - 1][6]);
   const persons = usePersons();
   const title = formatPlainDate(first, locale, { month: "long", year: "numeric" });
-  const dayEntries = entriesOn(entries.data ?? [], selected);
+  const dayEntries = entriesOn(entries, selected);
   return (
     <>
       <ViewNav
@@ -142,8 +152,8 @@ function Month({ first }: { first: PlainDate }) {
       />
       <MonthGrid
         month={first}
-        entries={entries.data ?? []}
-        types={types.data ?? []}
+        entries={entries}
+        types={types}
         today={today}
         selected={selected}
         locale={locale}
@@ -161,7 +171,7 @@ function Month({ first }: { first: PlainDate }) {
           <EntryBlock
             key={e.key}
             entry={e}
-            type={types.data?.find((ty) => ty.id === e.entryTypeId)}
+            type={types.find((ty) => ty.id === e.entryTypeId)}
             persons={persons.data ?? []}
             label={e.time.allDay ? t("entries.allDay") : e.time.startTime}
             className="py-1 text-sm"
@@ -183,8 +193,7 @@ function Year({ year }: { year: number }) {
   const locale = useLocale();
   const today = useToday();
   const date = `${year}-01-01`;
-  const entries = useOccurrences(date, `${year}-12-31`);
-  const types = useEntryTypes();
+  const { entries, types } = useCalendar(date, `${year}-12-31`);
   return (
     <>
       <ViewNav
@@ -193,13 +202,7 @@ function Year({ year }: { year: number }) {
         previous={paths.year(addMonths(date, -12))}
         next={paths.year(addMonths(date, 12))}
       />
-      <YearGrid
-        year={year}
-        entries={entries.data ?? []}
-        types={types.data ?? []}
-        today={today}
-        locale={locale}
-      />
+      <YearGrid year={year} entries={entries} types={types} today={today} locale={locale} />
     </>
   );
 }

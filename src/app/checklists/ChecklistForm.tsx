@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router";
 import { api } from "../api";
+import { RepetitionFields } from "../entries/RepetitionFields";
 import { paths } from "../paths";
 import { usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
@@ -24,7 +25,8 @@ function ChecklistForm({ checklist }: { checklist?: Checklist }) {
   const queryClient = useQueryClient();
   const persons = usePersons();
   const [draft, setDraft] = useState<ChecklistDraft>(
-    () => checklist ?? { name: "", startDate: null, endDate: null, personIds: [] },
+    () =>
+      checklist ?? { name: "", startDate: null, endDate: null, repetition: null, personIds: [] },
   );
   const set = (patch: Partial<ChecklistDraft>) => setDraft((d) => ({ ...d, ...patch }));
   const leave = async () => {
@@ -38,6 +40,15 @@ function ChecklistForm({ checklist }: { checklist?: Checklist }) {
       checklist
         ? api(`/checklists/${checklist.id}`, { method: "PUT", body: draft })
         : api("/checklists", { method: "POST", body: draft }),
+    onSuccess: leave,
+  });
+  const [newStart, setNewStart] = useState("");
+  const again = useMutation({
+    mutationFn: () =>
+      api(`/checklists/${checklist!.id}/rounds`, {
+        method: "POST",
+        body: { startDate: newStart || null },
+      }),
     onSuccess: leave,
   });
   const remove = useMutation({
@@ -74,7 +85,12 @@ function ChecklistForm({ checklist }: { checklist?: Checklist }) {
             <TextInput
               type="date"
               value={draft.startDate ?? ""}
-              onChange={(e) => set({ startDate: e.target.value || null })}
+              onChange={(e) =>
+                set({
+                  startDate: e.target.value || null,
+                  ...(e.target.value ? {} : { repetition: null }),
+                })
+              }
             />
           </Field>
           <Field label={t("checklists.end")}>
@@ -88,6 +104,18 @@ function ChecklistForm({ checklist }: { checklist?: Checklist }) {
           </Field>
         </div>
         <p className="-mt-2 text-xs text-muted">{t("checklists.periodHint")}</p>
+        {draft.startDate && (
+          <>
+            <RepetitionFields
+              value={draft.repetition}
+              start={draft.startDate}
+              onChange={(repetition) => set({ repetition })}
+            />
+            {draft.repetition && (
+              <p className="-mt-2 text-xs text-muted">{t("checklists.repeatHint")}</p>
+            )}
+          </>
+        )}
 
         <fieldset className="flex flex-col gap-1 text-sm">
           <legend className="mb-1 font-medium">{t("checklists.persons")}</legend>
@@ -118,6 +146,42 @@ function ChecklistForm({ checklist }: { checklist?: Checklist }) {
         {save.error && <ErrorText>{t("errors.unexpected")}</ErrorText>}
         <SubmitButton busy={save.isPending}>{t("persons.save")}</SubmitButton>
       </form>
+      {checklist && (
+        <div className="flex flex-col gap-2 border-t border-line pt-4">
+          <h2 className="font-medium">{t("checklists.useAgain")}</h2>
+          <p className="text-xs text-muted">{t("checklists.useAgainHint")}</p>
+          {checklist.startDate && (
+            <Field label={t("checklists.newStart")}>
+              <TextInput
+                type="date"
+                value={newStart}
+                onChange={(e) => setNewStart(e.target.value)}
+              />
+            </Field>
+          )}
+          <button
+            type="button"
+            className="self-start underline"
+            disabled={again.isPending}
+            onClick={() => again.mutate()}
+          >
+            {t("checklists.useAgain")}
+          </button>
+          {again.error && <ErrorText>{t("errors.unexpected")}</ErrorText>}
+          {checklist.rounds.length > 0 && (
+            <div className="flex flex-col gap-1 text-sm">
+              <h3 className="font-medium">{t("checklists.previousRounds")}</h3>
+              <ul>
+                {checklist.rounds.map((r, i) => (
+                  <li key={i}>
+                    {t("checklists.roundResult", { label: r.label, done: r.done, total: r.total })}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
       {checklist && (
         <div className="border-t border-line pt-4">
           <button
