@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { familyNow, groupTasks, isOverdue, type TaskTiming } from "./task";
+import type { Repetition } from "./repetition";
+import { familyNow, groupTasks, isOverdue, nextRepeat, type TaskTiming } from "./task";
 
 const task = (fields: Partial<TaskTiming> & { id?: string }) => ({
   dueDate: null,
@@ -60,5 +61,46 @@ describe("groupTasks", () => {
     expect(ids(groups.upcoming)).toEqual(["soon", "later"]);
     expect(ids(groups.noDate)).toEqual(["new-undated", "old-undated"]);
     expect(ids(groups.done)).toEqual(["done-last", "done-first"]);
+  });
+});
+
+describe("nextRepeat", () => {
+  const weekly: Repetition = { frequency: "weekly", interval: 1, end: { type: "never" } };
+
+  it("is the first Repetition date after today for an overdue Task", () => {
+    // Due Monday 28 September, ticked on Thursday 8 October: next is Monday 12 October.
+    expect(nextRepeat("2026-09-28", weekly, "2026-10-08")).toEqual({
+      dueDate: "2026-10-12",
+      repetition: weekly,
+    });
+  });
+
+  it("skips today itself when the Task is due today", () => {
+    expect(nextRepeat("2026-10-08", weekly, "2026-10-08")?.dueDate).toBe("2026-10-15");
+  });
+
+  it("follows the Task's own date when it is ticked early", () => {
+    expect(nextRepeat("2026-10-20", weekly, "2026-10-08")?.dueDate).toBe("2026-10-27");
+  });
+
+  it("keeps the last-day-of-month rule", () => {
+    const monthly: Repetition = { frequency: "monthly", interval: 1, end: { type: "never" } };
+    expect(nextRepeat("2026-01-31", monthly, "2026-02-01")?.dueDate).toBe("2026-02-28");
+  });
+
+  it("carries on with the times left, then ends", () => {
+    const thrice: Repetition = { ...weekly, end: { type: "count", count: 3 } };
+    const second = nextRepeat("2026-09-28", thrice, "2026-10-01")!;
+    expect(second).toEqual({
+      dueDate: "2026-10-05",
+      repetition: { ...weekly, end: { type: "count", count: 2 } },
+    });
+    // Ticked late: the missed week counts as one of the times.
+    expect(nextRepeat("2026-10-05", second.repetition, "2026-10-13")).toBeNull();
+  });
+
+  it("ends after the until date", () => {
+    const until: Repetition = { ...weekly, end: { type: "until", date: "2026-10-10" } };
+    expect(nextRepeat("2026-10-05", until, "2026-10-05")).toBeNull();
   });
 });

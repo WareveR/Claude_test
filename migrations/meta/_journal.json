@@ -57,6 +57,13 @@
       "when": 1790931125948,
       "tag": "0007_tasks",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1790931657755,
+      "tag": "0008_repeating_tasks",
+      "breakpoints": true
     }
   ]
 }

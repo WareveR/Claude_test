@@ -158,6 +158,12 @@ export const task = sqliteTable("task", {
   dueTime: text("due_time"),
   private: integer("private", { mode: "boolean" }).notNull().default(false),
   doneAt: text("done_at"),
+  /** A repeating Task brings up the next one when ticked; needs a due date. */
+  repetition: text("repetition", { mode: "json" }).$type<Repetition | null>(),
+  /** Links the Tasks of one repeating series. */
+  seriesId: text("series_id"),
+  /** The Task whose tick created this one; undoing that tick removes it if still untouched. */
+  repeatOf: text("repeat_of"),
   createdAt: text("created_at").notNull(),
   changedAt: text("changed_at").notNull(),
 });

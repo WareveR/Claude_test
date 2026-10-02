@@ -209,6 +209,9 @@
       "upcoming": "Próximas",
       "noDate": "Sem data",
       "done": "Feitas"
-    }
+    },
+    "repeatNeedsDate": "Dá-lhe uma data limite para poder repetir.",
+    "repeatHint": "Ao marcá-la como feita aparece a seguinte, para a primeira data depois de hoje.",
+    "repeats": "Repete"
   }
 }

@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { Repetition } from "../../core/repetition";
 import { api } from "../api";
 
 export type Task = {
@@ -10,13 +11,15 @@ export type Task = {
   personIds: string[];
   private: boolean;
   doneAt: string | null;
+  repetition: Repetition | null;
+  seriesId: string | null;
   createdAt: string;
   changedAt: string;
 };
 
 export type TaskDraft = Pick<
   Task,
-  "title" | "notes" | "dueDate" | "dueTime" | "personIds" | "private"
+  "title" | "notes" | "dueDate" | "dueTime" | "personIds" | "private" | "repetition"
 >;
 
 export function useTasks() {

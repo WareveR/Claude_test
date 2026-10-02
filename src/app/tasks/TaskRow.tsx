@@ -1,4 +1,4 @@
-import { Lock } from "lucide-react";
+import { Lock, Repeat } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { formatLocale } from "../../core/languages";
@@ -43,6 +43,9 @@ export function TaskRow({
       <Link to={`/tasks/${task.id}`} className="flex min-w-0 flex-1 flex-col">
         <span className={`break-words ${done ? "text-muted line-through" : ""}`}>
           {task.title}
+          {task.repetition && (
+            <Repeat aria-label={t("tasks.repeats")} className="ml-1 inline" size={14} />
+          )}
           {task.private && (
             <Lock aria-label={t("entries.private")} className="ml-1 inline" size={14} />
           )}

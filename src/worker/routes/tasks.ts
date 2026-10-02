@@ -1,7 +1,9 @@
-import { desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, ne } from "drizzle-orm";
 import { Hono } from "hono";
 import { isClockTime } from "../../core/entry-time";
 import { isPlainDate } from "../../core/plain-date";
+import { isRepetition, type Repetition } from "../../core/repetition";
+import { familyNow, nextRepeat } from "../../core/task";
 import { randomId } from "../auth/crypto";
 import type { Db } from "../db";
 import { schema } from "../db";
@@ -18,6 +20,7 @@ export type TaskInput = {
   dueTime: string | null;
   personIds: string[];
   private: boolean;
+  repetition: Repetition | null;
 };
 
 /** Validates a whole Task; returns the bad field's name or the clean values. */
@@ -30,6 +33,10 @@ async function parseTask(db: Db, body: Record<string, unknown>) {
   }
   const dueTime = body.dueTime ?? null;
   if (dueTime !== null && (!isClockTime(dueTime) || dueDate === null)) return { field: "dueTime" };
+  const repetition = body.repetition ?? null;
+  if (repetition !== null && (!isRepetition(repetition) || dueDate === null)) {
+    return { field: "repetition" };
+  }
   const personIds = Array.isArray(body.personIds) ? [...new Set(body.personIds)] : [];
   if (!personIds.every((p) => typeof p === "string")) return { field: "personIds" };
   if (personIds.length > 0) {
@@ -47,6 +54,7 @@ async function parseTask(db: Db, body: Record<string, unknown>) {
       dueTime: dueTime as string | null,
       personIds: personIds as string[],
       private: Boolean(body.private),
+      repetition: repetition as Repetition | null,
     } satisfies TaskInput,
   };
 }
@@ -71,6 +79,8 @@ async function present(db: Db, rows: TaskRow[]) {
     personIds: links.filter((l) => l.taskId === row.id).map((l) => l.personId),
     private: row.private,
     doneAt: row.doneAt,
+    repetition: row.repetition ?? null,
+    seriesId: row.seriesId,
     createdAt: row.createdAt,
     changedAt: row.changedAt,
   }));
@@ -142,29 +152,98 @@ taskRoutes.put("/tasks/:id", async (c) => {
   return c.json(await presentOne(db, id));
 });
 
-/** Ticks a Task done from any device, recording when; ticking again keeps the first time. */
+/**
+ * Ticks a Task done from any device, recording when; ticking again keeps the first time.
+ * A repeating Task stays done and brings up the next one, so only one is undone at a time.
+ */
 taskRoutes.post("/tasks/:id/done", async (c) => {
   const db = c.get("db");
   const id = c.req.param("id");
   const [existing] = await db.select().from(schema.task).where(eq(schema.task.id, id));
   if (!existing) return c.json({ error: "not_found" }, 404);
   if (!existing.doneAt) {
-    const now = c.get("now").toISOString();
-    await db.update(schema.task).set({ doneAt: now, changedAt: now }).where(eq(schema.task.id, id));
+    const now = c.get("now");
+    const at = now.toISOString();
+    const tick = db
+      .update(schema.task)
+      .set({ doneAt: at, changedAt: at })
+      .where(eq(schema.task.id, id));
+    const next = await nextTask(db, existing, now);
+    if (!next) await tick;
+    else {
+      const links = await db
+        .select({ personId: schema.taskPerson.personId })
+        .from(schema.taskPerson)
+        .where(eq(schema.taskPerson.taskId, id));
+      const nextId = randomId();
+      await db.batch([
+        tick,
+        db.insert(schema.task).values({
+          id: nextId,
+          title: existing.title,
+          notes: existing.notes,
+          dueDate: next.dueDate,
+          dueTime: existing.dueTime,
+          private: existing.private,
+          repetition: next.repetition,
+          seriesId: existing.seriesId ?? existing.id,
+          repeatOf: id,
+          createdAt: at,
+          changedAt: at,
+        }),
+        ...personLinks(
+          db,
+          nextId,
+          links.map((l) => l.personId),
+        ),
+        ...(existing.seriesId
+          ? []
+          : [db.update(schema.task).set({ seriesId: id }).where(eq(schema.task.id, id))]),
+      ]);
+    }
   }
   return c.json(await presentOne(db, id));
 });
 
-/** Undoes a tick. */
+/** The next Task of a repeating series, unless the series ended or already has an undone one. */
+async function nextTask(db: Db, task: TaskRow, now: Date) {
+  if (!task.repetition || !task.dueDate) return null;
+  if (task.seriesId) {
+    const [undone] = await db
+      .select({ id: schema.task.id })
+      .from(schema.task)
+      .where(
+        and(
+          eq(schema.task.seriesId, task.seriesId),
+          ne(schema.task.id, task.id),
+          isNull(schema.task.doneAt),
+        ),
+      )
+      .limit(1);
+    if (undone) return null;
+  }
+  const [family] = await db.select({ timeZone: schema.family.timeZone }).from(schema.family);
+  return nextRepeat(task.dueDate, task.repetition, familyNow(family.timeZone, now).today);
+}
+
+/** Undoes a tick; the next Task it brought up goes too, unless someone already changed it. */
 taskRoutes.delete("/tasks/:id/done", async (c) => {
   const db = c.get("db");
   const id = c.req.param("id");
-  const updated = await db
-    .update(schema.task)
-    .set({ doneAt: null, changedAt: c.get("now").toISOString() })
-    .where(eq(schema.task.id, id))
-    .returning({ id: schema.task.id });
-  if (updated.length === 0) return c.json({ error: "not_found" }, 404);
+  const [existing] = await db.select().from(schema.task).where(eq(schema.task.id, id));
+  if (!existing) return c.json({ error: "not_found" }, 404);
+  const [next] = await db
+    .select()
+    .from(schema.task)
+    .where(and(eq(schema.task.repeatOf, id), isNull(schema.task.doneAt)));
+  const untouched = next && next.changedAt === next.createdAt;
+  await db.batch([
+    db
+      .update(schema.task)
+      .set({ doneAt: null, changedAt: c.get("now").toISOString() })
+      .where(eq(schema.task.id, id)),
+    ...(untouched ? [db.delete(schema.task).where(eq(schema.task.id, next.id))] : []),
+  ]);
   return c.json(await presentOne(db, id));
 });
 
