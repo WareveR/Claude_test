@@ -51,5 +51,22 @@
     "title": "Definições",
     "back": "Voltar",
     "language": "Idioma deste dispositivo"
+  },
+  "devices": {
+    "title": "Dispositivos com sessão iniciada",
+    "thisDevice": "este dispositivo",
+    "lastUsed": "Último uso: {{when}}",
+    "rename": "Mudar o nome de {{name}}",
+    "newName": "Novo nome do dispositivo",
+    "signOut": "Terminar a sessão em {{name}}",
+    "confirmSignOut": "Terminar a sessão em {{name}}?"
+  },
+  "password": {
+    "title": "Mudar a palavra-passe da família",
+    "current": "Palavra-passe atual",
+    "new": "Nova palavra-passe",
+    "hint": "Todos os dispositivos, incluindo este, vão ter de voltar a entrar.",
+    "confirm": "Todos os dispositivos vão ter de voltar a entrar. Continuar?",
+    "submit": "Mudar palavra-passe"
   }
 }

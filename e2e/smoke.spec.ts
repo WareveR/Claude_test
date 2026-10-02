@@ -36,4 +36,12 @@ test("set up the Family, move between views, sign out and back in", async ({ pag
   await page.getByLabel("Family Password").fill("correct horse battery");
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByTestId("header-time")).toBeVisible();
+
+  await page.getByRole("link", { name: "Settings" }).click();
+  await expect(page.getByText("this device", { exact: true })).toBeVisible();
+  page.on("dialog", (dialog) => dialog.accept());
+  await page.getByLabel("Current password").fill("correct horse battery");
+  await page.getByLabel("New password").fill("a brand new phrase");
+  await page.getByRole("button", { name: "Change password" }).click();
+  await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
 });
