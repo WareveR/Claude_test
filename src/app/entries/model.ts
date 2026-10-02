@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
+import { birthdayAge, birthdayTitle } from "../../core/birthday";
 import { occurrencesOf, type OccurrenceException } from "../../core/occurrences";
 import type { EntryTime } from "../../core/entry-time";
 import type { Importance } from "../../core/entry-type";
@@ -20,11 +21,15 @@ export type Entry = {
   private: boolean;
   reminders: number[];
   repetition: Repetition | null;
+  /** Birthday Entries: the start date carries the real birth year, so the age shows. */
+  birthYearKnown?: boolean;
   seriesId?: string | null;
+  /** A synced Birthday's Person; its date, title and Person change only on the Person. */
+  birthdayPersonId?: string | null;
   exceptions?: OccurrenceException<Partial<EntryDraft>>[];
 };
 
-export type EntryDraft = Omit<Entry, "id" | "seriesId" | "exceptions">;
+export type EntryDraft = Omit<Entry, "id" | "seriesId" | "exceptions" | "birthdayPersonId">;
 
 /** One Occurrence of an Entry, drawn like an Entry but at its own time. */
 export type Shown = Entry & { occurrenceDate: string; key: string };
@@ -53,6 +58,10 @@ export function useOccurrences(from: PlainDate, to: PlainDate) {
       (entries.data ?? []).flatMap((entry) =>
         occurrencesOf(entry, from, to).map((o): Shown => ({
           ...entry,
+          title: birthdayTitle(
+            entry.title,
+            birthdayAge(entry.time.startDate, o.date, Boolean(entry.birthYearKnown)),
+          ),
           time: o.time,
           occurrenceDate: o.date,
           key: `${entry.id}:${o.date}`,

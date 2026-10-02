@@ -107,6 +107,10 @@ export const entry = sqliteTable("entry", {
   repetition: text("repetition", { mode: "json" }).$type<Repetition | null>(),
   /** Links the Entries a "this and the following" change split one series into. */
   seriesId: text("series_id"),
+  /** A Birthday Entry kept in sync with this Person's date of birth; it fixes date and Person. */
+  birthdayPersonId: text("birthday_person_id").references(() => person.id),
+  /** A Birthday Entry whose start date carries the real birth year, so the age can show. */
+  birthYearKnown: integer("birth_year_known", { mode: "boolean" }).notNull().default(false),
   createdAt: text("created_at").notNull(),
   changedAt: text("changed_at").notNull(),
 });

@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate, useParams, useSearchParams } from "react-router";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import {
   clockTime,
   isClockTime,
@@ -38,7 +38,8 @@ export function EntryPage() {
   if (!types.data || (!isNew && !entry.data)) return null;
   const date = search.get("occurrence");
   const occurrence =
-    entry.data?.repetition && date && isPlainDate(date)
+    // A synced Birthday's edits always apply to every year.
+    entry.data?.repetition && !entry.data.birthdayPersonId && date && isPlainDate(date)
       ? { date, values: occurrenceValues(entry.data, date) }
       : null;
   return (
@@ -72,6 +73,7 @@ function newDraft(type: EntryType, date: string, time: string | null): EntryDraf
       private: false,
       reminders: [],
       repetition: null,
+      birthYearKnown: false,
     },
     type.defaults,
     time !== null,
@@ -124,6 +126,8 @@ function EntryForm({
   const { family } = useSignedIn();
   const persons = usePersons();
   const general = types.find((ty) => ty.builtinKey === "general") ?? types[0];
+  const synced = entry?.birthdayPersonId ?? null;
+  const syncedPerson = persons.data?.find((p) => p.id === synced);
   const startDate = search.get("date");
   const startTime = search.get("time");
   const [draft, setDraft] = useState<EntryDraft>(() => {
@@ -226,65 +230,54 @@ function EntryForm({
         <h1 className="text-xl font-semibold">{entry ? entry.title : t("entries.new")}</h1>
       </div>
       <form onSubmit={submit} className="flex flex-col gap-4">
-        <Field label={t("entries.title")}>
-          <TextInput
-            required
-            autoFocus={!entry}
-            value={draft.title}
-            onChange={(e) => set({ title: e.target.value })}
-          />
-        </Field>
-        <Field label={t("entries.type")}>
-          <select
-            className={INPUT}
-            value={draft.entryTypeId}
-            onChange={(e) => changeType(e.target.value)}
-          >
-            {types.map((ty) => (
-              <option key={ty.id} value={ty.id}>
-                {typeName(ty, t)}
-              </option>
-            ))}
-          </select>
-        </Field>
+        {synced && (
+          <p className="rounded-md bg-surface p-3 text-sm">
+            {t("entries.birthdaySynced", { name: syncedPerson?.name ?? draft.title })}{" "}
+            <Link className="underline" to={`/settings/persons/${synced}`}>
+              {t("entries.openPerson")}
+            </Link>
+          </p>
+        )}
+        {/* A synced Birthday's date, title and Person follow its Person. */}
+        <fieldset disabled={Boolean(synced)} className="contents">
+          <Field label={t("entries.title")}>
+            <TextInput
+              required
+              autoFocus={!entry}
+              value={draft.title}
+              onChange={(e) => set({ title: e.target.value })}
+            />
+          </Field>
+          <Field label={t("entries.type")}>
+            <select
+              className={INPUT}
+              value={draft.entryTypeId}
+              onChange={(e) => changeType(e.target.value)}
+            >
+              {types.map((ty) => (
+                <option key={ty.id} value={ty.id}>
+                  {typeName(ty, t)}
+                </option>
+              ))}
+            </select>
+          </Field>
 
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={time.allDay}
-            onChange={(e) => toggleAllDay(e.target.checked)}
-          />
-          {t("entries.allDay")}
-        </label>
-        <datalist id="quarter-hours">
-          {QUARTER_HOURS.map((q) => (
-            <option key={q} value={q} />
-          ))}
-        </datalist>
-        {time.allDay ? (
-          <div className="flex gap-3">
-            <Field label={t("entries.from")}>
-              <TextInput
-                type="date"
-                required
-                value={time.startDate}
-                onChange={(e) => e.target.value && set({ time: moveStart(time, e.target.value) })}
-              />
-            </Field>
-            <Field label={t("entries.to")}>
-              <TextInput
-                type="date"
-                required
-                min={time.startDate}
-                value={time.endDate}
-                onChange={(e) => setTime({ endDate: e.target.value })}
-              />
-            </Field>
-          </div>
-        ) : (
-          <>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={time.allDay}
+              onChange={(e) => toggleAllDay(e.target.checked)}
+            />
+            {t("entries.allDay")}
+          </label>
+          <datalist id="quarter-hours">
+            {QUARTER_HOURS.map((q) => (
+              <option key={q} value={q} />
+            ))}
+          </datalist>
+          {time.allDay ? (
             <div className="flex gap-3">
-              <Field label={t("entries.startDate")}>
+              <Field label={t("entries.from")}>
                 <TextInput
                   type="date"
                   required
@@ -292,93 +285,128 @@ function EntryForm({
                   onChange={(e) => e.target.value && set({ time: moveStart(time, e.target.value) })}
                 />
               </Field>
-              <Field label={t("entries.startTime")}>
+              <Field label={t("entries.to")}>
                 <TextInput
+                  type="date"
                   required
-                  list="quarter-hours"
-                  pattern="([01][0-9]|2[0-3]):[0-5][0-9]"
-                  placeholder="09:00"
-                  value={time.startTime}
-                  onChange={(e) =>
-                    isClockTime(e.target.value)
-                      ? set({ time: moveStart(time, time.startDate, e.target.value) })
-                      : setTime({ startTime: e.target.value })
-                  }
+                  min={time.startDate}
+                  value={time.endDate}
+                  onChange={(e) => setTime({ endDate: e.target.value })}
                 />
               </Field>
             </div>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={hasEnd}
-                onChange={(e) =>
-                  setTime(
-                    e.target.checked
-                      ? {
-                          endDate: time.startDate,
-                          endTime: clockTime(Math.min(minutesOf(time.startTime) + 60, 1439)),
-                        }
-                      : { endDate: null, endTime: null },
-                  )
-                }
-              />
-              {t("entries.hasEnd")}
-            </label>
-            {hasEnd && (
+          ) : (
+            <>
               <div className="flex gap-3">
-                <Field label={t("entries.endDate")}>
+                <Field label={t("entries.startDate")}>
                   <TextInput
                     type="date"
                     required
-                    min={time.startDate}
-                    value={time.endDate ?? ""}
-                    onChange={(e) => setTime({ endDate: e.target.value })}
+                    value={time.startDate}
+                    onChange={(e) =>
+                      e.target.value && set({ time: moveStart(time, e.target.value) })
+                    }
                   />
                 </Field>
-                <Field label={t("entries.endTime")}>
+                <Field label={t("entries.startTime")}>
                   <TextInput
                     required
                     list="quarter-hours"
                     pattern="([01][0-9]|2[0-3]):[0-5][0-9]"
-                    value={time.endTime ?? ""}
-                    onChange={(e) => setTime({ endTime: e.target.value })}
+                    placeholder="09:00"
+                    value={time.startTime}
+                    onChange={(e) =>
+                      isClockTime(e.target.value)
+                        ? set({ time: moveStart(time, time.startDate, e.target.value) })
+                        : setTime({ startTime: e.target.value })
+                    }
                   />
                 </Field>
               </div>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={hasEnd}
+                  onChange={(e) =>
+                    setTime(
+                      e.target.checked
+                        ? {
+                            endDate: time.startDate,
+                            endTime: clockTime(Math.min(minutesOf(time.startTime) + 60, 1439)),
+                          }
+                        : { endDate: null, endTime: null },
+                    )
+                  }
+                />
+                {t("entries.hasEnd")}
+              </label>
+              {hasEnd && (
+                <div className="flex gap-3">
+                  <Field label={t("entries.endDate")}>
+                    <TextInput
+                      type="date"
+                      required
+                      min={time.startDate}
+                      value={time.endDate ?? ""}
+                      onChange={(e) => setTime({ endDate: e.target.value })}
+                    />
+                  </Field>
+                  <Field label={t("entries.endTime")}>
+                    <TextInput
+                      required
+                      list="quarter-hours"
+                      pattern="([01][0-9]|2[0-3]):[0-5][0-9]"
+                      value={time.endTime ?? ""}
+                      onChange={(e) => setTime({ endTime: e.target.value })}
+                    />
+                  </Field>
+                </div>
+              )}
+            </>
+          )}
+
+          <RepetitionFields
+            value={draft.repetition}
+            start={draft.time.startDate}
+            onChange={(repetition) => set({ repetition })}
+          />
+
+          <fieldset className="flex flex-col gap-1 text-sm">
+            <legend className="mb-1 font-medium">{t("entries.persons")}</legend>
+            <div className="flex flex-wrap gap-3">
+              {persons.data
+                ?.filter((p) => !p.archived || draft.personIds.includes(p.id))
+                .map((p) => (
+                  <label key={p.id} className="flex items-center gap-1">
+                    <input
+                      type="checkbox"
+                      checked={draft.personIds.includes(p.id)}
+                      onChange={(e) =>
+                        set({
+                          personIds: e.target.checked
+                            ? [...draft.personIds, p.id]
+                            : draft.personIds.filter((id) => id !== p.id),
+                        })
+                      }
+                    />
+                    <PersonAvatar person={p} size={24} />
+                    {p.name}
+                  </label>
+                ))}
+            </div>
+            <p className="text-xs text-muted">{t("entries.familyWideHint")}</p>
+          </fieldset>
+          {types.find((ty) => ty.id === draft.entryTypeId)?.builtinKey === "birthday" &&
+            !synced && (
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={Boolean(draft.birthYearKnown)}
+                  onChange={(e) => set({ birthYearKnown: e.target.checked })}
+                />
+                {t("entries.birthYearKnown")}
+              </label>
             )}
-          </>
-        )}
-
-        <RepetitionFields
-          value={draft.repetition}
-          start={draft.time.startDate}
-          onChange={(repetition) => set({ repetition })}
-        />
-
-        <fieldset className="flex flex-col gap-1 text-sm">
-          <legend className="mb-1 font-medium">{t("entries.persons")}</legend>
-          <div className="flex flex-wrap gap-3">
-            {persons.data
-              ?.filter((p) => !p.archived || draft.personIds.includes(p.id))
-              .map((p) => (
-                <label key={p.id} className="flex items-center gap-1">
-                  <input
-                    type="checkbox"
-                    checked={draft.personIds.includes(p.id)}
-                    onChange={(e) =>
-                      set({
-                        personIds: e.target.checked
-                          ? [...draft.personIds, p.id]
-                          : draft.personIds.filter((id) => id !== p.id),
-                      })
-                    }
-                  />
-                  <PersonAvatar person={p} size={24} />
-                  {p.name}
-                </label>
-              ))}
-          </div>
-          <p className="text-xs text-muted">{t("entries.familyWideHint")}</p>
         </fieldset>
 
         <Field label={t("entries.importance")}>
@@ -473,13 +501,17 @@ function EntryForm({
 
         {saveError && (
           <ErrorText>
-            {saveError.field === "time" ? t("entries.badTime") : t("errors.unexpected")}
+            {saveError.error === "birthday_locked"
+              ? t("entries.birthdayLocked")
+              : saveError.field === "time"
+                ? t("entries.badTime")
+                : t("errors.unexpected")}
           </ErrorText>
         )}
         {save.error && !saveError && <ErrorText>{t("errors.network")}</ErrorText>}
         <SubmitButton busy={save.isPending}>{t("persons.save")}</SubmitButton>
       </form>
-      {entry && (
+      {entry && !synced && (
         <div className="border-t border-line pt-4">
           <button
             type="button"

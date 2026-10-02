@@ -2,6 +2,7 @@ import { asc, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { isPlainDate } from "../../core/plain-date";
 import { randomId } from "../auth/crypto";
+import { detachBirthday, syncBirthday, syncedBirthday } from "../birthdays";
 import type { Db } from "../db";
 import { schema } from "../db";
 import { requireDevice } from "../require-device";
@@ -104,6 +105,7 @@ personRoutes.post("/persons", async (c) => {
       db.insert(schema.personNickname).values({ id: randomId(), personId: id, nickname }),
     ),
   ]);
+  await syncBirthday(db, id, now);
   const person = (await listPersons(db)).find((p) => p.id === id);
   return c.json(person, 201);
 });
@@ -111,15 +113,21 @@ personRoutes.post("/persons", async (c) => {
 personRoutes.patch("/persons/:id", async (c) => {
   const db = c.get("db");
   const id = c.req.param("id");
-  const parsed = parsePerson(await c.req.json().catch(() => ({})), true);
+  const body = await c.req.json().catch(() => ({}));
+  const parsed = parsePerson(body, true);
   if (!parsed.values) return c.json({ error: "invalid", field: parsed.field }, 400);
   const { nicknames, ...fields } = parsed.values;
   const [existing] = await db.select().from(schema.person).where(eq(schema.person.id, id));
   if (!existing) return c.json({ error: "not_found" }, 404);
+  const now = c.get("now").toISOString();
+  // Archiving asks whether to keep the Birthday on the calendar, then Family-wide.
+  if (fields.archived && !existing.archived && body.keepBirthday === true) {
+    await detachBirthday(db, id, now);
+  }
   await db.batch([
     db
       .update(schema.person)
-      .set({ ...fields, changedAt: c.get("now").toISOString() })
+      .set({ ...fields, changedAt: now })
       .where(eq(schema.person.id, id)),
     ...(nicknames
       ? [
@@ -130,6 +138,7 @@ personRoutes.patch("/persons/:id", async (c) => {
         ]
       : []),
   ]);
+  await syncBirthday(db, id, now);
   return c.json((await listPersons(db)).find((p) => p.id === id));
 });
 
@@ -137,10 +146,20 @@ personRoutes.delete("/persons/:id", async (c) => {
   const db = c.get("db");
   const id = c.req.param("id");
   if (await isMentioned(db, id)) return c.json({ error: "person_in_use" }, 409);
-  const deleted = await db
+  const birthday = await syncedBirthday(db, id);
+  const deletePerson = db
     .delete(schema.person)
     .where(eq(schema.person.id, id))
     .returning({ id: schema.person.id });
+  // The synced Birthday goes with its Person, before the Person it points at.
+  const deleted = birthday
+    ? (
+        await db.batch([
+          db.delete(schema.entry).where(eq(schema.entry.id, birthday.id)),
+          deletePerson,
+        ])
+      )[1]
+    : await deletePerson;
   if (deleted.length === 0) return c.json({ error: "not_found" }, 404);
   return c.body(null, 204);
 });

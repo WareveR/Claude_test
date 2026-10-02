@@ -1,4 +1,4 @@
-import { and, eq, gte, inArray, isNotNull, like, lte, or, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, isNotNull, isNull, like, lte, ne, or, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { entryTimeProblem, isClockTime, type EntryTime } from "../../core/entry-time";
 import { ICONS, IMPORTANCES, type Importance } from "../../core/entry-type";
@@ -26,6 +26,8 @@ export type EntryInput = {
   private: boolean;
   reminders: number[];
   repetition: Repetition | null;
+  /** Birthday Entries: the start date carries the real birth year, so the age can show. */
+  birthYearKnown: boolean;
 };
 
 function parseTime(value: unknown): EntryTime | null {
@@ -89,6 +91,7 @@ async function parseEntry(db: Db, body: Record<string, unknown>) {
       private: Boolean(body.private),
       reminders: [...new Set(reminders as number[])].sort((a, b) => b - a),
       repetition: repetition as Repetition | null,
+      birthYearKnown: Boolean(body.birthYearKnown),
     } satisfies EntryInput,
   };
 }
@@ -110,6 +113,7 @@ function columns(v: EntryInput) {
     private: v.private,
     reminders: v.reminders,
     repetition: v.repetition,
+    birthYearKnown: v.birthYearKnown,
   };
 }
 
@@ -139,6 +143,8 @@ export function present(row: EntryRow, personIds: string[], exceptions: Exceptio
     reminders: row.reminders,
     repetition: row.repetition ?? null,
     seriesId: row.seriesId,
+    birthdayPersonId: row.birthdayPersonId,
+    birthYearKnown: row.birthYearKnown,
     exceptions: exceptions.map((e) => ({
       date: e.originalDate,
       skipped: e.skipped,
@@ -181,10 +187,17 @@ function personLinks(db: Db, entryId: string, personIds: string[]) {
 }
 
 personMentionChecks.push(async (db, personId) => {
+  // The Person's own synced Birthday doesn't count: it goes with them.
   const [link] = await db
-    .select()
+    .select({ entryId: schema.entryPerson.entryId })
     .from(schema.entryPerson)
-    .where(eq(schema.entryPerson.personId, personId))
+    .innerJoin(schema.entry, eq(schema.entry.id, schema.entryPerson.entryId))
+    .where(
+      and(
+        eq(schema.entryPerson.personId, personId),
+        or(isNull(schema.entry.birthdayPersonId), ne(schema.entry.birthdayPersonId, personId)),
+      ),
+    )
     .limit(1);
   if (link) return true;
   const [override] = await db
@@ -205,6 +218,21 @@ entryTypeDeleteSteps.push(async (db, typeId, moves, generalId) => {
     await db.update(schema.entry).set({ entryTypeId: target }).where(eq(schema.entry.id, id));
   }
 });
+
+/**
+ * A synced Birthday's date, Person, title, type and Repetition follow its Person; returns the
+ * first of those the edit tries to change.
+ */
+function lockedChange(row: EntryRow, v: EntryInput) {
+  const fixed = columns(v);
+  for (const key of ["title", "entryTypeId", "allDay", "startDate", "endDate"] as const) {
+    if (fixed[key] !== row[key]) return key === "title" || key === "entryTypeId" ? key : "time";
+  }
+  if (JSON.stringify(v.repetition) !== JSON.stringify(row.repetition)) return "repetition";
+  if (v.personIds.length !== 1 || v.personIds[0] !== row.birthdayPersonId) return "personIds";
+  if (!v.birthYearKnown) return "birthYearKnown";
+  return null;
+}
 
 export const entryRoutes = new Hono<AppEnv>().use(requireDevice);
 
@@ -272,6 +300,8 @@ entryRoutes.put("/entries/:id", async (c) => {
   if (!existing) return c.json({ error: "not_found" }, 404);
   const parsed = await parseEntry(db, await c.req.json().catch(() => ({})));
   if (!parsed.values) return c.json({ error: "invalid", ...parsed }, 400);
+  const field = existing.birthdayPersonId && lockedChange(existing, parsed.values);
+  if (field) return c.json({ error: "birthday_locked", field }, 409);
   await db.batch([
     db
       .update(schema.entry)
@@ -284,10 +314,15 @@ entryRoutes.put("/entries/:id", async (c) => {
   return c.json((await withPersons(db, rows))[0]);
 });
 
-/** Deleting is for good; nightly Backups are the safety net. */
+/**
+ * Deleting is for good; nightly Backups are the safety net. A synced Birthday goes only through
+ * its Person's date of birth.
+ */
 entryRoutes.delete("/entries/:id", async (c) => {
-  const deleted = await c
-    .get("db")
+  const db = c.get("db");
+  const row = await loadEntry(db, c.req.param("id"));
+  if (row?.birthdayPersonId) return c.json({ error: "birthday_locked" }, 409);
+  const deleted = await db
     .delete(schema.entry)
     .where(eq(schema.entry.id, c.req.param("id")))
     .returning({ id: schema.entry.id });
@@ -327,6 +362,7 @@ entryRoutes.put("/entries/:id/occurrences/:date", async (c) => {
   const { id, date } = c.req.param();
   const row = await loadEntry(db, id);
   if (!row || !isOccurrence(row, date)) return c.json({ error: "not_found" }, 404);
+  if (row.birthdayPersonId) return c.json({ error: "birthday_locked" }, 409);
   const parsed = await parseEntry(db, await c.req.json().catch(() => ({})));
   if (!parsed.values) return c.json({ error: "invalid", ...parsed }, 400);
   const { repetition, ...override } = parsed.values;
@@ -353,6 +389,7 @@ entryRoutes.delete("/entries/:id/occurrences/:date", async (c) => {
   const { id, date } = c.req.param();
   const row = await loadEntry(db, id);
   if (!row || !isOccurrence(row, date)) return c.json({ error: "not_found" }, 404);
+  if (row.birthdayPersonId) return c.json({ error: "birthday_locked" }, 409);
   await db
     .insert(schema.occurrenceException)
     .values({ entryId: id, originalDate: date, skipped: true, override: null })
@@ -372,6 +409,7 @@ entryRoutes.post("/entries/:id/following/:date", async (c) => {
   const { id, date } = c.req.param();
   const row = await loadEntry(db, id);
   if (!row || !isOccurrence(row, date)) return c.json({ error: "not_found" }, 404);
+  if (row.birthdayPersonId) return c.json({ error: "birthday_locked" }, 409);
   const parsed = await parseEntry(db, await c.req.json().catch(() => ({})));
   if (!parsed.values) return c.json({ error: "invalid", ...parsed }, 400);
   const now = c.get("now").toISOString();
@@ -420,6 +458,7 @@ entryRoutes.delete("/entries/:id/following/:date", async (c) => {
   const { id, date } = c.req.param();
   const row = await loadEntry(db, id);
   if (!row || !isOccurrence(row, date)) return c.json({ error: "not_found" }, 404);
+  if (row.birthdayPersonId) return c.json({ error: "birthday_locked" }, 409);
   const oldEnd = endBefore(row, date);
   if (date === row.startDate || (oldEnd.end.type === "count" && oldEnd.end.count === 0)) {
     await db.delete(schema.entry).where(eq(schema.entry.id, id));
