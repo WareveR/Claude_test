@@ -1,1 +1,11 @@
 @import "tailwindcss";
+
+/* Light and dark follow the device setting (Tailwind's default `dark:` media strategy). */
+@layer base {
+  html {
+    color-scheme: light dark;
+  }
+  body {
+    @apply bg-stone-50 text-stone-900 dark:bg-stone-950 dark:text-stone-100;
+  }
+}

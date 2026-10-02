@@ -17,7 +17,61 @@ export function daysInMonth(year: number, month: number): number {
   return new Date(Date.UTC(year, month, 0)).getUTCDate();
 }
 
-export function addDays(date: PlainDate, days: number): PlainDate {
+function toUtc(date: PlainDate): Date {
   const [y, m, d] = date.split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+  return new Date(Date.UTC(y, m - 1, d));
+}
+
+function fromUtc(date: Date): PlainDate {
+  return date.toISOString().slice(0, 10);
+}
+
+export function addDays(date: PlainDate, days: number): PlainDate {
+  const utc = toUtc(date);
+  utc.setUTCDate(utc.getUTCDate() + days);
+  return fromUtc(utc);
+}
+
+/** Adds months, keeping the day when it exists and otherwise taking the month's last day. */
+export function addMonths(date: PlainDate, months: number): PlainDate {
+  const [y, m, d] = date.split("-").map(Number);
+  const first = new Date(Date.UTC(y, m - 1 + months, 1));
+  const year = first.getUTCFullYear();
+  const month = first.getUTCMonth() + 1;
+  return fromUtc(new Date(Date.UTC(year, month - 1, Math.min(d, daysInMonth(year, month)))));
+}
+
+/** Day of the week with Monday = 0 … Sunday = 6. */
+export function weekday(date: PlainDate): number {
+  return (toUtc(date).getUTCDay() + 6) % 7;
+}
+
+/** The Monday on or before the date: both v1 languages start the week on Monday. */
+export function startOfWeek(date: PlainDate): PlainDate {
+  return addDays(date, -weekday(date));
+}
+
+export function startOfMonth(date: PlainDate): PlainDate {
+  return `${date.slice(0, 7)}-01`;
+}
+
+/** Today's date on the wall clocks of the given time zone. */
+export function todayIn(timeZone: string, now: Date = new Date()): PlainDate {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value;
+  return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
+/** Formats a PlainDate in a language without letting any time zone shift it. */
+export function formatPlainDate(
+  date: PlainDate,
+  language: string,
+  options: Intl.DateTimeFormatOptions,
+): string {
+  return new Intl.DateTimeFormat(language, { ...options, timeZone: "UTC" }).format(toUtc(date));
 }

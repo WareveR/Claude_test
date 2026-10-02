@@ -1,6 +1,11 @@
 {
-  "app": { "name": "Family Calendar" },
-  "languages": { "pt-PT": "Português", "en": "English" },
+  "app": {
+    "name": "Family Calendar"
+  },
+  "languages": {
+    "pt-PT": "Português",
+    "en": "English"
+  },
   "setup": {
     "title": "Create the Family calendar",
     "setupCode": "Setup code",
@@ -31,5 +36,20 @@
   "errors": {
     "network": "No connection. Check the internet and try again.",
     "unexpected": "Something went wrong. Try again."
+  },
+  "views": {
+    "day": "Day",
+    "week": "Week",
+    "month": "Month",
+    "year": "Year",
+    "tasks": "Tasks",
+    "today": "Today",
+    "previous": "Previous",
+    "next": "Next"
+  },
+  "settings": {
+    "title": "Settings",
+    "back": "Back",
+    "language": "Language on this device"
   }
 }

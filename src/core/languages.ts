@@ -15,3 +15,8 @@ export function isTimeZone(value: unknown): value is string {
     return false;
   }
 }
+
+/** The Intl locale used for dates and times: English uses British formats (dd/mm/yyyy, 24-hour). */
+export function formatLocale(language: Language): string {
+  return language === "en" ? "en-GB" : "pt-PT";
+}
