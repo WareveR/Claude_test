@@ -30,6 +30,7 @@ export type Device = { id: string; name: string; language: string | null };
 
 export type Status = {
   familyExists: boolean;
+  newSetupCode: boolean;
   signedIn: boolean;
   family: Family | null;
   device: Device | null;

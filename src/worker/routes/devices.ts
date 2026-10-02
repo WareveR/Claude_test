@@ -5,6 +5,7 @@ import { hashPassword, isAcceptablePassword, verifyPassword } from "../auth/pass
 import { SESSION_COOKIE } from "../auth/session";
 import { clearFailures, clientIp, recordFailure, retryAfter } from "../auth/throttle";
 import { schema } from "../db";
+import { sendPasswordNotice } from "./recovery";
 import { requireDevice } from "../require-device";
 import type { AppEnv } from "../types";
 
@@ -81,6 +82,7 @@ devicesRoutes.post("/password", async (c) => {
       .where(eq(schema.family.id, family.id)),
     db.delete(schema.signedInDevice),
   ]);
+  await sendPasswordNotice(c.env, family);
   deleteCookie(c, SESSION_COOKIE, { path: "/", secure: true, prefix: "host" });
   return c.body(null, 204);
 });

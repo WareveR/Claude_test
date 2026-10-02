@@ -10,6 +10,7 @@ import { HolidaysSection } from "./HolidaysSection";
 import { PersonsSection } from "../persons/PersonsSection";
 import { DevicesSection } from "./DevicesSection";
 import { PasswordSection } from "./PasswordSection";
+import { RecoveryEmailSection } from "./RecoveryEmailSection";
 
 export function SettingsPage() {
   const { t } = useTranslation();
@@ -52,6 +53,7 @@ export function SettingsPage() {
       <HolidaysSection />
       <DevicesSection />
       <PasswordSection />
+      <RecoveryEmailSection />
       <button type="button" className="self-start underline" onClick={() => signOut.mutate()}>
         {t("signIn.signOut")}
       </button>

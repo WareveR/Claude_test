@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { getDb, schema } from "./db";
 import { authRoutes } from "./routes/auth";
+import { recoveryEmailRoutes, recoveryRoutes } from "./routes/recovery";
 import { deviceRoutes } from "./routes/device";
 import { devicesRoutes } from "./routes/devices";
 import { entryRoutes } from "./routes/entries";
@@ -28,6 +29,9 @@ app.get("/health", async (c) => {
 });
 
 app.route("/", authRoutes);
+// Before any route group that requires a signed-in device.
+app.route("/", recoveryRoutes);
+app.route("/", recoveryEmailRoutes);
 app.route("/", deviceRoutes);
 app.route("/", devicesRoutes);
 app.route("/", imageRoutes);

@@ -85,6 +85,13 @@
       "when": 1790933304996,
       "tag": "0011_holiday_places",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1790933814134,
+      "tag": "0012_recovery",
+      "breakpoints": true
     }
   ]
 }

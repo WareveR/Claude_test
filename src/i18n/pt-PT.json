@@ -33,6 +33,30 @@
     "tooMany": "Demasiadas tentativas. Tenta de novo daqui a {{seconds}} s.",
     "signOut": "Sair neste dispositivo"
   },
+  "recovery": {
+    "forgot": "Esqueceste a palavra-passe?",
+    "title": "Esqueceste a palavra-passe?",
+    "email": "Email de recuperação",
+    "send": "Enviar ligação de recuperação",
+    "sent": "Se esse endereço estiver registado, uma ligação de recuperação está a caminho. Verifica a caixa de entrada.",
+    "back": "Voltar a entrar",
+    "newPasswordTitle": "Escolhe uma nova palavra-passe",
+    "newPassword": "Nova palavra-passe",
+    "choose": "Escolher palavra-passe",
+    "done": "A palavra-passe foi alterada e todos os dispositivos terminaram a sessão. Entra com a nova.",
+    "invalidLink": "Esta ligação já não é válida. Pede uma nova.",
+    "confirmTitle": "Email de recuperação",
+    "confirming": "A confirmar…",
+    "confirmed": "Email de recuperação confirmado.",
+    "continue": "Continuar",
+    "newSetupCodeTitle": "Define uma nova palavra-passe",
+    "newSetupCodeHint": "O email de recuperação foi usado, por isso este calendário precisa de uma nova palavra-passe. Escreve o código de configuração do servidor e escolhe uma nova Palavra-passe da Família.",
+    "emailTitle": "Email de recuperação",
+    "emailHint": "Para onde enviamos a ligação se a Palavra-passe da Família for esquecida. O novo endereço tem de ser confirmado na sua caixa de entrada.",
+    "emailNew": "Novo email de recuperação",
+    "emailChange": "Alterar email de recuperação",
+    "emailSent": "Enviámos uma ligação de confirmação para {{email}}. A alteração aplica-se depois de a abrires."
+  },
   "errors": {
     "network": "Sem ligação. Verifica a internet e tenta de novo.",
     "unexpected": "Algo correu mal. Tenta de novo."
