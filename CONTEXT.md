@@ -119,3 +119,11 @@ _Avoid_: Summary, digest, home page, dashboard
 **Error Log**:
 The record of everything that went wrong in the app, on the server or on a device, kept for 90 days and readable in Settings on any Signed-in Device except in Display Mode. When something fails, the device shows at once what failed and what to try, with a short error code that points to its Error Log line; the details show the action, time, app version and technical message. Reporting an error adds an optional comment to its line and emails the Family's recovery address straight away; on days with errors, a summary email is also sent. An error that happens offline is kept on the device and logged when it is back online. The Error Log never holds notes or the titles of Private Entries and Tasks.
 _Avoid_: Crash log, bug report, error history
+
+**Backup**:
+A copy of the Family's data kept so it can be brought back after a mistake or a loss, since deleting is final and nothing keeps a history. Every night a full copy is saved; the last 30 nightly copies and one per month for 12 months are kept. Images are never overwritten, and one no longer used is removed only 30 days later, so a restored copy still finds its images. Restoring brings back the whole calendar as it was at that moment, losing what changed since; it is done by hand by whoever runs the installation, never from the app. A Backup that fails is logged in the Error Log.
+_Avoid_: Snapshot, archive, history
+
+**Export**:
+A file the Family downloads from Settings to keep its data outside the app: either everything (all data and images) or all Entries as an .ics calendar file. It holds everything the Family sees, Private Entries and Tasks, archived Persons and closed Checklist rounds included, but never the Family Password, secrets, Signed-in Devices or the Error Log. Settings shows when the last full Export was downloaded. A full Export can be used to restore, the same way as a Backup; the app has no import.
+_Avoid_: Download, dump, Calendar Feed (a live link, not a file)
