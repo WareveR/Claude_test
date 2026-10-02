@@ -12,11 +12,14 @@ export function ViewNav({
   title,
   previous,
   next,
+  newPath,
 }: {
   date: PlainDate;
   title?: string;
   previous?: string;
   next?: string;
+  /** Where "+" leads; a new Entry on the view's date unless given. */
+  newPath?: string;
 }) {
   const { t } = useTranslation();
   return (
@@ -49,8 +52,8 @@ export function ViewNav({
       )}
       {title && <h1 className="text-lg font-semibold first-letter:uppercase">{title}</h1>}
       <Link
-        to={`/entries/new?date=${date}`}
-        aria-label={t("entries.new")}
+        to={newPath ?? `/entries/new?date=${date}`}
+        aria-label={newPath ? t("tasks.new") : t("entries.new")}
         className="ml-auto rounded-full bg-accent p-2 text-accent-ink"
       >
         <Plus aria-hidden size={20} strokeWidth={2} />

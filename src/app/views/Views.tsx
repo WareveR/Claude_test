@@ -197,8 +197,3 @@ function Year({ year }: { year: number }) {
     </>
   );
 }
-
-export function TasksView() {
-  const { t } = useTranslation();
-  return <ViewNav date={useToday()} title={t("views.tasks")} />;
-}
