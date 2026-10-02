@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router";
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router";
 import {
   clockTime,
   isClockTime,
@@ -33,6 +33,7 @@ const QUARTER_HOURS = Array.from({ length: 96 }, (_, i) => clockTime(i * 15));
 export function EntryPage() {
   const { id } = useParams();
   const [search] = useSearchParams();
+  const location = useLocation();
   const isNew = id === "new";
   const entry = useEntry(isNew ? undefined : id);
   const types = useEntryTypes();
@@ -45,7 +46,7 @@ export function EntryPage() {
       : null;
   return (
     <EntryForm
-      key={`${id}:${date}`}
+      key={`${id}:${date}:${isNew ? location.key : ""}`}
       entry={isNew ? undefined : entry.data}
       occurrence={occurrence?.values ? { date: occurrence.date, values: occurrence.values } : null}
       types={types.data}
@@ -131,15 +132,18 @@ function EntryForm({
   const syncedPerson = persons.data?.find((p) => p.id === synced);
   const startDate = search.get("date");
   const startTime = search.get("time");
+  const given = (useLocation().state as { values?: Partial<EntryDraft> } | null)?.values;
   const [draft, setDraft] = useState<EntryDraft>(() => {
     if (occurrence) return occurrence.values;
     if (entry) return entry;
     const type = types.find((ty) => ty.id === search.get("type")) ?? general;
-    return newDraft(
+    const fresh = newDraft(
       type,
       startDate && isPlainDate(startDate) ? startDate : todayIn(family.timeZone),
       startTime && isClockTime(startTime) ? startTime : null,
     );
+    // Values from a Voice Entry already include the Entry Type's defaults.
+    return given ? { ...fresh, ...given } : fresh;
   });
   const set = (patch: Partial<EntryDraft>) => setDraft((d) => ({ ...d, ...patch }));
   const setTime = (patch: Partial<EntryTime>) =>

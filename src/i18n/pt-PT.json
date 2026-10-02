@@ -393,5 +393,23 @@
       "snow": "Neve",
       "fog": "Nevoeiro"
     }
+  },
+  "voice": {
+    "title": "Entrada por voz",
+    "open": "Entrada por voz",
+    "sentence": "Diga ou escreva uma frase",
+    "send": "Enviar",
+    "listen": "Falar",
+    "listening": "A ouvir…",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "edit": "Editar",
+    "saveQuestion": "Guardar?",
+    "saved": "Guardado",
+    "undo": "Anular",
+    "failed": "Não consegui perceber. Tente outra vez.",
+    "saveFailed": "Não foi possível guardar. Tente outra vez.",
+    "hint": "Diga ou escreva uma frase para adicionar uma entrada ou tarefa. Só neste dispositivo.",
+    "readback": "Ler em voz alta e perguntar antes de guardar"
   }
 }
