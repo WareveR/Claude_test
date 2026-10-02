@@ -1,3 +1,35 @@
 {
-  "app": { "name": "Calendário da Família" }
+  "app": { "name": "Calendário da Família" },
+  "languages": { "pt-PT": "Português", "en": "English" },
+  "setup": {
+    "title": "Criar o calendário da família",
+    "setupCode": "Código de configuração",
+    "familyName": "Nome da família",
+    "password": "Palavra-passe da família",
+    "passwordHint": "Pelo menos 10 caracteres. Uma frase fácil de lembrar serve.",
+    "recoveryEmail": "Email de recuperação",
+    "language": "Idioma da família",
+    "timeZone": "Fuso horário da família",
+    "submit": "Criar",
+    "wrongCode": "O código de configuração não está certo.",
+    "invalid": {
+      "name": "Escreve o nome da família.",
+      "password": "A palavra-passe precisa de pelo menos 10 caracteres.",
+      "recoveryEmail": "Este email não parece válido.",
+      "language": "Escolhe um idioma.",
+      "timeZone": "Escolhe um fuso horário."
+    }
+  },
+  "signIn": {
+    "title": "Entrar",
+    "password": "Palavra-passe da família",
+    "submit": "Entrar",
+    "wrong": "Palavra-passe errada.",
+    "tooMany": "Demasiadas tentativas. Tenta de novo daqui a {{seconds}} s.",
+    "signOut": "Sair neste dispositivo"
+  },
+  "errors": {
+    "network": "Sem ligação. Verifica a internet e tenta de novo.",
+    "unexpected": "Algo correu mal. Tenta de novo."
+  }
 }

@@ -16,7 +16,10 @@ export default defineConfig({
           cloudflareTest(async () => ({
             wrangler: { configPath: "./wrangler.jsonc" },
             miniflare: {
-              bindings: { TEST_MIGRATIONS: await readD1Migrations("migrations") },
+              bindings: {
+                SETUP_CODE: "test-setup-code",
+                TEST_MIGRATIONS: await readD1Migrations("migrations"),
+              },
             },
           })),
         ],

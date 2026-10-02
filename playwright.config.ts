@@ -3,12 +3,15 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "e2e",
   use: {
-    baseURL: "http://localhost:5173",
+    baseURL: "http://localhost:4173",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    command: "npm run db:migrate:local && npm run dev -- --port 5173 --strictPort",
-    url: "http://localhost:5173/api/health",
-    reuseExistingServer: !process.env.CI,
+    // A fresh local database and the production build, so each run starts at first-run setup.
+    command:
+      "rm -rf .wrangler/state && npm run db:migrate:local && npm run build && npx vite preview --port 4173 --strictPort",
+    url: "http://localhost:4173/api/health",
+    reuseExistingServer: false,
+    timeout: 180_000,
   },
 });

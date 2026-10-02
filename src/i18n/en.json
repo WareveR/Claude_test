@@ -1,3 +1,35 @@
 {
-  "app": { "name": "Family Calendar" }
+  "app": { "name": "Family Calendar" },
+  "languages": { "pt-PT": "Português", "en": "English" },
+  "setup": {
+    "title": "Create the Family calendar",
+    "setupCode": "Setup code",
+    "familyName": "Family name",
+    "password": "Family Password",
+    "passwordHint": "At least 10 characters. A memorable phrase works.",
+    "recoveryEmail": "Recovery email",
+    "language": "Family Language",
+    "timeZone": "Family Time Zone",
+    "submit": "Create",
+    "wrongCode": "That setup code isn't right.",
+    "invalid": {
+      "name": "Enter the Family's name.",
+      "password": "The password needs at least 10 characters.",
+      "recoveryEmail": "That email doesn't look valid.",
+      "language": "Choose a language.",
+      "timeZone": "Choose a time zone."
+    }
+  },
+  "signIn": {
+    "title": "Sign in",
+    "password": "Family Password",
+    "submit": "Sign in",
+    "wrong": "Wrong password.",
+    "tooMany": "Too many attempts. Try again in {{seconds}} s.",
+    "signOut": "Sign out on this device"
+  },
+  "errors": {
+    "network": "No connection. Check the internet and try again.",
+    "unexpected": "Something went wrong. Try again."
+  }
 }
