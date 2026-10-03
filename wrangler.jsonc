@@ -4,6 +4,9 @@
   "main": "src/worker/index.ts",
   "compatibility_date": "2026-08-20",
   "compatibility_flags": ["nodejs_compat"],
+  // The family's address; the workers.dev beta address keeps working too.
+  "routes": [{ "pattern": "calendario.phinest.org", "custom_domain": true }],
+  "workers_dev": true,
   "assets": {
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api/*"],
@@ -24,10 +27,10 @@
   ],
   // Workers AI writes the Briefing and reads Voice Entry sentences.
   "ai": { "binding": "AI" },
-  // Cloudflare Email Service; the sender address is set with the own domain (#53).
+  // Cloudflare Email Service, sending from the own domain (#53).
   "send_email": [{ "name": "EMAIL" }],
   "vars": {
-    "EMAIL_FROM": "calendar@example.com",
+    "EMAIL_FROM": "calendario@phinest.org",
     // Open-Meteo, free and keyless; the e2e tests point these at a local fake.
     "OPEN_METEO_FORECAST_URL": "https://api.open-meteo.com",
     "OPEN_METEO_GEOCODING_URL": "https://geocoding-api.open-meteo.com",

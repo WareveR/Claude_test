@@ -7,7 +7,7 @@ interface __BaseEnv_Env {
 	DB: D1Database;
 	EMAIL: SendEmail;
 	AI: Ai;
-	EMAIL_FROM: "calendar@example.com";
+	EMAIL_FROM: "calendario@phinest.org";
 	SETUP_CODE: string;
 	OPEN_METEO_FORECAST_URL: string;
 	OPEN_METEO_GEOCODING_URL: string;
