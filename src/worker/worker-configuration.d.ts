@@ -14,6 +14,7 @@ interface __BaseEnv_Env {
 	VAPID_PUBLIC_KEY: string;
 	VAPID_PRIVATE_KEY: string;
 	VAPID_SUBJECT: string;
+	RESEND_API_KEY: string;
 }
 declare namespace Cloudflare {
 	interface GlobalProps {
@@ -26,7 +27,7 @@ type StringifyValues<EnvType extends Record<string, unknown>> = {
 	[Binding in keyof EnvType]: EnvType[Binding] extends string ? EnvType[Binding] : string;
 };
 declare namespace NodeJS {
-	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "EMAIL_FROM" | "SETUP_CODE" | "OPEN_METEO_FORECAST_URL" | "OPEN_METEO_GEOCODING_URL" | "VAPID_PUBLIC_KEY" | "VAPID_PRIVATE_KEY" | "VAPID_SUBJECT">> {}
+	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "EMAIL_FROM" | "SETUP_CODE" | "OPEN_METEO_FORECAST_URL" | "OPEN_METEO_GEOCODING_URL" | "VAPID_PUBLIC_KEY" | "VAPID_PRIVATE_KEY" | "VAPID_SUBJECT" | "RESEND_API_KEY">> {}
 }
 
 // Begin runtime types
