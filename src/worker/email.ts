@@ -3,14 +3,32 @@ import type { Language } from "../core/languages";
 export type Email = { to: string; subject: string; text: string };
 
 /**
- * Where emails go. Normally Cloudflare Email Service; tests swap `send` for a fake outbox.
- * A failed send never undoes the change that caused it.
+ * Where emails go: Resend when the Worker has a RESEND_API_KEY secret (its free plan covers a
+ * family), otherwise Cloudflare Email Service, which needs Workers Paid. Tests swap `send` for a
+ * fake outbox. A failed send never undoes the change that caused it.
  */
 export const mailer = {
   async send(env: Env, email: Email) {
+    if (env.RESEND_API_KEY) {
+      await sendWithResend(env.RESEND_API_KEY, { from: env.EMAIL_FROM, ...email });
+      return;
+    }
     await env.EMAIL.send({ from: env.EMAIL_FROM, ...email });
   },
 };
+
+const RESEND_URL = "https://api.resend.com/emails";
+
+export async function sendWithResend(apiKey: string, email: Email & { from: string }) {
+  const response = await fetch(RESEND_URL, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify(email),
+  });
+  if (!response.ok) {
+    throw new Error(`Resend answered ${response.status}: ${await response.text()}`);
+  }
+}
 
 export async function sendEmail(env: Env, email: Email) {
   try {

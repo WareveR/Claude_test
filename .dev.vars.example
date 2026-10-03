@@ -7,3 +7,6 @@ OPEN_METEO_GEOCODING_URL=http://localhost:4174
 VAPID_PUBLIC_KEY=BP-YVRiIWVoBJIPIZA7r8Nw-fdctXup0sb6GNwIctouAvyH2meZz9b8d8AqtMaativsR95XTEy-vnmLBBfyQWeo
 VAPID_PRIVATE_KEY=gdWrDjYbXXjpht4mfRPqOJgErQkmORrr6iubA6JcNz0
 VAPID_SUBJECT=mailto:calendar@example.com
+# Emails go through Resend when this holds an API key (production: npx wrangler secret put
+# RESEND_API_KEY, see docs/runbooks/email.md); empty uses Cloudflare Email Service.
+RESEND_API_KEY=
