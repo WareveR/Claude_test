@@ -30,5 +30,25 @@ Emails go out from the next request; no redeploy is needed.
 
 ## Receiving email
 
-Mail sent to an address at phinest.org is a separate, free Cloudflare feature: **Email Routing**
-forwards it to an existing inbox.
+Resend only sends; it has no inbox. Mail sent to an address at phinest.org is a separate, free
+Cloudflare feature, **Email Routing**, which forwards it to an existing inbox:
+
+1. Cloudflare › phinest.org › **Email › Email Routing** › enable it and accept the DNS records it
+   adds.
+2. **Routing rules › Create address** for each address (`info@`, `calendario@`, a personal one)
+   with the destination inbox. Cloudflare sends a confirmation to that inbox once.
+3. Optionally turn on **Catch-all** to forward any other address at phinest.org.
+
+## Sending personal mail as an address at phinest.org
+
+Gmail can send as `info@phinest.org` through Resend's SMTP server:
+
+1. In Resend, **API Keys › Create API key** named `gmail`, **Sending access**, domain
+   `phinest.org`. Use a separate key from the Worker's, so either can be replaced alone.
+2. In Gmail, **Settings › Accounts › Send mail as › Add another email address**:
+   - SMTP server `smtp.resend.com`, port `465`, SSL
+   - username `resend` (that word, not an email address)
+   - password: the API key from step 1
+3. Gmail emails a confirmation code to the new address; it arrives through Email Routing.
+
+Everything sent this way counts against the same Resend quota as the calendar's emails.
