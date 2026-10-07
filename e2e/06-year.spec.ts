@@ -17,3 +17,22 @@ test("the year view fills High days and dots the others", async ({ page }) => {
   await page.getByTestId("year-day-2026-12-24").click();
   await expect(page).toHaveURL(/\/month\/2026-12\?day=2026-12-24$/);
 });
+
+test("Detail shows a line per Person and one for the Family in each month", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/year/2026");
+  await page.getByRole("link", { name: "Detail" }).click();
+  await expect(page).toHaveURL(/\/year\/2026\?detail=1$/);
+  const detail = page.getByTestId("year-detail");
+  await expect(detail).toBeVisible();
+  // Christmas Eve dinner is for no Person in particular, so it sits on the Family line.
+  await expect(detail.getByTestId("year-cell-2026-12-24-family")).toBeVisible();
+  await expect(detail.getByTestId("year-line-12-family")).toContainText("Family");
+  await detail.getByTestId("year-cell-2026-12-24-family").click();
+  await expect(page).toHaveURL(/\/month\/2026-12\?day=2026-12-24$/);
+
+  await page.goto("/year/2026?detail=1");
+  await page.getByRole("link", { name: "Detail" }).click();
+  await expect(page).toHaveURL(/\/year\/2026$/);
+  await expect(page.getByTestId("year-detail")).toHaveCount(0);
+});
