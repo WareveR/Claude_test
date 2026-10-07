@@ -9,6 +9,7 @@ import { reportFailure, watchForErrors } from "./errors/store";
 import i18n from "./i18n";
 import { persistOptions, wipeOfflineCopy } from "./offline/persist";
 import { registerServiceWorker } from "./offline/service-worker";
+import { applyTheme } from "./theme";
 import "./index.css";
 
 const queryClient: QueryClient = new QueryClient({
@@ -67,6 +68,7 @@ class CrashBoundary extends Component<{ children: ReactNode }, { crashed: boolea
   }
 }
 
+applyTheme();
 watchForErrors();
 registerServiceWorker();
 

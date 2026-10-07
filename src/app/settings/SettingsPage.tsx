@@ -16,10 +16,12 @@ import { PersonsSection } from "../persons/PersonsSection";
 import { DevicesSection } from "./DevicesSection";
 import { PasswordSection } from "./PasswordSection";
 import { RecoveryEmailSection } from "./RecoveryEmailSection";
+import { setTheme, THEMES, useTheme, type Theme } from "../theme";
 
 export function SettingsPage() {
   const { t } = useTranslation();
   const { language } = useSignedIn();
+  const theme = useTheme();
   const queryClient = useQueryClient();
   const refreshStatus = () => queryClient.invalidateQueries({ queryKey: ["status"] });
   const changeLanguage = useMutation({
@@ -49,6 +51,20 @@ export function SettingsPage() {
           {LANGUAGES.map((lng) => (
             <option key={lng} value={lng}>
               {t(`languages.${lng}`)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="flex flex-col gap-1 text-sm">
+        <span className="font-medium">{t("settings.theme")}</span>
+        <select
+          value={theme}
+          onChange={(e) => setTheme(e.target.value as Theme)}
+          className="rounded-md border border-line bg-surface px-3 py-2"
+        >
+          {THEMES.map((th) => (
+            <option key={th} value={th}>
+              {t(`themes.${th}`)}
             </option>
           ))}
         </select>

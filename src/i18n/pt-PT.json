@@ -106,7 +106,15 @@
     "title": "Definições",
     "back": "Voltar",
     "cancel": "Cancelar",
-    "language": "Idioma deste dispositivo"
+    "language": "Idioma deste dispositivo",
+    "theme": "Tema deste dispositivo"
+  },
+  "themes": {
+    "auto": "Automático (segue o dispositivo)",
+    "light": "Claro",
+    "dark": "Escuro",
+    "spring": "Primavera",
+    "ocean": "Oceano"
   },
   "devices": {
     "title": "Dispositivos com sessão iniciada",

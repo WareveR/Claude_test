@@ -1,26 +1,29 @@
 @import "tailwindcss";
 
-/* Calendar palette from the reference design (prototype/16-calendar-views, variant B). */
-:root {
-  --bg: #eef0ec;
-  --frame: #fbfbf8;
+/* Colour themes. Each device picks one in Settings (browser only); "auto", the default, sets no
+   data-theme and follows the device's light or dark setting. */
+:root,
+:root[data-theme="light"] {
+  --bg: #f4f2ec;
+  --frame: #fffdf8;
   --surface: #ffffff;
-  --ink: #151a17;
+  --ink: #1b2420;
   --muted: #56605a;
-  --line: #cfd6cf;
-  --accent: #20624a;
+  --line: #d9d6ca;
+  --accent: #1f7a5a;
   --accent-ink: #ffffff;
-  --weekend: #d6e6f5;
+  --header: #1f6f53;
+  --header-ink: #ffffff;
+  --weekend: #dde9f8;
   --weekend-ink: #1d4f80;
-  --holiday: #fbeee3;
+  --holiday: #fdeadb;
   --holiday-ink: #9a4a16;
   --overdue: #b3261e;
-  color-scheme: light dark;
+  color-scheme: light;
 }
 
-/* Light and dark follow the device setting. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     --bg: #1a1f1c;
     --frame: #252b27;
     --surface: #323a35;
@@ -29,12 +32,74 @@
     --line: #4a544d;
     --accent: #7fd6ae;
     --accent-ink: #0d1a14;
+    --header: #16352b;
+    --header-ink: #e6f6ee;
     --weekend: #28425e;
     --weekend-ink: #cfe4fa;
     --holiday: #33241a;
     --holiday-ink: #f0a877;
     --overdue: #ff8a80;
+    color-scheme: dark;
   }
+}
+
+:root[data-theme="dark"] {
+  --bg: #1a1f1c;
+  --frame: #252b27;
+  --surface: #323a35;
+  --ink: #f4f7f3;
+  --muted: #bcc6bf;
+  --line: #4a544d;
+  --accent: #7fd6ae;
+  --accent-ink: #0d1a14;
+  --header: #16352b;
+  --header-ink: #e6f6ee;
+  --weekend: #28425e;
+  --weekend-ink: #cfe4fa;
+  --holiday: #33241a;
+  --holiday-ink: #f0a877;
+  --overdue: #ff8a80;
+  color-scheme: dark;
+}
+
+/* Spring: warm cream with violet, raspberry and sunny weekends. */
+:root[data-theme="spring"] {
+  --bg: #fff6ea;
+  --frame: #fffcf6;
+  --surface: #ffffff;
+  --ink: #2b2235;
+  --muted: #6b5f73;
+  --line: #efdccb;
+  --accent: #d6336c;
+  --accent-ink: #ffffff;
+  --header: #6741d9;
+  --header-ink: #ffffff;
+  --weekend: #fff0bf;
+  --weekend-ink: #8a5a00;
+  --holiday: #e9e1ff;
+  --holiday-ink: #5f3dc4;
+  --overdue: #c92a2a;
+  color-scheme: light;
+}
+
+/* Ocean: light blues with a deep blue header and teal accents. */
+:root[data-theme="ocean"] {
+  --bg: #edf5fb;
+  --frame: #f8fcff;
+  --surface: #ffffff;
+  --ink: #0b2533;
+  --muted: #4d6878;
+  --line: #cde0ec;
+  --accent: #0b7f92;
+  --accent-ink: #ffffff;
+  --header: #1864ab;
+  --header-ink: #ffffff;
+  --weekend: #dcf5f8;
+  --weekend-ink: #0b6575;
+  --holiday: #fff0e0;
+  --holiday-ink: #c2410c;
+  --overdue: #c92a2a;
+  color-scheme: light;
 }
 
 @theme inline {
@@ -46,6 +111,8 @@
   --color-line: var(--line);
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
+  --color-header: var(--header);
+  --color-header-ink: var(--header-ink);
   --color-weekend: var(--weekend);
   --color-weekend-ink: var(--weekend-ink);
   --color-holiday: var(--holiday);
