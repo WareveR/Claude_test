@@ -6,10 +6,17 @@ database `family-calendar` (EU jurisdiction) and the R2 buckets `family-calendar
 `family-calendar-backups`. Secrets: `SETUP_CODE`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`,
 `VAPID_SUBJECT` and, for email, `RESEND_API_KEY` (see [email.md](email.md)).
 
-For now deploys are run by hand from a computer with the repo checked out and
-`npx wrangler login` done. Deploying on every merge to `main` is still to do (#53).
-
 ## Deploy
+
+Every push to `main` whose `check` job passes is deployed by the `deploy` job in
+`.github/workflows/ci.yml`. It runs the same steps as below, using the repository secrets
+`CLOUDFLARE_API_TOKEN` (a token from the "Edit Cloudflare Workers" template plus D1 Edit, scoped
+to the account and the `phinest.org` zone) and `CLOUDFLARE_ACCOUNT_ID`. The bookmark is printed
+in the job's "Record a Time Travel bookmark" step. To stop automatic deploys, delete the `deploy`
+job.
+
+To deploy by hand instead, from a computer with the repo checked out and `npx wrangler login`
+done:
 
 ```sh
 git pull
