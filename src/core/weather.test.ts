@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  compassPoint,
   forecastQuery,
   forecastSite,
   parseForecast,
@@ -51,6 +52,72 @@ describe("parseForecast", () => {
     ]);
   });
 
+  it("keeps wind, humidity, UV and the current conditions when Open-Meteo has them", () => {
+    const forecast = parseForecast({
+      utc_offset_seconds: 3600,
+      current: {
+        time: "2026-10-02T14:15",
+        weather_code: 2,
+        temperature_2m: 19.6,
+        apparent_temperature: 18.2,
+        relative_humidity_2m: 64,
+        wind_speed_10m: 12.4,
+        wind_direction_10m: 315,
+      },
+      daily: {
+        time: ["2026-10-02"],
+        weather_code: [3],
+        temperature_2m_max: [21],
+        temperature_2m_min: [12],
+        wind_speed_10m_max: [24.7],
+        wind_direction_10m_dominant: [300],
+        uv_index_max: [5.4],
+      },
+      hourly: {
+        time: ["2026-10-02T14:00", "2026-10-02T15:00"],
+        weather_code: [2, 2],
+        temperature_2m: [19, 20],
+        precipitation_probability: [10, 5],
+        relative_humidity_2m: [65, null],
+        wind_speed_10m: [12.4, 13],
+        wind_direction_10m: [310, 320],
+      },
+    });
+    expect(forecast.current).toEqual({
+      time: "2026-10-02T14:15",
+      code: 2,
+      temp: 20,
+      feels: 18,
+      humidity: 64,
+      wind: 12,
+      windDir: 315,
+    });
+    expect(forecast.daily[0]).toEqual({
+      date: "2026-10-02",
+      code: 3,
+      max: 21,
+      min: 12,
+      wind: 25,
+      windDir: 300,
+      uv: 5,
+    });
+    expect(forecast.hourly[0]).toMatchObject({ humidity: 65, wind: 12, windDir: 310 });
+    expect(forecast.hourly[1]).not.toHaveProperty("humidity");
+  });
+
+  it("names the nearest compass point", () => {
+    expect([0, 44, 46, 180, 337, 338, 359, -90].map(compassPoint)).toEqual([
+      "N",
+      "NE",
+      "NE",
+      "S",
+      "NW",
+      "N",
+      "N",
+      "W",
+    ]);
+  });
+
   it("reads the place's clock from its offset", () => {
     expect(placeClock(3600, new Date("2026-10-02T23:30:00Z"))).toBe("2026-10-03T00:30");
   });
@@ -65,6 +132,8 @@ describe("parseForecast", () => {
     expect(query.get("past_days")).toBe("1");
     expect(query.get("timezone")).toBe("auto");
     expect(query.get("hourly")).toContain("precipitation_probability");
+    expect(query.get("hourly")).toContain("relative_humidity_2m");
+    expect(query.get("current")).toContain("wind_direction_10m");
   });
 });
 

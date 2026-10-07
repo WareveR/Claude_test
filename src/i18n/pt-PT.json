@@ -414,7 +414,42 @@
       "snow": "Neve",
       "fog": "Nevoeiro"
     },
-    "rainChance": "Probabilidade de chuva"
+    "rainChance": "Probabilidade de chuva",
+    "detail": {
+      "updated": "Atualizado às {{time}}",
+      "maxMin": "Máx. {{max}}° · Mín. {{min}}°",
+      "feelsLike": "Sensação de {{temp}}°",
+      "wind": "Vento",
+      "windFrom": "Vento de {{point}}",
+      "humidity": "Humidade",
+      "uv": "Índice UV",
+      "sunMoon": "Sol e Lua",
+      "moonLit": "{{percent}}% iluminada",
+      "nextPhase": "{{phase}}: {{date}}",
+      "hours": "Próximas horas",
+      "days": "Próximos dias",
+      "today": "Hoje",
+      "compass": {
+        "N": "N",
+        "NE": "NE",
+        "E": "E",
+        "SE": "SE",
+        "S": "S",
+        "SW": "SO",
+        "W": "O",
+        "NW": "NO"
+      },
+      "moon": {
+        "new": "Lua nova",
+        "waxingCrescent": "Crescente",
+        "firstQuarter": "Quarto crescente",
+        "waxingGibbous": "Crescente gibosa",
+        "full": "Lua cheia",
+        "waningGibbous": "Minguante gibosa",
+        "lastQuarter": "Quarto minguante",
+        "waningCrescent": "Minguante"
+      }
+    }
   },
   "voice": {
     "title": "Entrada por voz",

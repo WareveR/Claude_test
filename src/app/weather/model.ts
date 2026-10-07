@@ -4,6 +4,7 @@ import { addDays, todayIn, type PlainDate } from "../../core/plain-date";
 import {
   CERTAIN_DAYS,
   FORECAST_DAYS,
+  type CurrentWeather,
   type DayWeather,
   type HourWeather,
   type WeatherPlace,
@@ -18,6 +19,8 @@ export type Weather = {
   utcOffset: number;
   daily: DayWeather[];
   hourly: HourWeather[];
+  /** The conditions when it was fetched; absent in forecasts fetched before it was asked for. */
+  current?: CurrentWeather;
 };
 export type WeatherLocations = { locations: WeatherLocation[]; selectedId: string | null };
 /** A day's forecast; `faded` from the 8th day on, when it is less certain. */

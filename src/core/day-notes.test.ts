@@ -1,6 +1,6 @@
 import * as A from "astronomy-engine";
 import { describe, expect, it } from "vitest";
-import { dayNotes, easter, specialDays, sunTimes } from "./day-notes";
+import { dayNotes, easter, moonNow, specialDays, sunTimes } from "./day-notes";
 
 const LISBON = { latitude: 38.72, longitude: -9.14 };
 const TZ = "Europe/Lisbon";
@@ -55,6 +55,18 @@ describe("day notes", () => {
     expect(keys(notes, "2026-10-26")).toEqual(["moon.full"]);
     expect(keys(notes, "2026-10-10")).toEqual(["moon.new"]);
     expect([...notes.values()].flat()).toHaveLength(4);
+  });
+
+  it("tells the Moon's phase now and when the next phases come", () => {
+    const moon = moonNow(A, new Date("2026-10-07T12:00:00Z"), TZ);
+    expect(moon.phase).toBe("waningCrescent");
+    expect(moon.lit).toBeGreaterThan(0);
+    expect(moon.lit).toBeLessThan(50);
+    expect(moon.next.map((n) => [n.key, n.date])).toEqual([
+      ["moon.new", "2026-10-10"],
+      ["moon.firstQuarter", expect.stringMatching(/^2026-10-1[78]$/)],
+    ]);
+    expect(moonNow(A, new Date("2026-10-26T12:00:00Z"), TZ).phase).toBe("full");
   });
 
   it("marks the start of each season", () => {
