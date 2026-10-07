@@ -1,7 +1,7 @@
 import { asc, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { Hono } from "hono";
-import { dueRoundStart, roundLabel, shiftRound } from "../../core/checklist";
-import { addDays, isPlainDate } from "../../core/plain-date";
+import { dueRoundStart, firstRoundStart, roundLabel, shiftRound } from "../../core/checklist";
+import { isPlainDate } from "../../core/plain-date";
 import { isRepetition, type Repetition } from "../../core/repetition";
 import { familyNow } from "../../core/task";
 import { randomId } from "../auth/crypto";
@@ -13,12 +13,16 @@ import { personMentionChecks } from "./persons";
 
 type ChecklistRow = typeof schema.checklist.$inferSelect;
 
-/** Validates a whole Checklist; returns the bad field's name or the clean values. */
-async function parseChecklist(db: Db, body: Record<string, unknown>) {
+/**
+ * Validates a whole Checklist; returns the bad field's name or the clean values. Start and end
+ * are each optional; a Repetition counts its rounds from the start, or from today without one
+ * (the first round then starts on the first Repetition date from today).
+ */
+async function parseChecklist(db: Db, body: Record<string, unknown>, today: string) {
   const name = typeof body.name === "string" ? body.name.trim() : "";
   if (!name) return { field: "name" };
   const date = (v: unknown) => (v === null || v === undefined ? null : v);
-  const startDate = date(body.startDate);
+  let startDate = date(body.startDate);
   const endDate = date(body.endDate);
   for (const [field, value] of [
     ["startDate", startDate],
@@ -26,12 +30,13 @@ async function parseChecklist(db: Db, body: Record<string, unknown>) {
   ] as const) {
     if (value !== null && (typeof value !== "string" || !isPlainDate(value))) return { field };
   }
-  if (startDate && (!endDate || (endDate as string) < (startDate as string))) {
-    return { field: "endDate" };
-  }
   const repetition = body.repetition ?? null;
-  if (repetition !== null && (!isRepetition(repetition) || !startDate)) {
-    return { field: "repetition" };
+  if (repetition !== null && !isRepetition(repetition)) return { field: "repetition" };
+  if (repetition !== null && startDate === null) {
+    startDate = firstRoundStart(repetition as Repetition, today);
+  }
+  if (startDate && endDate && (endDate as string) < (startDate as string)) {
+    return { field: "endDate" };
   }
   const remindAtStart = body.remindAtStart ?? true;
   if (typeof remindAtStart !== "boolean") return { field: "remindAtStart" };
@@ -114,8 +119,8 @@ personMentionChecks.push(async (db, personId) => {
 });
 
 /**
- * Closes the current round, keeping only its result, and starts the next: every Task undone,
- * the period and the Tasks' dates moved to the new start.
+ * Closes the current round, keeping only its result, and starts the next: every item undone,
+ * the period moved to the new start. Items' own stored dates are left as they are (ignored).
  */
 async function startRound(db: Db, checklist: ChecklistRow, newStart: string | null, now: Date) {
   const tasks = await db
@@ -123,7 +128,7 @@ async function startRound(db: Db, checklist: ChecklistRow, newStart: string | nu
     .from(schema.task)
     .where(eq(schema.task.checklistId, checklist.id));
   const at = now.toISOString();
-  const { startDate, endDate, days } = shiftRound(checklist, newStart);
+  const { startDate, endDate } = shiftRound(checklist, newStart);
   await db.batch([
     db.insert(schema.checklistRound).values({
       id: randomId(),
@@ -137,17 +142,17 @@ async function startRound(db: Db, checklist: ChecklistRow, newStart: string | nu
       .update(schema.checklist)
       .set({ startDate, endDate, changedAt: at })
       .where(eq(schema.checklist.id, checklist.id)),
-    ...tasks.map((t) =>
-      db
-        .update(schema.task)
-        .set({
-          doneAt: null,
-          dueDate: t.dueDate && days ? addDays(t.dueDate, days) : t.dueDate,
-          changedAt: at,
-        })
-        .where(eq(schema.task.id, t.id)),
-    ),
+    ...tasks
+      .filter((t) => t.doneAt)
+      .map((t) =>
+        db.update(schema.task).set({ doneAt: null, changedAt: at }).where(eq(schema.task.id, t.id)),
+      ),
   ]);
+}
+
+async function familyToday(db: Db, now: Date) {
+  const [family] = await db.select({ timeZone: schema.family.timeZone }).from(schema.family);
+  return familyNow(family.timeZone, now).today;
 }
 
 /** Starts the rounds that repeating Checklists are due for; the Scheduler can call it too. */
@@ -157,8 +162,7 @@ export async function startDueRounds(db: Db, now: Date) {
     .from(schema.checklist)
     .where(isNotNull(schema.checklist.repetition));
   if (repeating.length === 0) return;
-  const [family] = await db.select({ timeZone: schema.family.timeZone }).from(schema.family);
-  const today = familyNow(family.timeZone, now).today;
+  const today = await familyToday(db, now);
   for (const checklist of repeating) {
     const start = dueRoundStart(checklist, today);
     if (start) await startRound(db, checklist, start, now);
@@ -182,7 +186,11 @@ checklistRoutes.get("/checklists/:id", async (c) => {
 
 checklistRoutes.post("/checklists", async (c) => {
   const db = c.get("db");
-  const parsed = await parseChecklist(db, await c.req.json().catch(() => ({})));
+  const parsed = await parseChecklist(
+    db,
+    await c.req.json().catch(() => ({})),
+    await familyToday(db, c.get("now")),
+  );
   if (!parsed.values) return c.json({ error: "invalid", field: parsed.field }, 400);
   const { personIds, ...fields } = parsed.values;
   const id = randomId();
@@ -199,7 +207,11 @@ checklistRoutes.put("/checklists/:id", async (c) => {
   const id = c.req.param("id");
   const [existing] = await db.select().from(schema.checklist).where(eq(schema.checklist.id, id));
   if (!existing) return c.json({ error: "not_found" }, 404);
-  const parsed = await parseChecklist(db, await c.req.json().catch(() => ({})));
+  const parsed = await parseChecklist(
+    db,
+    await c.req.json().catch(() => ({})),
+    await familyToday(db, c.get("now")),
+  );
   if (!parsed.values) return c.json({ error: "invalid", field: parsed.field }, 400);
   const { personIds, ...fields } = parsed.values;
   await db.batch([
@@ -213,7 +225,7 @@ checklistRoutes.put("/checklists/:id", async (c) => {
   return c.json(await presentOne(db, id));
 });
 
-/** Deleting a Checklist deletes its Tasks too, for good. */
+/** Deleting a Checklist deletes its items too, for good. */
 checklistRoutes.delete("/checklists/:id", async (c) => {
   const db = c.get("db");
   const id = c.req.param("id");

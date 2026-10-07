@@ -107,14 +107,17 @@ type ReminderTask = {
 
 const inWindow = (at: WallClock, from: WallClock, to: WallClock) => at > from && at <= to;
 
-/** A dated Task's one Reminder: at its due time, or 09:00 on its due day. Done Tasks don't remind. */
+/**
+ * A dated Task's one Reminder: at its due time, or 09:00 on its due day. Done Tasks don't remind,
+ * and neither do a Checklist's items: only their Checklist does.
+ */
 export function taskReminders(
   tasks: ReminderTask[],
   from: WallClock,
   to: WallClock,
 ): DueReminder[] {
   return tasks.flatMap((task): DueReminder[] => {
-    if (!task.dueDate || task.doneAt) return [];
+    if (!task.dueDate || task.doneAt || task.checklistId) return [];
     const at = wallClock(task.dueDate, task.dueTime ?? ALL_DAY_REMINDER_TIME);
     if (!inWindow(at, from, to)) return [];
     return [
