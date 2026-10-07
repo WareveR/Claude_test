@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Navigate, useParams, useSearchParams } from "react-router";
+import { Link, Navigate, useParams, useSearchParams } from "react-router";
 import { formatLocale } from "../../core/languages";
 import {
   addDays,
@@ -17,6 +17,7 @@ import { EntryBlock } from "../calendar/EntryBlock";
 import { monthWeeks } from "../../core/layout";
 import { entriesOn, MonthGrid } from "../calendar/MonthGrid";
 import { TimeGrid } from "../calendar/TimeGrid";
+import { YearDetail } from "../calendar/YearDetail";
 import { YearGrid } from "../calendar/YearGrid";
 import { CHECKLIST_BAR_TYPE, useChecklistBars } from "../checklists/bars";
 import { useOccurrences } from "../entries/model";
@@ -280,25 +281,53 @@ export function YearView() {
 function Year({ year }: { year: number }) {
   const locale = useLocale();
   const today = useToday();
+  const { t } = useTranslation();
+  const [search] = useSearchParams();
+  // The detail (a line per Person) is in the address, so back and reload keep it.
+  const detail = search.get("detail") === "1";
+  const persons = usePersons();
   const date = `${year}-01-01`;
   const { entries, types } = useCalendar(date, `${year}-12-31`);
   const holidays = useHolidays(date, `${year}-12-31`);
+  const withDetail = (path: string) => (detail ? `${path}?detail=1` : path);
   return (
     <>
       <ViewNav
         date={date}
         title={String(year)}
-        previous={paths.year(addMonths(date, -12))}
-        next={paths.year(addMonths(date, 12))}
+        previous={withDetail(paths.year(addMonths(date, -12)))}
+        next={withDetail(paths.year(addMonths(date, 12)))}
+        extra={
+          <Link
+            to={detail ? paths.year(date) : `${paths.year(date)}?detail=1`}
+            aria-pressed={detail}
+            className={`rounded-md border px-3 py-1 text-sm ${detail ? "border-accent bg-accent text-accent-ink" : "border-line"}`}
+          >
+            {t("views.yearDetail")}
+          </Link>
+        }
       />
-      <YearGrid
-        year={year}
-        entries={entries}
-        types={types}
-        today={today}
-        locale={locale}
-        holidays={holidays}
-      />
+      {detail ? (
+        <YearDetail
+          year={year}
+          entries={entries}
+          types={types}
+          persons={persons.data ?? []}
+          today={today}
+          locale={locale}
+          familyLabel={t("views.family")}
+          holidays={holidays}
+        />
+      ) : (
+        <YearGrid
+          year={year}
+          entries={entries}
+          types={types}
+          today={today}
+          locale={locale}
+          holidays={holidays}
+        />
+      )}
     </>
   );
 }

@@ -91,6 +91,8 @@
     }
   },
   "views": {
+    "yearDetail": "Detalhe",
+    "family": "Família",
     "day": "Dia",
     "week": "Semana",
     "month": "Mês",
