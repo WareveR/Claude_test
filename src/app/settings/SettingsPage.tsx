@@ -9,6 +9,7 @@ import { paths } from "../paths";
 import { EntryTypesSection } from "../entry-types/EntryTypesSection";
 import { HolidaysSection } from "./HolidaysSection";
 import { VoiceSection } from "./VoiceSection";
+import { WasteSection } from "./WasteSection";
 import { WeatherSection } from "./WeatherSection";
 import { ExportSection } from "./ExportSection";
 import { RemindersSection } from "./RemindersSection";
@@ -104,6 +105,7 @@ function AreaContent({ area }: { area: Area }) {
         <>
           <HolidaysSection />
           <WeatherSection />
+          <WasteSection />
           <RemindersSection />
           <FeedsSection />
         </>

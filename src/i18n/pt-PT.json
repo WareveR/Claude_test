@@ -455,7 +455,8 @@
       "clock": "Mudança da hora",
       "special": "Dias especiais",
       "sky": "Eclipses e chuvas de meteoros",
-      "sun": "Nascer e pôr do sol (vista Dia)"
+      "sun": "Nascer e pôr do sol (vista Dia)",
+      "waste": "Recolha do lixo"
     },
     "notes": {
       "moon": {
@@ -511,7 +512,21 @@
         "endMiddle": "Fim das aulas: 5.º a 8.º e 10.º anos",
         "endPrimary": "Fim das aulas: pré-escolar e 1.º ciclo",
         "start": "Início das aulas (entre 11 e 15 de setembro)"
+      },
+      "waste": {
+        "collection": "Recolha: {{bins}}"
       }
+    }
+  },
+  "waste": {
+    "title": "Recolha do lixo",
+    "hint": "Os dias em que cada contentor é recolhido na vossa rua. Aparecem no calendário quando ligares \"Recolha do lixo\" no filtro.",
+    "bins": {
+      "general": "Indiferenciado",
+      "packaging": "Embalagens (amarelo)",
+      "paper": "Papel (azul)",
+      "glass": "Vidro (verde)",
+      "organic": "Orgânicos (castanho)"
     }
   }
 }

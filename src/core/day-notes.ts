@@ -5,7 +5,16 @@ import { addDays, todayIn, type PlainDate } from "./plain-date";
  * Calendar Layers: optional things shown on the days, calculated here and never stored.
  * Each device picks which ones it shows.
  */
-export const LAYERS = ["school", "special", "moon", "seasons", "clock", "sky", "sun"] as const;
+export const LAYERS = [
+  "school",
+  "special",
+  "moon",
+  "seasons",
+  "clock",
+  "sky",
+  "sun",
+  "waste",
+] as const;
 export type Layer = (typeof LAYERS)[number];
 
 /** One thing a Layer says about a day: a translation key and, for timed events, a local time. */
