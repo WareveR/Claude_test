@@ -23,3 +23,26 @@ jobs:
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+
+  # Every green push to main goes to production (docs/runbooks/deploy.md).
+  deploy:
+    needs: check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    concurrency: production
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      # The bookmark to restore to if this release's migrations go wrong.
+      - name: Record a Time Travel bookmark
+        run: npx wrangler d1 time-travel info family-calendar
+      - run: npx wrangler d1 migrations apply family-calendar --remote
+      - run: npx wrangler deploy
