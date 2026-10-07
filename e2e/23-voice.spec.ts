@@ -6,6 +6,8 @@ test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 async function say(page: Page, sentence: string) {
   await page.getByRole("button", { name: "Voice Entry" }).click();
   const dialog = page.getByRole("dialog", { name: "Voice Entry" });
+  // The whole sheet is on screen, not pushed above the header.
+  await expect(dialog).toBeInViewport({ ratio: 1 });
   await dialog.getByLabel("Say or type one sentence").fill(sentence);
   await dialog.getByRole("button", { name: "Send" }).click();
   return dialog;

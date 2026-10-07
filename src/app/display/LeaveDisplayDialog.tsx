@@ -1,10 +1,12 @@
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { setDisplayMode } from "./mode";
 
 /** Asks before a long press on the header takes the tablet out of Display Mode. */
 export function LeaveDisplayDialog({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
-  return (
+  // On the body, not inside the blurred header, which would trap a fixed overlay.
+  return createPortal(
     <div
       className="fixed inset-0 z-30 flex items-center justify-center bg-black/40"
       onPointerDown={(e) => e.stopPropagation()}
@@ -38,6 +40,7 @@ export function LeaveDisplayDialog({ onClose }: { onClose: () => void }) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

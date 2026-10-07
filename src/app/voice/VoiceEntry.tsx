@@ -1,6 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Mic } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { api } from "../api";
@@ -293,159 +294,162 @@ export function VoiceEntry() {
       >
         <Mic aria-hidden size={20} strokeWidth={1.75} />
       </button>
-      {open && (
-        <div className="fixed inset-0 z-20 flex items-end justify-center bg-black/40 sm:items-center">
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="voice-title"
-            className="flex w-full max-w-md flex-col gap-3 rounded-t-2xl bg-frame p-4 sm:rounded-2xl"
-          >
-            <h2 id="voice-title" className="font-semibold">
-              {t("voice.title")}
-            </h2>
-            {phase === "readback" && (choices || plan) ? (
-              <>
-                {choices ? (
-                  <>
-                    <p>{t("voice.which")}</p>
-                    <div className="flex flex-col gap-2">
-                      {choices.map((option, i) => (
-                        <button
-                          key={`${option.kind}-${option.id}-${option.date ?? i}`}
-                          type="button"
-                          className="rounded-md border border-line px-4 py-2 text-left"
-                          onClick={() => void startPlan(option)}
-                        >
-                          {option.label}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                ) : plan && scope === null ? (
-                  <>
-                    <p data-testid="voice-summary">{plan.summary}</p>
-                    <p className="text-sm text-muted">{t("voice.scopeQuestion")}</p>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        className="rounded-md bg-teal-700 px-4 py-2 font-medium text-white"
-                        onClick={() => void confirmPlan(plan, "this")}
-                      >
-                        {t("voice.onlyThis")}
-                      </button>
-                      <button
-                        type="button"
-                        className="rounded-md bg-teal-700 px-4 py-2 font-medium text-white"
-                        onClick={() => void confirmPlan(plan, "following")}
-                      >
-                        {t("voice.fromNowOn")}
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  plan &&
-                  scope && (
+      {open &&
+        // On the body, not inside the blurred header, which would trap a fixed overlay.
+        createPortal(
+          <div className="fixed inset-0 z-20 flex items-end justify-center bg-black/40 sm:items-center">
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="voice-title"
+              className="flex w-full max-w-md flex-col gap-3 rounded-t-2xl bg-frame p-4 sm:rounded-2xl"
+            >
+              <h2 id="voice-title" className="font-semibold">
+                {t("voice.title")}
+              </h2>
+              {phase === "readback" && (choices || plan) ? (
+                <>
+                  {choices ? (
+                    <>
+                      <p>{t("voice.which")}</p>
+                      <div className="flex flex-col gap-2">
+                        {choices.map((option, i) => (
+                          <button
+                            key={`${option.kind}-${option.id}-${option.date ?? i}`}
+                            type="button"
+                            className="rounded-md border border-line px-4 py-2 text-left"
+                            onClick={() => void startPlan(option)}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  ) : plan && scope === null ? (
                     <>
                       <p data-testid="voice-summary">{plan.summary}</p>
-                      <p className="text-sm text-muted">{t("voice.saveQuestion")}</p>
-                      {error && (
-                        <p role="alert" className="text-sm text-overdue">
-                          {t("voice.saveFailed")}
-                        </p>
-                      )}
+                      <p className="text-sm text-muted">{t("voice.scopeQuestion")}</p>
                       <div className="flex gap-2">
                         <button
                           type="button"
                           className="rounded-md bg-teal-700 px-4 py-2 font-medium text-white"
-                          onClick={() => void saveChange(plan, scope)}
+                          onClick={() => void confirmPlan(plan, "this")}
                         >
-                          {t("voice.save")}
+                          {t("voice.onlyThis")}
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded-md bg-teal-700 px-4 py-2 font-medium text-white"
+                          onClick={() => void confirmPlan(plan, "following")}
+                        >
+                          {t("voice.fromNowOn")}
                         </button>
                       </div>
                     </>
-                  )
-                )}
-              </>
-            ) : phase === "readback" && pending ? (
-              <>
-                <p data-testid="voice-summary">{pending.summary}</p>
-                <p className="text-sm text-muted">{t("voice.saveQuestion")}</p>
-                {error && (
-                  <p role="alert" className="text-sm text-overdue">
-                    {t("voice.saveFailed")}
-                  </p>
-                )}
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    className="rounded-md bg-teal-700 px-4 py-2 font-medium text-white"
-                    onClick={() => void save(pending)}
-                  >
-                    {t("voice.save")}
-                  </button>
-                  <button
-                    type="button"
-                    className="rounded-md border border-line px-4 py-2"
-                    onClick={() => openForm(pending.kind, pending.values)}
-                  >
-                    {t("voice.edit")}
-                  </button>
-                </div>
-              </>
-            ) : (
-              <form className="flex flex-col gap-2" onSubmit={submit}>
-                <Field label={t("voice.sentence")}>
-                  <TextInput
-                    autoFocus
-                    maxLength={300}
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                  />
-                </Field>
-                {phase === "listening" && (
-                  <p role="status" className="text-sm text-muted">
-                    {t("voice.listening")}
-                  </p>
-                )}
-                {notice && (
-                  <p data-testid="voice-notice" className="text-sm">
-                    {t(`voice.${notice}`)}
-                  </p>
-                )}
-                {error && (
-                  <p role="alert" className="text-sm text-overdue">
-                    {t("voice.failed")}
-                  </p>
-                )}
-                <div className="flex items-center gap-2">
-                  <button
-                    type="submit"
-                    disabled={phase === "sending" || !text.trim()}
-                    className="rounded-md bg-teal-700 px-4 py-2 font-medium text-white disabled:opacity-60"
-                  >
-                    {t("voice.send")}
-                  </button>
-                  {canListen() && (
+                  ) : (
+                    plan &&
+                    scope && (
+                      <>
+                        <p data-testid="voice-summary">{plan.summary}</p>
+                        <p className="text-sm text-muted">{t("voice.saveQuestion")}</p>
+                        {error && (
+                          <p role="alert" className="text-sm text-overdue">
+                            {t("voice.saveFailed")}
+                          </p>
+                        )}
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            className="rounded-md bg-teal-700 px-4 py-2 font-medium text-white"
+                            onClick={() => void saveChange(plan, scope)}
+                          >
+                            {t("voice.save")}
+                          </button>
+                        </div>
+                      </>
+                    )
+                  )}
+                </>
+              ) : phase === "readback" && pending ? (
+                <>
+                  <p data-testid="voice-summary">{pending.summary}</p>
+                  <p className="text-sm text-muted">{t("voice.saveQuestion")}</p>
+                  {error && (
+                    <p role="alert" className="text-sm text-overdue">
+                      {t("voice.saveFailed")}
+                    </p>
+                  )}
+                  <div className="flex gap-2">
                     <button
                       type="button"
-                      aria-label={t("voice.listen")}
-                      disabled={phase === "sending"}
-                      className="rounded-md border border-line p-2 disabled:opacity-60"
-                      onClick={() => void dictate()}
+                      className="rounded-md bg-teal-700 px-4 py-2 font-medium text-white"
+                      onClick={() => void save(pending)}
                     >
-                      <Mic aria-hidden size={20} strokeWidth={1.75} />
+                      {t("voice.save")}
                     </button>
+                    <button
+                      type="button"
+                      className="rounded-md border border-line px-4 py-2"
+                      onClick={() => openForm(pending.kind, pending.values)}
+                    >
+                      {t("voice.edit")}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <form className="flex flex-col gap-2" onSubmit={submit}>
+                  <Field label={t("voice.sentence")}>
+                    <TextInput
+                      autoFocus
+                      maxLength={300}
+                      value={text}
+                      onChange={(e) => setText(e.target.value)}
+                    />
+                  </Field>
+                  {phase === "listening" && (
+                    <p role="status" className="text-sm text-muted">
+                      {t("voice.listening")}
+                    </p>
                   )}
-                </div>
-              </form>
-            )}
-            <button type="button" className="self-end text-sm underline" onClick={close}>
-              {t("voice.cancel")}
-            </button>
-          </div>
-        </div>
-      )}
+                  {notice && (
+                    <p data-testid="voice-notice" className="text-sm">
+                      {t(`voice.${notice}`)}
+                    </p>
+                  )}
+                  {error && (
+                    <p role="alert" className="text-sm text-overdue">
+                      {t("voice.failed")}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="submit"
+                      disabled={phase === "sending" || !text.trim()}
+                      className="rounded-md bg-teal-700 px-4 py-2 font-medium text-white disabled:opacity-60"
+                    >
+                      {t("voice.send")}
+                    </button>
+                    {canListen() && (
+                      <button
+                        type="button"
+                        aria-label={t("voice.listen")}
+                        disabled={phase === "sending"}
+                        className="rounded-md border border-line p-2 disabled:opacity-60"
+                        onClick={() => void dictate()}
+                      >
+                        <Mic aria-hidden size={20} strokeWidth={1.75} />
+                      </button>
+                    )}
+                  </div>
+                </form>
+              )}
+              <button type="button" className="self-end text-sm underline" onClick={close}>
+                {t("voice.cancel")}
+              </button>
+            </div>
+          </div>,
+          document.body,
+        )}
       {toast && (
         <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center p-3">
           <div

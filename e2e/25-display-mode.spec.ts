@@ -201,6 +201,7 @@ test("a long press on the header asks, then leaves Display Mode", async ({ page 
   await press();
   const dialog = page.getByRole("dialog", { name: "Leave Display Mode?" });
   await expect(dialog).toBeVisible();
+  await expect(dialog).toBeInViewport({ ratio: 1 });
   await dialog.getByRole("button", { name: "Stay" }).click();
   await expect(page.getByTestId("display-board")).toBeVisible();
 
