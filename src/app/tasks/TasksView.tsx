@@ -1,3 +1,4 @@
+import { Plus } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
@@ -13,6 +14,7 @@ import { useNow } from "../shell/useNow";
 import { ViewNav } from "../shell/ViewNav";
 import { useTasks, type Task } from "./model";
 import { TaskRow } from "./TaskRow";
+import { BUTTON, BUTTON_PRIMARY } from "../ui/button";
 
 const GROUPS = ["overdue", "today", "upcoming", "noDate"] as const;
 type Group = keyof TaskGroups<Task>;
@@ -91,11 +93,18 @@ export function TasksView() {
 
   return (
     <>
-      <ViewNav date={now.today} title={t("views.tasks")} newPath="/tasks/new" />
+      <ViewNav date={now.today} title={t("views.tasks")} newPath={null} />
       <main className="mx-auto flex w-full max-w-xl flex-col gap-4 px-4 pb-6">
-        <Link to="/checklists/new" className="self-end text-sm underline">
-          {t("checklists.new")}
-        </Link>
+        <div className="flex flex-wrap justify-end gap-2">
+          <Link to="/tasks/new" className={BUTTON_PRIMARY}>
+            <Plus aria-hidden size={16} />
+            {t("tasks.new")}
+          </Link>
+          <Link to="/checklists/new" className={BUTTON}>
+            <Plus aria-hidden size={16} />
+            {t("checklists.new")}
+          </Link>
+        </div>
         {tasks.data && GROUPS.every((g) => count(g) === 0) && (
           <p className="text-muted">{t("tasks.nothingLeft")}</p>
         )}

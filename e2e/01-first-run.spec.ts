@@ -38,7 +38,7 @@ test("set up the Family, move between views, sign out and back in", async ({ pag
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByTestId("header-time")).toBeVisible();
 
-  await page.getByRole("link", { name: "Settings" }).click();
+  // Signing in again keeps the page it was on: still in Settings.
   await page.getByRole("link", { name: "Account and security" }).click();
   page.on("dialog", (dialog) => dialog.accept());
   const passwordSection = page.locator("section section", {

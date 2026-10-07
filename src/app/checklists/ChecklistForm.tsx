@@ -10,6 +10,7 @@ import { PersonAvatar } from "../persons/PersonAvatar";
 import { ErrorText, Field, FormActions, TextInput } from "../screens/form";
 import { useChecklist, type Checklist, type ChecklistDraft } from "./model";
 import { readyToEdit } from "../offline/fresh";
+import { BUTTON, BUTTON_DANGER } from "../ui/button";
 
 export function ChecklistPage() {
   const { id } = useParams();
@@ -72,9 +73,6 @@ function ChecklistForm({ checklist }: { checklist?: Checklist }) {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-col gap-4 p-4">
       <div className="flex items-center gap-3">
-        <button type="button" className="text-sm underline" onClick={() => navigate(-1)}>
-          {t("settings.back")}
-        </button>
         <h1 className="text-xl font-semibold">
           {checklist ? checklist.name : t("checklists.new")}
         </h1>
@@ -182,7 +180,7 @@ function ChecklistForm({ checklist }: { checklist?: Checklist }) {
           )}
           <button
             type="button"
-            className="self-start underline"
+            className={`${BUTTON} self-start`}
             disabled={again.isPending}
             onClick={() => again.mutate()}
           >
@@ -207,7 +205,7 @@ function ChecklistForm({ checklist }: { checklist?: Checklist }) {
         <div className="border-t border-line pt-4">
           <button
             type="button"
-            className="text-overdue underline"
+            className={BUTTON_DANGER}
             onClick={() => {
               if (window.confirm(t("checklists.confirmDelete", { name: checklist.name })))
                 remove.mutate();

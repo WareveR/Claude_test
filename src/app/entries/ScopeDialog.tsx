@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { BUTTON } from "../ui/button";
 
 export type Scope = "this" | "following" | "all";
 
@@ -41,7 +42,7 @@ export function ScopeDialog({
         <button type="button" className={button} onClick={() => onPick("all")}>
           {t("scope.all")}
         </button>
-        <button type="button" className="mt-1 self-end text-sm underline" onClick={onCancel}>
+        <button type="button" className={`${BUTTON} mt-1 self-end`} onClick={onCancel}>
           {t("scope.cancel")}
         </button>
       </div>

@@ -1,9 +1,11 @@
+import { ChevronLeft } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { formatLocale } from "../../core/languages";
 import { api } from "../api";
 import { useSignedIn } from "../family";
+import { BUTTON } from "../ui/button";
 
 type LoggedError = {
   code: string;
@@ -31,7 +33,8 @@ export function ErrorLogPage() {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-col gap-4 p-4">
       <div className="flex items-center gap-3">
-        <button type="button" className="text-sm underline" onClick={() => navigate(-1)}>
+        <button type="button" className={BUTTON} onClick={() => navigate(-1)}>
+          <ChevronLeft aria-hidden size={16} />
           {t("settings.back")}
         </button>
         <h1 className="text-xl font-semibold">{t("errors.log.title")}</h1>

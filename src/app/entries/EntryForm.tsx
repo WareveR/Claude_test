@@ -24,6 +24,7 @@ import { occurrenceValues, useEntry, type Entry, type EntryDraft } from "./model
 import { ScopeDialog, type Scope } from "./ScopeDialog";
 import { RepetitionFields } from "./RepetitionFields";
 import { readyToEdit } from "../offline/fresh";
+import { BUTTON, BUTTON_DANGER } from "../ui/button";
 
 const INPUT = "rounded-md border border-line bg-surface px-3 py-2 text-base text-ink";
 /** The time picker suggests 15-minute steps but accepts any typed minute. */
@@ -228,16 +229,13 @@ function EntryForm({
   return (
     <main className="mx-auto flex w-full max-w-xl flex-col gap-4 p-4">
       <div className="flex items-center gap-3">
-        <button type="button" className="text-sm underline" onClick={() => navigate(-1)}>
-          {t("settings.back")}
-        </button>
         <h1 className="text-xl font-semibold">{entry ? entry.title : t("entries.new")}</h1>
       </div>
       <form onSubmit={submit} className="flex flex-col gap-4">
         {synced && (
           <p className="rounded-md bg-surface p-3 text-sm">
             {t("entries.birthdaySynced", { name: syncedPerson?.name ?? draft.title })}{" "}
-            <Link className="underline" to={`/settings/persons/${synced}`}>
+            <Link className={BUTTON} to={`/settings/persons/${synced}`}>
               {t("entries.openPerson")}
             </Link>
           </p>
@@ -524,7 +522,7 @@ function EntryForm({
         <div className="border-t border-line pt-4">
           <button
             type="button"
-            className="text-overdue underline"
+            className={BUTTON_DANGER}
             onClick={() => {
               if (occurrence) setAsking("delete");
               else if (window.confirm(t("entries.confirmDelete", { title: entry.title }))) {

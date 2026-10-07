@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { forecastSite } from "../../core/weather";
 import { useWeather } from "./model";
+import { BUTTON } from "../ui/button";
 
 /** Weather that can be tapped; it asks before opening the forecast site in a new tab. */
 export function ForecastButton({
@@ -55,7 +56,7 @@ export function ForecastButton({
               </button>
               <button
                 type="button"
-                className="mt-1 self-end text-sm underline"
+                className={`${BUTTON} mt-1 self-end`}
                 onClick={() => setAsking(false)}
               >
                 {t("weather.cancel")}

@@ -1,12 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useNavigate, useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { api, ApiError } from "../api";
 import { ErrorText, Field, FormActions, TextInput } from "../screens/form";
 import { PERSON_COLORS, uploadPhoto, usePersons, type Person } from "./model";
 import { PersonAvatar } from "./PersonAvatar";
 import { readyToEdit } from "../offline/fresh";
+import { BUTTON, BUTTON_DANGER } from "../ui/button";
 
 export function PersonPage() {
   const { id } = useParams();
@@ -78,15 +79,12 @@ function PersonForm({ person }: { person?: Person }) {
   return (
     <main className="mx-auto flex max-w-xl flex-col gap-4 p-4">
       <div className="flex items-center gap-3">
-        <Link to="/settings/family" className="text-sm underline">
-          {t("settings.back")}
-        </Link>
         <h1 className="text-xl font-semibold">{person ? person.name : t("persons.add")}</h1>
       </div>
       <form onSubmit={submit} className="flex flex-col gap-4">
         <div className="flex items-center gap-4">
           <PersonAvatar person={{ ...form, name: form.name || "?" }} size={64} />
-          <label className="text-sm underline">
+          <label className={BUTTON}>
             {t("persons.photo")}
             <input
               type="file"
@@ -98,7 +96,7 @@ function PersonForm({ person }: { person?: Person }) {
           {form.photoKey && (
             <button
               type="button"
-              className="text-sm underline"
+              className={BUTTON}
               onClick={() => setForm({ ...form, photoKey: null })}
             >
               {t("persons.removePhoto")}
@@ -161,7 +159,7 @@ function PersonForm({ person }: { person?: Person }) {
         <div className="flex flex-col gap-2 border-t border-line pt-4">
           <button
             type="button"
-            className="self-start underline"
+            className={`${BUTTON} self-start`}
             onClick={() =>
               archive.mutate(
                 person.archived
@@ -181,7 +179,7 @@ function PersonForm({ person }: { person?: Person }) {
           <p className="text-xs text-muted">{t("persons.archiveHint")}</p>
           <button
             type="button"
-            className="self-start text-overdue underline"
+            className={`${BUTTON_DANGER} self-start`}
             onClick={() => {
               if (window.confirm(t("persons.confirmDelete", { name: person.name })))
                 remove.mutate();

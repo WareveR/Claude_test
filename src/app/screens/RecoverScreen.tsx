@@ -4,6 +4,7 @@ import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { api, ApiError } from "../api";
 import { ErrorText, Field, FormCard, SubmitButton, TextInput } from "./form";
+import { BUTTON } from "../ui/button";
 
 export function RecoverScreen({ token }: { token: string }) {
   const { t } = useTranslation();
@@ -24,7 +25,7 @@ export function RecoverScreen({ token }: { token: string }) {
           <p role="status">{t("recovery.done")}</p>
           <button
             type="button"
-            className="self-start underline"
+            className={`${BUTTON} self-start`}
             onClick={() => window.location.assign("/")}
           >
             {t("recovery.continue")}

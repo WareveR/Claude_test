@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Link, NavLink, Navigate, useParams } from "react-router";
-import { LogOut } from "lucide-react";
+import { ChevronLeft, LogOut } from "lucide-react";
 import { LANGUAGES } from "../../core/languages";
 import { api } from "../api";
 import { useSignedIn } from "../family";
@@ -19,6 +19,7 @@ import { DevicesSection } from "./DevicesSection";
 import { PasswordSection } from "./PasswordSection";
 import { RecoveryEmailSection } from "./RecoveryEmailSection";
 import { setTheme, THEMES, useTheme, type Theme } from "../theme";
+import { BUTTON } from "../ui/button";
 
 /** Settings come in four areas, each with its own address. */
 export const SETTINGS_AREAS = ["family", "calendar", "device", "account"] as const;
@@ -49,9 +50,6 @@ export function SettingsPage() {
         className={`flex flex-col gap-1 md:w-56 md:shrink-0 ${area ? "hidden md:flex" : ""}`}
       >
         <div className="mb-2 flex items-center gap-3">
-          <Link to={paths.today()} className="text-sm underline">
-            {t("settings.back")}
-          </Link>
           <h1 className="text-xl font-semibold">{t("settings.title")}</h1>
         </div>
         {SETTINGS_AREAS.map((a) => (
@@ -79,8 +77,9 @@ export function SettingsPage() {
         className={`flex min-w-0 flex-1 flex-col gap-6 ${area ? "" : "hidden md:flex"}`}
       >
         <div className="flex items-center gap-3">
-          <Link to={paths.settings()} className="text-sm underline md:hidden">
-            {t("settings.back")}
+          <Link to={paths.settings()} className={`${BUTTON} md:hidden`}>
+            <ChevronLeft aria-hidden size={16} />
+            {t("settings.title")}
           </Link>
           <h2 className="text-xl font-semibold">{t(`settings.areas.${open}`)}</h2>
         </div>
@@ -124,7 +123,7 @@ function AreaContent({ area }: { area: Area }) {
           <RecoveryEmailSection />
           <DevicesSection />
           <ExportSection />
-          <Link to={paths.errorLog()} className="self-start underline">
+          <Link to={paths.errorLog()} className={`${BUTTON} self-start`}>
             {t("errors.log.open")}
           </Link>
         </>

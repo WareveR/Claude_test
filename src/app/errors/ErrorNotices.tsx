@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ApiError } from "../api";
 import { dismissNotice, sendReport, useErrorNotices, type ErrorNotice } from "./store";
+import { BUTTON } from "../ui/button";
 
 /** Failures, shown at once over every screen until dismissed. */
 export function ErrorNotices() {
@@ -102,13 +103,13 @@ function Notice({ notice }: { notice: ErrorNotice }) {
         </form>
       ) : (
         <div className="flex gap-4 text-xs">
-          <button type="button" className="underline" onClick={() => setDetails(!details)}>
+          <button type="button" className={BUTTON} onClick={() => setDetails(!details)}>
             {t(details ? "errors.hideDetails" : "errors.seeDetails")}
           </button>
           {report === "sent" ? (
             <span>{t("errors.reported")}</span>
           ) : (
-            <button type="button" className="underline" onClick={() => setReport("open")}>
+            <button type="button" className={BUTTON} onClick={() => setReport("open")}>
               {t("errors.report")}
             </button>
           )}

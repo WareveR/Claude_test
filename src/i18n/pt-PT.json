@@ -115,7 +115,8 @@
       "calendar": "Calendário",
       "device": "Este dispositivo",
       "account": "Conta e segurança"
-    }
+    },
+    "close": "Fechar definições"
   },
   "themes": {
     "auto": "Automático (segue o dispositivo)",

@@ -12,6 +12,7 @@ import { ErrorText, Field, FormActions, TextInput } from "../screens/form";
 import { paths } from "../paths";
 import { useTask, type Task, type TaskDraft } from "./model";
 import { readyToEdit } from "../offline/fresh";
+import { BUTTON_DANGER } from "../ui/button";
 
 const INPUT = "rounded-md border border-line bg-surface px-3 py-2 text-base text-ink";
 
@@ -85,9 +86,6 @@ function TaskForm({ task, checklist }: { task?: Task; checklist?: Checklist }) {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-col gap-4 p-4">
       <div className="flex items-center gap-3">
-        <button type="button" className="text-sm underline" onClick={() => navigate(-1)}>
-          {t("settings.back")}
-        </button>
         <h1 className="text-xl font-semibold">{task ? task.title : t("tasks.new")}</h1>
       </div>
       {task?.doneAt && (
@@ -205,7 +203,7 @@ function TaskForm({ task, checklist }: { task?: Task; checklist?: Checklist }) {
         <div className="border-t border-line pt-4">
           <button
             type="button"
-            className="text-overdue underline"
+            className={BUTTON_DANGER}
             onClick={() => {
               if (window.confirm(t("tasks.confirmDelete", { title: task.title }))) remove.mutate();
             }}
