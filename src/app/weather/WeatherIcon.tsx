@@ -6,6 +6,7 @@ import {
   CloudSnow,
   CloudSun,
   CloudSunRain,
+  Droplet,
   Sun,
   type LucideIcon,
 } from "lucide-react";
@@ -24,12 +25,42 @@ const ICONS: Record<WeatherKind, LucideIcon> = {
   fog: CloudFog,
 };
 
-/** The line icon for a WMO weather code, named by its kind. */
+/** Each kind's colour, so the icons read at a glance on any theme. */
+const COLORS: Record<WeatherKind, string> = {
+  sunny: "#f59e0b",
+  partlyCloudy: "#eab308",
+  cloudy: "#94a3b8",
+  rain: "#3b82f6",
+  showers: "#0ea5e9",
+  thunder: "#8b5cf6",
+  snow: "#38bdf8",
+  fog: "#9ca3af",
+};
+
+/** The coloured line icon for a WMO weather code, named by its kind. */
+/** A chance of rain with its own drop icon. */
+export function RainChance({ percent, size = 14 }: { percent: number; size?: number }) {
+  const { t } = useTranslation();
+  return (
+    <span className="inline-flex items-center gap-0.5 tabular-nums" title={t("weather.rainChance")}>
+      <Droplet aria-hidden size={size} strokeWidth={2} color="#3b82f6" />
+      <span className="sr-only">{t("weather.rainChance")}</span>
+      {percent}%
+    </span>
+  );
+}
+
 export function WeatherIcon({ code, size = 18 }: { code: number; size?: number }) {
   const { t } = useTranslation();
   const kind = weatherKind(code);
   const Component = ICONS[kind];
   return (
-    <Component role="img" aria-label={t(`weather.kind.${kind}`)} size={size} strokeWidth={1.75} />
+    <Component
+      role="img"
+      aria-label={t(`weather.kind.${kind}`)}
+      size={size}
+      strokeWidth={2}
+      color={COLORS[kind]}
+    />
   );
 }

@@ -166,8 +166,9 @@ export function DisplayBoard() {
                     <WeatherBadge
                       day={weather}
                       faded={weather.faded}
-                      size={14}
-                      className="text-[10px]"
+                      size={16}
+                      rain
+                      className="flex-wrap justify-center text-xs"
                     />
                   </ForecastButton>
                 </div>

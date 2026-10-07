@@ -34,6 +34,7 @@ describe("parseForecast", () => {
         weather_code: [3, null],
         temperature_2m_max: [21.6, 20],
         temperature_2m_min: [12.4, 11],
+        precipitation_probability_max: [35.4, 10],
       },
       hourly: {
         time: ["2026-10-02T00:00", "2026-10-02T01:00"],
@@ -43,7 +44,7 @@ describe("parseForecast", () => {
       },
     });
     expect(forecast.utcOffset).toBe(3600);
-    expect(forecast.daily).toEqual([{ date: "2026-10-02", code: 3, max: 22, min: 12 }]);
+    expect(forecast.daily).toEqual([{ date: "2026-10-02", code: 3, max: 22, min: 12, rain: 35 }]);
     expect(forecast.hourly).toEqual([
       { time: "2026-10-02T00:00", code: 61, temp: 15, rain: 80 },
       { time: "2026-10-02T01:00", code: 2, temp: 13, rain: 0 },

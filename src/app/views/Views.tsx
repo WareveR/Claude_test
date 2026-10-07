@@ -84,7 +84,7 @@ export function DayView() {
           <>
             {date !== today && weather && (
               <ForecastButton>
-                <WeatherBadge day={weather} faded={weather.faded} />
+                <WeatherBadge day={weather} faded={weather.faded} rain />
               </ForecastButton>
             )}
             {date !== today && <SunTimes day={date} />}
@@ -156,8 +156,9 @@ function Week({ monday }: { monday: PlainDate }) {
                   <WeatherBadge
                     day={weather}
                     faded={weather.faded}
-                    size={14}
-                    className="text-[10px]"
+                    size={16}
+                    rain
+                    className="flex-wrap justify-center text-xs"
                   />
                 </ForecastButton>
               </div>
@@ -268,7 +269,11 @@ function Month({ first }: { first: PlainDate }) {
             </h2>
             {forecast.get(selected) && (
               <ForecastButton>
-                <WeatherBadge day={forecast.get(selected)!} faded={forecast.get(selected)!.faded} />
+                <WeatherBadge
+                  day={forecast.get(selected)!}
+                  faded={forecast.get(selected)!.faded}
+                  rain
+                />
               </ForecastButton>
             )}
           </div>
