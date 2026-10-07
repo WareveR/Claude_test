@@ -76,3 +76,80 @@ test("templates are edited, deleted and restored to their defaults", async ({ pa
   await expect(templates.getByRole("link", { name: /^Shopping/ })).toBeVisible();
   await expect(templates.getByRole("link", { name: /^Groceries/ })).toHaveCount(0);
 });
+
+/** Presses on one element and drags to another with the mouse, in small steps. */
+async function drag(page: Page, from: { x: number; y: number }, to: { x: number; y: number }) {
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.mouse.move(from.x + 15, from.y + 5, { steps: 3 });
+  await page.mouse.move(to.x, to.y, { steps: 10 });
+}
+
+async function centre(locator: import("@playwright/test").Locator) {
+  const box = (await locator.boundingBox())!;
+  return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+}
+
+test("a Task dragged onto a Checklist moves in, and items swipe away with Undo", async ({
+  page,
+}) => {
+  await signIn(page);
+  await page.goto("/tasks/new");
+  await page.getByLabel("Title").fill("Pack the pencil case");
+  await page.getByRole("button", { name: "Save" }).click();
+  await page.goto("/tasks");
+
+  const task = page.getByTestId("task").filter({ hasText: "Pack the pencil case" });
+  const school = page.getByTestId("checklist").filter({ hasText: "Back to school" });
+  await expect(school).toContainText("0 of 9");
+  await drag(page, await centre(task.getByRole("link")), await centre(school));
+  await expect(school).toHaveClass(/ring-2/);
+  await page.mouse.up();
+
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toContainText('Add "Pack the pencil case" to "Back to school"?');
+  await dialog.getByRole("button", { name: "Move" }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(task).toHaveCount(0);
+  await expect(school).toContainText("0 of 10");
+
+  // A plain click still opens the Checklist.
+  await school.click();
+  const detail = page.getByTestId("checklist-detail");
+  const items = detail.getByTestId("checklist-item");
+  await expect(items.last()).toContainText("Pack the pencil case");
+
+  // Swiping an item sideways removes it, with an Undo.
+  const kit = items.filter({ hasText: "Sports kit" });
+  const from = await centre(kit.getByText("Sports kit"));
+  await drag(page, from, { x: from.x - 250, y: from.y });
+  await page.mouse.up();
+  await expect(kit).toHaveCount(0);
+  await expect(detail).toContainText("0 of 9");
+  await page.getByRole("status").getByRole("button", { name: "Undo" }).click();
+  await expect(kit).toBeVisible();
+  await expect(detail).toContainText("0 of 10");
+
+  await drag(page, from, { x: from.x + 250, y: from.y });
+  await page.mouse.up();
+  await expect(kit).toHaveCount(0);
+  await page.goto("/tasks");
+  await expect(school).toContainText("0 of 9");
+});
+
+test("a loose Task's form adds a copy of it to a Checklist", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/tasks/new");
+  await page.getByLabel("Title").fill("Buy glue sticks");
+  await page.getByRole("button", { name: "Save" }).click();
+  await page.goto("/tasks");
+  await page.getByTestId("task").filter({ hasText: "Buy glue sticks" }).getByRole("link").click();
+  await page.getByLabel("Which checklist").selectOption({ label: "Back to school" });
+  await page.getByRole("button", { name: "Duplicate" }).click();
+  await expect(page.getByRole("status")).toContainText('Added a copy to "Back to school"');
+  await page.goto("/tasks");
+  await expect(page.getByTestId("task").filter({ hasText: "Buy glue sticks" })).toBeVisible();
+  await expect(page.getByTestId("checklist").filter({ hasText: "Back to school" })).toContainText(
+    "0 of 10",
+  );
+});

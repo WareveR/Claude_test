@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Navigate, useLocation, useNavigate, useParams, useSearchParams } from "react-router";
 import { isPlainDate } from "../../core/plain-date";
 import { api } from "../api";
+import { AddToChecklistSection } from "../checklists/AddToChecklist";
 import { RepetitionFields } from "../entries/RepetitionFields";
 import { usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
@@ -188,6 +189,7 @@ function TaskForm({ task }: { task?: Task }) {
           onCancel={() => navigate(-1)}
         />
       </form>
+      {task && <AddToChecklistSection task={task} />}
       {task && (
         <div className="border-t border-line pt-4">
           <button

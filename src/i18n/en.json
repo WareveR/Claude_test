@@ -335,7 +335,20 @@
     "itemName": "Name",
     "itemPersons": "For whom",
     "editItem": "Edit {{title}}",
-    "removeItem": "Remove {{title}}"
+    "removeItem": "Remove {{title}}",
+    "removed": "Removed \"{{title}}\"",
+    "undo": "Undo",
+    "dragHint": "Tip: drag a task onto a checklist to move or copy it there (on a phone, press and hold it first). Swipe an item sideways on a checklist's page to remove it.",
+    "addTo": {
+      "title": "Add to checklist",
+      "hint": "Move makes it an item of the checklist, without its date, time, repetition or Private. Duplicate adds an item with the same title and people and keeps this task.",
+      "which": "Which checklist",
+      "choose": "Choose a checklist",
+      "question": "Add \"{{title}}\" to \"{{name}}\"?",
+      "move": "Move",
+      "duplicate": "Duplicate",
+      "duplicated": "Added a copy to \"{{name}}\"."
+    }
   },
   "checklistTemplates": {
     "title": "Checklist templates",

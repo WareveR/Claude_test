@@ -167,3 +167,91 @@ describe("repeating Tasks", () => {
     expect(next.title).toBe("Bins and recycling");
   });
 });
+
+describe("putting a Task into a Checklist", () => {
+  async function setUp() {
+    const { browser, ana } = await family();
+    const checklist = (await (
+      await browser.post("/checklists", { name: "Back to school", items: ["Notebooks"] })
+    ).json()) as { id: string };
+    const task = (await (
+      await browser.post("/tasks", {
+        title: "Pencil case",
+        dueDate: "2026-09-01",
+        dueTime: "10:00",
+        repetition: { frequency: "weekly", interval: 1, end: { type: "never" } },
+        private: true,
+        personIds: [ana.id],
+      })
+    ).json()) as Task;
+    return { browser, ana, checklist, task };
+  }
+
+  it("moves it in as the last item, without its date, time, Repetition or Private", async () => {
+    const { browser, ana, checklist, task } = await setUp();
+    const res = await browser.post(`/tasks/${task.id}/checklist`, {
+      checklistId: checklist.id,
+      mode: "move",
+    });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({
+      id: task.id,
+      title: "Pencil case",
+      checklistId: checklist.id,
+      dueDate: null,
+      dueTime: null,
+      repetition: null,
+      private: false,
+      personIds: [ana.id],
+    });
+    const tasks = (await (await browser.get("/tasks")).json()) as (Task & {
+      checklistId: string | null;
+      createdAt: string;
+    })[];
+    expect(
+      tasks
+        .filter((t) => t.checklistId === checklist.id)
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+        .map((t) => t.title),
+    ).toEqual(["Notebooks", "Pencil case"]);
+    // Once an item, it can't be put in again.
+    const again = await browser.post(`/tasks/${task.id}/checklist`, {
+      checklistId: checklist.id,
+      mode: "duplicate",
+    });
+    expect(again.status).toBe(409);
+  });
+
+  it("duplicates it as a new item with the same title and Persons; the Task stays", async () => {
+    const { browser, ana, checklist, task } = await setUp();
+    const res = await browser.post(`/tasks/${task.id}/checklist`, {
+      checklistId: checklist.id,
+      mode: "duplicate",
+    });
+    expect(res.status).toBe(201);
+    const copy = (await res.json()) as Task & { checklistId: string };
+    expect(copy).toMatchObject({
+      title: "Pencil case",
+      checklistId: checklist.id,
+      dueDate: null,
+      private: false,
+      personIds: [ana.id],
+    });
+    expect(copy.id).not.toBe(task.id);
+    const kept = (await (await browser.get(`/tasks/${task.id}`)).json()) as Task & {
+      checklistId: string | null;
+    };
+    expect(kept).toMatchObject({ dueDate: "2026-09-01", private: true, checklistId: null });
+  });
+
+  it("refuses an unknown Checklist or way", async () => {
+    const { browser, checklist, task } = await setUp();
+    const post = (body: unknown) => browser.post(`/tasks/${task.id}/checklist`, body);
+    expect((await post({ checklistId: "nope", mode: "move" })).status).toBe(400);
+    expect((await post({ checklistId: checklist.id, mode: "copy" })).status).toBe(400);
+    expect(
+      (await browser.post("/tasks/nope/checklist", { checklistId: checklist.id, mode: "move" }))
+        .status,
+    ).toBe(404);
+  });
+});
