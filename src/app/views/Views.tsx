@@ -33,6 +33,7 @@ import { paths } from "../paths";
 import { ViewNav } from "../shell/ViewNav";
 import { ForecastButton } from "../weather/ForecastButton";
 import { HourlyStrip } from "../weather/HourlyStrip";
+import { SunBand } from "../weather/SunBand";
 import { useForecastDays } from "../weather/model";
 import { WeatherBadge } from "../weather/WeatherBadge";
 import { TasksAccordion } from "../tasks/TasksAccordion";
@@ -86,11 +87,12 @@ export function DayView() {
                 <WeatherBadge day={weather} faded={weather.faded} />
               </ForecastButton>
             )}
-            <SunTimes day={date} />
+            {date !== today && <SunTimes day={date} />}
           </>
         }
       />
       {date === today && <HourlyStrip />}
+      {date === today && <SunBand />}
       {/* On wide screens the Briefing and Tasks sit beside the grid instead of above it. */}
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row-reverse">
         <aside className="flex flex-col lg:w-[26rem] lg:shrink-0 lg:gap-2 lg:overflow-y-auto lg:border-l lg:border-line lg:py-2">

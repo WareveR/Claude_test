@@ -81,12 +81,18 @@ export function useDayNotes(from: PlainDate, to: PlainDate): Map<PlainDate, stri
   return lines;
 }
 
-/** Sunrise and sunset at the Weather Location on a day, when the Sun Layer is on. */
-export function useSunTimes(day: PlainDate): { rise: string | null; set: string | null } | null {
+/**
+ * Sunrise and sunset at the Weather Location on a day, when the Sun Layer is on,
+ * or always when `always` is set.
+ */
+export function useSunTimes(
+  day: PlainDate,
+  always = false,
+): { rise: string | null; set: string | null } | null {
   const { family } = useSignedIn();
   const { layers } = usePersonFilter();
   const place = useWeather().data?.location ?? null;
-  const on = layers.includes("sun") && place !== null;
+  const on = (always || layers.includes("sun")) && place !== null;
   const A = useAstronomy(on);
   return useMemo(
     () => (A && on && place ? sunTimes(A, day, family.timeZone, place) : null),
