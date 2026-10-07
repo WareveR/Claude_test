@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api";
 import { ErrorText, Field, FormCard, SubmitButton, TextInput } from "./form";
+import { BUTTON } from "../ui/button";
 
 export function ForgotPasswordScreen({ onBack }: { onBack: () => void }) {
   const { t } = useTranslation();
@@ -35,7 +36,7 @@ export function ForgotPasswordScreen({ onBack }: { onBack: () => void }) {
           <SubmitButton busy={send.isPending}>{t("recovery.send")}</SubmitButton>
         </form>
       )}
-      <button type="button" className="self-start text-sm underline" onClick={onBack}>
+      <button type="button" className={`${BUTTON} self-start`} onClick={onBack}>
         {t("recovery.back")}
       </button>
     </FormCard>

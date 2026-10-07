@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useNavigate, useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { ICONS, IMPORTANCES, type EntryTypeDefaults } from "../../core/entry-type";
 import type { Repetition } from "../../core/repetition";
 import { api } from "../api";
@@ -13,6 +13,7 @@ import { Icon } from "../ui/Icon";
 import { EntryTypeBadge } from "./EntryTypeBadge";
 import { REMINDER_CHOICES, reminderLabel, typeName, useEntryTypes, type EntryType } from "./model";
 import { readyToEdit } from "../offline/fresh";
+import { BUTTON, BUTTON_DANGER } from "../ui/button";
 
 const FREQUENCIES = ["none", "daily", "weekly", "monthly", "yearly"] as const;
 const SELECT = "rounded-md border border-line bg-surface px-3 py-2";
@@ -93,9 +94,6 @@ function EntryTypeForm({ type }: { type?: EntryType }) {
   return (
     <main className="mx-auto flex max-w-xl flex-col gap-4 p-4">
       <div className="flex items-center gap-3">
-        <Link to="/settings/family" className="text-sm underline">
-          {t("settings.back")}
-        </Link>
         <h1 className="text-xl font-semibold">{type ? typeName(type, t) : t("entryTypes.add")}</h1>
       </div>
       <form onSubmit={submit} className="flex flex-col gap-4">
@@ -149,7 +147,7 @@ function EntryTypeForm({ type }: { type?: EntryType }) {
           </div>
           <div className="mt-2 flex items-center gap-3">
             <EntryTypeBadge type={{ color, icon, thumbnailKey }} size={40} />
-            <label className="underline">
+            <label className={BUTTON}>
               {t("entryTypes.thumbnail")}
               <input
                 type="file"
@@ -294,7 +292,7 @@ function EntryTypeForm({ type }: { type?: EntryType }) {
           {!deleting ? (
             <button
               type="button"
-              className="self-start text-overdue underline"
+              className={`${BUTTON_DANGER} self-start`}
               onClick={() => setDeleting(true)}
             >
               {t("entryTypes.delete")}

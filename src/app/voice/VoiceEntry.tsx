@@ -18,6 +18,7 @@ import {
   stopListening,
   stopSpeaking,
 } from "./speech";
+import { BUTTON } from "../ui/button";
 
 type Create = { outcome: "create"; kind: "entry" | "task"; values: object; summary: string };
 type Req = { method: "PUT" | "POST" | "DELETE"; path: string; body?: unknown };
@@ -443,7 +444,7 @@ export function VoiceEntry() {
                   </div>
                 </form>
               )}
-              <button type="button" className="self-end text-sm underline" onClick={close}>
+              <button type="button" className={`${BUTTON} self-end`} onClick={close}>
                 {t("voice.cancel")}
               </button>
             </div>
@@ -458,7 +459,7 @@ export function VoiceEntry() {
           >
             <span>{t("voice.saved")} ·</span>
             {toast.undo && (
-              <button type="button" className="font-medium underline" onClick={() => void undo()}>
+              <button type="button" className={BUTTON} onClick={() => void undo()}>
                 {t("voice.undo")}
               </button>
             )}

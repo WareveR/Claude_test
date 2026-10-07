@@ -5,6 +5,7 @@ import { MAX_HOLIDAY_PLACES, type HolidayPlace } from "../../core/holidays";
 import { api } from "../api";
 import { useSignedIn } from "../family";
 import { Field } from "../screens/form";
+import { BUTTON } from "../ui/button";
 
 const SELECT = "rounded-md border border-line bg-surface px-3 py-2 text-base text-ink";
 
@@ -78,7 +79,7 @@ export function HolidaysSection() {
                   <span>{name}</span>
                   <button
                     type="button"
-                    className="text-sm underline"
+                    className={BUTTON}
                     aria-label={t("holidays.removePlace", { name })}
                     onClick={() => save.mutate(places.filter((p) => !samePlace(p, place)))}
                   >

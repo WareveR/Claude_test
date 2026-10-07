@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api";
 import { usePersons } from "../persons/model";
+import { BUTTON } from "../ui/button";
 
 type DeviceState = {
   id: string;
@@ -120,7 +121,7 @@ export function RemindersSection() {
             <span className="text-sm">{t("reminders.pushOn")}</span>
             <button
               type="button"
-              className="text-sm underline"
+              className={BUTTON}
               disabled={turnOff.isPending}
               onClick={() => turnOff.mutate()}
             >

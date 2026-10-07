@@ -115,7 +115,8 @@
       "calendar": "Calendar",
       "device": "This device",
       "account": "Account and security"
-    }
+    },
+    "close": "Close Settings"
   },
   "themes": {
     "auto": "Automatic (follows the device)",

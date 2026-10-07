@@ -10,6 +10,7 @@ import type { Person } from "../persons/model";
 import type { Task } from "../tasks/model";
 import { TaskRow } from "../tasks/TaskRow";
 import type { Checklist } from "./model";
+import { BUTTON } from "../ui/button";
 
 /** A Checklist as one expandable row with its progress; its Tasks inside. */
 export function ChecklistRow({
@@ -59,10 +60,10 @@ export function ChecklistRow({
           ))}
         </ul>
         <div className="ml-6 flex gap-4 py-1 text-sm">
-          <Link className="underline" to={`/tasks/new?checklist=${checklist.id}`}>
+          <Link className={BUTTON} to={`/tasks/new?checklist=${checklist.id}`}>
             {t("checklists.addTask")}
           </Link>
-          <Link className="underline" to={`/checklists/${checklist.id}`}>
+          <Link className={BUTTON} to={`/checklists/${checklist.id}`}>
             {t("checklists.edit")}
           </Link>
         </div>

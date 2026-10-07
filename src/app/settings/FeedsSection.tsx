@@ -5,6 +5,7 @@ import { api } from "../api";
 import { usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
 import { ErrorText, Field, SubmitButton, TextInput } from "../screens/form";
+import { BUTTON } from "../ui/button";
 
 type FeedRow = {
   id: string;
@@ -88,19 +89,15 @@ export function FeedsSection() {
           <div className="flex items-center gap-4">
             <button
               type="button"
-              className="text-sm underline"
+              className={BUTTON}
               onClick={() => navigator.clipboard?.writeText(shown).catch(() => {})}
             >
               {t("feeds.copy")}
             </button>
-            <a className="text-sm underline" href={shown.replace(/^https?:\/\//, "webcal://")}>
+            <a className={BUTTON} href={shown.replace(/^https?:\/\//, "webcal://")}>
               {t("feeds.open")}
             </a>
-            <button
-              type="button"
-              className="ml-auto text-sm underline"
-              onClick={() => setShown(null)}
-            >
+            <button type="button" className={`${BUTTON} ml-auto`} onClick={() => setShown(null)}>
               {t("feeds.done")}
             </button>
           </div>
@@ -115,7 +112,7 @@ export function FeedsSection() {
             </div>
             <button
               type="button"
-              className="text-sm underline"
+              className={BUTTON}
               aria-label={t("feeds.replaceOf", { name: feed.name })}
               onClick={() => {
                 if (window.confirm(t("feeds.confirmReplace", { name: feed.name }))) {
@@ -127,7 +124,7 @@ export function FeedsSection() {
             </button>
             <button
               type="button"
-              className="text-sm underline"
+              className={BUTTON}
               aria-label={t("feeds.revokeOf", { name: feed.name })}
               onClick={() => {
                 if (window.confirm(t("feeds.confirmRevoke", { name: feed.name }))) {

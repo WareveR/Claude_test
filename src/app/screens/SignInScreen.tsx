@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { api, ApiError } from "../api";
 import { ForgotPasswordScreen } from "./ForgotPasswordScreen";
 import { ErrorText, Field, FormCard, SubmitButton, TextInput } from "./form";
+import { BUTTON } from "../ui/button";
 
 export function SignInScreen() {
   const { t } = useTranslation();
@@ -38,11 +39,7 @@ export function SignInScreen() {
         {signIn.error && <ErrorText>{signInError(signIn.error, t)}</ErrorText>}
         <SubmitButton busy={signIn.isPending}>{t("signIn.submit")}</SubmitButton>
       </form>
-      <button
-        type="button"
-        className="self-start text-sm underline"
-        onClick={() => setForgot(true)}
-      >
+      <button type="button" className={`${BUTTON} self-start`} onClick={() => setForgot(true)}>
         {t("recovery.forgot")}
       </button>
     </FormCard>

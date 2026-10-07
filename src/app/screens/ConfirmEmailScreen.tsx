@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { api, ApiError } from "../api";
 import { FormCard } from "./form";
+import { BUTTON } from "../ui/button";
 
 export function ConfirmEmailScreen({ token }: { token: string }) {
   const { t } = useTranslation();
@@ -32,7 +33,7 @@ export function ConfirmEmailScreen({ token }: { token: string }) {
       {(confirm.isSuccess || confirm.isError) && (
         <button
           type="button"
-          className="self-start underline"
+          className={`${BUTTON} self-start`}
           onClick={() => window.location.assign("/")}
         >
           {t("recovery.continue")}

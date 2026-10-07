@@ -1,7 +1,9 @@
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, NavLink } from "react-router";
+import { Link, NavLink, useLocation } from "react-router";
+import { todayIn } from "../../core/plain-date";
+import { useSignedIn } from "../family";
 import type { PlainDate } from "../../core/plain-date";
 import { FilterButton } from "../filter/FilterButton";
 import { setDisplayMode } from "../display/mode";
@@ -22,12 +24,18 @@ export function ViewNav({
   title?: string;
   previous?: string;
   next?: string;
-  /** Where "+" leads; a new Entry on the view's date unless given. */
-  newPath?: string;
+  /** Where "+" leads; a new Entry on the view's date unless given, and no "+" when null. */
+  newPath?: string | null;
   /** Shown beside the title. */
   extra?: ReactNode;
 }) {
   const { t } = useTranslation();
+  const { pathname } = useLocation();
+  const today = todayIn(useSignedIn().family.timeZone);
+  // "Today" stays in the view it is pressed in: this week, this month, this year.
+  const view = pathname.split("/")[1];
+  const todayPath =
+    view === "week" || view === "month" || view === "year" ? paths[view](today) : paths.day(today);
   return (
     <nav className="flex flex-wrap items-center gap-2 px-4 py-2">
       <div className="flex rounded-md border border-line">
@@ -56,7 +64,7 @@ export function ViewNav({
           <Link to={previous} aria-label={t("views.previous")} className="rounded-md p-1">
             <ChevronLeft aria-hidden size={20} strokeWidth={1.75} />
           </Link>
-          <Link to={paths.today()} className="rounded-md px-2 py-1 text-sm">
+          <Link to={todayPath} className="rounded-md px-2 py-1 text-sm">
             {t("views.today")}
           </Link>
           <Link to={next} aria-label={t("views.next")} className="rounded-md p-1">
@@ -69,13 +77,15 @@ export function ViewNav({
       <div className="ml-auto">
         <FilterButton />
       </div>
-      <Link
-        to={newPath ?? `/entries/new?date=${date}`}
-        aria-label={newPath ? t("tasks.new") : t("entries.new")}
-        className="rounded-full bg-accent p-2 text-accent-ink"
-      >
-        <Plus aria-hidden size={20} strokeWidth={2} />
-      </Link>
+      {newPath !== null && (
+        <Link
+          to={newPath ?? `/entries/new?date=${date}`}
+          aria-label={t("entries.new")}
+          className="rounded-full bg-accent p-2 text-accent-ink"
+        >
+          <Plus aria-hidden size={20} strokeWidth={2} />
+        </Link>
+      )}
     </nav>
   );
 }

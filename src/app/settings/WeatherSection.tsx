@@ -5,6 +5,7 @@ import { MAX_WEATHER_LOCATIONS, type WeatherPlace } from "../../core/weather";
 import { api } from "../api";
 import { Field, TextInput } from "../screens/form";
 import { useWeatherLocations } from "../weather/model";
+import { BUTTON } from "../ui/button";
 
 const describe = (place: WeatherPlace) =>
   [place.name, place.admin, place.country].filter(Boolean).join(", ");
@@ -60,7 +61,7 @@ export function WeatherSection() {
                   ) : (
                     <button
                       type="button"
-                      className="text-sm underline"
+                      className={BUTTON}
                       aria-label={t("weather.usePlace", { name })}
                       onClick={() => select.mutate(place.id)}
                     >
@@ -69,7 +70,7 @@ export function WeatherSection() {
                   )}
                   <button
                     type="button"
-                    className="text-sm underline"
+                    className={BUTTON}
                     aria-label={t("weather.removePlace", { name })}
                     onClick={() => remove.mutate(place.id)}
                   >
@@ -119,7 +120,7 @@ export function WeatherSection() {
                     <span>{name}</span>
                     <button
                       type="button"
-                      className="text-sm underline disabled:opacity-40 disabled:no-underline"
+                      className={BUTTON}
                       aria-label={t("weather.savePlace", { name })}
                       disabled={save.isPending || locations.some((l) => samePlace(l, place))}
                       onClick={() => save.mutate(place)}

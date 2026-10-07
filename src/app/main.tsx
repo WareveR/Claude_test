@@ -11,6 +11,7 @@ import { persistOptions, wipeOfflineCopy } from "./offline/persist";
 import { registerServiceWorker } from "./offline/service-worker";
 import { applyTheme } from "./theme";
 import "./index.css";
+import { BUTTON } from "./ui/button";
 
 const queryClient: QueryClient = new QueryClient({
   defaultOptions: {
@@ -60,7 +61,7 @@ class CrashBoundary extends Component<{ children: ReactNode }, { crashed: boolea
     return (
       <main className="flex flex-col items-center gap-3 p-8">
         <p>{i18n.t("errors.notice.app")}</p>
-        <button type="button" className="underline" onClick={() => window.location.reload()}>
+        <button type="button" className={BUTTON} onClick={() => window.location.reload()}>
           {i18n.t("errors.reload")}
         </button>
       </main>

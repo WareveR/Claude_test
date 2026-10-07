@@ -1,6 +1,7 @@
 import { Settings, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Link, useNavigate } from "react-router";
+import { useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router";
 import { formatLocale } from "../../core/languages";
 import { setDisplayMode, useDisplayMode } from "../display/mode";
 import { useSignedIn } from "../family";
@@ -11,6 +12,9 @@ import { WeatherBadge } from "../weather/WeatherBadge";
 import { VoiceEntry } from "../voice/VoiceEntry";
 import { paths } from "../paths";
 import { useNow } from "./useNow";
+
+/** The last page outside Settings, where the Settings button returns to. */
+let outsideSettings: string = paths.today();
 
 /** The fixed header on every view: the time, weekday, day and month in the Family Time Zone. */
 export function Header({
@@ -24,6 +28,11 @@ export function Header({
   // On the wall there is no Settings link and no microphone; a button leaves.
   const wall = useDisplayMode();
   const navigate = useNavigate();
+  const location = useLocation();
+  const inSettings = location.pathname.startsWith("/settings");
+  useEffect(() => {
+    if (!inSettings) outsideSettings = location.pathname + location.search;
+  }, [inSettings, location.pathname, location.search]);
   const today = useForecastDays().get(todayIn(family.timeZone, now));
   const locale = formatLocale(language);
   const time = new Intl.DateTimeFormat(locale, {
@@ -66,10 +75,11 @@ export function Header({
           {t("display.leave")}
         </button>
       ) : (
+        // The same button opens Settings and, from inside them, closes them.
         <Link
-          to="/settings"
-          aria-label={t("settings.title")}
-          className={`${showVoice ? "" : "ml-auto "}rounded-md p-2 hover:bg-header-ink/15`}
+          to={inSettings ? outsideSettings : paths.settings()}
+          aria-label={inSettings ? t("settings.close") : t("settings.title")}
+          className={`${showVoice ? "" : "ml-auto "}rounded-md p-2 hover:bg-header-ink/15 ${inSettings ? "bg-header-ink/20" : ""}`}
         >
           <Settings aria-hidden size={20} strokeWidth={1.75} />
         </Link>

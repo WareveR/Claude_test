@@ -5,6 +5,7 @@ import { formatLocale } from "../../core/languages";
 import { todayIn } from "../../core/plain-date";
 import { api, ApiError, NetworkError } from "../api";
 import { useSignedIn } from "../family";
+import { BUTTON } from "../ui/button";
 
 const PARALLEL_IMAGES = 4;
 const EXTENSIONS: Record<string, string> = {
@@ -94,7 +95,7 @@ export function ExportSection() {
       >
         {download.isPending ? t("export.preparing") : t("export.download")}
       </button>
-      <a href="/api/export/entries.ics" download className="self-start underline">
+      <a href="/api/export/entries.ics" download className={`${BUTTON} self-start`}>
         {t("export.entries")}
       </a>
       <p className="text-sm text-muted">{when ? t("export.last", { when }) : t("export.never")}</p>
