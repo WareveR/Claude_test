@@ -266,7 +266,9 @@
     "birthdaySynced": "This Birthday follows {{name}}'s date of birth: change its date or Person on the Person.",
     "openPerson": "Open the Person",
     "birthYearKnown": "Birth year known (the date above is the date of birth, so the age shows)",
-    "birthdayLocked": "This Birthday's date and Person change only on its Person."
+    "birthdayLocked": "This Birthday's date and Person change only on its Person.",
+    "edit": "Edit",
+    "close": "Close"
   },
   "scope": {
     "saveTitle": "Save the change for…",
