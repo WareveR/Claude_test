@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { addDays, formatPlainDate } from "../../core/plain-date";
 import { BINS, type Bin, type WasteCollection } from "../../core/waste";
-import { api } from "../api";
+import { api, type Status } from "../api";
 import { useSignedIn } from "../family";
 import { formatLocale } from "../../core/languages";
 
@@ -16,10 +16,16 @@ export function WasteSection() {
   const save = useMutation({
     mutationFn: (collection: WasteCollection) =>
       api("/family/waste", { method: "PUT", body: { collection } }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["status"] }),
+    // Shows the change at once, while it saves.
+    onMutate: (collection) =>
+      queryClient.setQueryData<Status>(["status"], (status) =>
+        status?.family
+          ? { ...status, family: { ...status.family, wasteCollection: collection } }
+          : status,
+      ),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["status"] }),
   });
-  // Shows the change at once, while it saves.
-  const collection = (save.isPending && save.variables) || family.wasteCollection;
+  const collection = family.wasteCollection;
   const locale = formatLocale(language);
   const weekdays = Array.from({ length: 7 }, (_, i) =>
     formatPlainDate(addDays(MONDAY, i), locale, { weekday: "short" }),
