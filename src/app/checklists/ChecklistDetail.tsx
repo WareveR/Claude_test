@@ -25,7 +25,8 @@ export function ChecklistDetailPage() {
   const tasks = useTasks();
   if (!checklists.data || !tasks.data) return null;
   const checklist = checklists.data.find((c) => c.id === id);
-  if (!checklist) return <Navigate to={paths.tasks()} replace />;
+  // A Checklist saved a moment ago may only arrive with the refetch of a stale list.
+  if (!checklist) return checklists.isFetching ? null : <Navigate to={paths.tasks()} replace />;
   const items = tasks.data
     .filter((task) => task.checklistId === checklist.id)
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
@@ -102,6 +103,8 @@ function ItemRow({ task, overdue, persons }: { task: Task; overdue: boolean; per
   const tick = useTick();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
+  // The tick shows the moment it's clicked, before the server answers.
+  const [ticking, setTicking] = useState<boolean | null>(null);
   const remove = useMutation({
     mutationFn: () => api(`/tasks/${task.id}`, { method: "DELETE" }),
     onMutate: async () => {
@@ -119,7 +122,7 @@ function ItemRow({ task, overdue, persons }: { task: Task; overdue: boolean; per
       </li>
     );
   }
-  const done = Boolean(task.doneAt);
+  const done = ticking ?? Boolean(task.doneAt);
   return (
     <li className="flex items-center gap-3 py-2" data-testid="checklist-item">
       <input
@@ -128,7 +131,10 @@ function ItemRow({ task, overdue, persons }: { task: Task; overdue: boolean; per
         aria-label={t("tasks.tick", { title: task.title })}
         checked={done}
         disabled={tick.isPending || !online}
-        onChange={(e) => tick.mutate({ task, done: e.target.checked })}
+        onChange={(e) => {
+          setTicking(e.target.checked);
+          tick.mutate({ task, done: e.target.checked }, { onSettled: () => setTicking(null) });
+        }}
       />
       <span
         className={`min-w-0 flex-1 break-words ${done ? "text-muted line-through" : overdue ? "text-overdue" : ""}`}
