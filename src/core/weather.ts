@@ -41,7 +41,10 @@ export const CERTAIN_DAYS = 7;
 
 const OPEN_METEO_DAYS = 16;
 
-/** Open-Meteo forecast query: 16 days daily, hourly with chance of rain, in the place's clock. */
+/**
+ * Open-Meteo forecast query: 16 days daily, hourly with chance of rain, in the place's clock;
+ * plus yesterday, so the day just gone keeps its final reading.
+ */
 export function forecastQuery(place: Pick<WeatherPlace, "latitude" | "longitude">): string {
   return new URLSearchParams({
     latitude: String(place.latitude),
@@ -50,6 +53,7 @@ export function forecastQuery(place: Pick<WeatherPlace, "latitude" | "longitude"
     hourly: "weather_code,temperature_2m,precipitation_probability",
     timezone: "auto",
     forecast_days: String(OPEN_METEO_DAYS),
+    past_days: "1",
   }).toString();
 }
 

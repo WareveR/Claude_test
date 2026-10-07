@@ -3,7 +3,7 @@ import type { EntryTypeDefaults, Importance, ReminderOffset } from "../../core/e
 import type { HolidayPlace } from "../../core/holidays";
 import type { Repetition } from "../../core/repetition";
 import type { Segment } from "../../core/briefing";
-import type { Forecast } from "../../core/weather";
+import type { DayWeather, Forecast, HourWeather } from "../../core/weather";
 import type { WasteCollection } from "../../core/waste";
 
 /**
@@ -347,6 +347,23 @@ export const weatherCache = sqliteTable("weather_cache", {
   fetchedAt: text("fetched_at"),
   attemptedAt: text("attempted_at").notNull(),
 });
+
+/**
+ * The last forecast read for each day at a Weather Location, kept after the day has passed so
+ * past days still show their weather: the day's summary and its hours.
+ */
+export const weatherDay = sqliteTable(
+  "weather_day",
+  {
+    locationId: text("location_id")
+      .notNull()
+      .references(() => weatherLocation.id, { onDelete: "cascade" }),
+    date: text("date").notNull(),
+    day: text("day", { mode: "json" }).$type<DayWeather>().notNull(),
+    hours: text("hours", { mode: "json" }).$type<HourWeather[]>().notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.locationId, t.date] })],
+);
 
 /** The latest Briefing per scope ("family" or a Person's id) and language. */
 export const briefing = sqliteTable(
