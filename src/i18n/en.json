@@ -104,6 +104,7 @@
   "settings": {
     "title": "Settings",
     "back": "Back",
+    "cancel": "Cancel",
     "language": "Language on this device"
   },
   "devices": {

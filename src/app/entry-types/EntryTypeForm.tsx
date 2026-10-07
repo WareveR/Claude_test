@@ -8,7 +8,7 @@ import { api } from "../api";
 import type { Entry } from "../entries/model";
 import { PERSON_COLORS, uploadPhoto, usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
-import { ErrorText, Field, SubmitButton, TextInput } from "../screens/form";
+import { ErrorText, Field, FormActions, TextInput } from "../screens/form";
 import { Icon } from "../ui/Icon";
 import { EntryTypeBadge } from "./EntryTypeBadge";
 import { REMINDER_CHOICES, reminderLabel, typeName, useEntryTypes, type EntryType } from "./model";
@@ -283,7 +283,12 @@ function EntryTypeForm({ type }: { type?: EntryType }) {
           </div>
         </fieldset>
         {save.error && <ErrorText>{t("errors.unexpected")}</ErrorText>}
-        <SubmitButton busy={save.isPending}>{t("persons.save")}</SubmitButton>
+        <FormActions
+          busy={save.isPending}
+          saveLabel={t("persons.save")}
+          cancelLabel={t("settings.cancel")}
+          onCancel={() => navigate("/settings")}
+        />
       </form>
       {type?.deletable && (
         <div className="flex flex-col gap-3 border-t border-line pt-4">

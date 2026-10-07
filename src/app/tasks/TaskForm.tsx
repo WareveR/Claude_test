@@ -8,7 +8,7 @@ import { useChecklist, type Checklist } from "../checklists/model";
 import { RepetitionFields } from "../entries/RepetitionFields";
 import { usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
-import { ErrorText, Field, SubmitButton, TextInput } from "../screens/form";
+import { ErrorText, Field, FormActions, TextInput } from "../screens/form";
 import { paths } from "../paths";
 import { useTask, type Task, type TaskDraft } from "./model";
 import { readyToEdit } from "../offline/fresh";
@@ -194,7 +194,12 @@ function TaskForm({ task, checklist }: { task?: Task; checklist?: Checklist }) {
         <p className="-mt-3 text-xs text-muted">{t("entries.privateHint")}</p>
 
         {save.error && <ErrorText>{t("errors.unexpected")}</ErrorText>}
-        <SubmitButton busy={save.isPending}>{t("persons.save")}</SubmitButton>
+        <FormActions
+          busy={save.isPending}
+          saveLabel={t("persons.save")}
+          cancelLabel={t("settings.cancel")}
+          onCancel={() => navigate(-1)}
+        />
       </form>
       {task && (
         <div className="border-t border-line pt-4">

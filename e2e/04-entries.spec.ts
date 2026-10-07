@@ -8,6 +8,9 @@ test("create, see, edit and delete Entries in the week view", async ({ page }) =
   await page.goto("/week/2026-10-12");
 
   await page.getByRole("link", { name: "New entry" }).click();
+  // Cancel and Save stay on screen without scrolling the long form.
+  await expect(page.getByRole("button", { name: "Save" })).toBeInViewport();
+  await expect(page.getByRole("button", { name: "Cancel" })).toBeInViewport();
   await page.getByLabel("Title").fill("Dentist");
   await page.getByLabel("Type", { exact: true }).selectOption({ label: "Appointment" });
   await page.getByLabel("Date", { exact: true }).fill("2026-10-13");
