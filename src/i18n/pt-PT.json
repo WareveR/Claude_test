@@ -104,6 +104,7 @@
   "settings": {
     "title": "Definições",
     "back": "Voltar",
+    "cancel": "Cancelar",
     "language": "Idioma deste dispositivo"
   },
   "devices": {

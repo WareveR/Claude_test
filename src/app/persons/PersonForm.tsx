@@ -3,7 +3,7 @@ import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useParams } from "react-router";
 import { api, ApiError } from "../api";
-import { ErrorText, Field, SubmitButton, TextInput } from "../screens/form";
+import { ErrorText, Field, FormActions, TextInput } from "../screens/form";
 import { PERSON_COLORS, uploadPhoto, usePersons, type Person } from "./model";
 import { PersonAvatar } from "./PersonAvatar";
 import { readyToEdit } from "../offline/fresh";
@@ -150,7 +150,12 @@ function PersonForm({ person }: { person?: Person }) {
         </Field>
         <p className="-mt-2 text-xs text-stone-500">{t("persons.nicknamesHint")}</p>
         {save.error && <ErrorText>{t("errors.unexpected")}</ErrorText>}
-        <SubmitButton busy={save.isPending || uploading}>{t("persons.save")}</SubmitButton>
+        <FormActions
+          busy={save.isPending || uploading}
+          saveLabel={t("persons.save")}
+          cancelLabel={t("settings.cancel")}
+          onCancel={() => navigate("/settings")}
+        />
       </form>
       {person && (
         <div className="flex flex-col gap-2 border-t border-stone-200 pt-4 dark:border-stone-800">

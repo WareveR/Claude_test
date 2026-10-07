@@ -50,6 +50,28 @@ export function SubmitButton({ children, busy }: { children: ReactNode; busy: bo
   );
 }
 
+/** Cancel and Save, pinned to the bottom of the screen so they never need scrolling to. */
+export function FormActions({
+  busy,
+  saveLabel,
+  cancelLabel,
+  onCancel,
+}: {
+  busy: boolean;
+  saveLabel: string;
+  cancelLabel: string;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="sticky bottom-0 z-[5] -mx-4 flex justify-end gap-3 border-t border-line bg-bg/95 px-4 py-3 backdrop-blur">
+      <button type="button" className="rounded-md border border-line px-4 py-2" onClick={onCancel}>
+        {cancelLabel}
+      </button>
+      <SubmitButton busy={busy}>{saveLabel}</SubmitButton>
+    </div>
+  );
+}
+
 export function FormCard({ title, children }: { title: string; children: ReactNode }) {
   return (
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-6 p-4">

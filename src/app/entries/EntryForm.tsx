@@ -18,7 +18,7 @@ import { useSignedIn } from "../family";
 import { paths } from "../paths";
 import { usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
-import { ErrorText, Field, SubmitButton, TextInput } from "../screens/form";
+import { ErrorText, Field, FormActions, TextInput } from "../screens/form";
 import { Icon } from "../ui/Icon";
 import { occurrenceValues, useEntry, type Entry, type EntryDraft } from "./model";
 import { ScopeDialog, type Scope } from "./ScopeDialog";
@@ -514,7 +514,12 @@ function EntryForm({
           </ErrorText>
         )}
         {save.error && !saveError && <ErrorText>{t("errors.network")}</ErrorText>}
-        <SubmitButton busy={save.isPending}>{t("persons.save")}</SubmitButton>
+        <FormActions
+          busy={save.isPending}
+          saveLabel={t("persons.save")}
+          cancelLabel={t("settings.cancel")}
+          onCancel={() => navigate(-1)}
+        />
       </form>
       {entry && !synced && (
         <div className="border-t border-line pt-4">
