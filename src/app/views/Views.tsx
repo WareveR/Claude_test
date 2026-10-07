@@ -25,6 +25,7 @@ import { usePersonFilter } from "../filter/model";
 import { matchesFilter } from "../../core/person-filter";
 import { useEntryTypes } from "../entry-types/model";
 import { useHolidays } from "../holidays/model";
+import { useDayNotes, useSunTimes } from "../layers/model";
 import { useSignedIn } from "../family";
 import { usePersons } from "../persons/model";
 import { useNow } from "../shell/useNow";
@@ -79,12 +80,14 @@ export function DayView() {
         previous={paths.day(addDays(date, -1))}
         next={paths.day(addDays(date, 1))}
         extra={
-          date !== today &&
-          weather && (
-            <ForecastButton>
-              <WeatherBadge day={weather} faded={weather.faded} />
-            </ForecastButton>
-          )
+          <>
+            {date !== today && weather && (
+              <ForecastButton>
+                <WeatherBadge day={weather} faded={weather.faded} />
+              </ForecastButton>
+            )}
+            <SunTimes day={date} />
+          </>
         }
       />
       {date === today && <HourlyStrip />}
@@ -99,6 +102,21 @@ export function DayView() {
         </div>
       </div>
     </>
+  );
+}
+
+/** Sunrise and sunset beside the day's title, when this device shows the Sun Layer. */
+function SunTimes({ day }: { day: PlainDate }) {
+  const { t } = useTranslation();
+  const sun = useSunTimes(day);
+  if (!sun) return null;
+  return (
+    <span data-testid="sun-times" className="text-sm text-muted tabular-nums">
+      <span aria-hidden>🌅</span> {sun.rise ?? "–"} · <span aria-hidden>🌇</span> {sun.set ?? "–"}
+      <span className="sr-only">
+        {t("layers.sunrise")} {sun.rise}, {t("layers.sunset")} {sun.set}
+      </span>
+    </span>
   );
 }
 
@@ -165,6 +183,7 @@ export function CalendarGrid({
   const { entries, types } = useCalendar(days[0], days[days.length - 1]);
   const persons = usePersons();
   const holidays = useHolidays(days[0], days[days.length - 1]);
+  const notes = useDayNotes(days[0], days[days.length - 1]);
   return (
     <TimeGrid
       days={days}
@@ -175,6 +194,7 @@ export function CalendarGrid({
       nowMinutes={minutesNowIn(family.timeZone, now)}
       locale={locale}
       holidays={holidays}
+      notes={notes}
       dayExtra={dayExtra}
       readOnly={readOnly}
     />
@@ -205,6 +225,7 @@ function Month({ first }: { first: PlainDate }) {
   const weeks = monthWeeks(first);
   const { entries, types } = useCalendar(weeks[0][0], weeks[weeks.length - 1][6]);
   const holidays = useHolidays(weeks[0][0], weeks[weeks.length - 1][6]);
+  const notes = useDayNotes(weeks[0][0], weeks[weeks.length - 1][6]);
   const forecast = useForecastDays();
   const persons = usePersons();
   const title = formatPlainDate(first, locale, { month: "long", year: "numeric" });
@@ -227,6 +248,7 @@ function Month({ first }: { first: PlainDate }) {
           selected={selected}
           locale={locale}
           holidays={holidays}
+          notes={notes}
           weather={forecast}
           dayLink={(day) => `${paths.month(day)}?day=${day}`}
         />
@@ -251,6 +273,11 @@ function Month({ first }: { first: PlainDate }) {
           {holidays.get(selected) && (
             <p className="text-sm text-holiday-ink">{holidays.get(selected)?.join(" · ")}</p>
           )}
+          {notes.get(selected)?.map((note) => (
+            <p key={note} className="text-sm text-muted">
+              {note}
+            </p>
+          ))}
           <div className="-mx-4">
             <TasksAccordion from={selected} to={selected} />
           </div>

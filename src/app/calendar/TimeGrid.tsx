@@ -22,6 +22,8 @@ export type TimeGridProps = {
   locale: string;
   /** Public Holiday names by date. */
   holidays?: Map<string, string[]>;
+  /** Calendar Layer notes by date (Moon, seasons…), shown small under the day's name. */
+  notes?: Map<string, string[]>;
   /** Something to show under a day's name, like its weather. */
   dayExtra?: (day: PlainDate) => ReactNode;
   /** Display Mode: tapping an empty spot starts nothing. */
@@ -45,6 +47,7 @@ export function TimeGrid({
   nowMinutes,
   locale,
   holidays = new Map(),
+  notes = new Map(),
   dayExtra,
   readOnly = false,
 }: TimeGridProps) {
@@ -78,6 +81,15 @@ export function TimeGrid({
           >
             {formatPlainDate(day, locale, { weekday: "short", day: "numeric" })}
             {dayExtra?.(day)}
+            {notes.get(day)?.map((note) => (
+              <div
+                key={note}
+                data-testid={`note-${day}`}
+                className="truncate px-1 text-[10px] font-normal text-muted"
+              >
+                {note}
+              </div>
+            ))}
           </div>
         ))}
       </div>

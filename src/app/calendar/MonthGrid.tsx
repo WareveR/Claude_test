@@ -33,6 +33,7 @@ export function MonthGrid({
   locale,
   dayLink,
   holidays = new Map(),
+  notes = new Map(),
   weather = new Map(),
 }: {
   month: PlainDate;
@@ -44,6 +45,8 @@ export function MonthGrid({
   dayLink: (day: PlainDate) => string;
   /** Public Holiday names by date. */
   holidays?: Map<string, string[]>;
+  /** Calendar Layer notes by date (Moon, seasons…). */
+  notes?: Map<string, string[]>;
   /** The forecast by date; shown small in each day, never tappable inside a link. */
   weather?: Map<string, ShownDay>;
 }) {
@@ -88,6 +91,15 @@ export function MonthGrid({
                   {names.join(" · ")}
                 </span>
               )}
+              {notes.get(day)?.map((note) => (
+                <span
+                  key={note}
+                  data-testid={`note-${day}`}
+                  className="truncate text-[10px] leading-tight text-muted"
+                >
+                  {note}
+                </span>
+              ))}
               {forecast && (
                 <WeatherBadge
                   day={forecast}

@@ -136,6 +136,7 @@ publicFeedRoutes.get("/feed/:file", async (c) => {
     personIds: links.map((l) => l.personId),
     familyWide: feed.familyWide,
     holidays: false,
+    layers: [],
   };
   const included: FeedEntry[] = entries
     .filter((entry) => matchesFilter(entry.personIds, filter))

@@ -443,5 +443,75 @@
     "otherWeek": "Another week is shown · Back to today",
     "leave": "Leave wall view",
     "backToBoard": "Back to the board"
+  },
+  "layers": {
+    "title": "Show on the calendar",
+    "sunrise": "Sunrise",
+    "sunset": "Sunset",
+    "names": {
+      "school": "School calendar",
+      "moon": "Moon phases",
+      "seasons": "Change of season",
+      "clock": "Clock change",
+      "special": "Special days",
+      "sky": "Eclipses and meteor showers",
+      "sun": "Sunrise and sunset (Day view)"
+    },
+    "notes": {
+      "moon": {
+        "new": "New moon",
+        "firstQuarter": "First quarter",
+        "full": "Full moon",
+        "lastQuarter": "Last quarter"
+      },
+      "season": {
+        "spring": "Spring begins",
+        "summer": "Summer begins",
+        "autumn": "Autumn begins",
+        "winter": "Winter begins"
+      },
+      "clock": {
+        "forward": "Clocks change tonight: forward 1 h",
+        "back": "Clocks change tonight: back 1 h"
+      },
+      "special": {
+        "valentines": "Valentine's Day",
+        "carnival": "Carnival",
+        "fathersDay": "Father's Day",
+        "easter": "Easter",
+        "mothersDay": "Mother's Day",
+        "childrensDay": "Children's Day",
+        "grandparentsDay": "Grandparents' Day",
+        "halloween": "Halloween"
+      },
+      "sky": {
+        "quadrantids": "Quadrantids meteor shower",
+        "lyrids": "Lyrids meteor shower",
+        "etaAquariids": "Eta Aquariids meteor shower",
+        "perseids": "Perseids meteor shower",
+        "orionids": "Orionids meteor shower",
+        "leonids": "Leonids meteor shower",
+        "geminids": "Geminids meteor shower",
+        "lunarEclipse": {
+          "partial": "Partial lunar eclipse",
+          "total": "Total lunar eclipse"
+        },
+        "solarEclipse": {
+          "partial": "Partial solar eclipse",
+          "annular": "Annular solar eclipse",
+          "total": "Total solar eclipse"
+        }
+      },
+      "school": {
+        "christmasBreak": "Christmas school break",
+        "carnivalBreak": "Carnival school break",
+        "easterBreak": "Easter school break",
+        "back": "Back to school",
+        "endSecondary": "Last day of school: years 9, 11 and 12",
+        "endMiddle": "Last day of school: years 5 to 8 and 10",
+        "endPrimary": "Last day of school: pre-school and years 1 to 4",
+        "start": "School starts (between 11 and 15 September)"
+      }
+    }
   }
 }

@@ -443,5 +443,75 @@
     "otherWeek": "Está a ver outra semana · Voltar a hoje",
     "leave": "Sair do mural",
     "backToBoard": "Voltar ao painel"
+  },
+  "layers": {
+    "title": "Mostrar no calendário",
+    "sunrise": "Nascer do sol",
+    "sunset": "Pôr do sol",
+    "names": {
+      "school": "Calendário escolar",
+      "moon": "Fases da lua",
+      "seasons": "Mudança de estação",
+      "clock": "Mudança da hora",
+      "special": "Dias especiais",
+      "sky": "Eclipses e chuvas de meteoros",
+      "sun": "Nascer e pôr do sol (vista Dia)"
+    },
+    "notes": {
+      "moon": {
+        "new": "Lua nova",
+        "firstQuarter": "Quarto crescente",
+        "full": "Lua cheia",
+        "lastQuarter": "Quarto minguante"
+      },
+      "season": {
+        "spring": "Início da primavera",
+        "summer": "Início do verão",
+        "autumn": "Início do outono",
+        "winter": "Início do inverno"
+      },
+      "clock": {
+        "forward": "Hora muda esta noite: adiantar 1 h",
+        "back": "Hora muda esta noite: atrasar 1 h"
+      },
+      "special": {
+        "valentines": "Dia dos Namorados",
+        "carnival": "Carnaval",
+        "fathersDay": "Dia do Pai",
+        "easter": "Páscoa",
+        "mothersDay": "Dia da Mãe",
+        "childrensDay": "Dia da Criança",
+        "grandparentsDay": "Dia dos Avós",
+        "halloween": "Halloween"
+      },
+      "sky": {
+        "quadrantids": "Chuva de meteoros Quadrântidas",
+        "lyrids": "Chuva de meteoros Líridas",
+        "etaAquariids": "Chuva de meteoros Eta Aquáridas",
+        "perseids": "Chuva de meteoros Perseidas",
+        "orionids": "Chuva de meteoros Oriónidas",
+        "leonids": "Chuva de meteoros Leónidas",
+        "geminids": "Chuva de meteoros Gemínidas",
+        "lunarEclipse": {
+          "partial": "Eclipse parcial da Lua",
+          "total": "Eclipse total da Lua"
+        },
+        "solarEclipse": {
+          "partial": "Eclipse parcial do Sol",
+          "annular": "Eclipse anular do Sol",
+          "total": "Eclipse total do Sol"
+        }
+      },
+      "school": {
+        "christmasBreak": "Férias escolares do Natal",
+        "carnivalBreak": "Férias escolares do Carnaval",
+        "easterBreak": "Férias escolares da Páscoa",
+        "back": "Regresso às aulas",
+        "endSecondary": "Fim das aulas: 9.º, 11.º e 12.º anos",
+        "endMiddle": "Fim das aulas: 5.º a 8.º e 10.º anos",
+        "endPrimary": "Fim das aulas: pré-escolar e 1.º ciclo",
+        "start": "Início das aulas (entre 11 e 15 de setembro)"
+      }
+    }
   }
 }
