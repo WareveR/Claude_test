@@ -87,9 +87,16 @@ export function DayView() {
         }
       />
       {date === today && <HourlyStrip />}
-      {date === today && <BriefingBand />}
-      <TasksAccordion from={date} to={date} />
-      <CalendarGrid days={[date]} />
+      {/* On wide screens the Briefing and Tasks sit beside the grid instead of above it. */}
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row-reverse">
+        <aside className="flex flex-col lg:w-[26rem] lg:shrink-0 lg:gap-2 lg:overflow-y-auto lg:border-l lg:border-line lg:py-2">
+          {date === today && <BriefingBand />}
+          <TasksAccordion from={date} to={date} />
+        </aside>
+        <div className="flex min-h-0 flex-1 flex-col">
+          <CalendarGrid days={[date]} />
+        </div>
+      </div>
     </>
   );
 }
@@ -209,46 +216,56 @@ function Month({ first }: { first: PlainDate }) {
         previous={paths.month(addMonths(first, -1))}
         next={paths.month(addMonths(first, 1))}
       />
-      <MonthGrid
-        month={first}
-        entries={entries}
-        types={types}
-        today={today}
-        selected={selected}
-        locale={locale}
-        holidays={holidays}
-        weather={forecast}
-        dayLink={(day) => `${paths.month(day)}?day=${day}`}
-      />
-      <section className="flex flex-col gap-1 p-4" data-testid="picked-day">
-        <div className="flex items-center gap-2">
-          <h2 className="font-semibold first-letter:uppercase">
-            {formatPlainDate(selected, locale, { weekday: "long", day: "numeric", month: "long" })}
-          </h2>
-          {forecast.get(selected) && (
-            <ForecastButton>
-              <WeatherBadge day={forecast.get(selected)!} faded={forecast.get(selected)!.faded} />
-            </ForecastButton>
+      {/* On wide screens the grid fills the height and the picked day sits beside it. */}
+      <div className="flex flex-1 flex-col lg:min-h-0 lg:flex-row">
+        <MonthGrid
+          month={first}
+          entries={entries}
+          types={types}
+          today={today}
+          selected={selected}
+          locale={locale}
+          holidays={holidays}
+          weather={forecast}
+          dayLink={(day) => `${paths.month(day)}?day=${day}`}
+        />
+        <section
+          className="flex flex-col gap-1 p-4 lg:w-[26rem] lg:shrink-0 lg:overflow-y-auto lg:border-l lg:border-line"
+          data-testid="picked-day"
+        >
+          <div className="flex items-center gap-2">
+            <h2 className="font-semibold first-letter:uppercase">
+              {formatPlainDate(selected, locale, {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+              })}
+            </h2>
+            {forecast.get(selected) && (
+              <ForecastButton>
+                <WeatherBadge day={forecast.get(selected)!} faded={forecast.get(selected)!.faded} />
+              </ForecastButton>
+            )}
+          </div>
+          {holidays.get(selected) && (
+            <p className="text-sm text-holiday-ink">{holidays.get(selected)?.join(" · ")}</p>
           )}
-        </div>
-        {holidays.get(selected) && (
-          <p className="text-sm text-holiday-ink">{holidays.get(selected)?.join(" · ")}</p>
-        )}
-        <div className="-mx-4">
-          <TasksAccordion from={selected} to={selected} />
-        </div>
-        {dayEntries.length === 0 && <p className="text-sm text-muted">{t("views.nothing")}</p>}
-        {dayEntries.map((e) => (
-          <EntryBlock
-            key={e.key}
-            entry={e}
-            type={types.find((ty) => ty.id === e.entryTypeId)}
-            persons={persons.data ?? []}
-            label={e.time.allDay ? t("entries.allDay") : e.time.startTime}
-            className="py-1 text-sm"
-          />
-        ))}
-      </section>
+          <div className="-mx-4">
+            <TasksAccordion from={selected} to={selected} />
+          </div>
+          {dayEntries.length === 0 && <p className="text-sm text-muted">{t("views.nothing")}</p>}
+          {dayEntries.map((e) => (
+            <EntryBlock
+              key={e.key}
+              entry={e}
+              type={types.find((ty) => ty.id === e.entryTypeId)}
+              persons={persons.data ?? []}
+              label={e.time.allDay ? t("entries.allDay") : e.time.startTime}
+              className="py-1 text-sm"
+            />
+          ))}
+        </section>
+      </div>
     </>
   );
 }
