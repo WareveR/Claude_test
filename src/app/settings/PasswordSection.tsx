@@ -44,7 +44,7 @@ export function PasswordSection() {
             onChange={(e) => setNew(e.target.value)}
           />
         </Field>
-        <p className="text-xs text-stone-500">{t("password.hint")}</p>
+        <p className="text-xs text-muted">{t("password.hint")}</p>
         {error && (
           <ErrorText>
             {error instanceof ApiError && error.body.error === "wrong_password"

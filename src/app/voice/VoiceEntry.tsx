@@ -289,7 +289,7 @@ export function VoiceEntry() {
       <button
         type="button"
         aria-label={t("voice.open")}
-        className="ml-auto rounded-md p-2 hover:bg-stone-200 dark:hover:bg-stone-800"
+        className="ml-auto rounded-md p-2 hover:bg-header-ink/15"
         onClick={() => setOpen(true)}
       >
         <Mic aria-hidden size={20} strokeWidth={1.75} />
@@ -332,14 +332,14 @@ export function VoiceEntry() {
                       <div className="flex gap-2">
                         <button
                           type="button"
-                          className="rounded-md bg-teal-700 px-4 py-2 font-medium text-white"
+                          className="rounded-md bg-accent px-4 py-2 font-medium text-accent-ink"
                           onClick={() => void confirmPlan(plan, "this")}
                         >
                           {t("voice.onlyThis")}
                         </button>
                         <button
                           type="button"
-                          className="rounded-md bg-teal-700 px-4 py-2 font-medium text-white"
+                          className="rounded-md bg-accent px-4 py-2 font-medium text-accent-ink"
                           onClick={() => void confirmPlan(plan, "following")}
                         >
                           {t("voice.fromNowOn")}
@@ -360,7 +360,7 @@ export function VoiceEntry() {
                         <div className="flex gap-2">
                           <button
                             type="button"
-                            className="rounded-md bg-teal-700 px-4 py-2 font-medium text-white"
+                            className="rounded-md bg-accent px-4 py-2 font-medium text-accent-ink"
                             onClick={() => void saveChange(plan, scope)}
                           >
                             {t("voice.save")}
@@ -382,7 +382,7 @@ export function VoiceEntry() {
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      className="rounded-md bg-teal-700 px-4 py-2 font-medium text-white"
+                      className="rounded-md bg-accent px-4 py-2 font-medium text-accent-ink"
                       onClick={() => void save(pending)}
                     >
                       {t("voice.save")}
@@ -425,7 +425,7 @@ export function VoiceEntry() {
                     <button
                       type="submit"
                       disabled={phase === "sending" || !text.trim()}
-                      className="rounded-md bg-teal-700 px-4 py-2 font-medium text-white disabled:opacity-60"
+                      className="rounded-md bg-accent px-4 py-2 font-medium text-accent-ink disabled:opacity-60"
                     >
                       {t("voice.send")}
                     </button>

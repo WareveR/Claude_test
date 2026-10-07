@@ -30,7 +30,7 @@ export function ViewNav({
   const { t } = useTranslation();
   return (
     <nav className="flex flex-wrap items-center gap-2 px-4 py-2">
-      <div className="flex rounded-md border border-stone-300 dark:border-stone-700">
+      <div className="flex rounded-md border border-line">
         {VIEWS.map((view) => (
           <NavLink
             key={view}
@@ -44,7 +44,7 @@ export function ViewNav({
             // The board is only reachable with Display Mode on; turn it on before navigating.
             onClick={view === "display" ? () => setDisplayMode(true) : undefined}
             className={({ isActive }) =>
-              `px-3 py-1 text-sm ${isActive ? "bg-stone-800 text-white dark:bg-stone-200 dark:text-stone-900" : ""}`
+              `px-3 py-1 text-sm ${isActive ? "bg-accent text-accent-ink" : ""}`
             }
           >
             {t(`views.${view}`)}

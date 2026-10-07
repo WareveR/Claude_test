@@ -40,7 +40,7 @@ export function Header({
   }).format(now);
 
   return (
-    <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-stone-200 bg-stone-50/95 px-4 py-2 backdrop-blur dark:border-stone-800 dark:bg-stone-950/95">
+    <header className="sticky top-0 z-10 flex items-center gap-3 bg-header px-4 py-2 text-header-ink shadow-sm">
       <time data-testid="header-time" className="text-2xl font-semibold tabular-nums">
         {time}
       </time>
@@ -60,7 +60,7 @@ export function Header({
             setDisplayMode(false);
             navigate(paths.today());
           }}
-          className="ml-auto flex items-center gap-1.5 rounded-md border border-line px-3 py-1.5"
+          className="ml-auto flex items-center gap-1.5 rounded-md border border-header-ink/40 px-3 py-1.5 hover:bg-header-ink/15"
         >
           <X aria-hidden size={20} strokeWidth={1.75} />
           {t("display.leave")}
@@ -69,7 +69,7 @@ export function Header({
         <Link
           to="/settings"
           aria-label={t("settings.title")}
-          className={`${showVoice ? "" : "ml-auto "}rounded-md p-2 hover:bg-stone-200 dark:hover:bg-stone-800`}
+          className={`${showVoice ? "" : "ml-auto "}rounded-md p-2 hover:bg-header-ink/15`}
         >
           <Settings aria-hidden size={20} strokeWidth={1.75} />
         </Link>
