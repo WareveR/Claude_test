@@ -118,9 +118,10 @@ function TaskForm({ task }: { task?: Task }) {
           <Field label={t("tasks.dueTime")}>
             <TimeSelect
               optional
+              label={t("tasks.dueTime")}
               disabled={!draft.dueDate}
               value={draft.dueTime ?? ""}
-              onChange={(e) => set({ dueTime: e.target.value || null })}
+              onChange={(value) => set({ dueTime: value || null })}
             />
           </Field>
         </div>

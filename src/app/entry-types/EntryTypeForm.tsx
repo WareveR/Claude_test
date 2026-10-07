@@ -178,8 +178,9 @@ function EntryTypeForm({ type }: { type?: EntryType }) {
             <Field label={t("entryTypes.startTime")}>
               <TimeSelect
                 optional
+                label={t("entryTypes.startTime")}
                 value={defaults.startTime ?? ""}
-                onChange={(e) => set({ startTime: e.target.value || undefined })}
+                onChange={(value) => set({ startTime: value || undefined })}
               />
             </Field>
             <Field label={t("entryTypes.duration")}>

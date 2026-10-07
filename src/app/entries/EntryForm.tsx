@@ -305,8 +305,9 @@ function EntryForm({
                 <Field label={t("entries.startTime")}>
                   <TimeSelect
                     required
+                    label={t("entries.startTime")}
                     value={time.startTime}
-                    onChange={(e) => set({ time: moveStart(time, time.startDate, e.target.value) })}
+                    onChange={(value) => set({ time: moveStart(time, time.startDate, value) })}
                   />
                 </Field>
               </div>
@@ -340,8 +341,9 @@ function EntryForm({
                   <Field label={t("entries.endTime")}>
                     <TimeSelect
                       required
+                      label={t("entries.endTime")}
                       value={time.endTime ?? ""}
-                      onChange={(e) => setTime({ endTime: e.target.value })}
+                      onChange={(value) => setTime({ endTime: value })}
                     />
                   </Field>
                 </div>

@@ -9,7 +9,8 @@ test("edit one Occurrence, then delete this and the following", async ({ page })
   const tuesday = page.getByTestId("day-column-2026-10-13").getByTestId("entry");
   await tuesday.click();
   await expect(page).toHaveURL(/occurrence=2026-10-13/);
-  await page.getByLabel("Time", { exact: true }).selectOption("17:00");
+  await page.getByLabel("Time", { exact: true }).selectOption("17");
+  await page.getByLabel("Time: minutes", { exact: true }).selectOption("00");
   await page.getByRole("button", { name: "Save" }).click();
   await page.getByRole("button", { name: "This Occurrence only" }).click();
 
