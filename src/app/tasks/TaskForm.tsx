@@ -13,6 +13,7 @@ import { paths } from "../paths";
 import { useTask, type Task, type TaskDraft } from "./model";
 import { readyToEdit } from "../offline/fresh";
 import { BUTTON_DANGER } from "../ui/button";
+import { TimeSelect } from "../ui/TimeSelect";
 
 const INPUT = "rounded-md border border-line bg-surface px-3 py-2 text-base text-ink";
 
@@ -122,8 +123,8 @@ function TaskForm({ task, checklist }: { task?: Task; checklist?: Checklist }) {
             />
           </Field>
           <Field label={t("tasks.dueTime")}>
-            <TextInput
-              type="time"
+            <TimeSelect
+              optional
               disabled={!draft.dueDate}
               value={draft.dueTime ?? ""}
               onChange={(e) => set({ dueTime: e.target.value || null })}
