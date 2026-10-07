@@ -14,7 +14,8 @@ test("create, see, edit and delete Entries in the week view", async ({ page }) =
   await page.getByLabel("Title").fill("Dentist");
   await page.getByLabel("Type", { exact: true }).selectOption({ label: "Appointment" });
   await page.getByLabel("Date", { exact: true }).fill("2026-10-13");
-  await page.getByLabel("Time", { exact: true }).selectOption("15:10");
+  await page.getByLabel("Time", { exact: true }).selectOption("15");
+  await page.getByLabel("Time: minutes", { exact: true }).selectOption("10");
   await expect(page.getByLabel("Has an end")).toBeChecked();
   await expect(page.getByLabel("1 day before")).toBeChecked();
   await page.getByLabel("Importance").selectOption("high");

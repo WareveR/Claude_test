@@ -586,5 +586,8 @@
       "glass": "Glass (green)",
       "organic": "Food waste (brown)"
     }
+  },
+  "time": {
+    "minutesOf": "{{label}}: minutes"
   }
 }
