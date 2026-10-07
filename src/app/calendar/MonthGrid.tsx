@@ -54,7 +54,7 @@ export function MonthGrid({
   const colorOf = (e: Entry) => types.find((t) => t.id === e.entryTypeId)?.color ?? "#607d8b";
   return (
     <div className="flex flex-col bg-surface lg:min-h-0 lg:flex-1">
-      <div className="grid grid-cols-7 border-b border-line text-center text-xs font-semibold">
+      <div className="grid grid-cols-7 border-b border-line text-center text-xs font-semibold lg:text-sm">
         {weeks[0].map((day) => (
           <div
             key={day}

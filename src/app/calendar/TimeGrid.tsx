@@ -77,7 +77,7 @@ export function TimeGrid({
         {days.map((day) => (
           <div
             key={day}
-            className={`py-1 text-center text-xs font-semibold first-letter:uppercase ${holidays.has(day) ? "bg-holiday text-holiday-ink" : isWeekend(day) ? "bg-weekend text-weekend-ink" : ""} ${day === today ? "text-accent" : ""}`}
+            className={`py-1.5 text-center text-sm font-bold first-letter:uppercase lg:text-base ${holidays.has(day) ? "bg-holiday text-holiday-ink" : isWeekend(day) ? "bg-weekend text-weekend-ink" : ""} ${day === today ? "text-accent" : ""}`}
           >
             {formatPlainDate(day, locale, { weekday: "short", day: "numeric" })}
             {dayExtra?.(day)}
@@ -85,7 +85,7 @@ export function TimeGrid({
               <div
                 key={note}
                 data-testid={`note-${day}`}
-                className="truncate px-1 text-[10px] font-normal text-muted"
+                className="truncate px-1 text-[11px] font-normal text-muted lg:text-xs"
               >
                 {note}
               </div>
@@ -107,7 +107,7 @@ export function TimeGrid({
             <div
               key={day}
               data-testid={`holiday-${day}`}
-              className="truncate px-1 text-xs text-holiday-ink"
+              className="truncate px-1 text-xs text-holiday-ink lg:text-sm"
               style={{ gridColumn: i + 2, gridRow: 1 }}
             >
               {names.join(" · ")}
@@ -136,10 +136,10 @@ export function TimeGrid({
             {Array.from({ length: 24 }, (_, h) => (
               <span
                 key={h}
-                className="absolute right-1 -translate-y-1/2 text-[10px] text-muted tabular-nums"
+                className="absolute right-1.5 -translate-y-1/2 text-xs font-semibold text-ink/70 tabular-nums lg:text-sm"
                 style={{ top: h * HOUR_PX }}
               >
-                {h > 0 ? `${String(h).padStart(2, "0")}:00` : ""}
+                {h > 0 ? `${h}h` : ""}
               </span>
             ))}
           </div>
