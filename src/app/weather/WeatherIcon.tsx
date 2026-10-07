@@ -8,6 +8,8 @@ import {
   CloudSunRain,
   Droplet,
   Sun,
+  Sunrise,
+  Sunset,
   type LucideIcon,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -63,4 +65,18 @@ export function WeatherIcon({ code, size = 18 }: { code: number; size?: number }
       color={COLORS[kind]}
     />
   );
+}
+
+/** The sunrise and sunset colours, warm like the sunny weather icon. */
+export const SUNRISE_COLOR = "#f59e0b";
+export const SUNSET_COLOR = "#f97316";
+
+/** Sunrise's coloured line icon, to sit beside its time. */
+export function SunriseIcon({ size = 18 }: { size?: number }) {
+  return <Sunrise aria-hidden size={size} strokeWidth={2} color={SUNRISE_COLOR} />;
+}
+
+/** Sunset's coloured line icon, to sit beside its time. */
+export function SunsetIcon({ size = 18 }: { size?: number }) {
+  return <Sunset aria-hidden size={size} strokeWidth={2} color={SUNSET_COLOR} />;
 }

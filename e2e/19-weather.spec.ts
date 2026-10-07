@@ -32,6 +32,8 @@ test("the first saved place is selected and its weather shows in every view", as
   // Today's sunrise and sunset show without turning the Sun Layer on.
   await expect(page.getByTestId("sun-band")).toContainText(/Sunrise \d\d:\d\d/);
   await expect(page.getByTestId("sun-band")).toContainText(/Daylight \d+ h \d\d/);
+  // The sun sits on its arc between the two.
+  await expect(page.getByTestId("sun-band").getByTestId("sun-dot")).toHaveCount(1);
 
   await page.getByRole("link", { name: "Week", exact: true }).click();
   // The week shows each day's chance of rain too.

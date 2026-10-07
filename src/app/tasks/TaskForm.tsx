@@ -13,6 +13,7 @@ import { paths } from "../paths";
 import { useTask, type Task, type TaskDraft } from "./model";
 import { readyToEdit } from "../offline/fresh";
 import { BUTTON_DANGER } from "../ui/button";
+import { Chip, Switch } from "../ui/Toggle";
 
 const INPUT = "rounded-md border border-line bg-surface px-3 py-2 text-base text-ink";
 
@@ -152,21 +153,20 @@ function TaskForm({ task, checklist }: { task?: Task; checklist?: Checklist }) {
             {persons.data
               ?.filter((p) => !p.archived || draft.personIds.includes(p.id))
               .map((p) => (
-                <label key={p.id} className="flex items-center gap-1">
-                  <input
-                    type="checkbox"
-                    checked={draft.personIds.includes(p.id)}
-                    onChange={(e) =>
-                      set({
-                        personIds: e.target.checked
-                          ? [...draft.personIds, p.id]
-                          : draft.personIds.filter((id) => id !== p.id),
-                      })
-                    }
-                  />
+                <Chip
+                  key={p.id}
+                  checked={draft.personIds.includes(p.id)}
+                  onChange={(e) =>
+                    set({
+                      personIds: e.target.checked
+                        ? [...draft.personIds, p.id]
+                        : draft.personIds.filter((id) => id !== p.id),
+                    })
+                  }
+                >
                   <PersonAvatar person={p} size={24} />
                   {p.name}
-                </label>
+                </Chip>
               ))}
           </div>
           <p className="text-xs text-muted">{t("tasks.familyWideHint")}</p>
@@ -182,11 +182,7 @@ function TaskForm({ task, checklist }: { task?: Task; checklist?: Checklist }) {
         </Field>
 
         <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={draft.private}
-            onChange={(e) => set({ private: e.target.checked })}
-          />
+          <Switch checked={draft.private} onChange={(e) => set({ private: e.target.checked })} />
           {t("entries.private")}
         </label>
         <p className="-mt-3 text-xs text-muted">{t("entries.privateHint")}</p>

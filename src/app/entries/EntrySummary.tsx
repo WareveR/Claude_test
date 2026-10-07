@@ -1,3 +1,4 @@
+import { MapPin } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { EntryTime } from "../../core/entry-time";
 import { formatLocale } from "../../core/languages";
@@ -80,7 +81,18 @@ export function EntrySummary({
               ))}
             </ul>
           )}
-          {shown.location && <p>📍 {shown.location}</p>}
+          {shown.location && (
+            <p className="flex items-start gap-1.5">
+              <MapPin
+                aria-hidden
+                size={18}
+                strokeWidth={2}
+                color="#ef4444"
+                className="mt-0.5 shrink-0"
+              />
+              {shown.location}
+            </p>
+          )}
           {shown.notes && <p className="whitespace-pre-wrap">{shown.notes}</p>}
         </>
       )}

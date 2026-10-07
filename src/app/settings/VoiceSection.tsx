@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getReadback, setReadback } from "../voice/speech";
+import { Switch } from "../ui/Toggle";
 
 /** Settings › Voice Entry: whether this device reads an Entry back and asks before saving. */
 export function VoiceSection() {
@@ -11,8 +12,7 @@ export function VoiceSection() {
       <h2 className="font-semibold">{t("voice.title")}</h2>
       <p className="text-sm text-muted">{t("voice.hint")}</p>
       <label className="flex items-center gap-2">
-        <input
-          type="checkbox"
+        <Switch
           checked={on}
           onChange={(e) => {
             setOn(e.target.checked);

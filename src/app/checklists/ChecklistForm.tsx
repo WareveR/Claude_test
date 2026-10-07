@@ -11,6 +11,7 @@ import { ErrorText, Field, FormActions, TextInput } from "../screens/form";
 import { useChecklist, type Checklist, type ChecklistDraft } from "./model";
 import { readyToEdit } from "../offline/fresh";
 import { BUTTON, BUTTON_DANGER } from "../ui/button";
+import { Chip, Switch } from "../ui/Toggle";
 
 export function ChecklistPage() {
   const { id } = useParams();
@@ -121,8 +122,7 @@ function ChecklistForm({ checklist }: { checklist?: Checklist }) {
               <p className="-mt-2 text-xs text-muted">{t("checklists.repeatHint")}</p>
             )}
             <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
+              <Switch
                 checked={draft.remindAtStart}
                 onChange={(e) => set({ remindAtStart: e.target.checked })}
               />
@@ -137,21 +137,20 @@ function ChecklistForm({ checklist }: { checklist?: Checklist }) {
             {persons.data
               ?.filter((p) => !p.archived || draft.personIds.includes(p.id))
               .map((p) => (
-                <label key={p.id} className="flex items-center gap-1">
-                  <input
-                    type="checkbox"
-                    checked={draft.personIds.includes(p.id)}
-                    onChange={(e) =>
-                      set({
-                        personIds: e.target.checked
-                          ? [...draft.personIds, p.id]
-                          : draft.personIds.filter((id) => id !== p.id),
-                      })
-                    }
-                  />
+                <Chip
+                  key={p.id}
+                  checked={draft.personIds.includes(p.id)}
+                  onChange={(e) =>
+                    set({
+                      personIds: e.target.checked
+                        ? [...draft.personIds, p.id]
+                        : draft.personIds.filter((id) => id !== p.id),
+                    })
+                  }
+                >
                   <PersonAvatar person={p} size={24} />
                   {p.name}
-                </label>
+                </Chip>
               ))}
           </div>
           <p className="text-xs text-muted">{t("checklists.personsHint")}</p>

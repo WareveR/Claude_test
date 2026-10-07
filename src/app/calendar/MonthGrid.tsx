@@ -7,6 +7,7 @@ import type { Shown as Entry } from "../entries/model";
 import type { ShownDay } from "../weather/model";
 import { WeatherBadge } from "../weather/WeatherBadge";
 import { importanceClass } from "./EntryBlock";
+import { NoteLine } from "../layers/NoteLine";
 
 /** How many Entry lines a day shows before "+N", on narrow and on wide screens. */
 const NARROW = 3;
@@ -108,7 +109,7 @@ export function MonthGrid({
                   data-testid={`note-${day}`}
                   className="truncate text-[10px] leading-tight text-muted lg:text-xs"
                 >
-                  {note}
+                  <NoteLine note={note} />
                 </span>
               ))}
               {/* Wide screens have room for more lines per day. */}

@@ -14,6 +14,7 @@ import { EntryTypeBadge } from "./EntryTypeBadge";
 import { REMINDER_CHOICES, reminderLabel, typeName, useEntryTypes, type EntryType } from "./model";
 import { readyToEdit } from "../offline/fresh";
 import { BUTTON, BUTTON_DANGER } from "../ui/button";
+import { Chip, Switch } from "../ui/Toggle";
 
 const FREQUENCIES = ["none", "daily", "weekly", "monthly", "yearly"] as const;
 const SELECT = "rounded-md border border-line bg-surface px-3 py-2";
@@ -165,8 +166,7 @@ function EntryTypeForm({ type }: { type?: EntryType }) {
         <h2 className="mt-2 font-semibold">{t("entryTypes.defaults")}</h2>
         <p className="-mt-3 text-xs text-muted">{t("entryTypes.defaultsHint")}</p>
         <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
+          <Switch
             checked={defaults.allDay ?? false}
             onChange={(e) => set({ allDay: e.target.checked })}
           />
@@ -240,21 +240,20 @@ function EntryTypeForm({ type }: { type?: EntryType }) {
             {persons.data
               ?.filter((p) => !p.archived)
               .map((p) => (
-                <label key={p.id} className="flex items-center gap-1">
-                  <input
-                    type="checkbox"
-                    checked={defaults.personIds?.includes(p.id) ?? false}
-                    onChange={(e) =>
-                      set({
-                        personIds: e.target.checked
-                          ? [...(defaults.personIds ?? []), p.id]
-                          : defaults.personIds?.filter((id) => id !== p.id),
-                      })
-                    }
-                  />
+                <Chip
+                  key={p.id}
+                  checked={defaults.personIds?.includes(p.id) ?? false}
+                  onChange={(e) =>
+                    set({
+                      personIds: e.target.checked
+                        ? [...(defaults.personIds ?? []), p.id]
+                        : defaults.personIds?.filter((id) => id !== p.id),
+                    })
+                  }
+                >
                   <PersonAvatar person={p} size={24} />
                   {p.name}
-                </label>
+                </Chip>
               ))}
           </div>
         </fieldset>
@@ -262,20 +261,19 @@ function EntryTypeForm({ type }: { type?: EntryType }) {
           <legend className="mb-1 font-medium">{t("entryTypes.reminders")}</legend>
           <div className="flex flex-wrap gap-3">
             {REMINDER_CHOICES.map((minutes) => (
-              <label key={minutes} className="flex items-center gap-1">
-                <input
-                  type="checkbox"
-                  checked={defaults.reminders?.includes(minutes) ?? false}
-                  onChange={(e) =>
-                    set({
-                      reminders: e.target.checked
-                        ? [...(defaults.reminders ?? []), minutes]
-                        : defaults.reminders?.filter((r) => r !== minutes),
-                    })
-                  }
-                />
+              <Chip
+                key={minutes}
+                checked={defaults.reminders?.includes(minutes) ?? false}
+                onChange={(e) =>
+                  set({
+                    reminders: e.target.checked
+                      ? [...(defaults.reminders ?? []), minutes]
+                      : defaults.reminders?.filter((r) => r !== minutes),
+                  })
+                }
+              >
                 {reminderLabel(minutes, t)}
-              </label>
+              </Chip>
             ))}
           </div>
         </fieldset>
