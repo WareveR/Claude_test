@@ -249,7 +249,7 @@ weatherRoutes.delete("/weather/locations/:id", async (c) => {
 
 /**
  * The selected Weather Location's forecast from the cache: every day, and the hours of the
- * place's today and tomorrow. Null when there is none, or it is more than a day old.
+ * place's today and tomorrow, and the conditions when it was fetched. Null when there is none, or it is more than a day old.
  */
 weatherRoutes.get("/weather", async (c) => {
   const db = c.get("db");
@@ -262,7 +262,7 @@ weatherRoutes.get("/weather", async (c) => {
     .where(eq(schema.weatherCache.locationId, location.id));
   if (!cache?.forecast || !cache.fetchedAt) return c.json(null);
   if (now.getTime() - Date.parse(cache.fetchedAt) > SHOWN_FOR) return c.json(null);
-  const { utcOffset, daily, hourly } = cache.forecast;
+  const { utcOffset, daily, hourly, current } = cache.forecast;
   const today = placeClock(utcOffset, now).slice(0, 10);
   const tomorrow = placeClock(utcOffset, new Date(now.getTime() + 24 * HOUR)).slice(0, 10);
   return c.json({
@@ -277,6 +277,7 @@ weatherRoutes.get("/weather", async (c) => {
     utcOffset,
     daily: daily.filter((d) => d.date >= today),
     hourly: hourly.filter((h) => h.time.startsWith(today) || h.time.startsWith(tomorrow)),
+    ...(current && { current }),
   });
 });
 

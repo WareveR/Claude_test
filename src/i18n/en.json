@@ -423,7 +423,42 @@
       "snow": "Snow",
       "fog": "Fog"
     },
-    "rainChance": "Chance of rain"
+    "rainChance": "Chance of rain",
+    "detail": {
+      "updated": "Updated {{time}}",
+      "maxMin": "High {{max}}° · Low {{min}}°",
+      "feelsLike": "Feels like {{temp}}°",
+      "wind": "Wind",
+      "windFrom": "Wind from {{point}}",
+      "humidity": "Humidity",
+      "uv": "UV index",
+      "sunMoon": "Sun and Moon",
+      "moonLit": "{{percent}}% lit",
+      "nextPhase": "{{phase}}: {{date}}",
+      "hours": "Next hours",
+      "days": "Next days",
+      "today": "Today",
+      "compass": {
+        "N": "N",
+        "NE": "NE",
+        "E": "E",
+        "SE": "SE",
+        "S": "S",
+        "SW": "SW",
+        "W": "W",
+        "NW": "NW"
+      },
+      "moon": {
+        "new": "New moon",
+        "waxingCrescent": "Waxing crescent",
+        "firstQuarter": "First quarter",
+        "waxingGibbous": "Waxing gibbous",
+        "full": "Full moon",
+        "waningGibbous": "Waning gibbous",
+        "lastQuarter": "Last quarter",
+        "waningCrescent": "Waning crescent"
+      }
+    }
   },
   "voice": {
     "title": "Voice Entry",

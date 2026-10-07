@@ -25,10 +25,10 @@ import { ScopeDialog, type Scope } from "./ScopeDialog";
 import { RepetitionFields } from "./RepetitionFields";
 import { readyToEdit } from "../offline/fresh";
 import { BUTTON, BUTTON_DANGER } from "../ui/button";
+import { TimeSelect } from "../ui/TimeSelect";
 
 const INPUT = "rounded-md border border-line bg-surface px-3 py-2 text-base text-ink";
 /** The time picker suggests 15-minute steps but accepts any typed minute. */
-const QUARTER_HOURS = Array.from({ length: 96 }, (_, i) => clockTime(i * 15));
 
 export function EntryPage() {
   const { id } = useParams();
@@ -272,11 +272,6 @@ function EntryForm({
             />
             {t("entries.allDay")}
           </label>
-          <datalist id="quarter-hours">
-            {QUARTER_HOURS.map((q) => (
-              <option key={q} value={q} />
-            ))}
-          </datalist>
           {time.allDay ? (
             <div className="flex gap-3">
               <Field label={t("entries.from")}>
@@ -311,17 +306,10 @@ function EntryForm({
                   />
                 </Field>
                 <Field label={t("entries.startTime")}>
-                  <TextInput
+                  <TimeSelect
                     required
-                    list="quarter-hours"
-                    pattern="([01][0-9]|2[0-3]):[0-5][0-9]"
-                    placeholder="09:00"
                     value={time.startTime}
-                    onChange={(e) =>
-                      isClockTime(e.target.value)
-                        ? set({ time: moveStart(time, time.startDate, e.target.value) })
-                        : setTime({ startTime: e.target.value })
-                    }
+                    onChange={(e) => set({ time: moveStart(time, time.startDate, e.target.value) })}
                   />
                 </Field>
               </div>
@@ -354,10 +342,8 @@ function EntryForm({
                     />
                   </Field>
                   <Field label={t("entries.endTime")}>
-                    <TextInput
+                    <TimeSelect
                       required
-                      list="quarter-hours"
-                      pattern="([01][0-9]|2[0-3]):[0-5][0-9]"
                       value={time.endTime ?? ""}
                       onChange={(e) => setTime({ endTime: e.target.value })}
                     />
