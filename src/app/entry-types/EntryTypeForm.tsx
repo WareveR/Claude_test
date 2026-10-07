@@ -39,7 +39,7 @@ function EntryTypeForm({ type }: { type?: EntryType }) {
 
   const done = async () => {
     await queryClient.invalidateQueries({ queryKey: ["entry-types"] });
-    navigate("/settings");
+    navigate("/settings/family");
   };
   const save = useMutation({
     mutationFn: () => {
@@ -93,7 +93,7 @@ function EntryTypeForm({ type }: { type?: EntryType }) {
   return (
     <main className="mx-auto flex max-w-xl flex-col gap-4 p-4">
       <div className="flex items-center gap-3">
-        <Link to="/settings" className="text-sm underline">
+        <Link to="/settings/family" className="text-sm underline">
           {t("settings.back")}
         </Link>
         <h1 className="text-xl font-semibold">{type ? typeName(type, t) : t("entryTypes.add")}</h1>
@@ -286,7 +286,7 @@ function EntryTypeForm({ type }: { type?: EntryType }) {
           busy={save.isPending}
           saveLabel={t("persons.save")}
           cancelLabel={t("settings.cancel")}
-          onCancel={() => navigate("/settings")}
+          onCancel={() => navigate("/settings/family")}
         />
       </form>
       {type?.deletable && (

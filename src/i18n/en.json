@@ -109,7 +109,13 @@
     "back": "Back",
     "cancel": "Cancel",
     "language": "Language on this device",
-    "theme": "Theme on this device"
+    "theme": "Theme on this device",
+    "areas": {
+      "family": "Family",
+      "calendar": "Calendar",
+      "device": "This device",
+      "account": "Account and security"
+    }
   },
   "themes": {
     "auto": "Automatic (follows the device)",

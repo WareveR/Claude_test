@@ -61,6 +61,7 @@ const router = createBrowserRouter([
       { path: "/entries/:id", element: <EntryRoute /> },
       { path: paths.display(), element: <DisplayBoard /> },
       { path: "/settings", element: <SettingsPage /> },
+      { path: "/settings/:area", element: <SettingsPage /> },
       { path: "/settings/errors", element: <ErrorLogPage /> },
       { path: "/settings/persons/:id", element: <PersonPage /> },
       { path: "/settings/entry-types/:id", element: <EntryTypePage /> },

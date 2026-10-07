@@ -8,7 +8,7 @@ test("a theme picked in Settings recolours the app and stays after a reload", as
   const html = page.locator("html");
   await expect(html).not.toHaveAttribute("data-theme");
 
-  await page.goto("/settings");
+  await page.goto("/settings/device");
   await page.getByLabel("Theme on this device").selectOption({ label: "Spring" });
   await expect(html).toHaveAttribute("data-theme", "spring");
   const header = page.locator("header");

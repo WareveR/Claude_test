@@ -18,7 +18,7 @@ test("without a saved place nothing shows weather", async ({ page }) => {
 
 test("the first saved place is selected and its weather shows in every view", async ({ page }) => {
   await signIn(page);
-  await page.goto("/settings");
+  await page.goto("/settings/calendar");
   await savePlace(page, "Lis", "Lisboa");
   await expect(page.getByText("Selected", { exact: true })).toBeVisible();
 
@@ -43,7 +43,7 @@ test("tapping the weather asks before leaving for the forecast site", async ({ p
   await page.getByRole("button", { name: "Cancel" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
 
-  await page.goto("/settings");
+  await page.goto("/settings/calendar");
   await savePlace(page, "Mad", "Madrid");
   await page.getByRole("button", { name: "Use Madrid" }).click();
   await expect(page.getByRole("button", { name: "Use Lisboa" })).toBeVisible();
@@ -63,7 +63,7 @@ test("tapping the weather asks before leaving for the forecast site", async ({ p
 
 test("removing the places clears the weather", async ({ page }) => {
   await signIn(page);
-  await page.goto("/settings");
+  await page.goto("/settings/calendar");
   await page.getByRole("button", { name: "Remove Madrid" }).click();
   await expect(page.getByRole("button", { name: "Remove Madrid" })).toHaveCount(0);
   await page.getByRole("button", { name: "Remove Lisboa" }).click();
