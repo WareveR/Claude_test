@@ -98,7 +98,7 @@ export function WeatherSection() {
             <button
               type="submit"
               disabled={search.isPending}
-              className="self-start rounded-md bg-teal-700 px-4 py-2 font-medium text-white disabled:opacity-60"
+              className="self-start rounded-md bg-accent px-4 py-2 font-medium text-accent-ink disabled:opacity-60"
             >
               {t("weather.search")}
             </button>

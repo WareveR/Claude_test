@@ -15,8 +15,7 @@ import { REMINDER_CHOICES, reminderLabel, typeName, useEntryTypes, type EntryTyp
 import { readyToEdit } from "../offline/fresh";
 
 const FREQUENCIES = ["none", "daily", "weekly", "monthly", "yearly"] as const;
-const SELECT =
-  "rounded-md border border-stone-300 bg-white px-3 py-2 dark:border-stone-600 dark:bg-stone-900";
+const SELECT = "rounded-md border border-line bg-surface px-3 py-2";
 
 export function EntryTypePage() {
   const { id } = useParams();
@@ -119,7 +118,7 @@ function EntryTypeForm({ type }: { type?: EntryType }) {
                 />
                 <span
                   style={{ backgroundColor: c }}
-                  className="block size-8 rounded-full ring-offset-2 peer-checked:ring-2 peer-checked:ring-stone-900 dark:peer-checked:ring-stone-100"
+                  className="block size-8 rounded-full ring-offset-2 peer-checked:ring-2 peer-checked:ring-accent"
                 />
               </label>
             ))}
@@ -142,7 +141,7 @@ function EntryTypeForm({ type }: { type?: EntryType }) {
                   className="peer sr-only"
                   aria-label={key}
                 />
-                <span className="flex size-9 items-center justify-center rounded-md peer-checked:bg-stone-800 peer-checked:text-white dark:peer-checked:bg-stone-200 dark:peer-checked:text-stone-900">
+                <span className="flex size-9 items-center justify-center rounded-md peer-checked:bg-accent peer-checked:text-accent-ink">
                   <Icon name={key} />
                 </span>
               </label>
@@ -166,7 +165,7 @@ function EntryTypeForm({ type }: { type?: EntryType }) {
         </fieldset>
 
         <h2 className="mt-2 font-semibold">{t("entryTypes.defaults")}</h2>
-        <p className="-mt-3 text-xs text-stone-500">{t("entryTypes.defaultsHint")}</p>
+        <p className="-mt-3 text-xs text-muted">{t("entryTypes.defaultsHint")}</p>
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
@@ -330,7 +329,7 @@ function EntryTypeForm({ type }: { type?: EntryType }) {
               </ul>
               <button
                 type="button"
-                className="self-start rounded-md bg-overdue px-4 py-2 font-medium text-white"
+                className="self-start rounded-md bg-overdue px-4 py-2 font-medium text-accent-ink"
                 onClick={() => remove.mutate()}
               >
                 {t("entryTypes.confirmDeleteButton", { name: typeName(type, t) })}

@@ -55,7 +55,7 @@ export function SetupScreen() {
             onChange={update("password")}
           />
         </Field>
-        <p className="-mt-2 text-xs text-stone-500">{t("setup.passwordHint")}</p>
+        <p className="-mt-2 text-xs text-muted">{t("setup.passwordHint")}</p>
         <Field label={t("setup.recoveryEmail")}>
           <TextInput
             required
@@ -68,7 +68,7 @@ export function SetupScreen() {
           <select
             value={form.language}
             onChange={update("language")}
-            className="rounded-md border border-stone-300 bg-white px-3 py-2 dark:border-stone-600 dark:bg-stone-900"
+            className="rounded-md border border-line bg-surface px-3 py-2"
           >
             {LANGUAGES.map((lng) => (
               <option key={lng} value={lng}>
@@ -81,7 +81,7 @@ export function SetupScreen() {
           <select
             value={form.timeZone}
             onChange={update("timeZone")}
-            className="rounded-md border border-stone-300 bg-white px-3 py-2 dark:border-stone-600 dark:bg-stone-900"
+            className="rounded-md border border-line bg-surface px-3 py-2"
           >
             {TIME_ZONES.map((zone) => (
               <option key={zone} value={zone}>

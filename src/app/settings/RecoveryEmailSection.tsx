@@ -29,7 +29,7 @@ export function RecoveryEmailSection() {
   return (
     <section className="flex flex-col gap-2">
       <h2 className="font-semibold">{t("recovery.emailTitle")}</h2>
-      <p className="text-xs text-stone-500">{t("recovery.emailHint")}</p>
+      <p className="text-xs text-muted">{t("recovery.emailHint")}</p>
       <form onSubmit={submit} className="flex flex-col gap-3">
         <Field label={t("password.current")}>
           <TextInput

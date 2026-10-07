@@ -44,7 +44,7 @@ export function SettingsPage() {
         <select
           value={language}
           onChange={(e) => changeLanguage.mutate(e.target.value)}
-          className="rounded-md border border-stone-300 bg-white px-3 py-2 dark:border-stone-600 dark:bg-stone-900"
+          className="rounded-md border border-line bg-surface px-3 py-2"
         >
           {LANGUAGES.map((lng) => (
             <option key={lng} value={lng}>

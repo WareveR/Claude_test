@@ -49,7 +49,7 @@ function Notice({ notice }: { notice: ErrorNotice }) {
         <button
           type="button"
           aria-label={t("errors.dismiss")}
-          className="rounded-md p-1 hover:bg-stone-200 dark:hover:bg-stone-800"
+          className="rounded-md p-1 hover:bg-line/60"
           onClick={() => dismissNotice(notice.code)}
         >
           <X size={16} />
@@ -95,7 +95,7 @@ function Notice({ notice }: { notice: ErrorNotice }) {
           <button
             type="submit"
             disabled={report === "sending"}
-            className="self-start rounded-md bg-teal-700 px-3 py-1 text-white disabled:opacity-50"
+            className="self-start rounded-md bg-accent px-3 py-1 text-accent-ink disabled:opacity-50"
           >
             {t("errors.send")}
           </button>

@@ -128,7 +128,7 @@ function PersonForm({ person }: { person?: Person }) {
                 />
                 <span
                   style={{ backgroundColor: color }}
-                  className="block size-8 rounded-full ring-offset-2 peer-checked:ring-2 peer-checked:ring-stone-900 dark:peer-checked:ring-stone-100"
+                  className="block size-8 rounded-full ring-offset-2 peer-checked:ring-2 peer-checked:ring-accent"
                 />
               </label>
             ))}
@@ -148,7 +148,7 @@ function PersonForm({ person }: { person?: Person }) {
             onChange={(e) => setForm({ ...form, nicknames: e.target.value })}
           />
         </Field>
-        <p className="-mt-2 text-xs text-stone-500">{t("persons.nicknamesHint")}</p>
+        <p className="-mt-2 text-xs text-muted">{t("persons.nicknamesHint")}</p>
         {save.error && <ErrorText>{t("errors.unexpected")}</ErrorText>}
         <FormActions
           busy={save.isPending || uploading}
@@ -158,7 +158,7 @@ function PersonForm({ person }: { person?: Person }) {
         />
       </form>
       {person && (
-        <div className="flex flex-col gap-2 border-t border-stone-200 pt-4 dark:border-stone-800">
+        <div className="flex flex-col gap-2 border-t border-line pt-4">
           <button
             type="button"
             className="self-start underline"
@@ -178,10 +178,10 @@ function PersonForm({ person }: { person?: Person }) {
           >
             {person.archived ? t("persons.unarchive") : t("persons.archive")}
           </button>
-          <p className="text-xs text-stone-500">{t("persons.archiveHint")}</p>
+          <p className="text-xs text-muted">{t("persons.archiveHint")}</p>
           <button
             type="button"
-            className="self-start text-red-700 underline dark:text-red-400"
+            className="self-start text-overdue underline"
             onClick={() => {
               if (window.confirm(t("persons.confirmDelete", { name: person.name })))
                 remove.mutate();

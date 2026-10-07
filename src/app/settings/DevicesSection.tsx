@@ -35,26 +35,24 @@ export function DevicesSection() {
   return (
     <section className="flex flex-col gap-2">
       <h2 className="font-semibold">{t("devices.title")}</h2>
-      <ul className="divide-y divide-stone-200 rounded-md border border-stone-200 dark:divide-stone-800 dark:border-stone-800">
+      <ul className="divide-y divide-line rounded-md border border-line">
         {devices.data?.map((device) => (
           <li key={device.id} className="flex items-center gap-2 px-3 py-2">
             <div className="flex flex-1 flex-col">
               <span className="font-medium">
                 {device.name}
                 {device.current && (
-                  <span className="ml-2 text-xs text-teal-700 dark:text-teal-400">
-                    {t("devices.thisDevice")}
-                  </span>
+                  <span className="ml-2 text-xs text-accent">{t("devices.thisDevice")}</span>
                 )}
               </span>
-              <span className="text-xs text-stone-500">
+              <span className="text-xs text-muted">
                 {t("devices.lastUsed", { when: lastUse.format(new Date(device.lastUsedAt)) })}
               </span>
             </div>
             <button
               type="button"
               aria-label={t("devices.rename", { name: device.name })}
-              className="rounded-md p-2 hover:bg-stone-200 dark:hover:bg-stone-800"
+              className="rounded-md p-2 hover:bg-line/60"
               onClick={() => {
                 const name = window.prompt(t("devices.newName"), device.name);
                 if (name?.trim()) rename.mutate({ id: device.id, name });
@@ -65,7 +63,7 @@ export function DevicesSection() {
             <button
               type="button"
               aria-label={t("devices.signOut", { name: device.name })}
-              className="rounded-md p-2 hover:bg-stone-200 dark:hover:bg-stone-800"
+              className="rounded-md p-2 hover:bg-line/60"
               onClick={() => {
                 if (window.confirm(t("devices.confirmSignOut", { name: device.name }))) {
                   signOut.mutate(device.id);

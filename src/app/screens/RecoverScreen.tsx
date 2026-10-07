@@ -42,7 +42,7 @@ export function RecoverScreen({ token }: { token: string }) {
               onChange={(e) => setPassword(e.target.value)}
             />
           </Field>
-          <p className="-mt-2 text-xs text-stone-500">{t("setup.passwordHint")}</p>
+          <p className="-mt-2 text-xs text-muted">{t("setup.passwordHint")}</p>
           {recover.error && <ErrorText>{recoverError(recover.error, t)}</ErrorText>}
           <SubmitButton busy={recover.isPending}>{t("recovery.choose")}</SubmitButton>
         </form>

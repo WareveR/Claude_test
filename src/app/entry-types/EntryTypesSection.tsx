@@ -10,7 +10,7 @@ export function EntryTypesSection() {
   return (
     <section className="flex flex-col gap-2">
       <h2 className="font-semibold">{t("entryTypes.title")}</h2>
-      <ul className="divide-y divide-stone-200 rounded-md border border-stone-200 dark:divide-stone-800 dark:border-stone-800">
+      <ul className="divide-y divide-line rounded-md border border-line">
         {types.data?.map((type) => (
           <li key={type.id}>
             <Link

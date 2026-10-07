@@ -29,10 +29,7 @@ export function Field({
 
 export function TextInput(props: InputHTMLAttributes<HTMLInputElement>) {
   return (
-    <input
-      {...props}
-      className="rounded-md border border-stone-300 bg-white px-3 py-2 text-base dark:border-stone-600 dark:bg-stone-900"
-    />
+    <input {...props} className="rounded-md border border-line bg-surface px-3 py-2 text-base" />
   );
 }
 
@@ -43,7 +40,7 @@ export function SubmitButton({ children, busy }: { children: ReactNode; busy: bo
     <button
       type="submit"
       disabled={busy || !online}
-      className="rounded-md bg-teal-700 px-4 py-2 font-medium text-white disabled:opacity-60"
+      className="rounded-md bg-accent px-4 py-2 font-medium text-accent-ink disabled:opacity-60"
     >
       {children}
     </button>
@@ -83,7 +80,7 @@ export function FormCard({ title, children }: { title: string; children: ReactNo
 
 export function ErrorText({ children }: { children: ReactNode }) {
   return (
-    <p role="alert" className="text-sm text-red-700 dark:text-red-400">
+    <p role="alert" className="text-sm text-overdue">
       {children}
     </p>
   );

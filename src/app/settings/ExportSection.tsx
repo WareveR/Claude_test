@@ -90,7 +90,7 @@ export function ExportSection() {
         type="button"
         disabled={download.isPending}
         onClick={() => download.mutate()}
-        className="self-start rounded-md bg-teal-700 px-4 py-2 font-medium text-white disabled:opacity-60"
+        className="self-start rounded-md bg-accent px-4 py-2 font-medium text-accent-ink disabled:opacity-60"
       >
         {download.isPending ? t("export.preparing") : t("export.download")}
       </button>

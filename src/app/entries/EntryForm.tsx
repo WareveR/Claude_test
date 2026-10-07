@@ -25,8 +25,7 @@ import { ScopeDialog, type Scope } from "./ScopeDialog";
 import { RepetitionFields } from "./RepetitionFields";
 import { readyToEdit } from "../offline/fresh";
 
-const INPUT =
-  "rounded-md border border-line bg-surface px-3 py-2 text-base text-ink dark:border-line";
+const INPUT = "rounded-md border border-line bg-surface px-3 py-2 text-base text-ink";
 /** The time picker suggests 15-minute steps but accepts any typed minute. */
 const QUARTER_HOURS = Array.from({ length: 96 }, (_, i) => clockTime(i * 15));
 
