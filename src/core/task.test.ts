@@ -126,4 +126,13 @@ describe("periodTasks", () => {
   it("leaves overdue Tasks out of other periods", () => {
     expect(ids(periodTasks(tasks, "2026-10-12", "2026-10-18", now))).toEqual(["next-week"]);
   });
+
+  it("never holds a Checklist's items, whatever their stored date", () => {
+    const items = [
+      { ...task({ id: "item", dueDate: "2026-10-10" }), checklistId: "c1" },
+      { ...task({ id: "late-item", dueDate: "2026-09-30" }), checklistId: "c1" },
+      { ...task({ id: "own", dueDate: "2026-10-10" }), checklistId: null },
+    ];
+    expect(ids(periodTasks(items, "2026-10-05", "2026-10-11", now))).toEqual(["own"]);
+  });
 });

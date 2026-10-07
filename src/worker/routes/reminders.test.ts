@@ -168,6 +168,8 @@ describe("Reminders", () => {
       ).json()) as { id: string }
     ).id;
     await task({ title: "Pencils", checklistId: school, personIds: [rui] });
+    // A Checklist item's own stored date never reminds: only its Checklist does.
+    await task({ title: "Old item date", checklistId: school, dueDate: "2026-10-03" });
     await phone.post("/checklists", {
       name: "Quiet one",
       startDate: "2026-10-03",

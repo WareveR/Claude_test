@@ -104,6 +104,12 @@ describe("taskReminders and checklistReminders", () => {
     ).toEqual([]);
   });
 
+  it("never reminds a Checklist's item on its own, whatever its stored date", () => {
+    expect(
+      taskReminders([{ ...task, checklistId: "c1" }], "2026-10-05T08:55", "2026-10-05T09:00"),
+    ).toEqual([]);
+  });
+
   it("reminds a Checklist at 09:00 on its first day when switched on, for its Tasks' Persons", () => {
     const checklist = { id: "c1", name: "School", startDate: "2026-10-05", remindAtStart: true };
     const tasks = [{ ...task, checklistId: "c1" }];

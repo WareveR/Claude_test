@@ -17,6 +17,7 @@ import { ErrorLogPage } from "./settings/ErrorLogPage";
 import { SettingsPage } from "./settings/SettingsPage";
 import { Header } from "./shell/Header";
 import { OfflineBanner } from "./offline/OfflineBanner";
+import { ChecklistDetailPage } from "./checklists/ChecklistDetail";
 import { ChecklistPage } from "./checklists/ChecklistForm";
 import { TaskPage } from "./tasks/TaskForm";
 import { TasksView } from "./tasks/TasksView";
@@ -57,7 +58,9 @@ const router = createBrowserRouter([
       { path: "/year/:year", element: <YearView /> },
       { path: "/tasks", element: <TasksView /> },
       { path: "/tasks/:id", element: <TaskPage /> },
-      { path: "/checklists/:id", element: <ChecklistPage /> },
+      { path: "/checklists/new", element: <ChecklistPage /> },
+      { path: "/checklists/:id", element: <ChecklistDetailPage /> },
+      { path: "/checklists/:id/edit", element: <ChecklistPage /> },
       { path: "/entries/:id", element: <EntryRoute /> },
       { path: paths.display(), element: <DisplayBoard /> },
       { path: "/settings", element: <SettingsPage /> },

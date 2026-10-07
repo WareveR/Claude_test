@@ -2,7 +2,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router";
+import { formatLocale } from "../../core/languages";
+import { formatPlainDate } from "../../core/plain-date";
+import { familyNow } from "../../core/task";
 import { api } from "../api";
+import { useSignedIn } from "../family";
 import { RepetitionFields } from "../entries/RepetitionFields";
 import { paths } from "../paths";
 import { usePersons } from "../persons/model";
@@ -13,15 +17,19 @@ import { readyToEdit } from "../offline/fresh";
 import { BUTTON, BUTTON_DANGER } from "../ui/button";
 import { Chip, Switch } from "../ui/Toggle";
 
+/** A Checklist's settings: at /checklists/new, or behind Edit on its detail page. */
 export function ChecklistPage() {
   const { id } = useParams();
-  const isNew = id === "new";
+  const isNew = !id;
   const checklist = useChecklist(isNew ? undefined : id);
   if (!isNew && !readyToEdit(checklist)) return null;
   return <ChecklistForm key={id} checklist={isNew ? undefined : checklist.data} />;
 }
 
-/** A Checklist's name, optional period and default Persons for its new Tasks. */
+/**
+ * A Checklist's name, optional start and end (each on its own), Repetition, Reminder and default
+ * Persons for its new items; also Use again, its previous rounds and deleting it.
+ */
 function ChecklistForm({ checklist }: { checklist?: Checklist }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -39,18 +47,26 @@ function ChecklistForm({ checklist }: { checklist?: Checklist }) {
       },
   );
   const set = (patch: Partial<ChecklistDraft>) => setDraft((d) => ({ ...d, ...patch }));
-  const leave = async () => {
+  const today = familyNow(useSignedIn().family.timeZone).today;
+  const locale = formatLocale(useSignedIn().language);
+  const refresh = async () => {
     if (checklist) queryClient.removeQueries({ queryKey: ["checklist", checklist.id] });
     await queryClient.invalidateQueries({ queryKey: ["checklists"] });
     await queryClient.invalidateQueries({ queryKey: ["tasks"] });
-    navigate(paths.tasks());
+  };
+  /** Back to the Checklist's own page: a step back when Edit came from there, else in place. */
+  const open = async (id: string) => {
+    await refresh();
+    const cameFromIt = checklist && (window.history.state?.idx ?? 0) > 0;
+    if (cameFromIt) navigate(-1);
+    else navigate(`/checklists/${id}`, { replace: true });
   };
   const save = useMutation({
     mutationFn: () =>
       checklist
-        ? api(`/checklists/${checklist.id}`, { method: "PUT", body: draft })
-        : api("/checklists", { method: "POST", body: draft }),
-    onSuccess: leave,
+        ? api<Checklist>(`/checklists/${checklist.id}`, { method: "PUT", body: draft })
+        : api<Checklist>("/checklists", { method: "POST", body: draft }),
+    onSuccess: (saved) => open(saved.id),
   });
   const [newStart, setNewStart] = useState("");
   const again = useMutation({
@@ -59,11 +75,14 @@ function ChecklistForm({ checklist }: { checklist?: Checklist }) {
         method: "POST",
         body: { startDate: newStart || null },
       }),
-    onSuccess: leave,
+    onSuccess: () => open(checklist!.id),
   });
   const remove = useMutation({
     mutationFn: () => api(`/checklists/${checklist!.id}`, { method: "DELETE" }),
-    onSuccess: leave,
+    onSuccess: async () => {
+      await refresh();
+      navigate(paths.tasks(), { replace: true });
+    },
   });
 
   function submit(e: FormEvent) {
@@ -92,18 +111,13 @@ function ChecklistForm({ checklist }: { checklist?: Checklist }) {
             <TextInput
               type="date"
               value={draft.startDate ?? ""}
-              onChange={(e) =>
-                set({
-                  startDate: e.target.value || null,
-                  ...(e.target.value ? {} : { repetition: null }),
-                })
-              }
+              max={draft.endDate ?? undefined}
+              onChange={(e) => set({ startDate: e.target.value || null })}
             />
           </Field>
           <Field label={t("checklists.end")}>
             <TextInput
               type="date"
-              required={Boolean(draft.startDate)}
               min={draft.startDate ?? undefined}
               value={draft.endDate ?? ""}
               onChange={(e) => set({ endDate: e.target.value || null })}
@@ -111,24 +125,30 @@ function ChecklistForm({ checklist }: { checklist?: Checklist }) {
           </Field>
         </div>
         <p className="-mt-2 text-xs text-muted">{t("checklists.periodHint")}</p>
-        {draft.startDate && (
-          <>
-            <RepetitionFields
-              value={draft.repetition}
-              start={draft.startDate}
-              onChange={(repetition) => set({ repetition })}
+        <RepetitionFields
+          value={draft.repetition}
+          start={draft.startDate ?? today}
+          onChange={(repetition) => set({ repetition })}
+        />
+        {draft.repetition && (
+          <p className="-mt-2 text-xs text-muted">
+            {t("checklists.repeatHint", {
+              date: formatPlainDate(draft.startDate ?? today, locale, {
+                weekday: "short",
+                day: "numeric",
+                month: "short",
+              }),
+            })}
+          </p>
+        )}
+        {(draft.startDate || draft.repetition) && (
+          <label className="flex items-center gap-2 text-sm">
+            <Switch
+              checked={draft.remindAtStart}
+              onChange={(e) => set({ remindAtStart: e.target.checked })}
             />
-            {draft.repetition && (
-              <p className="-mt-2 text-xs text-muted">{t("checklists.repeatHint")}</p>
-            )}
-            <label className="flex items-center gap-2 text-sm">
-              <Switch
-                checked={draft.remindAtStart}
-                onChange={(e) => set({ remindAtStart: e.target.checked })}
-              />
-              {t("checklists.remindAtStart")}
-            </label>
-          </>
+            {t("checklists.remindAtStart")}
+          </label>
         )}
 
         <fieldset className="flex flex-col gap-1 text-sm">

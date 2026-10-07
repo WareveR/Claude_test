@@ -1,5 +1,5 @@
 import { birthdayAge, birthdayTitle } from "./birthday";
-import { checklistProgress } from "./checklist";
+import { checklistProgress, roundEnd } from "./checklist";
 import type { Importance } from "./entry-type";
 import type { EntryTime } from "./entry-time";
 import type { Language } from "./languages";
@@ -67,6 +67,7 @@ type BriefingChecklist = {
   name: string;
   startDate: PlainDate | null;
   endDate: PlainDate | null;
+  repetition?: Repetition | null;
 };
 
 export type BriefingInput = {
@@ -132,7 +133,8 @@ export function briefingCandidates(input: BriefingInput, max = MAX_CANDIDATES): 
   }
 
   for (const checklist of input.checklists) {
-    if (!checklist.endDate || checklist.endDate < today || checklist.endDate > last) continue;
+    const end = roundEnd(checklist);
+    if (!end || end < today || end > last) continue;
     if (checklist.startDate && checklist.startDate > today) continue;
     const tasks = input.tasks.filter((t) => t.checklistId === checklist.id);
     const { done, total } = checklistProgress(tasks);
@@ -140,7 +142,7 @@ export function briefingCandidates(input: BriefingInput, max = MAX_CANDIDATES): 
     out.push({
       kind: "checklist",
       id: checklist.id,
-      date: checklist.endDate,
+      date: end,
       time: null,
       title: checklist.name,
       persons: [],

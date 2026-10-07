@@ -16,13 +16,54 @@ export function weatherKind(code: number): WeatherKind {
   return "rain"; // drizzle 51–57 and rain 61–67
 }
 
-/** A day; `rain` is the highest hourly chance of rain, absent in forecasts cached before it. */
-export type DayWeather = { date: PlainDate; code: number; max: number; min: number; rain?: number };
-/** One hour, `time` as the location's wall clock `YYYY-MM-DDTHH:MM`; `rain` is a percentage. */
-export type HourWeather = { time: string; code: number; temp: number; rain: number };
+/**
+ * A day; `rain` is the highest hourly chance of rain, `wind` the strongest wind in km/h blowing
+ * from `windDir` degrees, `uv` the highest UV index. Each is absent in forecasts read before it.
+ */
+export type DayWeather = {
+  date: PlainDate;
+  code: number;
+  max: number;
+  min: number;
+  rain?: number;
+  wind?: number;
+  windDir?: number;
+  uv?: number;
+};
+/**
+ * One hour, `time` as the location's wall clock `YYYY-MM-DDTHH:MM`; `rain` and `humidity` are
+ * percentages, `wind` km/h from `windDir` degrees. Humidity and wind are absent in older readings.
+ */
+export type HourWeather = {
+  time: string;
+  code: number;
+  temp: number;
+  rain: number;
+  humidity?: number;
+  wind?: number;
+  windDir?: number;
+};
+/** The conditions when the forecast was fetched, `time` in the place's wall clock. */
+export type CurrentWeather = {
+  time: string;
+  code: number;
+  temp: number;
+  feels?: number;
+  humidity?: number;
+  wind?: number;
+  windDir?: number;
+};
 
-/** What is kept of an Open-Meteo forecast; `utcOffset` is the place's offset in seconds. */
-export type Forecast = { utcOffset: number; daily: DayWeather[]; hourly: HourWeather[] };
+/**
+ * What is kept of an Open-Meteo forecast; `utcOffset` is the place's offset in seconds.
+ * `current` is absent in forecasts fetched before it was asked for.
+ */
+export type Forecast = {
+  utcOffset: number;
+  daily: DayWeather[];
+  hourly: HourWeather[];
+  current?: CurrentWeather;
+};
 
 /** A saved place to show the weather for. */
 export type WeatherPlace = {
@@ -49,8 +90,31 @@ export function forecastQuery(place: Pick<WeatherPlace, "latitude" | "longitude"
   return new URLSearchParams({
     latitude: String(place.latitude),
     longitude: String(place.longitude),
-    daily: "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max",
-    hourly: "weather_code,temperature_2m,precipitation_probability",
+    daily: [
+      "weather_code",
+      "temperature_2m_max",
+      "temperature_2m_min",
+      "precipitation_probability_max",
+      "wind_speed_10m_max",
+      "wind_direction_10m_dominant",
+      "uv_index_max",
+    ].join(","),
+    hourly: [
+      "weather_code",
+      "temperature_2m",
+      "precipitation_probability",
+      "relative_humidity_2m",
+      "wind_speed_10m",
+      "wind_direction_10m",
+    ].join(","),
+    current: [
+      "weather_code",
+      "temperature_2m",
+      "apparent_temperature",
+      "relative_humidity_2m",
+      "wind_speed_10m",
+      "wind_direction_10m",
+    ].join(","),
     timezone: "auto",
     forecast_days: String(OPEN_METEO_DAYS),
     past_days: "1",
@@ -61,14 +125,42 @@ type OpenMeteoForecast = {
   utc_offset_seconds?: unknown;
   daily?: Record<string, unknown[]>;
   hourly?: Record<string, unknown[]>;
+  current?: Record<string, unknown>;
 };
 
 const isNumber = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
 
+/** The optional rounded numbers of a reading, left out when Open-Meteo has none. */
+function extras<K extends string>(values: Record<K, unknown>): Partial<Record<K, number>> {
+  const kept: Partial<Record<K, number>> = {};
+  for (const key of Object.keys(values) as K[]) {
+    const value = values[key];
+    if (isNumber(value)) kept[key] = Math.round(value);
+  }
+  return kept;
+}
+
+function parseCurrent(current: Record<string, unknown> | undefined): CurrentWeather | undefined {
+  if (!current) return undefined;
+  const { time, weather_code: code, temperature_2m: temp } = current;
+  if (typeof time !== "string" || !isNumber(code) || !isNumber(temp)) return undefined;
+  return {
+    time,
+    code,
+    temp: Math.round(temp),
+    ...extras({
+      feels: current.apparent_temperature,
+      humidity: current.relative_humidity_2m,
+      wind: current.wind_speed_10m,
+      windDir: current.wind_direction_10m,
+    }),
+  };
+}
+
 /** Keeps the days and hours of an Open-Meteo answer that have every value; throws on garbage. */
 export function parseForecast(body: unknown): Forecast {
-  const { daily, hourly, utc_offset_seconds } = (body ?? {}) as OpenMeteoForecast;
+  const { daily, hourly, current, utc_offset_seconds } = (body ?? {}) as OpenMeteoForecast;
   if (!Array.isArray(daily?.time) || !Array.isArray(hourly?.time)) {
     throw new Error("Unexpected Open-Meteo forecast");
   }
@@ -77,14 +169,18 @@ export function parseForecast(body: unknown): Forecast {
     const code = daily.weather_code?.[i];
     const max = daily.temperature_2m_max?.[i];
     const min = daily.temperature_2m_min?.[i];
-    const rain = daily.precipitation_probability_max?.[i];
     if (typeof date === "string" && isNumber(code) && isNumber(max) && isNumber(min)) {
       days.push({
         date,
         code,
         max: Math.round(max),
         min: Math.round(min),
-        ...(isNumber(rain) && { rain: Math.round(rain) }),
+        ...extras({
+          rain: daily.precipitation_probability_max?.[i],
+          wind: daily.wind_speed_10m_max?.[i],
+          windDir: daily.wind_direction_10m_dominant?.[i],
+          uv: daily.uv_index_max?.[i],
+        }),
       });
     }
   });
@@ -94,11 +190,30 @@ export function parseForecast(body: unknown): Forecast {
     const temp = hourly.temperature_2m?.[i];
     const rain = hourly.precipitation_probability?.[i];
     if (typeof time === "string" && isNumber(code) && isNumber(temp)) {
-      hours.push({ time, code, temp: Math.round(temp), rain: isNumber(rain) ? rain : 0 });
+      hours.push({
+        time,
+        code,
+        temp: Math.round(temp),
+        rain: isNumber(rain) ? rain : 0,
+        ...extras({
+          humidity: hourly.relative_humidity_2m?.[i],
+          wind: hourly.wind_speed_10m?.[i],
+          windDir: hourly.wind_direction_10m?.[i],
+        }),
+      });
     }
   });
   const utcOffset = isNumber(utc_offset_seconds) ? utc_offset_seconds : 0;
-  return { utcOffset, daily: days, hourly: hours };
+  const now = parseCurrent(current);
+  return { utcOffset, daily: days, hourly: hours, ...(now && { current: now }) };
+}
+
+export const COMPASS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"] as const;
+export type CompassPoint = (typeof COMPASS)[number];
+
+/** The nearest of the eight compass points to a direction in degrees. */
+export function compassPoint(degrees: number): CompassPoint {
+  return COMPASS[Math.round((((degrees % 360) + 360) % 360) / 45) % 8];
 }
 
 /** The place's wall-clock time now, as `YYYY-MM-DDTHH:MM`, like the forecast's hours. */

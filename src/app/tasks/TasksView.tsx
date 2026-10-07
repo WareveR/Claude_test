@@ -2,7 +2,7 @@ import { Plus } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
-import { checklistGroup, isChecklistTaskOverdue } from "../../core/checklist";
+import { checklistGroup } from "../../core/checklist";
 import { checklistMatches, matchesFilter } from "../../core/person-filter";
 import { familyNow, groupTasks, isOverdue, type TaskGroups } from "../../core/task";
 import { ChecklistRow } from "../checklists/ChecklistRow";
@@ -22,7 +22,7 @@ type Group = keyof TaskGroups<Task>;
 
 /**
  * Overdue, Today, Upcoming and No date, with done Tasks behind "Show done". A Checklist is one
- * row in the group of its end; its dated Tasks also show alone, its undated ones only inside it.
+ * row in the group of its round's end; its items show only on its own page.
  */
 export function TasksView() {
   const { t } = useTranslation();
@@ -33,12 +33,9 @@ export function TasksView() {
   const persons = usePersons().data ?? [];
   const [showDone, setShowDone] = useState(false);
   const all = tasks.data ?? [];
-  const checklistOf = (task: Task) => checklists.find((c) => c.id === task.checklistId);
   const filter = usePersonFilter();
   const groups = groupTasks(
-    all.filter(
-      (task) => (!task.checklistId || task.dueDate) && matchesFilter(task.personIds, filter),
-    ),
+    all.filter((task) => !task.checklistId && matchesFilter(task.personIds, filter)),
     now,
   );
   const listsIn: Record<Group, Checklist[]> = {
@@ -60,24 +57,14 @@ export function TasksView() {
     listsIn[checklistGroup(checklist, own, now)].push(checklist);
   }
 
-  const row = (task: Task) => {
-    const checklist = checklistOf(task);
-    return (
-      <TaskRow
-        key={task.id}
-        task={task}
-        overdue={checklist ? isChecklistTaskOverdue(task, checklist, now) : isOverdue(task, now)}
-        persons={persons}
-        label={checklist?.name}
-      />
-    );
-  };
+  const row = (task: Task) => (
+    <TaskRow key={task.id} task={task} overdue={isOverdue(task, now)} persons={persons} />
+  );
   const listRow = (checklist: Checklist) => (
     <ChecklistRow
       key={checklist.id}
       checklist={checklist}
       tasks={all.filter((task) => task.checklistId === checklist.id)}
-      persons={persons}
       now={now}
     />
   );

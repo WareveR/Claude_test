@@ -310,23 +310,32 @@
     "new": "Nova checklist",
     "name": "Nome",
     "start": "Começa (opcional)",
-    "end": "Acaba",
-    "periodHint": "Antes do início não está pendente; no fim, as Tarefas por fazer ficam atrasadas, incluindo as sem data.",
-    "persons": "Para quem (por omissão nas novas Tarefas)",
-    "personsHint": "Cada Tarefa mantém as suas Pessoas.",
+    "end": "Acaba (opcional)",
+    "periodHint": "Ambos são opcionais. Antes do início não está pendente; no fim, os itens por fazer ficam atrasados.",
+    "persons": "Para quem (por omissão nos novos itens)",
+    "personsHint": "Cada item mantém as suas Pessoas.",
     "progress": "{{done}} de {{total}}",
-    "addTask": "Adicionar tarefa",
     "edit": "Editar checklist",
     "delete": "Apagar checklist",
-    "confirmDelete": "Apagar \"{{name}}\" e as suas Tarefas de vez?",
-    "inChecklist": "Na checklist \"{{name}}\".",
-    "repeatHint": "Quando chega a próxima data, começa uma nova ronda: todas as Tarefas por fazer, datas movidas com o período.",
+    "confirmDelete": "Apagar \"{{name}}\" e os seus itens de vez?",
+    "repeatHint": "As rondas contam a partir de {{date}}. Cada ronda começa com todos os itens por fazer e dura até ao fim, ou só o primeiro dia se não tiver fim.",
     "useAgain": "Usar outra vez",
-    "useAgainHint": "Começa já uma nova ronda: todas as Tarefas por fazer. Só fica o resultado desta ronda.",
+    "useAgainHint": "Começa já uma nova ronda: todos os itens por fazer. Só fica o resultado desta ronda.",
     "newStart": "Novo início (opcional)",
     "previousRounds": "Rondas anteriores",
     "roundResult": "{{label}}: {{done}} de {{total}}",
-    "remindAtStart": "Lembrar às 09:00 no primeiro dia"
+    "remindAtStart": "Lembrar às 09:00 no primeiro dia",
+    "thisRound": "Esta ronda: {{period}}",
+    "nextRound": "próxima ronda {{date}}",
+    "until": "Até {{date}}",
+    "from": "A partir de {{date}}",
+    "noItems": "Ainda sem itens.",
+    "newItem": "Novo item",
+    "addItem": "Adicionar",
+    "itemName": "Nome",
+    "itemPersons": "Para quem",
+    "editItem": "Editar {{title}}",
+    "removeItem": "Remover {{title}}"
   },
   "filter": {
     "title": "Filtro de Pessoas",
@@ -381,10 +390,19 @@
     "never": "Ainda não foi feita nenhuma exportação completa."
   },
   "briefing": {
-    "title": "Resumo do dia",
     "refresh": "Atualizar",
     "none": "Ainda não há resumo.",
     "failed": "Não foi possível atualizar o resumo. Tente de novo."
+  },
+  "comingUp": {
+    "title": "A seguir",
+    "toDo_one": "Por fazer · {{count}}",
+    "toDo_other": "Por fazer · {{count}}"
+  },
+  "sidePanel": {
+    "label": "Painel de hoje",
+    "hide": "Esconder painel",
+    "show": "Mostrar painel"
   },
   "weather": {
     "title": "Meteorologia",
@@ -414,7 +432,42 @@
       "snow": "Neve",
       "fog": "Nevoeiro"
     },
-    "rainChance": "Probabilidade de chuva"
+    "rainChance": "Probabilidade de chuva",
+    "detail": {
+      "updated": "Atualizado às {{time}}",
+      "maxMin": "Máx. {{max}}° · Mín. {{min}}°",
+      "feelsLike": "Sensação de {{temp}}°",
+      "wind": "Vento",
+      "windFrom": "Vento de {{point}}",
+      "humidity": "Humidade",
+      "uv": "Índice UV",
+      "sunMoon": "Sol e Lua",
+      "moonLit": "{{percent}}% iluminada",
+      "nextPhase": "{{phase}}: {{date}}",
+      "hours": "Próximas horas",
+      "days": "Próximos dias",
+      "today": "Hoje",
+      "compass": {
+        "N": "N",
+        "NE": "NE",
+        "E": "E",
+        "SE": "SE",
+        "S": "S",
+        "SW": "SO",
+        "W": "O",
+        "NW": "NO"
+      },
+      "moon": {
+        "new": "Lua nova",
+        "waxingCrescent": "Crescente",
+        "firstQuarter": "Quarto crescente",
+        "waxingGibbous": "Crescente gibosa",
+        "full": "Lua cheia",
+        "waningGibbous": "Minguante gibosa",
+        "lastQuarter": "Quarto minguante",
+        "waningCrescent": "Minguante"
+      }
+    }
   },
   "voice": {
     "title": "Entrada por voz",

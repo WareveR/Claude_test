@@ -310,23 +310,32 @@
     "new": "New checklist",
     "name": "Name",
     "start": "Starts (optional)",
-    "end": "Ends",
-    "periodHint": "Before its start it isn't pending; at its end its undone Tasks are overdue, undated ones included.",
-    "persons": "For whom (default for new Tasks)",
-    "personsHint": "Each Task keeps its own Persons.",
+    "end": "Ends (optional)",
+    "periodHint": "Both are optional. Before its start it isn't pending; at its end its undone items are overdue.",
+    "persons": "For whom (default for new items)",
+    "personsHint": "Each item keeps its own Persons.",
     "progress": "{{done}} of {{total}}",
-    "addTask": "Add a task",
     "edit": "Edit checklist",
     "delete": "Delete checklist",
-    "confirmDelete": "Delete \"{{name}}\" and its Tasks for good?",
-    "inChecklist": "In the checklist \"{{name}}\".",
-    "repeatHint": "When the next date comes, a new round starts: every Task undone, dates moved with the period.",
+    "confirmDelete": "Delete \"{{name}}\" and its items for good?",
+    "repeatHint": "Rounds count from {{date}}. Each round starts with every item undone and lasts until the end, or only its first day without one.",
     "useAgain": "Use again",
-    "useAgainHint": "Starts a new round now: every Task undone. Only this round's result is kept.",
+    "useAgainHint": "Starts a new round now: every item undone. Only this round's result is kept.",
     "newStart": "New start (optional)",
     "previousRounds": "Previous rounds",
     "roundResult": "{{label}}: {{done}} of {{total}}",
-    "remindAtStart": "Remind at 09:00 on the first day"
+    "remindAtStart": "Remind at 09:00 on the first day",
+    "thisRound": "This round: {{period}}",
+    "nextRound": "next round {{date}}",
+    "until": "Until {{date}}",
+    "from": "From {{date}}",
+    "noItems": "No items yet.",
+    "newItem": "New item",
+    "addItem": "Add",
+    "itemName": "Name",
+    "itemPersons": "For whom",
+    "editItem": "Edit {{title}}",
+    "removeItem": "Remove {{title}}"
   },
   "filter": {
     "title": "Person filter",
@@ -381,10 +390,19 @@
     "never": "No full Export yet."
   },
   "briefing": {
-    "title": "Briefing",
     "refresh": "Refresh",
     "none": "No briefing yet.",
     "failed": "The briefing could not be refreshed. Try again."
+  },
+  "comingUp": {
+    "title": "Coming up",
+    "toDo_one": "Still to do · {{count}}",
+    "toDo_other": "Still to do · {{count}}"
+  },
+  "sidePanel": {
+    "label": "Today's side panel",
+    "hide": "Hide panel",
+    "show": "Show panel"
   },
   "weather": {
     "title": "Weather",
@@ -414,7 +432,42 @@
       "snow": "Snow",
       "fog": "Fog"
     },
-    "rainChance": "Chance of rain"
+    "rainChance": "Chance of rain",
+    "detail": {
+      "updated": "Updated {{time}}",
+      "maxMin": "High {{max}}° · Low {{min}}°",
+      "feelsLike": "Feels like {{temp}}°",
+      "wind": "Wind",
+      "windFrom": "Wind from {{point}}",
+      "humidity": "Humidity",
+      "uv": "UV index",
+      "sunMoon": "Sun and Moon",
+      "moonLit": "{{percent}}% lit",
+      "nextPhase": "{{phase}}: {{date}}",
+      "hours": "Next hours",
+      "days": "Next days",
+      "today": "Today",
+      "compass": {
+        "N": "N",
+        "NE": "NE",
+        "E": "E",
+        "SE": "SE",
+        "S": "S",
+        "SW": "SW",
+        "W": "W",
+        "NW": "NW"
+      },
+      "moon": {
+        "new": "New moon",
+        "waxingCrescent": "Waxing crescent",
+        "firstQuarter": "First quarter",
+        "waxingGibbous": "Waxing gibbous",
+        "full": "Full moon",
+        "waningGibbous": "Waning gibbous",
+        "lastQuarter": "Last quarter",
+        "waningCrescent": "Waning crescent"
+      }
+    }
   },
   "voice": {
     "title": "Voice Entry",

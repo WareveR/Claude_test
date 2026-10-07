@@ -36,6 +36,17 @@ function forecastBody(max = 21) {
       weather_code: hours.map(() => 61),
       temperature_2m: hours.map(() => 15),
       precipitation_probability: hours.map(() => 70),
+      relative_humidity_2m: hours.map(() => 80),
+      wind_speed_10m: hours.map(() => 14),
+      wind_direction_10m: hours.map(() => 300),
+    },
+    current: {
+      time: `${today}T10:00`,
+      weather_code: 61,
+      temperature_2m: 16.4,
+      relative_humidity_2m: 82,
+      wind_speed_10m: 15,
+      wind_direction_10m: 290,
     },
   };
 }
@@ -79,7 +90,8 @@ type Locations = { locations: { id: string; name: string }[]; selectedId: string
 type Weather = {
   location: { name: string };
   daily: { date: string; max: number }[];
-  hourly: { time: string; rain: number }[];
+  hourly: { time: string; rain: number; humidity?: number; wind?: number }[];
+  current?: { temp: number; humidity?: number; windDir?: number };
 } | null;
 
 function runScheduler(at: Date) {
@@ -115,7 +127,19 @@ describe("Weather", () => {
     expect(weather?.location.name).toBe("Lisboa");
     expect(weather?.daily).toHaveLength(16);
     expect(weather?.hourly).toHaveLength(48);
-    expect(weather?.hourly[0].rain).toBe(70);
+    expect(weather?.hourly[0]).toMatchObject({ rain: 70, humidity: 80, wind: 14 });
+    expect(weather?.current).toMatchObject({ temp: 16, humidity: 82, windDir: 290 });
+  });
+
+  it("still serves a forecast without the current conditions", async () => {
+    const older: Partial<ReturnType<typeof forecastBody>> = forecastBody();
+    delete older.current;
+    answer = () => Response.json(older);
+    const browser = await setUpFamily();
+    await browser.post("/weather/locations", LISBOA);
+    const weather = (await (await browser.get("/weather")).json()) as Weather;
+    expect(weather?.daily).toHaveLength(16);
+    expect(weather).not.toHaveProperty("current");
   });
 
   it("keeps each day's last reading, so past days still show their weather", async () => {

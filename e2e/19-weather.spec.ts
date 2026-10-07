@@ -45,7 +45,8 @@ test("the first saved place is selected and its weather shows in every view", as
   );
   await page.goto(`/day/${yesterday}`);
   await expect(page.locator("nav").getByText("15°/8°")).toBeVisible();
-  await expect(page.getByTestId("hourly-strip")).toContainText("9°");
+  // Below today's strip in the side panel, the past day's own strip above its grid.
+  await expect(page.getByTestId("hourly-strip").last()).toContainText("9°");
 
   await page.goto("/");
   await page.getByRole("link", { name: "Month", exact: true }).click();
@@ -55,7 +56,23 @@ test("the first saved place is selected and its weather shows in every view", as
 test("tapping the weather asks before leaving for the forecast site", async ({ page }) => {
   await signIn(page);
   await page.getByTestId("header-weather").click();
-  await expect(page.getByRole("dialog")).toContainText("Open the forecast on IPMA?");
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toContainText("Open the forecast on IPMA?");
+  // The weather in detail: now, the Sun and Moon, the next hours and days.
+  await expect(dialog.getByRole("heading", { name: "Lisboa" })).toBeVisible();
+  await expect(dialog.getByTestId("forecast-now")).toContainText("17°");
+  await expect(dialog.getByTestId("forecast-now")).toContainText("Feels like 16°");
+  await expect(dialog.getByTestId("forecast-now")).toContainText("72%");
+  await expect(dialog.getByTestId("forecast-now")).toContainText("18 km/h");
+  await expect(dialog.getByTestId("forecast-sky")).toContainText(/Sunrise \d\d:\d\d/);
+  await expect(dialog.getByTestId("forecast-moon")).toContainText(/% lit/);
+  await expect(dialog.getByTestId("forecast-hour").first()).toContainText(/\d+h/);
+  await expect(dialog.getByTestId("forecast-hour").first()).toContainText("12km/h");
+  await expect(dialog.getByTestId("forecast-day").first()).toContainText("Today");
+  await expect(dialog.getByTestId("forecast-day").nth(1)).toContainText("21°");
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await page.getByTestId("header-weather").click();
   await page.getByRole("button", { name: "Cancel" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
 

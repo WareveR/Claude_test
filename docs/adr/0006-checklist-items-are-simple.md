@@ -1,0 +1,9 @@
+# Checklist items are simple, and a Checklist repeats on its own schedule
+
+Until now a Checklist's Tasks were full Tasks: each could have its own due date and time, notes, Private and Reminder, dated ones also showed alone in the Tasks view and on the calendar, and a Checklist could only repeat when it had both a start and an end, shifting the whole period and every Task's date each round. The owner found this heavy for everyday lists and asked for three changes: a Checklist repeating every Sunday should show on Sundays only, not across the whole week; selecting a Checklist should open it with every item ready to tick; and the dates should be simpler.
+
+So a Checklist's items are now only a title, a done state and optional Persons. They are not shown on their own anywhere (Tasks view, calendar days, Tasks accordion, Briefing, Voice Entry) and send no Reminders; they are overdue only when their Checklist's round ends. A Checklist's start and end are independent and both optional. Its Repetition says when each round starts, counted from the start or, without one, from the day it is saved; a round lasts until the end, keeping that length each round, or only its first day without an end. The calendar draws a repeating Checklist on each round's days. Selecting a Checklist opens its own page with its items; its settings sit behind Edit.
+
+The `task` table keeps its columns, and items' stored due dates, times, notes and Private stay in the database untouched (migrations stay additive only); the app simply ignores them for items. No new column was needed: a repeating Checklist's start is always the current round's first day.
+
+This simpler model also suits what comes next: Checklist templates and reordering items by drag and drop, which would have had to carry and reconcile per-item dates and Reminders.

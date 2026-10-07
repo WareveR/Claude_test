@@ -26,6 +26,8 @@ const PLACES = [
 /**
  * 16 days from today in Lisbon: sunny, then partly cloudy, cloudy, rain, …; highs 20, 21, …
  * Like Open-Meteo with `past_days`, it also starts with yesterday: rainy, 15°/8°, 90%.
+ * Now it is 17° (feels 16°), 72% humidity, wind 18 km/h from the north-west; every hour has
+ * 70% humidity and 12 km/h wind from the west, every day 25 km/h from the north and UV 4.
  */
 function forecast() {
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Lisbon" }).format(new Date());
@@ -41,14 +43,32 @@ function forecast() {
     { length: 24 },
     (_, h) => `${yesterday}T${String(h).padStart(2, "0")}:00`,
   );
+  const now = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Lisbon",
+    hour: "2-digit",
+    hourCycle: "h23",
+  }).format(new Date());
+  const all = [...pastHours, ...hours];
   return {
     utc_offset_seconds: 3600,
+    current: {
+      time: `${today}T${now.padStart(2, "0")}:00`,
+      weather_code: 2,
+      temperature_2m: 17.2,
+      apparent_temperature: 16.1,
+      relative_humidity_2m: 72,
+      wind_speed_10m: 18.3,
+      wind_direction_10m: 315,
+    },
     daily: {
       time: [yesterday, ...days],
       weather_code: [61, ...days.map((_, i) => codes[i % codes.length])],
       temperature_2m_max: [15, ...days.map((_, i) => 20 + i)],
       temperature_2m_min: [8, ...days.map((_, i) => 10 + i)],
       precipitation_probability_max: [90, ...days.map((_, i) => (i * 10) % 100)],
+      wind_speed_10m_max: [30, ...days.map(() => 25)],
+      wind_direction_10m_dominant: [200, ...days.map(() => 0)],
+      uv_index_max: [2, ...days.map(() => 4)],
     },
     hourly: {
       time: [...pastHours, ...hours],
@@ -58,6 +78,9 @@ function forecast() {
         ...pastHours.map(() => 90),
         ...hours.map((_, i) => (i % 24 < 12 ? 0 : 80)),
       ],
+      relative_humidity_2m: all.map(() => 70),
+      wind_speed_10m: all.map(() => 12),
+      wind_direction_10m: all.map(() => 270),
     },
   };
 }

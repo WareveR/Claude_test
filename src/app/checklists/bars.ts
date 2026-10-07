@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { checklistProgress } from "../../core/checklist";
+import { checklistProgress, checklistSpans } from "../../core/checklist";
 import { checklistMatches } from "../../core/person-filter";
 import type { PlainDate } from "../../core/plain-date";
 import type { Shown } from "../entries/model";
@@ -20,7 +20,10 @@ export const CHECKLIST_BAR_TYPE: EntryType = {
   deletable: false,
 };
 
-/** Each Checklist period touching the window as an all-day bar ("Summer cleaning 3/8"). */
+/**
+ * Each Checklist touching the window as an all-day bar ("Summer cleaning 3/8"): a repeating one
+ * on each of its rounds' days, not across the whole time.
+ */
 export function useChecklistBars(from: PlainDate, to: PlainDate): Shown[] {
   const checklists = useChecklists().data;
   const tasks = useTasks().data;
@@ -28,7 +31,6 @@ export function useChecklistBars(from: PlainDate, to: PlainDate): Shown[] {
   return useMemo(
     () =>
       (checklists ?? [])
-        .filter((c) => c.startDate && c.endDate && c.startDate <= to && c.endDate >= from)
         .map((c) => ({ c, own: (tasks ?? []).filter((t) => t.checklistId === c.id) }))
         .filter(({ own }) =>
           checklistMatches(
@@ -36,25 +38,28 @@ export function useChecklistBars(from: PlainDate, to: PlainDate): Shown[] {
             filter,
           ),
         )
-        .map(({ c, own }) => {
+        .flatMap(({ c, own }) => {
           const { done, total } = checklistProgress(own);
-          return {
-            id: c.id,
-            key: `checklist:${c.id}`,
-            href: `/checklists/${c.id}`,
-            occurrenceDate: c.startDate!,
-            title: `${c.name} ${done}/${total}`,
-            entryTypeId: CHECKLIST_BAR_TYPE.id,
-            time: { allDay: true, startDate: c.startDate!, endDate: c.endDate! },
-            personIds: [],
-            importance: "normal",
-            location: "",
-            notes: "",
-            icon: null,
-            private: false,
-            reminders: [],
-            repetition: null,
-          } satisfies Shown;
+          return checklistSpans(c, from, to).map(
+            (span) =>
+              ({
+                id: c.id,
+                key: `checklist:${c.id}:${span.startDate}`,
+                href: `/checklists/${c.id}`,
+                occurrenceDate: span.startDate,
+                title: `${c.name} ${done}/${total}`,
+                entryTypeId: CHECKLIST_BAR_TYPE.id,
+                time: { allDay: true, startDate: span.startDate, endDate: span.endDate },
+                personIds: [],
+                importance: "normal",
+                location: "",
+                notes: "",
+                icon: null,
+                private: false,
+                reminders: [],
+                repetition: null,
+              }) satisfies Shown,
+          );
         }),
     [checklists, tasks, filter, from, to],
   );
