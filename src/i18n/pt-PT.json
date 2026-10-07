@@ -335,7 +335,42 @@
     "itemName": "Nome",
     "itemPersons": "Para quem",
     "editItem": "Editar {{title}}",
-    "removeItem": "Remover {{title}}"
+    "removeItem": "Remover {{title}}",
+    "removed": "Removido \"{{title}}\"",
+    "undo": "Anular",
+    "dragHint": "Dica: arraste uma tarefa para uma checklist para a mover ou copiar para lá (no telemóvel, mantenha-a premida primeiro). Deslize um item para o lado na página de uma checklist para o remover.",
+    "addTo": {
+      "title": "Adicionar a uma checklist",
+      "hint": "Mover torna-a um item da checklist, sem data, hora, repetição nem Privado. Duplicar adiciona um item com o mesmo título e pessoas e mantém esta tarefa.",
+      "which": "Que checklist",
+      "choose": "Escolha uma checklist",
+      "question": "Adicionar \"{{title}}\" a \"{{name}}\"?",
+      "move": "Mover",
+      "duplicate": "Duplicar",
+      "duplicated": "Foi adicionada uma cópia a \"{{name}}\"."
+    }
+  },
+  "checklistTemplates": {
+    "title": "Modelos de checklist",
+    "hint": "Listas prontas para começar uma checklist. As incluídas aparecem na língua de cada dispositivo até serem editadas.",
+    "add": "Novo modelo",
+    "itemCount_one": "1 item",
+    "itemCount_other": "{{count}} itens",
+    "restore": "Repor predefinições",
+    "confirmRestore": "Repor os modelos incluídos como vieram? Os seus próprios modelos ficam como estão.",
+    "name": "Nome do modelo",
+    "items": "Itens",
+    "itemLabel": "Item {{n}}",
+    "moveUp": "Subir {{title}}",
+    "moveDown": "Descer {{title}}",
+    "delete": "Apagar modelo",
+    "confirmDelete": "Apagar o modelo \"{{name}}\"? As checklists feitas a partir dele ficam como estão.",
+    "startFrom": "Começar a partir de",
+    "blank": "Checklist em branco",
+    "preview_one": "1 item: {{items}}",
+    "preview_other": "{{count}} itens: {{items}}",
+    "saveAs": "Guardar como modelo",
+    "saved": "Guardado como o modelo \"{{name}}\"."
   },
   "filter": {
     "title": "Filtro de Pessoas",

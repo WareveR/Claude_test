@@ -162,6 +162,13 @@
       "when": 1791383877506,
       "tag": "0022_weather_day",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1791390640727,
+      "tag": "0023_checklist_templates",
+      "breakpoints": true
     }
   ]
 }

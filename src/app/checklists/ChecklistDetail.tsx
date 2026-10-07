@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, Trash2 } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { BookmarkPlus, Pencil, Plus, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, Navigate, useParams } from "react-router";
 import { checklistProgress, isChecklistTaskOverdue } from "../../core/checklist";
@@ -18,6 +18,7 @@ import { BUTTON, BUTTON_DANGER, BUTTON_PRIMARY } from "../ui/button";
 import { Chip, Tick } from "../ui/Toggle";
 import { useChecklists, type Checklist } from "./model";
 import { usePeriodText } from "./period";
+import { useSwipeAway } from "./useSwipeAway";
 
 /** A Checklist with every item to tick, add, rename or remove; its settings sit behind Edit. */
 export function ChecklistDetailPage() {
@@ -34,9 +35,12 @@ export function ChecklistDetailPage() {
   return <ChecklistDetail checklist={checklist} items={items} />;
 }
 
-function ChecklistDetail({ checklist, items }: { checklist: Checklist; items: Task[] }) {
+function ChecklistDetail({ checklist, items: all }: { checklist: Checklist; items: Task[] }) {
   const { t } = useTranslation();
   const { family } = useSignedIn();
+  const removal = useRemoveWithUndo();
+  // A swiped-away item is hidden at once and only deleted when its Undo runs out.
+  const items = all.filter((task) => task.id !== removal.waiting?.id);
   const now = familyNow(family.timeZone, useNow(60_000));
   const persons = usePersons().data ?? [];
   const period = usePeriodText(checklist);
@@ -64,6 +68,7 @@ function ChecklistDetail({ checklist, items }: { checklist: Checklist; items: Ta
           {t("checklists.edit")}
         </Link>
       </div>
+      <SaveAsTemplate checklist={checklist} items={items} />
       {items.length === 0 ? (
         <p className="text-muted">{t("checklists.noItems")}</p>
       ) : (
@@ -74,13 +79,86 @@ function ChecklistDetail({ checklist, items }: { checklist: Checklist; items: Ta
               task={task}
               overdue={isChecklistTaskOverdue(task, checklist, now)}
               persons={persons}
+              onSwipedAway={() => removal.remove(task)}
             />
           ))}
         </ul>
       )}
       <AddItem checklist={checklist} />
+      {removal.waiting && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center p-3">
+          <div
+            role="status"
+            className="pointer-events-auto flex items-center gap-3 rounded-lg border border-line bg-surface px-4 py-2 text-sm shadow-lg"
+          >
+            <span className="break-words">
+              {t("checklists.removed", { title: removal.waiting.title })} ·
+            </span>
+            <button type="button" className={BUTTON} onClick={removal.undo}>
+              {t("checklists.undo")}
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
+}
+
+const UNDO_MS = 6000;
+
+/**
+ * Removing an item with a few seconds to Undo: it is deleted when the time runs out, when
+ * another item is removed, or when the page or the app is left.
+ */
+function useRemoveWithUndo() {
+  const queryClient = useQueryClient();
+  const [waiting, setWaiting] = useState<Task | null>(null);
+  const pending = useRef<{ task: Task; timer: number } | null>(null);
+  const commit = useRef((task: Task) => {
+    queryClient.setQueryData<Task[]>(["tasks"], (tasks) => tasks?.filter((x) => x.id !== task.id));
+    void api(`/tasks/${task.id}`, { method: "DELETE" })
+      .catch(() => undefined)
+      .finally(() => queryClient.invalidateQueries({ queryKey: ["tasks"] }));
+  });
+  const flush = () => {
+    const current = pending.current;
+    if (!current) return;
+    window.clearTimeout(current.timer);
+    pending.current = null;
+    commit.current(current.task);
+  };
+  useEffect(() => {
+    // Leaving the app altogether still deletes it: a keepalive request outlives the page.
+    const leave = () => {
+      const current = pending.current;
+      if (!current) return;
+      window.clearTimeout(current.timer);
+      pending.current = null;
+      void fetch(`/api/tasks/${current.task.id}`, { method: "DELETE", keepalive: true });
+    };
+    window.addEventListener("pagehide", leave);
+    return () => {
+      window.removeEventListener("pagehide", leave);
+      flush();
+    };
+  }, []);
+  return {
+    waiting,
+    remove(task: Task) {
+      flush();
+      const timer = window.setTimeout(() => {
+        flush();
+        setWaiting(null);
+      }, UNDO_MS);
+      pending.current = { task, timer };
+      setWaiting(task);
+    },
+    undo() {
+      if (pending.current) window.clearTimeout(pending.current.timer);
+      pending.current = null;
+      setWaiting(null);
+    },
+  };
 }
 
 /** Saves an item's name and Persons; its other stored fields go back as they were. */
@@ -97,13 +175,27 @@ function itemBody(task: Task, patch: { title: string; personIds: string[] }) {
   };
 }
 
-/** One item: a plain tick box, its name and Persons, and buttons to rename or remove it. */
-function ItemRow({ task, overdue, persons }: { task: Task; overdue: boolean; persons: Person[] }) {
+/**
+ * One item: a plain tick box, its name and Persons, and buttons to rename or remove it. Dragging
+ * or swiping it sideways removes it too.
+ */
+function ItemRow({
+  task,
+  overdue,
+  persons,
+  onSwipedAway,
+}: {
+  task: Task;
+  overdue: boolean;
+  persons: Person[];
+  onSwipedAway: () => void;
+}) {
   const { t } = useTranslation();
   const online = useOnline();
   const tick = useTick();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
+  const swipe = useSwipeAway(onSwipedAway);
   // The tick shows the moment it's clicked, before the server answers.
   const [ticking, setTicking] = useState<boolean | null>(null);
   const remove = useMutation({
@@ -125,7 +217,12 @@ function ItemRow({ task, overdue, persons }: { task: Task; overdue: boolean; per
   }
   const done = ticking ?? Boolean(task.doneAt);
   return (
-    <li className="flex items-center gap-3 py-2" data-testid="checklist-item">
+    <li
+      className="flex cursor-grab items-center gap-3 bg-bg py-2 select-none"
+      data-testid="checklist-item"
+      style={swipe.style}
+      {...swipe.handlers}
+    >
       <Tick
         className="-my-2 -ml-2"
         aria-label={t("tasks.tick", { title: task.title })}
@@ -269,5 +366,39 @@ function AddItem({ checklist }: { checklist: Checklist }) {
       </div>
       {add.error && <ErrorText>{t("errors.unexpected")}</ErrorText>}
     </form>
+  );
+}
+
+/** Keeps this Checklist's name and items, in their order, as a new template. */
+function SaveAsTemplate({ checklist, items }: { checklist: Checklist; items: Task[] }) {
+  const { t } = useTranslation();
+  const online = useOnline();
+  const queryClient = useQueryClient();
+  const save = useMutation({
+    mutationFn: () =>
+      api("/checklist-templates", {
+        method: "POST",
+        body: { name: checklist.name, items: items.map((task) => task.title) },
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["checklist-templates"] }),
+  });
+  return (
+    <div className="-mt-2 flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        className={BUTTON}
+        disabled={!online || save.isPending}
+        onClick={() => save.mutate()}
+      >
+        <BookmarkPlus aria-hidden size={16} color="#16a34a" />
+        {t("checklistTemplates.saveAs")}
+      </button>
+      {save.isSuccess && (
+        <p role="status" className="text-sm text-muted">
+          {t("checklistTemplates.saved", { name: checklist.name })}
+        </p>
+      )}
+      {save.error && <ErrorText>{t("errors.unexpected")}</ErrorText>}
+    </div>
   );
 }

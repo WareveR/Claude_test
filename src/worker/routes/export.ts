@@ -25,6 +25,7 @@ export const EXPORTED: Record<string, string[]> = {
   checklist: [],
   checklist_round: [],
   checklist_person: [],
+  checklist_template: [],
   calendar_feed: ["secret_hash"],
   calendar_feed_person: [],
   weather_location: [],

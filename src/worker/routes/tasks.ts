@@ -273,3 +273,63 @@ taskRoutes.delete("/tasks/:id", async (c) => {
   if (deleted.length === 0) return c.json({ error: "not_found" }, 404);
   return c.body(null, 204);
 });
+
+/**
+ * Puts a loose Task into a Checklist (ADR 0006). "move": the Task becomes one of its items,
+ * losing its date, time, Repetition and Private, and goes to the end of the list. "duplicate":
+ * a new item with the same title and Persons; the Task stays as it is.
+ */
+taskRoutes.post("/tasks/:id/checklist", async (c) => {
+  const db = c.get("db");
+  const id = c.req.param("id");
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
+  if (body.mode !== "move" && body.mode !== "duplicate") {
+    return c.json({ error: "invalid", field: "mode" }, 400);
+  }
+  const [existing] = await db.select().from(schema.task).where(eq(schema.task.id, id));
+  if (!existing) return c.json({ error: "not_found" }, 404);
+  if (existing.checklistId) return c.json({ error: "already_in_checklist" }, 409);
+  const checklistId = typeof body.checklistId === "string" ? body.checklistId : "";
+  const [checklist] = await db
+    .select({ id: schema.checklist.id })
+    .from(schema.checklist)
+    .where(eq(schema.checklist.id, checklistId));
+  if (!checklist) return c.json({ error: "invalid", field: "checklistId" }, 400);
+  const now = c.get("now").toISOString();
+  if (body.mode === "move") {
+    await db
+      .update(schema.task)
+      .set({
+        checklistId,
+        dueDate: null,
+        dueTime: null,
+        repetition: null,
+        private: false,
+        // Items are listed in the order they were added.
+        createdAt: now,
+        changedAt: now,
+      })
+      .where(eq(schema.task.id, id));
+    return c.json(await presentOne(db, id));
+  }
+  const links = await db
+    .select({ personId: schema.taskPerson.personId })
+    .from(schema.taskPerson)
+    .where(eq(schema.taskPerson.taskId, id));
+  const copyId = randomId();
+  await db.batch([
+    db.insert(schema.task).values({
+      id: copyId,
+      title: existing.title,
+      checklistId,
+      createdAt: now,
+      changedAt: now,
+    }),
+    ...personLinks(
+      db,
+      copyId,
+      links.map((l) => l.personId),
+    ),
+  ]);
+  return c.json(await presentOne(db, copyId), 201);
+});

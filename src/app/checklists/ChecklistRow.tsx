@@ -12,17 +12,24 @@ export function ChecklistRow({
   checklist,
   tasks,
   now,
+  dropTarget = false,
 }: {
   checklist: Checklist;
   tasks: Task[];
   now: FamilyNow;
+  /** A Task is being dragged over it. */
+  dropTarget?: boolean;
 }) {
   const { t } = useTranslation();
   const progress = checklistProgress(tasks);
   const period = usePeriodText(checklist);
   const overdue = tasks.some((task) => isChecklistTaskOverdue(task, checklist, now));
   return (
-    <li data-testid="checklist">
+    <li
+      data-testid="checklist"
+      data-drop-checklist={checklist.id}
+      className={`rounded-md transition-colors ${dropTarget ? "bg-accent/15 ring-2 ring-accent" : ""}`}
+    >
       <Link to={`/checklists/${checklist.id}`} className="flex items-center gap-2 py-2">
         <span className="flex min-w-0 flex-1 flex-col">
           <span className="font-medium">{checklist.name}</span>

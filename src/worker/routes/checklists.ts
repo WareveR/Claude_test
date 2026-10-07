@@ -1,5 +1,6 @@
 import { asc, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { Hono } from "hono";
+import { cleanItems } from "../../core/checklist-template";
 import { dueRoundStart, firstRoundStart, roundLabel, shiftRound } from "../../core/checklist";
 import { isPlainDate } from "../../core/plain-date";
 import { isRepetition, type Repetition } from "../../core/repetition";
@@ -184,20 +185,39 @@ checklistRoutes.get("/checklists/:id", async (c) => {
   return c.json(checklist);
 });
 
+/**
+ * A new Checklist; `items` (names, from a template) become its first items, in that order, each
+ * for the Checklist's Persons.
+ */
 checklistRoutes.post("/checklists", async (c) => {
   const db = c.get("db");
-  const parsed = await parseChecklist(
-    db,
-    await c.req.json().catch(() => ({})),
-    await familyToday(db, c.get("now")),
-  );
+  const body = await c.req.json().catch(() => ({}));
+  const parsed = await parseChecklist(db, body, await familyToday(db, c.get("now")));
   if (!parsed.values) return c.json({ error: "invalid", field: parsed.field }, 400);
+  const items = body.items === undefined ? [] : cleanItems(body.items);
+  if (!items) return c.json({ error: "invalid", field: "items" }, 400);
   const { personIds, ...fields } = parsed.values;
   const id = randomId();
-  const now = c.get("now").toISOString();
+  const at = c.get("now");
+  const now = at.toISOString();
   await db.batch([
     db.insert(schema.checklist).values({ id, ...fields, createdAt: now, changedAt: now }),
     ...personLinks(db, id, personIds),
+    ...items.flatMap((title, i) => {
+      // A millisecond apart, so the items keep the template's order on the Checklist's page.
+      const createdAt = new Date(at.getTime() + i).toISOString();
+      const taskId = randomId();
+      return [
+        db.insert(schema.task).values({
+          id: taskId,
+          title,
+          checklistId: id,
+          createdAt,
+          changedAt: createdAt,
+        }),
+        ...personIds.map((personId) => db.insert(schema.taskPerson).values({ taskId, personId })),
+      ];
+    }),
   ]);
   return c.json(await presentOne(db, id), 201);
 });

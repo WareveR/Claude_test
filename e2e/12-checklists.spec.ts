@@ -36,7 +36,7 @@ test("a Checklist's page holds its items to tick, add, rename and remove", async
 
   await detail.getByRole("button", { name: "Edit Clear the garage" }).click();
   await detail.getByLabel("Name").fill("Clear out the garage");
-  await detail.getByRole("button", { name: "Save" }).click();
+  await detail.getByRole("button", { name: "Save", exact: true }).click();
   await expect(detail.getByText("Clear out the garage")).toBeVisible();
 
   await detail.getByRole("button", { name: "Remove Sort the toys" }).click();

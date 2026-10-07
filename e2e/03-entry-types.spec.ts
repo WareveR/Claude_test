@@ -18,7 +18,7 @@ test("built-in Entry Types translate until renamed, and custom ones can be added
   await page.getByLabel("Idioma deste dispositivo").selectOption("en");
   await page.getByRole("link", { name: "Family", exact: true }).click();
 
-  await page.getByRole("link", { name: "Holiday" }).click();
+  await page.getByRole("link", { name: "Holiday", exact: true }).click();
   await page.getByLabel("Name", { exact: true }).fill("Summer break");
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page.getByRole("link", { name: "Summer break" })).toBeVisible();
