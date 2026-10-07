@@ -266,7 +266,9 @@
     "birthdaySynced": "Este Aniversário segue a data de nascimento de {{name}}: muda a data ou a Pessoa na própria Pessoa.",
     "openPerson": "Abrir a Pessoa",
     "birthYearKnown": "Ano de nascimento conhecido (a data acima é a de nascimento, para mostrar a idade)",
-    "birthdayLocked": "A data e a Pessoa deste Aniversário só mudam na própria Pessoa."
+    "birthdayLocked": "A data e a Pessoa deste Aniversário só mudam na própria Pessoa.",
+    "edit": "Editar",
+    "close": "Fechar"
   },
   "scope": {
     "saveTitle": "Guardar a alteração em…",

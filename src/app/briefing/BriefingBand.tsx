@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
 import type { Segment } from "../../core/briefing";
 import { api } from "../api";
+import { EntryPopup } from "../entries/EntryPopup";
 import { usePersonFilter } from "../filter/model";
 
 type Briefing = { segments: Segment[]; fallback: boolean; writtenAt: string } | null;
@@ -26,27 +26,23 @@ function writeCollapsed(collapsed: boolean) {
   }
 }
 
-function linkPath(link: NonNullable<Segment["link"]>): string | null {
-  switch (link.kind) {
-    case "entry":
-      return `/entries/${link.id}?occurrence=${link.date}`;
-    case "task":
-      return `/tasks/${link.id}`;
-    case "checklist":
-      return `/checklists/${link.id}`;
-    default:
-      return null;
-  }
-}
+type Open = { id: string; date: string } | null;
 
-function SegmentText({ segment }: { segment: Segment }) {
-  const to = segment.link ? linkPath(segment.link) : null;
-  return to ? (
-    <Link to={to} className="underline">
+/**
+ * A phrase of the Briefing. One about an Entry opens that Entry in a popup; the rest is plain
+ * text, as the Tasks are a tap away below.
+ */
+function SegmentText({ segment, onOpen }: { segment: Segment; onOpen: (open: Open) => void }) {
+  const link = segment.link;
+  if (link?.kind !== "entry") return <>{segment.text}</>;
+  return (
+    <button
+      type="button"
+      className="rounded px-0.5 text-left font-medium text-accent hover:bg-accent/10"
+      onClick={() => onOpen({ id: link.id, date: link.date })}
+    >
       {segment.text}
-    </Link>
-  ) : (
-    <>{segment.text}</>
+    </button>
   );
 }
 
@@ -73,6 +69,7 @@ export function BriefingBand({ readOnly = false }: { readOnly?: boolean }) {
     onSuccess: (data) => client.setQueryData(key, data),
   });
   const data = briefing.data;
+  const [open, setOpen] = useState<Open>(null);
   return (
     <section
       aria-labelledby="briefing-title"
@@ -115,7 +112,7 @@ export function BriefingBand({ readOnly = false }: { readOnly?: boolean }) {
         {data && !data.fallback && (
           <p>
             {data.segments.map((s, i) => (
-              <SegmentText key={i} segment={s} />
+              <SegmentText key={i} segment={s} onOpen={setOpen} />
             ))}
           </p>
         )}
@@ -123,7 +120,7 @@ export function BriefingBand({ readOnly = false }: { readOnly?: boolean }) {
           <ul className="flex flex-col gap-1">
             {data.segments.map((s, i) => (
               <li key={i} data-testid="briefing-line">
-                <SegmentText segment={s} />
+                <SegmentText segment={s} onOpen={setOpen} />
               </li>
             ))}
           </ul>
@@ -134,6 +131,7 @@ export function BriefingBand({ readOnly = false }: { readOnly?: boolean }) {
           </p>
         )}
       </div>
+      {open && <EntryPopup id={open.id} occurrence={open.date} onClose={() => setOpen(null)} />}
     </section>
   );
 }
