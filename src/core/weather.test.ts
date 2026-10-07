@@ -62,6 +62,7 @@ describe("parseForecast", () => {
   it("asks for 16 days in the place's own clock", () => {
     const query = new URLSearchParams(forecastQuery({ latitude: 38.72, longitude: -9.14 }));
     expect(query.get("forecast_days")).toBe("16");
+    expect(query.get("past_days")).toBe("1");
     expect(query.get("timezone")).toBe("auto");
     expect(query.get("hourly")).toContain("precipitation_probability");
   });

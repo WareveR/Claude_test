@@ -1,17 +1,23 @@
-import { placeClock } from "../../core/weather";
+import { placeClock, type HourWeather } from "../../core/weather";
 import { useNow } from "../shell/useNow";
 import { ForecastButton } from "./ForecastButton";
 import { useWeather } from "./model";
 import { RainChance, WeatherIcon } from "./WeatherIcon";
 
-/** Today's remaining hours in the place's own clock: spread across wide screens, scrolling sideways on narrow ones. */
-export function HourlyStrip() {
+/**
+ * Today's remaining hours in the place's own clock, or the given `past` hours of a day gone by:
+ * spread across wide screens, scrolling sideways on narrow ones.
+ */
+export function HourlyStrip({ past }: { past?: HourWeather[] }) {
   const { data } = useWeather();
   const now = useNow(60_000);
-  if (!data) return null;
-  const clock = placeClock(data.utcOffset, now);
-  const from = clock.slice(0, 13);
-  const hours = data.hourly.filter((h) => h.time.startsWith(clock.slice(0, 10)) && h.time >= from);
+  if (!data && !past) return null;
+  const clock = data ? placeClock(data.utcOffset, now) : "";
+  const hours =
+    past ??
+    (data?.hourly ?? []).filter(
+      (h) => h.time.startsWith(clock.slice(0, 10)) && h.time >= clock.slice(0, 13),
+    );
   if (hours.length === 0) return null;
   return (
     <div data-testid="hourly-strip" className="px-4">

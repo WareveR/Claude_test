@@ -118,6 +118,30 @@ describe("Weather", () => {
     expect(weather?.hourly[0].rain).toBe(70);
   });
 
+  it("keeps each day's last reading, so past days still show their weather", async () => {
+    const browser = await setUpFamily();
+    await browser.post("/weather/locations", LISBOA);
+    const today = new Date().toISOString().slice(0, 10);
+    type Past = { day: { date: string; max: number }; hours: { time: string }[] }[];
+    let past = (await (
+      await browser.get(`/weather/past?from=${today}&to=${today}`)
+    ).json()) as Past;
+    expect(past).toHaveLength(1);
+    expect(past[0].day.max).toBe(21);
+    expect(past[0].hours).toHaveLength(24);
+
+    // A later reading replaces the day's earlier one.
+    answer = () => Response.json(forecastBody(25));
+    await browser.post("/weather/locations", PORTO);
+    const lisboa = ((await (await browser.get("/weather/locations")).json()) as Locations)
+      .locations[0];
+    await browser.request("PUT", "/weather/selected", { id: lisboa.id });
+    past = (await (await browser.get(`/weather/past?from=${today}&to=${today}`)).json()) as Past;
+    expect(past[0].day.max).toBe(25);
+
+    expect((await browser.get("/weather/past?from=x&to=y")).status).toBe(400);
+  });
+
   it("keeps up to 10 places, refuses repeats, and the selection is Family-wide", async () => {
     const browser = await setUpFamily();
     await browser.post("/weather/locations", LISBOA);

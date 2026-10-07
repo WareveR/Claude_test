@@ -38,6 +38,7 @@ export const NOT_EXPORTED = new Set([
   "error_log",
   "scheduler_run",
   "weather_cache",
+  "weather_day",
   "briefing",
   "briefing_pending",
   "reminder_sent",

@@ -23,7 +23,10 @@ const PLACES = [
   },
 ];
 
-/** 16 days from today in Lisbon: sunny, then partly cloudy, cloudy, rain, …; highs 20, 21, … */
+/**
+ * 16 days from today in Lisbon: sunny, then partly cloudy, cloudy, rain, …; highs 20, 21, …
+ * Like Open-Meteo with `past_days`, it also starts with yesterday: rainy, 15°/8°, 90%.
+ */
 function forecast() {
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Lisbon" }).format(new Date());
   const days = Array.from({ length: 16 }, (_, i) =>
@@ -33,20 +36,28 @@ function forecast() {
   const hours = days.flatMap((d) =>
     Array.from({ length: 24 }, (_, h) => `${d}T${String(h).padStart(2, "0")}:00`),
   );
+  const yesterday = new Date(Date.parse(today) - 86_400_000).toISOString().slice(0, 10);
+  const pastHours = Array.from(
+    { length: 24 },
+    (_, h) => `${yesterday}T${String(h).padStart(2, "0")}:00`,
+  );
   return {
     utc_offset_seconds: 3600,
     daily: {
-      time: days,
-      weather_code: days.map((_, i) => codes[i % codes.length]),
-      temperature_2m_max: days.map((_, i) => 20 + i),
-      temperature_2m_min: days.map((_, i) => 10 + i),
-      precipitation_probability_max: days.map((_, i) => (i * 10) % 100),
+      time: [yesterday, ...days],
+      weather_code: [61, ...days.map((_, i) => codes[i % codes.length])],
+      temperature_2m_max: [15, ...days.map((_, i) => 20 + i)],
+      temperature_2m_min: [8, ...days.map((_, i) => 10 + i)],
+      precipitation_probability_max: [90, ...days.map((_, i) => (i * 10) % 100)],
     },
     hourly: {
-      time: hours,
-      weather_code: hours.map((_, i) => (i % 24 < 12 ? 0 : 61)),
-      temperature_2m: hours.map((_, i) => 12 + (i % 24) / 2),
-      precipitation_probability: hours.map((_, i) => (i % 24 < 12 ? 0 : 80)),
+      time: [...pastHours, ...hours],
+      weather_code: [...pastHours.map(() => 61), ...hours.map((_, i) => (i % 24 < 12 ? 0 : 61))],
+      temperature_2m: [...pastHours.map(() => 9), ...hours.map((_, i) => 12 + (i % 24) / 2)],
+      precipitation_probability: [
+        ...pastHours.map(() => 90),
+        ...hours.map((_, i) => (i % 24 < 12 ? 0 : 80)),
+      ],
     },
   };
 }

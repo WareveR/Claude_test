@@ -37,6 +37,14 @@ test("the first saved place is selected and its weather shows in every view", as
   // The week shows each day's chance of rain too.
   await expect(page.locator('[data-testid^="week-weather-"]').nth(1)).toContainText("%");
 
+  // A past day keeps the last weather read for it, and its hours.
+  const yesterday = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Lisbon" }).format(
+    new Date(Date.now() - 86_400_000),
+  );
+  await page.goto(`/day/${yesterday}`);
+  await expect(page.locator("nav").getByText("15°/8°")).toBeVisible();
+  await expect(page.getByTestId("hourly-strip")).toContainText("9°");
+
   await page.goto("/");
   await page.getByRole("link", { name: "Month", exact: true }).click();
   await expect(page.getByTestId("picked-day").getByRole("button")).toContainText("20°/10°");

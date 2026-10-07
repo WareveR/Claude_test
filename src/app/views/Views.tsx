@@ -34,7 +34,7 @@ import { ViewNav } from "../shell/ViewNav";
 import { ForecastButton } from "../weather/ForecastButton";
 import { HourlyStrip } from "../weather/HourlyStrip";
 import { SunBand } from "../weather/SunBand";
-import { useForecastDays } from "../weather/model";
+import { useDayWeather, usePastWeather } from "../weather/model";
 import { WeatherBadge } from "../weather/WeatherBadge";
 import { TasksAccordion } from "../tasks/TasksAccordion";
 
@@ -69,9 +69,10 @@ export function DayView() {
   const { date = "" } = useParams();
   const locale = useLocale();
   const today = useToday();
-  const forecast = useForecastDays();
+  const day = isPlainDate(date) ? date : today;
+  const weather = useDayWeather(day, day).get(day);
+  const past = usePastWeather(day, day).get(day);
   if (!isPlainDate(date)) return <Navigate to={paths.day(today)} replace />;
-  const weather = forecast.get(date);
   const title = formatPlainDate(date, locale, { weekday: "long", day: "numeric", month: "long" });
   return (
     <>
@@ -92,6 +93,7 @@ export function DayView() {
         }
       />
       {date === today && <HourlyStrip />}
+      {past && <HourlyStrip past={past.hours} />}
       {date === today && <SunBand />}
       {/* On wide screens the Briefing and Tasks sit beside the grid instead of above it. */}
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row-reverse">
@@ -133,7 +135,7 @@ export function WeekView() {
 function Week({ monday }: { monday: PlainDate }) {
   const locale = useLocale();
   const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i));
-  const forecast = useForecastDays();
+  const forecast = useDayWeather(monday, days[6]);
   const short = { day: "numeric", month: "short" } as const;
   const title = `${formatPlainDate(monday, locale, short)} – ${formatPlainDate(days[6], locale, short)}`;
   return (
@@ -229,7 +231,7 @@ function Month({ first }: { first: PlainDate }) {
   const { entries, types } = useCalendar(weeks[0][0], weeks[weeks.length - 1][6]);
   const holidays = useHolidays(weeks[0][0], weeks[weeks.length - 1][6]);
   const notes = useDayNotes(weeks[0][0], weeks[weeks.length - 1][6]);
-  const forecast = useForecastDays();
+  const forecast = useDayWeather(weeks[0][0], weeks[weeks.length - 1][6]);
   const persons = usePersons();
   const title = formatPlainDate(first, locale, { month: "long", year: "numeric" });
   const dayEntries = entriesOn(entries, selected);

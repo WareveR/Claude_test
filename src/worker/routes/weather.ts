@@ -1,4 +1,5 @@
-import { and, eq, lt } from "drizzle-orm";
+import { and, eq, gte, lt, lte } from "drizzle-orm";
+import { isPlainDate } from "../../core/plain-date";
 import { Hono } from "hono";
 import {
   forecastQuery,
@@ -6,6 +7,7 @@ import {
   parseForecast,
   parsePlaces,
   placeClock,
+  type Forecast,
   type WeatherPlace,
 } from "../../core/weather";
 import { randomId } from "../auth/crypto";
@@ -42,6 +44,27 @@ async function selectedLocation(db: Db) {
   return location ?? null;
 }
 
+/** Keeps each day's latest reading, so it is still shown once the day has passed. */
+async function keepDays(db: Db, locationId: string, forecast: Forecast) {
+  const rows = forecast.daily.map((day) => ({
+    locationId,
+    date: day.date,
+    day,
+    hours: forecast.hourly.filter((h) => h.time.startsWith(day.date)),
+  }));
+  if (rows.length === 0) return;
+  const [first, ...rest] = rows.map((row) =>
+    db
+      .insert(schema.weatherDay)
+      .values(row)
+      .onConflictDoUpdate({
+        target: [schema.weatherDay.locationId, schema.weatherDay.date],
+        set: { day: row.day, hours: row.hours },
+      }),
+  );
+  await db.batch([first, ...rest]);
+}
+
 /** Fetches and keeps a Weather Location's forecast; throws when Open-Meteo fails. */
 export async function refreshForecast(db: Db, env: WeatherEnv, locationId: string, now: Date) {
   const [location] = await db
@@ -61,6 +84,7 @@ export async function refreshForecast(db: Db, env: WeatherEnv, locationId: strin
         target: schema.weatherCache.locationId,
         set: { forecast, fetchedAt: at, attemptedAt: at },
       });
+    await keepDays(db, locationId, forecast);
   } catch (error) {
     // The last forecast stays; it is shown until it is a day old.
     await db
@@ -254,4 +278,31 @@ weatherRoutes.get("/weather", async (c) => {
     daily: daily.filter((d) => d.date >= today),
     hourly: hourly.filter((h) => h.time.startsWith(today) || h.time.startsWith(tomorrow)),
   });
+});
+
+/**
+ * The selected Weather Location's kept readings for past days in `from`..`to`: each day's
+ * summary and its hours, as last read before the day ended.
+ */
+weatherRoutes.get("/weather/past", async (c) => {
+  const from = c.req.query("from") ?? "";
+  const to = c.req.query("to") ?? "";
+  if (!isPlainDate(from) || !isPlainDate(to) || from > to) {
+    return c.json({ error: "invalid_range" }, 400);
+  }
+  const db = c.get("db");
+  const location = await selectedLocation(db);
+  if (!location) return c.json([]);
+  const rows = await db
+    .select({ day: schema.weatherDay.day, hours: schema.weatherDay.hours })
+    .from(schema.weatherDay)
+    .where(
+      and(
+        eq(schema.weatherDay.locationId, location.id),
+        gte(schema.weatherDay.date, from),
+        lte(schema.weatherDay.date, to),
+      ),
+    )
+    .orderBy(schema.weatherDay.date);
+  return c.json(rows);
 });

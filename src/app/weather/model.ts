@@ -22,6 +22,8 @@ export type Weather = {
 export type WeatherLocations = { locations: WeatherLocation[]; selectedId: string | null };
 /** A day's forecast; `faded` from the 8th day on, when it is less certain. */
 export type ShownDay = DayWeather & { faded: boolean };
+/** A past day's last reading: its summary and its hours. */
+export type PastDay = { day: DayWeather; hours: HourWeather[] };
 
 /** The selected place's forecast, or null when there is none. */
 export function useWeather() {
@@ -55,4 +57,29 @@ export function useForecastDays(): Map<PlainDate, ShownDay> {
   const { data } = useWeather();
   const today = todayIn(family.timeZone);
   return useMemo(() => forecastDays(data, today), [data, today]);
+}
+
+/** The kept readings of the days before today in `from`..`to`, by date. */
+export function usePastWeather(from: PlainDate, to: PlainDate): Map<PlainDate, PastDay> {
+  const { family } = useSignedIn();
+  const today = todayIn(family.timeZone);
+  const last = addDays(today, -1);
+  const end = to < last ? to : last;
+  const { data } = useQuery({
+    queryKey: ["weather-past", from, end],
+    queryFn: () => api<PastDay[]>(`/weather/past?from=${from}&to=${end}`),
+    enabled: from <= end,
+  });
+  return useMemo(() => new Map((data ?? []).map((p) => [p.day.date, p])), [data]);
+}
+
+/** The weather of each day in `from`..`to`: the forecast from today on, the last reading before. */
+export function useDayWeather(from: PlainDate, to: PlainDate): Map<PlainDate, ShownDay> {
+  const forecast = useForecastDays();
+  const past = usePastWeather(from, to);
+  return useMemo(() => {
+    const days = new Map(forecast);
+    for (const [date, p] of past) days.set(date, { ...p.day, faded: false });
+    return days;
+  }, [forecast, past]);
 }
