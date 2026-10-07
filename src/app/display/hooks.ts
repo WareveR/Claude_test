@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { inOvernightWindow, msUntilMidnight } from "../../core/display";
 import { todayIn, type PlainDate } from "../../core/plain-date";
 import { applyUpdate, useUpdateWaiting } from "../offline/service-worker";
@@ -75,24 +75,4 @@ export function useOvernightReload(timeZone: string) {
     const id = setInterval(check, 60_000);
     return () => clearInterval(id);
   }, [waiting, timeZone]);
-}
-
-/** Calls back once the pointer has stayed down for `ms` without moving away. */
-export function useLongPress(callback: () => void, ms = 1500) {
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const cancel = () => {
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = null;
-  };
-  useEffect(() => cancel, []);
-  return {
-    onPointerDown: () => {
-      cancel();
-      timer.current = setTimeout(callback, ms);
-    },
-    onPointerUp: cancel,
-    onPointerLeave: cancel,
-    onPointerCancel: cancel,
-    onContextMenu: (e: { preventDefault: () => void }) => e.preventDefault(),
-  };
 }

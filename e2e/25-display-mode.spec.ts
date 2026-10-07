@@ -58,13 +58,13 @@ async function addTask(page: Page, title: string, extra = {}) {
 }
 
 async function turnOnDisplayMode(page: Page) {
-  await page.goto("/settings");
-  await page.getByRole("button", { name: "Use this device as a wall calendar" }).click();
+  await page.goto("/");
+  await page.getByRole("link", { name: "Wall" }).click();
   await expect(page).toHaveURL(/\/display$/);
   await expect(page.getByTestId("display-board")).toBeVisible();
 }
 
-test("turning Display Mode on shows the board and switches Reminders off", async ({ page }) => {
+test("the Wall view shows the board", async ({ page }) => {
   await signIn(page);
   await addEntry(page, "Family lunch", "12:00", { notes: "Bring the wine" });
   await addEntry(page, "Therapy with Dr Silva", "10:00", { private: true });
@@ -78,9 +78,7 @@ test("turning Display Mode on shows the board and switches Reminders off", async
   await page.getByRole("button", { name: "Save Lisboa" }).click();
   await expect(page.getByRole("button", { name: "Remove Lisboa" })).toBeVisible();
 
-  expect((await (await page.request.get("/api/device")).json()).remindersOn).toBe(true);
   await turnOnDisplayMode(page);
-  expect((await (await page.request.get("/api/device")).json()).remindersOn).toBe(false);
 
   // Today on the left, a seven-day grid starting today on the right.
   const board = page.getByTestId("display-board");
@@ -186,30 +184,10 @@ test("‹ › move the grid a week, a pill returns, and three idle minutes retur
   ).toBeVisible();
 });
 
-test("a long press on the header asks, then leaves Display Mode", async ({ page }) => {
+test("the Leave wall view button leaves Display Mode", async ({ page }) => {
   await signIn(page);
   await turnOnDisplayMode(page);
-  const header = page.locator("header");
-  const box = (await header.boundingBox())!;
-  const press = async () => {
-    await page.mouse.move(box.x + box.width - 40, box.y + box.height / 2);
-    await page.mouse.down();
-    await page.waitForTimeout(1700);
-    await page.mouse.up();
-  };
-
-  await press();
-  const dialog = page.getByRole("dialog", { name: "Leave Display Mode?" });
-  await expect(dialog).toBeVisible();
-  await expect(dialog).toBeInViewport({ ratio: 1 });
-  await dialog.getByRole("button", { name: "Stay" }).click();
-  await expect(page.getByTestId("display-board")).toBeVisible();
-
-  await press();
-  await page
-    .getByRole("dialog", { name: "Leave Display Mode?" })
-    .getByRole("button", { name: "Leave" })
-    .click();
+  await page.locator("header").getByRole("button", { name: "Leave wall view" }).click();
   await expect(page.getByTestId("display-board")).toHaveCount(0);
   await expect(page).not.toHaveURL(/\/display$/);
   await expect(page.getByRole("link", { name: "Settings" })).toBeVisible();

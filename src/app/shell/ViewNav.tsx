@@ -4,9 +4,10 @@ import { useTranslation } from "react-i18next";
 import { Link, NavLink } from "react-router";
 import type { PlainDate } from "../../core/plain-date";
 import { FilterButton } from "../filter/FilterButton";
+import { setDisplayMode } from "../display/mode";
 import { paths } from "../paths";
 
-const VIEWS = ["day", "week", "month", "year", "tasks"] as const;
+const VIEWS = ["day", "week", "month", "year", "tasks", "display"] as const;
 
 /** Switches between views and moves through dates, keeping the date in the address. */
 export function ViewNav({
@@ -33,7 +34,15 @@ export function ViewNav({
         {VIEWS.map((view) => (
           <NavLink
             key={view}
-            to={view === "tasks" ? paths.tasks() : paths[view](date)}
+            to={
+              view === "tasks"
+                ? paths.tasks()
+                : view === "display"
+                  ? paths.display()
+                  : paths[view](date)
+            }
+            // The board is only reachable with Display Mode on; turn it on before navigating.
+            onClick={view === "display" ? () => setDisplayMode(true) : undefined}
             className={({ isActive }) =>
               `px-3 py-1 text-sm ${isActive ? "bg-stone-800 text-white dark:bg-stone-200 dark:text-stone-900" : ""}`
             }

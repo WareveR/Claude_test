@@ -10,7 +10,6 @@ import { HolidaysSection } from "./HolidaysSection";
 import { VoiceSection } from "./VoiceSection";
 import { WeatherSection } from "./WeatherSection";
 import { ExportSection } from "./ExportSection";
-import { DisplayModeSection } from "./DisplayModeSection";
 import { RemindersSection } from "./RemindersSection";
 import { FeedsSection } from "./FeedsSection";
 import { PersonsSection } from "../persons/PersonsSection";
@@ -61,7 +60,6 @@ export function SettingsPage() {
       <VoiceSection />
       <ExportSection />
       <RemindersSection />
-      <DisplayModeSection />
       <FeedsSection />
       <DevicesSection />
       <PasswordSection />
