@@ -9,7 +9,7 @@ import { usePersonFilter } from "../filter/model";
 import { useWeather } from "../weather/model";
 
 /** `astronomy-engine` is large, so it loads on first use rather than with the app. */
-function useAstronomy(needed: boolean) {
+export function useAstronomy(needed: boolean) {
   return useQuery({
     queryKey: ["astronomy-engine"],
     queryFn: () => import("astronomy-engine"),

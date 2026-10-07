@@ -261,3 +261,41 @@ export function sunTimes(
   };
   return { rise: find(+1), set: find(-1) };
 }
+
+/** The Moon's eight phases, from new moon on, each centred on its angle from the Sun. */
+export const MOON_PHASES = [
+  "new",
+  "waxingCrescent",
+  "firstQuarter",
+  "waxingGibbous",
+  "full",
+  "waningGibbous",
+  "lastQuarter",
+  "waningCrescent",
+] as const;
+export type MoonPhase = (typeof MOON_PHASES)[number];
+
+/**
+ * The Moon at an instant: its phase, the lit percentage of its disc, and its next `count`
+ * principal phases (keys as the Moon Layer's notes) with their date and time in `timeZone`.
+ */
+export function moonNow(
+  A: Astro,
+  at: Date,
+  timeZone: string,
+  count = 2,
+): { phase: MoonPhase; lit: number; next: (DayNote & { date: PlainDate })[] } {
+  const angle = A.MoonPhase(at);
+  const phase = MOON_PHASES[Math.round(angle / 45) % 8];
+  const lit = Math.round(A.Illumination(A.Body.Moon, at).phase_fraction * 100);
+  const next: (DayNote & { date: PlainDate })[] = [];
+  for (let q = A.SearchMoonQuarter(at); next.length < count; q = A.NextMoonQuarter(q)) {
+    next.push({
+      layer: "moon",
+      key: MOON[q.quarter],
+      date: todayIn(timeZone, q.time.date),
+      time: clock(q.time.date, timeZone),
+    });
+  }
+  return { phase, lit, next };
+}
