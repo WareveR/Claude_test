@@ -254,6 +254,20 @@ export const checklistPerson = sqliteTable(
 );
 
 /**
+ * A Checklist template, Family-wide: a name and the ordered names of its items. A built-in one
+ * carries its builtinKey and no name or items until the Family edits it, so each device reads
+ * it in its own language; restoring defaults clears them again.
+ */
+export const checklistTemplate = sqliteTable("checklist_template", {
+  id: text("id").primaryKey(),
+  builtinKey: text("builtin_key"),
+  name: text("name"),
+  items: text("items", { mode: "json" }).$type<string[] | null>(),
+  createdAt: text("created_at").notNull(),
+  changedAt: text("changed_at").notNull(),
+});
+
+/**
  * A single-use link sent by email: choosing a new Family Password (valid 1 hour) or confirming
  * a new recovery email (valid 24 hours). Only the token's hash is kept.
  */

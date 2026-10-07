@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { BookmarkPlus, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, Navigate, useParams } from "react-router";
@@ -63,6 +63,7 @@ function ChecklistDetail({ checklist, items }: { checklist: Checklist; items: Ta
           {t("checklists.edit")}
         </Link>
       </div>
+      <SaveAsTemplate checklist={checklist} items={items} />
       {items.length === 0 ? (
         <p className="text-muted">{t("checklists.noItems")}</p>
       ) : (
@@ -272,5 +273,39 @@ function AddItem({ checklist }: { checklist: Checklist }) {
       </div>
       {add.error && <ErrorText>{t("errors.unexpected")}</ErrorText>}
     </form>
+  );
+}
+
+/** Keeps this Checklist's name and items, in their order, as a new template. */
+function SaveAsTemplate({ checklist, items }: { checklist: Checklist; items: Task[] }) {
+  const { t } = useTranslation();
+  const online = useOnline();
+  const queryClient = useQueryClient();
+  const save = useMutation({
+    mutationFn: () =>
+      api("/checklist-templates", {
+        method: "POST",
+        body: { name: checklist.name, items: items.map((task) => task.title) },
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["checklist-templates"] }),
+  });
+  return (
+    <div className="-mt-2 flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        className={BUTTON}
+        disabled={!online || save.isPending}
+        onClick={() => save.mutate()}
+      >
+        <BookmarkPlus aria-hidden size={16} color="#16a34a" />
+        {t("checklistTemplates.saveAs")}
+      </button>
+      {save.isSuccess && (
+        <p role="status" className="text-sm text-muted">
+          {t("checklistTemplates.saved", { name: checklist.name })}
+        </p>
+      )}
+      {save.error && <ErrorText>{t("errors.unexpected")}</ErrorText>}
+    </div>
   );
 }

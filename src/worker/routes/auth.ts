@@ -7,6 +7,7 @@ import { clearFailures, clientIp, recordFailure, retryAfter } from "../auth/thro
 import { schema } from "../db";
 import type { AppEnv } from "../types";
 import { seedBuiltInTypes } from "./entry-types";
+import { seedBuiltInTemplates } from "./checklist-templates";
 import { setupCodeChanged } from "./recovery";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -74,6 +75,7 @@ authRoutes.post("/setup", async (c) => {
       changedAt: now.toISOString(),
     }),
     ...seedBuiltInTypes(db, now.toISOString()),
+    ...seedBuiltInTemplates(db, now.toISOString()),
   ]);
   await clearFailures(db, ip);
   await startSession(c, db, now);

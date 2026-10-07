@@ -337,6 +337,28 @@
     "editItem": "Edit {{title}}",
     "removeItem": "Remove {{title}}"
   },
+  "checklistTemplates": {
+    "title": "Checklist templates",
+    "hint": "Ready-made lists to start a Checklist from. Built-in ones show in each device's language until edited.",
+    "add": "New template",
+    "itemCount_one": "1 item",
+    "itemCount_other": "{{count}} items",
+    "restore": "Restore defaults",
+    "confirmRestore": "Bring back the built-in templates as they came? Your own templates stay as they are.",
+    "name": "Template name",
+    "items": "Items",
+    "itemLabel": "Item {{n}}",
+    "moveUp": "Move {{title}} up",
+    "moveDown": "Move {{title}} down",
+    "delete": "Delete template",
+    "confirmDelete": "Delete the template \"{{name}}\"? Checklists made from it stay as they are.",
+    "startFrom": "Start from",
+    "blank": "Blank checklist",
+    "preview_one": "1 item: {{items}}",
+    "preview_other": "{{count}} items: {{items}}",
+    "saveAs": "Save as template",
+    "saved": "Saved as the template \"{{name}}\"."
+  },
   "filter": {
     "title": "Person filter",
     "noneHint": "With nobody picked, everyone shows.",

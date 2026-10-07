@@ -13,6 +13,8 @@ import { usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
 import { ErrorText, Field, FormActions, TextInput } from "../screens/form";
 import { useChecklist, type Checklist, type ChecklistDraft } from "./model";
+import { templateText } from "../../core/checklist-template";
+import { useTemplates } from "./templates";
 import { readyToEdit } from "../offline/fresh";
 import { BUTTON, BUTTON_DANGER } from "../ui/button";
 
@@ -46,8 +48,23 @@ function ChecklistForm({ checklist }: { checklist?: Checklist }) {
       },
   );
   const set = (patch: Partial<ChecklistDraft>) => setDraft((d) => ({ ...d, ...patch }));
+  const { language } = useSignedIn();
   const today = familyNow(useSignedIn().family.timeZone).today;
-  const locale = formatLocale(useSignedIn().language);
+  const locale = formatLocale(language);
+  // A new Checklist may start from a template: its name, and its items created on save.
+  const templates = useTemplates();
+  const [templateId, setTemplateId] = useState("");
+  const chosen = templates.data?.find((tpl) => tpl.id === templateId);
+  const fromTemplate = chosen ? templateText(chosen, language) : null;
+  const chooseTemplate = (id: string) => {
+    const previous = chosen ? templateText(chosen, language).name : "";
+    const next = templates.data?.find((tpl) => tpl.id === id);
+    setTemplateId(id);
+    // The name follows the template unless it was typed by hand.
+    if (draft.name === "" || draft.name === previous) {
+      set({ name: next ? templateText(next, language).name : "" });
+    }
+  };
   const refresh = async () => {
     if (checklist) queryClient.removeQueries({ queryKey: ["checklist", checklist.id] });
     await queryClient.invalidateQueries({ queryKey: ["checklists"] });
@@ -64,7 +81,10 @@ function ChecklistForm({ checklist }: { checklist?: Checklist }) {
     mutationFn: () =>
       checklist
         ? api<Checklist>(`/checklists/${checklist.id}`, { method: "PUT", body: draft })
-        : api<Checklist>("/checklists", { method: "POST", body: draft }),
+        : api<Checklist>("/checklists", {
+            method: "POST",
+            body: { ...draft, items: fromTemplate?.items ?? [] },
+          }),
     onSuccess: (saved) => open(saved.id),
   });
   const [newStart, setNewStart] = useState("");
@@ -97,6 +117,32 @@ function ChecklistForm({ checklist }: { checklist?: Checklist }) {
         </h1>
       </div>
       <form onSubmit={submit} className="flex flex-col gap-4">
+        {!checklist && (
+          <div className="flex flex-col gap-1">
+            <Field label={t("checklistTemplates.startFrom")}>
+              <select
+                className="rounded-md border border-line bg-surface px-3 py-2 text-base"
+                value={templateId}
+                onChange={(e) => chooseTemplate(e.target.value)}
+              >
+                <option value="">{t("checklistTemplates.blank")}</option>
+                {templates.data?.map((tpl) => (
+                  <option key={tpl.id} value={tpl.id}>
+                    {templateText(tpl, language).name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            {fromTemplate && (
+              <p className="text-xs text-muted" data-testid="template-preview">
+                {t("checklistTemplates.preview", {
+                  count: fromTemplate.items.length,
+                  items: fromTemplate.items.join(", "),
+                })}
+              </p>
+            )}
+          </div>
+        )}
         <Field label={t("checklists.name")}>
           <TextInput
             required

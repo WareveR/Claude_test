@@ -7,6 +7,7 @@ import { api } from "../api";
 import { useSignedIn } from "../family";
 import { paths } from "../paths";
 import { EntryTypesSection } from "../entry-types/EntryTypesSection";
+import { TemplatesSection } from "../checklists/TemplatesSection";
 import { HolidaysSection } from "./HolidaysSection";
 import { VoiceSection } from "./VoiceSection";
 import { WasteSection } from "./WasteSection";
@@ -97,6 +98,7 @@ function AreaContent({ area }: { area: Area }) {
         <>
           <PersonsSection />
           <EntryTypesSection />
+          <TemplatesSection />
         </>
       );
     case "calendar":

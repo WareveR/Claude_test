@@ -337,6 +337,28 @@
     "editItem": "Editar {{title}}",
     "removeItem": "Remover {{title}}"
   },
+  "checklistTemplates": {
+    "title": "Modelos de checklist",
+    "hint": "Listas prontas para começar uma checklist. As incluídas aparecem na língua de cada dispositivo até serem editadas.",
+    "add": "Novo modelo",
+    "itemCount_one": "1 item",
+    "itemCount_other": "{{count}} itens",
+    "restore": "Repor predefinições",
+    "confirmRestore": "Repor os modelos incluídos como vieram? Os seus próprios modelos ficam como estão.",
+    "name": "Nome do modelo",
+    "items": "Itens",
+    "itemLabel": "Item {{n}}",
+    "moveUp": "Subir {{title}}",
+    "moveDown": "Descer {{title}}",
+    "delete": "Apagar modelo",
+    "confirmDelete": "Apagar o modelo \"{{name}}\"? As checklists feitas a partir dele ficam como estão.",
+    "startFrom": "Começar a partir de",
+    "blank": "Checklist em branco",
+    "preview_one": "1 item: {{items}}",
+    "preview_other": "{{count}} itens: {{items}}",
+    "saveAs": "Guardar como modelo",
+    "saved": "Guardado como o modelo \"{{name}}\"."
+  },
   "filter": {
     "title": "Filtro de Pessoas",
     "noneHint": "Sem ninguém escolhido, aparecem todos.",
