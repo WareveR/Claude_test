@@ -16,7 +16,8 @@ export function weatherKind(code: number): WeatherKind {
   return "rain"; // drizzle 51–57 and rain 61–67
 }
 
-export type DayWeather = { date: PlainDate; code: number; max: number; min: number };
+/** A day; `rain` is the highest hourly chance of rain, absent in forecasts cached before it. */
+export type DayWeather = { date: PlainDate; code: number; max: number; min: number; rain?: number };
 /** One hour, `time` as the location's wall clock `YYYY-MM-DDTHH:MM`; `rain` is a percentage. */
 export type HourWeather = { time: string; code: number; temp: number; rain: number };
 
@@ -45,7 +46,7 @@ export function forecastQuery(place: Pick<WeatherPlace, "latitude" | "longitude"
   return new URLSearchParams({
     latitude: String(place.latitude),
     longitude: String(place.longitude),
-    daily: "weather_code,temperature_2m_max,temperature_2m_min",
+    daily: "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max",
     hourly: "weather_code,temperature_2m,precipitation_probability",
     timezone: "auto",
     forecast_days: String(OPEN_METEO_DAYS),
@@ -72,8 +73,15 @@ export function parseForecast(body: unknown): Forecast {
     const code = daily.weather_code?.[i];
     const max = daily.temperature_2m_max?.[i];
     const min = daily.temperature_2m_min?.[i];
+    const rain = daily.precipitation_probability_max?.[i];
     if (typeof date === "string" && isNumber(code) && isNumber(max) && isNumber(min)) {
-      days.push({ date, code, max: Math.round(max), min: Math.round(min) });
+      days.push({
+        date,
+        code,
+        max: Math.round(max),
+        min: Math.round(min),
+        ...(isNumber(rain) && { rain: Math.round(rain) }),
+      });
     }
   });
   const hours: HourWeather[] = [];

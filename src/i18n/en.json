@@ -410,7 +410,8 @@
       "thunder": "Thunder",
       "snow": "Snow",
       "fog": "Fog"
-    }
+    },
+    "rainChance": "Chance of rain"
   },
   "voice": {
     "title": "Voice Entry",

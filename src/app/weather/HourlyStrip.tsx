@@ -2,7 +2,7 @@ import { placeClock } from "../../core/weather";
 import { useNow } from "../shell/useNow";
 import { ForecastButton } from "./ForecastButton";
 import { useWeather } from "./model";
-import { WeatherIcon } from "./WeatherIcon";
+import { RainChance, WeatherIcon } from "./WeatherIcon";
 
 /** Today's remaining hours in the place's own clock: spread across wide screens, scrolling sideways on narrow ones. */
 export function HourlyStrip() {
@@ -20,12 +20,14 @@ export function HourlyStrip() {
           <span
             key={h.time}
             data-testid="hour-cell"
-            className="flex min-w-10 flex-1 shrink-0 basis-0 flex-col items-center gap-0.5 text-xs tabular-nums"
+            className="flex min-w-12 flex-1 shrink-0 basis-0 flex-col items-center gap-0.5 text-xs tabular-nums lg:flex-row lg:justify-center lg:gap-2 lg:text-sm"
           >
-            <span className="text-muted">{h.time.slice(11, 13)}</span>
-            <WeatherIcon code={h.code} />
+            <span className="font-semibold">{Number(h.time.slice(11, 13))}h</span>
+            <WeatherIcon code={h.code} size={20} />
             <span>{h.temp}°</span>
-            <span className="text-muted">{h.rain}%</span>
+            <span className="text-muted">
+              <RainChance percent={h.rain} size={12} />
+            </span>
           </span>
         ))}
       </ForecastButton>

@@ -78,15 +78,26 @@ export function MonthGrid({
               aria-current={day === selected ? "date" : undefined}
               className={`flex min-h-16 flex-col gap-0.5 border-b border-l border-line p-0.5 text-left ${names ? "bg-holiday" : weekday(day) >= 5 ? "bg-weekend" : ""} ${inMonth ? "" : "opacity-40"} ${day === selected ? "outline-2 -outline-offset-2 outline-accent" : ""}`}
             >
-              <span
-                className={`self-start px-1 text-xs tabular-nums lg:text-sm ${day === today ? "rounded-full bg-accent text-accent-ink" : names ? "text-holiday-ink" : weekday(day) >= 5 ? "text-weekend-ink" : ""}`}
-              >
-                {Number(day.slice(8))}
+              {/* The day's number and its weather share the top line. */}
+              <span className="flex items-start justify-between gap-1">
+                <span
+                  className={`px-1 text-xs font-semibold tabular-nums lg:text-sm ${day === today ? "rounded-full bg-accent text-accent-ink" : names ? "text-holiday-ink" : weekday(day) >= 5 ? "text-weekend-ink" : ""}`}
+                >
+                  {Number(day.slice(8))}
+                </span>
+                {forecast && (
+                  <WeatherBadge
+                    day={forecast}
+                    faded={forecast.faded}
+                    size={14}
+                    className="min-w-0 overflow-hidden text-[10px] leading-tight lg:text-xs"
+                  />
+                )}
               </span>
               {names && (
                 <span
                   data-testid={`holiday-${day}`}
-                  className="truncate text-[10px] leading-tight text-holiday-ink"
+                  className="truncate text-[10px] leading-tight text-holiday-ink lg:text-xs"
                 >
                   {names.join(" · ")}
                 </span>
@@ -95,19 +106,11 @@ export function MonthGrid({
                 <span
                   key={note}
                   data-testid={`note-${day}`}
-                  className="truncate text-[10px] leading-tight text-muted"
+                  className="truncate text-[10px] leading-tight text-muted lg:text-xs"
                 >
                   {note}
                 </span>
               ))}
-              {forecast && (
-                <WeatherBadge
-                  day={forecast}
-                  faded={forecast.faded}
-                  size={12}
-                  className="text-[10px] leading-tight"
-                />
-              )}
               {/* Wide screens have room for more lines per day. */}
               {dayEntries.slice(0, WIDE).map((e, i) => (
                 <span

@@ -28,12 +28,14 @@ test("the first saved place is selected and its weather shows in every view", as
   await page.goto("/");
   await expect(page.getByTestId("hourly-strip")).toBeVisible();
   await expect(page.getByTestId("hour-cell").first()).toContainText("%");
+  await expect(page.getByTestId("hour-cell").first()).toContainText(/\d+h/);
   // Today's sunrise and sunset show without turning the Sun Layer on.
   await expect(page.getByTestId("sun-band")).toContainText(/Sunrise \d\d:\d\d/);
   await expect(page.getByTestId("sun-band")).toContainText(/Daylight \d+ h \d\d/);
 
   await page.getByRole("link", { name: "Week", exact: true }).click();
-  await expect(page.locator('[data-testid^="week-weather-"]').first()).toBeVisible();
+  // The week shows each day's chance of rain too.
+  await expect(page.locator('[data-testid^="week-weather-"]').nth(1)).toContainText("%");
 
   await page.goto("/");
   await page.getByRole("link", { name: "Month", exact: true }).click();

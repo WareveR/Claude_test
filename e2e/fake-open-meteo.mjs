@@ -40,6 +40,7 @@ function forecast() {
       weather_code: days.map((_, i) => codes[i % codes.length]),
       temperature_2m_max: days.map((_, i) => 20 + i),
       temperature_2m_min: days.map((_, i) => 10 + i),
+      precipitation_probability_max: days.map((_, i) => (i * 10) % 100),
     },
     hourly: {
       time: hours,
