@@ -77,7 +77,7 @@ A browser or device holding a Family session that lasts a year from its last use
 _Avoid_: Session, user, client
 
 **Display Mode**:
-A per-device setting for a screen used as a wall display (typically a tablet): the screen stays awake, text is larger, the view returns to today after a few minutes without touch and rolls over at midnight, editing controls are hidden except ticking a Task done, and Private Entries and Tasks show only as "Private". Leaving Display Mode is one step; it is not a separate access level.
+A per-device setting for a screen used as a wall display (typically a tablet): the screen stays awake, text is larger, the view returns to today after a few minutes without touch and rolls over at midnight, editing controls are hidden except ticking a Task done, and Private Entries and Tasks show only as "Private". Display Mode is entered from the "Wall" tab of the view switcher and left with a "Leave wall view" button in the header; it is not a separate access level.
 _Avoid_: Kiosk, read-only mode, wall mode
 
 **Task**:
@@ -97,7 +97,7 @@ A place saved for the weather forecast by searching a town name; the Family keep
 _Avoid_: Home location, city, weather city
 
 **Reminder**:
-A phone notification sent a set time before an Entry or one of its Occurrences ("1 day before", "1 hour before"); an Entry has zero or more, defaulted by its Entry Type. All-day Entries remind at 09:00 in the Family Time Zone; a dated Task reminds at its due time, or 09:00 on its due day; a Checklist reminds at 09:00 on the first day of its period. The notification shows the title and time, never the notes (only the time for a Private one). Each Signed-in Device chooses which Persons it is reminded about, or switches Reminders off; Display Mode devices get none.
+A phone notification sent a set time before an Entry or one of its Occurrences ("1 day before", "1 hour before"); an Entry has zero or more, defaulted by its Entry Type. All-day Entries remind at 09:00 in the Family Time Zone; a dated Task reminds at its due time, or 09:00 on its due day; a Checklist reminds at 09:00 on the first day of its period. The notification shows the title and time, never the notes (only the time for a Private one). Each Signed-in Device chooses which Persons it is reminded about, or switches Reminders off; a wall tablet's are set in its own Settings like any device.
 _Avoid_: Alert, alarm, notification (the delivery, not the setting)
 
 **Calendar Feed**:
