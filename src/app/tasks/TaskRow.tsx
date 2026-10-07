@@ -10,6 +10,7 @@ import { useSignedIn } from "../family";
 import type { Person } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
 import { useTick, type Task } from "./model";
+import { Tick } from "../ui/Toggle";
 
 /** One Task with its tick box; done ones are struck through. */
 export function TaskRow({
@@ -43,9 +44,8 @@ export function TaskRow({
     : null;
   return (
     <li className="flex items-center gap-3 py-2" data-testid="task">
-      <input
-        type="checkbox"
-        className="size-5"
+      <Tick
+        className="-my-2 -ml-2"
         aria-label={t("tasks.tick", { title: task.title })}
         checked={done}
         disabled={tick.isPending || !online}

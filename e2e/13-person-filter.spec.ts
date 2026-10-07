@@ -21,7 +21,7 @@ test("the Person Filter narrows the Tasks view and is remembered", async ({ page
   await page.getByLabel("Person filter").first().click();
   const panel = page.getByRole("group", { name: "Person filter" });
   await panel.getByRole("checkbox", { name: "Caio" }).check();
-  await panel.getByRole("checkbox", { name: "Include Family-wide" }).uncheck();
+  await panel.getByRole("switch", { name: "Include Family-wide" }).uncheck();
   await expect(page.getByText("Caio's homework")).toBeVisible();
   await expect(page.getByText("Fix the bike")).toHaveCount(0);
 
@@ -30,6 +30,6 @@ test("the Person Filter narrows the Tasks view and is remembered", async ({ page
   await expect(page.getByText("Fix the bike")).toHaveCount(0);
 
   await page.getByLabel("Person filter").first().click();
-  await panel.getByRole("checkbox", { name: "Include Family-wide" }).check();
+  await panel.getByRole("switch", { name: "Include Family-wide" }).check();
   await expect(page.getByText("Fix the bike")).toBeVisible();
 });

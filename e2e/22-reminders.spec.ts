@@ -11,7 +11,7 @@ test("a device chooses its Reminders and the choice persists", async ({ page }) 
   });
   await expect(section.getByRole("button", { name: "Allow notifications" })).toBeVisible();
 
-  const on = section.getByRole("checkbox", { name: "Reminders on" });
+  const on = section.getByRole("switch", { name: "Reminders on" });
   await expect(on).toBeChecked();
   await on.click();
   await expect(on).not.toBeChecked();
@@ -33,10 +33,10 @@ test("a device chooses its Reminders and the choice persists", async ({ page }) 
   await expect(section.getByRole("button", { name: "Allow notifications" })).toBeVisible();
 
   // Wait for each save to land before reloading or moving on.
-  await section.getByRole("checkbox", { name: "Reminders on" }).click();
-  await expect(section.getByRole("checkbox", { name: "Reminders on" })).not.toBeChecked();
+  await section.getByRole("switch", { name: "Reminders on" }).click();
+  await expect(section.getByRole("switch", { name: "Reminders on" })).not.toBeChecked();
   await page.reload();
-  await expect(section.getByRole("checkbox", { name: "Reminders on" })).not.toBeChecked();
-  await section.getByRole("checkbox", { name: "Reminders on" }).click();
-  await expect(section.getByRole("checkbox", { name: "Reminders on" })).toBeChecked();
+  await expect(section.getByRole("switch", { name: "Reminders on" })).not.toBeChecked();
+  await section.getByRole("switch", { name: "Reminders on" }).click();
+  await expect(section.getByRole("switch", { name: "Reminders on" })).toBeChecked();
 });

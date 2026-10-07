@@ -15,6 +15,7 @@ import { ViewNav } from "../shell/ViewNav";
 import { useTasks, type Task } from "./model";
 import { TaskRow } from "./TaskRow";
 import { BUTTON, BUTTON_PRIMARY } from "../ui/button";
+import { Switch } from "../ui/Toggle";
 
 const GROUPS = ["overdue", "today", "upcoming", "noDate"] as const;
 type Group = keyof TaskGroups<Task>;
@@ -106,11 +107,7 @@ export function TasksView() {
           ),
         )}
         <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={showDone}
-            onChange={(e) => setShowDone(e.target.checked)}
-          />
+          <Switch checked={showDone} onChange={(e) => setShowDone(e.target.checked)} />
           {t("tasks.showDone", { count: count("done") })}
         </label>
         {showDone && count("done") > 0 && section("done", null)}

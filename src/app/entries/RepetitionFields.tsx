@@ -4,6 +4,7 @@ import { addDays, formatPlainDate, weekday, type PlainDate } from "../../core/pl
 import type { Repetition } from "../../core/repetition";
 import { useSignedIn } from "../family";
 import { Field, TextInput } from "../screens/form";
+import { Chip } from "../ui/Toggle";
 
 const INPUT = "rounded-md border border-line bg-surface px-3 py-2 text-base text-ink";
 const MONDAY = "2026-10-05";
@@ -67,19 +68,18 @@ export function RepetitionFields({
           {Array.from({ length: 7 }, (_, d) => {
             const days = value.weekdays ?? [weekday(start)];
             return (
-              <label key={d} className="flex items-center gap-1">
-                <input
-                  type="checkbox"
-                  checked={days.includes(d)}
-                  onChange={(e) => {
-                    const next = e.target.checked ? [...days, d] : days.filter((x) => x !== d);
-                    if (next.length > 0) set({ weekdays: next.sort() });
-                  }}
-                />
+              <Chip
+                key={d}
+                checked={days.includes(d)}
+                onChange={(e) => {
+                  const next = e.target.checked ? [...days, d] : days.filter((x) => x !== d);
+                  if (next.length > 0) set({ weekdays: next.sort() });
+                }}
+              >
                 <span className="first-letter:uppercase">
                   {formatPlainDate(addDays(MONDAY, d), locale, { weekday: "short" })}
                 </span>
-              </label>
+              </Chip>
             );
           })}
         </div>

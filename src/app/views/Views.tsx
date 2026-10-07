@@ -25,6 +25,8 @@ import { matchesFilter } from "../../core/person-filter";
 import { useEntryTypes } from "../entry-types/model";
 import { useHolidays } from "../holidays/model";
 import { useDayNotes, useSunTimes } from "../layers/model";
+import { NoteLine } from "../layers/NoteLine";
+import { SunriseIcon, SunsetIcon } from "../weather/WeatherIcon";
 import { useSignedIn } from "../family";
 import { usePersons } from "../persons/model";
 import { useNow } from "../shell/useNow";
@@ -111,8 +113,13 @@ function SunTimes({ day }: { day: PlainDate }) {
   const sun = useSunTimes(day);
   if (!sun) return null;
   return (
-    <span data-testid="sun-times" className="text-sm text-muted tabular-nums">
-      <span aria-hidden>🌅</span> {sun.rise ?? "–"} · <span aria-hidden>🌇</span> {sun.set ?? "–"}
+    <span
+      data-testid="sun-times"
+      className="inline-flex items-center gap-1 text-sm text-muted tabular-nums"
+    >
+      <span aria-hidden className="inline-flex items-center gap-1">
+        <SunriseIcon size={14} /> {sun.rise ?? "–"} · <SunsetIcon size={14} /> {sun.set ?? "–"}
+      </span>
       <span className="sr-only">
         {t("layers.sunrise")} {sun.rise}, {t("layers.sunset")} {sun.set}
       </span>
@@ -288,7 +295,7 @@ function Month({ first }: { first: PlainDate }) {
             )}
             {notes.get(selected)?.map((note) => (
               <p key={note} className="text-sm text-muted">
-                {note}
+                <NoteLine note={note} size={14} />
               </p>
             ))}
             <div className="-mx-4">

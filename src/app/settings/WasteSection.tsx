@@ -5,6 +5,7 @@ import { BINS, type Bin, type WasteCollection } from "../../core/waste";
 import { api, type Status } from "../api";
 import { useSignedIn } from "../family";
 import { formatLocale } from "../../core/languages";
+import { Tick } from "../ui/Toggle";
 
 const MONDAY = "2026-10-05";
 
@@ -63,8 +64,7 @@ export function WasteSection() {
                 <th className="py-1 pr-2 text-left font-normal">{t(`waste.bins.${bin}`)}</th>
                 {weekdays.map((name, day) => (
                   <td key={name} className="text-center">
-                    <input
-                      type="checkbox"
+                    <Tick
                       aria-label={`${t(`waste.bins.${bin}`)} · ${name}`}
                       checked={has(bin, day)}
                       disabled={save.isPending}
