@@ -119,8 +119,8 @@ test("Edit, and turning readback off, open the form filled in", async ({ page })
   await expect(page).toHaveURL(/\/tasks\/new$/);
   await expect(page.getByLabel("Title")).toHaveValue("Voice call plumber");
 
-  await page.goto("/settings");
-  const section = page.locator("section", {
+  await page.goto("/settings/device");
+  const section = page.locator("section section", {
     has: page.getByRole("heading", { name: "Voice Entry" }),
   });
   const readback = section.getByRole("checkbox");
@@ -134,7 +134,7 @@ test("Edit, and turning readback off, open the form filled in", async ({ page })
   await expect(page).toHaveURL(/\/tasks\/new$/);
   await expect(page.getByLabel("Title")).toHaveValue("Voice call plumber");
 
-  await page.goto("/settings");
+  await page.goto("/settings/device");
   await readback.click();
   await expect(readback).toBeChecked();
 });

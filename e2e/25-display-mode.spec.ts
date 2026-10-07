@@ -72,7 +72,7 @@ test("the Wall view shows the board", async ({ page }) => {
   await addTask(page, "Secret errand", { private: true });
 
   // A weather place, so the hourly strip has something to show.
-  await page.goto("/settings");
+  await page.goto("/settings/calendar");
   await page.getByLabel("Town").fill("Lis");
   await page.getByRole("button", { name: "Search", exact: true }).click();
   await page.getByRole("button", { name: "Save Lisboa" }).click();

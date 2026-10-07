@@ -32,7 +32,7 @@ function PersonForm({ person }: { person?: Person }) {
     await queryClient.invalidateQueries({ queryKey: ["persons"] });
     // A date of birth keeps the Person's Birthday Entry in sync.
     await queryClient.invalidateQueries({ queryKey: ["entries"] });
-    navigate("/settings");
+    navigate("/settings/family");
   };
   const save = useMutation({
     mutationFn: () => {
@@ -78,7 +78,7 @@ function PersonForm({ person }: { person?: Person }) {
   return (
     <main className="mx-auto flex max-w-xl flex-col gap-4 p-4">
       <div className="flex items-center gap-3">
-        <Link to="/settings" className="text-sm underline">
+        <Link to="/settings/family" className="text-sm underline">
           {t("settings.back")}
         </Link>
         <h1 className="text-xl font-semibold">{person ? person.name : t("persons.add")}</h1>
@@ -154,7 +154,7 @@ function PersonForm({ person }: { person?: Person }) {
           busy={save.isPending || uploading}
           saveLabel={t("persons.save")}
           cancelLabel={t("settings.cancel")}
-          onCancel={() => navigate("/settings")}
+          onCancel={() => navigate("/settings/family")}
         />
       </form>
       {person && (

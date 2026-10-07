@@ -5,7 +5,7 @@ test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 
 test("the Family creates, replaces and revokes a Calendar Feed", async ({ page }) => {
   await signIn(page);
-  await page.goto("/settings");
+  await page.goto("/settings/calendar");
   await page.getByLabel("Feed name").fill("Work phone");
   await page.getByRole("button", { name: "Create Feed" }).click();
 

@@ -5,8 +5,8 @@ test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 
 test("a device chooses its Reminders and the choice persists", async ({ page }) => {
   await signIn(page);
-  await page.goto("/settings");
-  const section = page.locator("section", {
+  await page.goto("/settings/calendar");
+  const section = page.locator("section section", {
     has: page.getByRole("heading", { name: "Reminders" }),
   });
   await expect(section.getByRole("button", { name: "Allow notifications" })).toBeVisible();

@@ -27,7 +27,7 @@ test("Portugal's Public Holidays show by default and each device can hide them",
 
 test("the Family adds and removes holiday countries in Settings", async ({ page }) => {
   await signIn(page);
-  await page.goto("/settings");
+  await page.goto("/settings/calendar");
   await expect(page.getByRole("button", { name: "Remove Portugal" })).toBeVisible();
   await page.getByLabel("Country").selectOption("ES");
   await page.getByRole("button", { name: "Add", exact: true }).click();
@@ -36,7 +36,7 @@ test("the Family adds and removes holiday countries in Settings", async ({ page 
   await page.goto("/month/2026-10?day=2026-10-12");
   await expect(page.getByTestId("holiday-2026-10-12")).toBeVisible();
 
-  await page.goto("/settings");
+  await page.goto("/settings/calendar");
   await page.getByRole("button", { name: "Remove Spain" }).click();
   await expect(page.getByRole("button", { name: "Remove Spain" })).toHaveCount(0);
 });

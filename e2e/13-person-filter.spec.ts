@@ -8,7 +8,7 @@ test("the Person Filter narrows the Tasks view and is remembered", async ({ page
   await page.goto("/settings/persons/new");
   await page.getByLabel("Name", { exact: true }).fill("Caio");
   await page.getByRole("button", { name: "Save" }).click();
-  await expect(page).toHaveURL(/\/settings$/);
+  await expect(page).toHaveURL(/\/settings\/family$/);
 
   await page.goto("/tasks");
   await page.getByRole("link", { name: "New task" }).click();

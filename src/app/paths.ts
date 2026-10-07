@@ -10,5 +10,6 @@ export const paths = {
   display: () => "/display",
   tasks: () => "/tasks",
   settings: () => "/settings",
+  settingsArea: (area: string) => `/settings/${area}`,
   errorLog: () => "/settings/errors",
 };

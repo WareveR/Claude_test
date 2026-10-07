@@ -7,7 +7,7 @@ test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 
 test("the Family downloads a full Export and every Entry as .ics", async ({ page }) => {
   await signIn(page);
-  await page.goto("/settings");
+  await page.goto("/settings/account");
   await expect(page.getByText("No full Export yet.")).toBeVisible();
 
   const zipDownload = page.waitForEvent("download");

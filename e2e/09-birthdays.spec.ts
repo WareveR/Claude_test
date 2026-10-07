@@ -9,7 +9,7 @@ test("a date of birth keeps a Birthday with the age on the calendar", async ({ p
   await page.getByLabel("Name", { exact: true }).fill("Bia");
   await page.getByLabel("Date of birth (optional)").fill("2016-10-20");
   await page.getByRole("button", { name: "Save" }).click();
-  await expect(page).toHaveURL(/\/settings$/);
+  await expect(page).toHaveURL(/\/settings\/family$/);
 
   await page.goto("/month/2026-10?day=2026-10-20");
   const birthday = page.getByTestId("picked-day").getByRole("link", { name: /Bia, 10/ });
@@ -22,11 +22,11 @@ test("a date of birth keeps a Birthday with the age on the calendar", async ({ p
   await expect(page).not.toHaveURL(/\/entries\//);
 
   // Archiving asks whether to keep the Birthday; kept, it becomes Family-wide and editable.
-  await page.goto("/settings");
+  await page.goto("/settings/family");
   await page.getByRole("link", { name: /Bia/ }).click();
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Archive" }).click();
-  await expect(page).toHaveURL(/\/settings$/);
+  await expect(page).toHaveURL(/\/settings\/family$/);
   await page.goto("/month/2026-10?day=2026-10-20");
   await page
     .getByTestId("picked-day")

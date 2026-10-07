@@ -22,8 +22,8 @@ test("a used or unknown recovery link is refused", async ({ page }) => {
 
 test("changing the recovery email waits for the new address to confirm", async ({ page }) => {
   await signIn(page);
-  await page.goto("/settings");
-  const section = page.locator("section", {
+  await page.goto("/settings/account");
+  const section = page.locator("section section", {
     has: page.getByRole("heading", { name: "Recovery email" }),
   });
   await section.getByLabel("Current password").fill(PASSWORD);

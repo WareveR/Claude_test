@@ -24,6 +24,7 @@ test("set up the Family, move between views, sign out and back in", async ({ pag
   await expect(page).toHaveURL(/\/month\/2026-10$/);
 
   await page.getByRole("link", { name: "Settings" }).click();
+  await page.getByRole("link", { name: "This device" }).click();
   await page.getByLabel("Language on this device").selectOption("pt-PT");
   await expect(page.getByRole("heading", { name: "Definições" })).toBeVisible();
   await page.getByLabel("Idioma deste dispositivo").selectOption("en");
@@ -38,9 +39,9 @@ test("set up the Family, move between views, sign out and back in", async ({ pag
   await expect(page.getByTestId("header-time")).toBeVisible();
 
   await page.getByRole("link", { name: "Settings" }).click();
-  await expect(page.getByText("this device", { exact: true })).toBeVisible();
+  await page.getByRole("link", { name: "Account and security" }).click();
   page.on("dialog", (dialog) => dialog.accept());
-  const passwordSection = page.locator("section", {
+  const passwordSection = page.locator("section section", {
     has: page.getByRole("heading", { name: "Change the Family Password" }),
   });
   await passwordSection.getByLabel("Current password").fill("correct horse battery");

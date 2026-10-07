@@ -27,7 +27,7 @@ test("a failure shows a code and details, can be reported and is in the Error lo
   await expect(notice).toHaveCount(0);
 
   await page.unroute("**/api/tasks");
-  await page.goto("/settings");
+  await page.goto("/settings/account");
   await page.getByRole("link", { name: "Error log" }).click();
   const row = page.getByRole("listitem").filter({ hasText: code });
   await expect(row).toContainText("GET /tasks");
