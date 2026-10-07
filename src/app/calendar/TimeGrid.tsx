@@ -7,6 +7,7 @@ import type { EntryType } from "../entry-types/model";
 import type { Shown as Entry } from "../entries/model";
 import type { Person } from "../persons/model";
 import { EntryBlock } from "./EntryBlock";
+import { NoteLine } from "../layers/NoteLine";
 
 const HOUR_PX = 44;
 const DAY_MINUTES = 24 * 60;
@@ -87,7 +88,7 @@ export function TimeGrid({
                 data-testid={`note-${day}`}
                 className="truncate px-1 text-[11px] font-normal text-muted lg:text-xs"
               >
-                {note}
+                <NoteLine note={note} />
               </div>
             ))}
           </div>

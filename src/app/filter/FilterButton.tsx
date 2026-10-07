@@ -5,6 +5,7 @@ import { isFiltering } from "../../core/person-filter";
 import { usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
 import { setPersonFilter, usePersonFilter } from "./model";
+import { Chip, Switch } from "../ui/Toggle";
 
 /** The Person Filter panel: several Persons, the Family-wide switch, and the Calendar Layers to show. */
 export function FilterButton() {
@@ -39,29 +40,28 @@ export function FilterButton() {
         aria-label={t("filter.title")}
       >
         <p className="font-medium">{t("filter.title")}</p>
-        {persons.map((p) => (
-          <label key={p.id} className="flex items-center gap-2">
-            <input
-              type="checkbox"
+        <div className="flex flex-wrap gap-2">
+          {persons.map((p) => (
+            <Chip
+              key={p.id}
               checked={filter.personIds.includes(p.id)}
               onChange={(e) => toggle(p.id, e.target.checked)}
-            />
-            <PersonAvatar person={p} size={22} />
-            {p.name}
-          </label>
-        ))}
+            >
+              <PersonAvatar person={p} size={22} />
+              {p.name}
+            </Chip>
+          ))}
+        </div>
         <p className="text-xs text-muted">{t("filter.noneHint")}</p>
         <label className="flex items-center gap-2 border-t border-line pt-2">
-          <input
-            type="checkbox"
+          <Switch
             checked={filter.familyWide}
             onChange={(e) => setPersonFilter({ ...filter, familyWide: e.target.checked })}
           />
           {t("filter.familyWide")}
         </label>
         <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
+          <Switch
             checked={filter.holidays}
             onChange={(e) => setPersonFilter({ ...filter, holidays: e.target.checked })}
           />
@@ -70,8 +70,7 @@ export function FilterButton() {
         <p className="border-t border-line pt-2 font-medium">{t("layers.title")}</p>
         {LAYERS.map((layer) => (
           <label key={layer} className="flex items-center gap-2">
-            <input
-              type="checkbox"
+            <Switch
               checked={filter.layers.includes(layer)}
               onChange={(e) =>
                 setPersonFilter({

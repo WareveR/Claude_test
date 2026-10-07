@@ -621,5 +621,8 @@
       "glass": "Vidro (verde)",
       "organic": "Orgânicos (castanho)"
     }
+  },
+  "time": {
+    "minutesOf": "{{label}}: minutos"
   }
 }

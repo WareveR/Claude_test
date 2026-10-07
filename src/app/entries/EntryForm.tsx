@@ -25,6 +25,7 @@ import { ScopeDialog, type Scope } from "./ScopeDialog";
 import { RepetitionFields } from "./RepetitionFields";
 import { readyToEdit } from "../offline/fresh";
 import { BUTTON, BUTTON_DANGER } from "../ui/button";
+import { Chip, Switch } from "../ui/Toggle";
 import { TimeSelect } from "../ui/TimeSelect";
 
 const INPUT = "rounded-md border border-line bg-surface px-3 py-2 text-base text-ink";
@@ -265,11 +266,7 @@ function EntryForm({
           </Field>
 
           <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={time.allDay}
-              onChange={(e) => toggleAllDay(e.target.checked)}
-            />
+            <Switch checked={time.allDay} onChange={(e) => toggleAllDay(e.target.checked)} />
             {t("entries.allDay")}
           </label>
           {time.allDay ? (
@@ -308,14 +305,14 @@ function EntryForm({
                 <Field label={t("entries.startTime")}>
                   <TimeSelect
                     required
+                    label={t("entries.startTime")}
                     value={time.startTime}
-                    onChange={(e) => set({ time: moveStart(time, time.startDate, e.target.value) })}
+                    onChange={(value) => set({ time: moveStart(time, time.startDate, value) })}
                   />
                 </Field>
               </div>
               <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
+                <Switch
                   checked={hasEnd}
                   onChange={(e) =>
                     setTime(
@@ -344,8 +341,9 @@ function EntryForm({
                   <Field label={t("entries.endTime")}>
                     <TimeSelect
                       required
+                      label={t("entries.endTime")}
                       value={time.endTime ?? ""}
-                      onChange={(e) => setTime({ endTime: e.target.value })}
+                      onChange={(value) => setTime({ endTime: value })}
                     />
                   </Field>
                 </div>
@@ -365,21 +363,20 @@ function EntryForm({
               {persons.data
                 ?.filter((p) => !p.archived || draft.personIds.includes(p.id))
                 .map((p) => (
-                  <label key={p.id} className="flex items-center gap-1">
-                    <input
-                      type="checkbox"
-                      checked={draft.personIds.includes(p.id)}
-                      onChange={(e) =>
-                        set({
-                          personIds: e.target.checked
-                            ? [...draft.personIds, p.id]
-                            : draft.personIds.filter((id) => id !== p.id),
-                        })
-                      }
-                    />
+                  <Chip
+                    key={p.id}
+                    checked={draft.personIds.includes(p.id)}
+                    onChange={(e) =>
+                      set({
+                        personIds: e.target.checked
+                          ? [...draft.personIds, p.id]
+                          : draft.personIds.filter((id) => id !== p.id),
+                      })
+                    }
+                  >
                     <PersonAvatar person={p} size={24} />
                     {p.name}
-                  </label>
+                  </Chip>
                 ))}
             </div>
             <p className="text-xs text-muted">{t("entries.familyWideHint")}</p>
@@ -387,8 +384,7 @@ function EntryForm({
           {types.find((ty) => ty.id === draft.entryTypeId)?.builtinKey === "birthday" &&
             !synced && (
               <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
+                <Switch
                   checked={Boolean(draft.birthYearKnown)}
                   onChange={(e) => set({ birthYearKnown: e.target.checked })}
                 />
@@ -459,30 +455,25 @@ function EntryForm({
           <legend className="mb-1 font-medium">{t("entries.reminders")}</legend>
           <div className="flex flex-wrap gap-3">
             {reminderChoices.map((minutes) => (
-              <label key={minutes} className="flex items-center gap-1">
-                <input
-                  type="checkbox"
-                  checked={draft.reminders.includes(minutes)}
-                  onChange={(e) =>
-                    set({
-                      reminders: e.target.checked
-                        ? [...draft.reminders, minutes]
-                        : draft.reminders.filter((r) => r !== minutes),
-                    })
-                  }
-                />
+              <Chip
+                key={minutes}
+                checked={draft.reminders.includes(minutes)}
+                onChange={(e) =>
+                  set({
+                    reminders: e.target.checked
+                      ? [...draft.reminders, minutes]
+                      : draft.reminders.filter((r) => r !== minutes),
+                  })
+                }
+              >
                 {reminderLabel(minutes, t)}
-              </label>
+              </Chip>
             ))}
           </div>
         </fieldset>
 
         <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={draft.private}
-            onChange={(e) => set({ private: e.target.checked })}
-          />
+          <Switch checked={draft.private} onChange={(e) => set({ private: e.target.checked })} />
           {t("entries.private")}
         </label>
         <p className="-mt-3 text-xs text-muted">{t("entries.privateHint")}</p>

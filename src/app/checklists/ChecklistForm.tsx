@@ -17,6 +17,7 @@ import { templateText } from "../../core/checklist-template";
 import { useTemplates } from "./templates";
 import { readyToEdit } from "../offline/fresh";
 import { BUTTON, BUTTON_DANGER } from "../ui/button";
+import { Chip, Switch } from "../ui/Toggle";
 
 /** A Checklist's settings: at /checklists/new, or behind Edit on its detail page. */
 export function ChecklistPage() {
@@ -188,8 +189,7 @@ function ChecklistForm({ checklist }: { checklist?: Checklist }) {
         )}
         {(draft.startDate || draft.repetition) && (
           <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
+            <Switch
               checked={draft.remindAtStart}
               onChange={(e) => set({ remindAtStart: e.target.checked })}
             />
@@ -203,21 +203,20 @@ function ChecklistForm({ checklist }: { checklist?: Checklist }) {
             {persons.data
               ?.filter((p) => !p.archived || draft.personIds.includes(p.id))
               .map((p) => (
-                <label key={p.id} className="flex items-center gap-1">
-                  <input
-                    type="checkbox"
-                    checked={draft.personIds.includes(p.id)}
-                    onChange={(e) =>
-                      set({
-                        personIds: e.target.checked
-                          ? [...draft.personIds, p.id]
-                          : draft.personIds.filter((id) => id !== p.id),
-                      })
-                    }
-                  />
+                <Chip
+                  key={p.id}
+                  checked={draft.personIds.includes(p.id)}
+                  onChange={(e) =>
+                    set({
+                      personIds: e.target.checked
+                        ? [...draft.personIds, p.id]
+                        : draft.personIds.filter((id) => id !== p.id),
+                    })
+                  }
+                >
                   <PersonAvatar person={p} size={24} />
                   {p.name}
-                </label>
+                </Chip>
               ))}
           </div>
           <p className="text-xs text-muted">{t("checklists.personsHint")}</p>

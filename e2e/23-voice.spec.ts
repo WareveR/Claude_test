@@ -123,7 +123,7 @@ test("Edit, and turning readback off, open the form filled in", async ({ page })
   const section = page.locator("section section", {
     has: page.getByRole("heading", { name: "Voice Entry" }),
   });
-  const readback = section.getByRole("checkbox");
+  const readback = section.getByRole("switch");
   await expect(readback).toBeChecked();
   await readback.click();
   await expect(readback).not.toBeChecked();

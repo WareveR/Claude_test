@@ -99,6 +99,7 @@ test("a Task dragged onto a Checklist moves in, and items swipe away with Undo",
   await page.goto("/tasks/new");
   await page.getByLabel("Title").fill("Pack the pencil case");
   await page.getByRole("button", { name: "Save" }).click();
+  await expect(page).not.toHaveURL(/\/tasks\/new$/);
   await page.goto("/tasks");
 
   const task = page.getByTestId("task").filter({ hasText: "Pack the pencil case" });
@@ -145,6 +146,7 @@ test("a loose Task's form adds a copy of it to a Checklist", async ({ page }) =>
   await page.goto("/tasks/new");
   await page.getByLabel("Title").fill("Buy glue sticks");
   await page.getByRole("button", { name: "Save" }).click();
+  await expect(page).not.toHaveURL(/\/tasks\/new$/);
   await page.goto("/tasks");
   await page.getByTestId("task").filter({ hasText: "Buy glue sticks" }).getByRole("link").click();
   await page.getByLabel("Which checklist").selectOption({ label: "Back to school" });

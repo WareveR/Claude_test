@@ -15,6 +15,7 @@ import { ErrorText, Field, TextInput } from "../screens/form";
 import { useNow } from "../shell/useNow";
 import { useTasks, useTick, type Task } from "../tasks/model";
 import { BUTTON, BUTTON_DANGER, BUTTON_PRIMARY } from "../ui/button";
+import { Chip, Tick } from "../ui/Toggle";
 import { useChecklists, type Checklist } from "./model";
 import { usePeriodText } from "./period";
 import { useSwipeAway } from "./useSwipeAway";
@@ -222,9 +223,8 @@ function ItemRow({
       style={swipe.style}
       {...swipe.handlers}
     >
-      <input
-        type="checkbox"
-        className="size-5"
+      <Tick
+        className="-my-2 -ml-2"
         aria-label={t("tasks.tick", { title: task.title })}
         checked={done}
         disabled={tick.isPending || !online}
@@ -302,21 +302,18 @@ function ItemEditor({
           {persons
             .filter((p) => !p.archived || personIds.includes(p.id))
             .map((p) => (
-              <label key={p.id} className="flex items-center gap-1">
-                <input
-                  type="checkbox"
-                  checked={personIds.includes(p.id)}
-                  onChange={(e) =>
-                    setPersonIds(
-                      e.target.checked
-                        ? [...personIds, p.id]
-                        : personIds.filter((id) => id !== p.id),
-                    )
-                  }
-                />
+              <Chip
+                key={p.id}
+                checked={personIds.includes(p.id)}
+                onChange={(e) =>
+                  setPersonIds(
+                    e.target.checked ? [...personIds, p.id] : personIds.filter((id) => id !== p.id),
+                  )
+                }
+              >
                 <PersonAvatar person={p} size={24} />
                 {p.name}
-              </label>
+              </Chip>
             ))}
         </div>
       </fieldset>

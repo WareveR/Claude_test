@@ -6,6 +6,7 @@ import { usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
 import { ErrorText, Field, SubmitButton, TextInput } from "../screens/form";
 import { BUTTON } from "../ui/button";
+import { Chip, Switch } from "../ui/Toggle";
 
 type FeedRow = {
   id: string;
@@ -147,33 +148,28 @@ export function FeedsSection() {
             {people
               .filter((p) => !p.archived)
               .map((p) => (
-                <label key={p.id} className="flex items-center gap-1">
-                  <input
-                    type="checkbox"
-                    checked={personIds.includes(p.id)}
-                    onChange={(e) =>
-                      setPersonIds(
-                        e.target.checked
-                          ? [...personIds, p.id]
-                          : personIds.filter((id) => id !== p.id),
-                      )
-                    }
-                  />
+                <Chip
+                  key={p.id}
+                  checked={personIds.includes(p.id)}
+                  onChange={(e) =>
+                    setPersonIds(
+                      e.target.checked
+                        ? [...personIds, p.id]
+                        : personIds.filter((id) => id !== p.id),
+                    )
+                  }
+                >
                   <span aria-hidden>
                     <PersonAvatar person={p} size={24} />
                   </span>
                   {p.name}
-                </label>
+                </Chip>
               ))}
           </div>
           <p className="text-xs text-muted">{t("feeds.noneHint")}</p>
         </fieldset>
         <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={familyWide}
-            onChange={(e) => setFamilyWide(e.target.checked)}
-          />
+          <Switch checked={familyWide} onChange={(e) => setFamilyWide(e.target.checked)} />
           {t("feeds.familyWide")}
         </label>
         {(create.error || replace.error || revoke.error) && (

@@ -15,12 +15,12 @@ test("Portugal's Public Holidays show by default and each device can hide them",
   await page.getByLabel("Person filter").first().click();
   await page
     .getByRole("group", { name: "Person filter" })
-    .getByRole("checkbox", { name: "Show Public Holidays" })
+    .getByRole("switch", { name: "Show Public Holidays" })
     .uncheck();
   await expect(page.getByTestId("holiday-2026-04-25")).toHaveCount(0);
   await page
     .getByRole("group", { name: "Person filter" })
-    .getByRole("checkbox", { name: "Show Public Holidays" })
+    .getByRole("switch", { name: "Show Public Holidays" })
     .check();
   await expect(page.getByTestId("holiday-2026-04-25")).toBeVisible();
 });

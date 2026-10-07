@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../api";
 import { usePersons } from "../persons/model";
 import { BUTTON } from "../ui/button";
+import { Chip, Switch } from "../ui/Toggle";
 
 type DeviceState = {
   id: string;
@@ -143,36 +144,31 @@ export function RemindersSection() {
           </>
         )}
         <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={d.remindersOn}
-            onChange={(e) => update(e.target.checked, ids)}
-          />
+          <Switch checked={d.remindersOn} onChange={(e) => update(e.target.checked, ids)} />
           {t("reminders.switch")}
         </label>
         {d.remindersOn && (
           <fieldset className="flex flex-col gap-1">
             <legend className="text-sm font-medium">{t("reminders.persons")}</legend>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
+            <div className="flex flex-wrap gap-2">
+              <Chip
                 checked={ids === null}
                 onChange={(e) =>
                   update(d.remindersOn, e.target.checked ? null : people.map((p) => p.id))
                 }
-              />
-              {t("reminders.everyone")}
-            </label>
-            {people.map((person) => (
-              <label key={person.id} className="flex items-center gap-2">
-                <input
-                  type="checkbox"
+              >
+                {t("reminders.everyone")}
+              </Chip>
+              {people.map((person) => (
+                <Chip
+                  key={person.id}
                   checked={ids === null || ids.includes(person.id)}
                   onChange={() => toggle(person.id)}
-                />
-                {person.name}
-              </label>
-            ))}
+                >
+                  {person.name}
+                </Chip>
+              ))}
+            </div>
             <p className="text-sm text-muted">{t("reminders.familyWide")}</p>
           </fieldset>
         )}
