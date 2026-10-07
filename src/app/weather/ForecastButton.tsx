@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { forecastSite } from "../../core/weather";
 import { useWeather } from "./model";
@@ -28,37 +29,41 @@ export function ForecastButton({
       >
         {children}
       </button>
-      {asking && site && (
-        <div className="fixed inset-0 z-20 flex items-end justify-center bg-black/40 sm:items-center">
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="forecast-title"
-            className="flex w-full max-w-sm flex-col gap-2 rounded-t-2xl bg-frame p-4 sm:rounded-2xl"
-          >
-            <h2 id="forecast-title" className="font-semibold">
-              {t("weather.confirm", { site: site.name })}
-            </h2>
-            <button
-              type="button"
-              className={button}
-              onClick={() => {
-                window.open(site.url, "_blank", "noopener");
-                setAsking(false);
-              }}
+      {asking &&
+        site &&
+        // On the body: the header's blur would otherwise trap this fixed overlay.
+        createPortal(
+          <div className="fixed inset-0 z-20 flex items-end justify-center bg-black/40 sm:items-center">
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="forecast-title"
+              className="flex w-full max-w-sm flex-col gap-2 rounded-t-2xl bg-frame p-4 sm:rounded-2xl"
             >
-              {t("weather.open")}
-            </button>
-            <button
-              type="button"
-              className="mt-1 self-end text-sm underline"
-              onClick={() => setAsking(false)}
-            >
-              {t("weather.cancel")}
-            </button>
-          </div>
-        </div>
-      )}
+              <h2 id="forecast-title" className="font-semibold">
+                {t("weather.confirm", { site: site.name })}
+              </h2>
+              <button
+                type="button"
+                className={button}
+                onClick={() => {
+                  window.open(site.url, "_blank", "noopener");
+                  setAsking(false);
+                }}
+              >
+                {t("weather.open")}
+              </button>
+              <button
+                type="button"
+                className="mt-1 self-end text-sm underline"
+                onClick={() => setAsking(false)}
+              >
+                {t("weather.cancel")}
+              </button>
+            </div>
+          </div>,
+          document.body,
+        )}
     </>
   );
 }
