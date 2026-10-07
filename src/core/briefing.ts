@@ -182,7 +182,7 @@ export function briefingCandidates(input: BriefingInput, max = MAX_CANDIDATES): 
 
 /** A Person's Briefing: what is theirs and what is Family-wide. */
 export function forPerson(candidates: Candidate[], personId: string): Candidate[] {
-  const filter = { personIds: [personId], familyWide: true, holidays: true };
+  const filter = { personIds: [personId], familyWide: true, holidays: true, layers: [] };
   return candidates.filter((c) => matchesFilter(c.personIds, filter));
 }
 

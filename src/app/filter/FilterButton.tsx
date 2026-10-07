@@ -1,11 +1,12 @@
 import { Filter } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { LAYERS } from "../../core/day-notes";
 import { isFiltering } from "../../core/person-filter";
 import { usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
 import { setPersonFilter, usePersonFilter } from "./model";
 
-/** The Person Filter panel: several Persons and the Family-wide switch. */
+/** The Person Filter panel: several Persons, the Family-wide switch, and the Calendar Layers to show. */
 export function FilterButton() {
   const { t } = useTranslation();
   const filter = usePersonFilter();
@@ -66,6 +67,24 @@ export function FilterButton() {
           />
           {t("filter.holidays")}
         </label>
+        <p className="border-t border-line pt-2 font-medium">{t("layers.title")}</p>
+        {LAYERS.map((layer) => (
+          <label key={layer} className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={filter.layers.includes(layer)}
+              onChange={(e) =>
+                setPersonFilter({
+                  ...filter,
+                  layers: e.target.checked
+                    ? [...filter.layers, layer]
+                    : filter.layers.filter((l) => l !== layer),
+                })
+              }
+            />
+            {t(`layers.names.${layer}`)}
+          </label>
+        ))}
       </div>
     </details>
   );

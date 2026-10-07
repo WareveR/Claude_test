@@ -8,7 +8,7 @@ import {
 } from "./person-filter";
 
 describe("Person Filter", () => {
-  const kids = { personIds: ["ana", "bia"], familyWide: true, holidays: true };
+  const kids = { personIds: ["ana", "bia"], familyWide: true, holidays: true, layers: [] };
 
   it("shows everything when nothing is picked", () => {
     expect(matchesFilter(["dad"], NO_FILTER)).toBe(true);
@@ -40,6 +40,8 @@ describe("Person Filter", () => {
       personIds: ["ana"],
       familyWide: false,
       holidays: true,
+      layers: [],
     });
+    expect(parseFilter({ layers: ["moon", "tides", "sky"] }).layers).toEqual(["moon", "sky"]);
   });
 });
