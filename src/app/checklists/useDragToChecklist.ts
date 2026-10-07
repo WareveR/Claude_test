@@ -3,6 +3,9 @@ import { useEffect, useRef, useState, type DragEvent, type PointerEvent } from "
 /** How far a mouse moves before a press becomes a drag, and how long a finger must rest. */
 const MOVE_PX = 6;
 const LONG_PRESS_MS = 450;
+/** Near the top or bottom edge, the page scrolls so far-away Checklists can be reached. */
+const EDGE_PX = 60;
+const SCROLL_STEP = 12;
 
 const TASK_LINK = '[data-testid="task"] a[href^="/tasks/"]';
 const DROP = "[data-drop-checklist]";
@@ -36,6 +39,8 @@ export function useDragToChecklist(onDrop: (taskId: string, checklistId: string)
     const touch = e.pointerType === "touch";
     let active = false;
     let target: string | null = null;
+    let last = start;
+    let scrolling = 0;
 
     const place = (x: number, y: number) => {
       if (ghost.current) ghost.current.style.transform = `translate(${x + 12}px, ${y + 12}px)`;
@@ -46,8 +51,18 @@ export function useDragToChecklist(onDrop: (taskId: string, checklistId: string)
         setOver(id);
       }
     };
+    const edgeScroll = () => {
+      const dy =
+        last.y < EDGE_PX ? -SCROLL_STEP : last.y > window.innerHeight - EDGE_PX ? SCROLL_STEP : 0;
+      if (dy) {
+        window.scrollBy(0, dy);
+        place(last.x, last.y);
+      }
+      scrolling = window.requestAnimationFrame(edgeScroll);
+    };
     const begin = (x: number, y: number) => {
       active = true;
+      scrolling = window.requestAnimationFrame(edgeScroll);
       window.getSelection()?.removeAllRanges();
       document.body.style.userSelect = "none";
       if (touch) navigator.vibrate?.(15);
@@ -65,6 +80,7 @@ export function useDragToChecklist(onDrop: (taskId: string, checklistId: string)
         if (touch) return end();
         begin(ev.clientX, ev.clientY);
       }
+      last = { x: ev.clientX, y: ev.clientY };
       place(ev.clientX, ev.clientY);
     };
     const up = (ev: globalThis.PointerEvent) => {
@@ -84,6 +100,7 @@ export function useDragToChecklist(onDrop: (taskId: string, checklistId: string)
 
     function end() {
       window.clearTimeout(timer);
+      window.cancelAnimationFrame(scrolling);
       document.removeEventListener("pointermove", move);
       document.removeEventListener("pointerup", up);
       document.removeEventListener("pointercancel", cancel);

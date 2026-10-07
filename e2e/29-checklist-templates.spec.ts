@@ -93,6 +93,8 @@ async function centre(locator: import("@playwright/test").Locator) {
 test("a Task dragged onto a Checklist moves in, and items swipe away with Undo", async ({
   page,
 }) => {
+  // Tall enough for the Task and the Checklist to be on screen together.
+  await page.setViewportSize({ width: 1280, height: 1600 });
   await signIn(page);
   await page.goto("/tasks/new");
   await page.getByLabel("Title").fill("Pack the pencil case");
@@ -133,7 +135,8 @@ test("a Task dragged onto a Checklist moves in, and items swipe away with Undo",
   await drag(page, from, { x: from.x + 250, y: from.y });
   await page.mouse.up();
   await expect(kit).toHaveCount(0);
-  await page.goto("/tasks");
+  // Leaving the page deletes it for good.
+  await page.goBack();
   await expect(school).toContainText("0 of 9");
 });
 

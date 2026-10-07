@@ -107,7 +107,7 @@ const UNDO_MS = 6000;
 
 /**
  * Removing an item with a few seconds to Undo: it is deleted when the time runs out, when
- * another item is removed, or when the page is left.
+ * another item is removed, or when the page or the app is left.
  */
 function useRemoveWithUndo() {
   const queryClient = useQueryClient();
@@ -126,7 +126,21 @@ function useRemoveWithUndo() {
     pending.current = null;
     commit.current(current.task);
   };
-  useEffect(() => () => flush(), []);
+  useEffect(() => {
+    // Leaving the app altogether still deletes it: a keepalive request outlives the page.
+    const leave = () => {
+      const current = pending.current;
+      if (!current) return;
+      window.clearTimeout(current.timer);
+      pending.current = null;
+      void fetch(`/api/tasks/${current.task.id}`, { method: "DELETE", keepalive: true });
+    };
+    window.addEventListener("pagehide", leave);
+    return () => {
+      window.removeEventListener("pagehide", leave);
+      flush();
+    };
+  }, []);
   return {
     waiting,
     remove(task: Task) {
