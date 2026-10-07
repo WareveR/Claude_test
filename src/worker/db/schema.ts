@@ -4,6 +4,7 @@ import type { HolidayPlace } from "../../core/holidays";
 import type { Repetition } from "../../core/repetition";
 import type { Segment } from "../../core/briefing";
 import type { Forecast } from "../../core/weather";
+import type { WasteCollection } from "../../core/waste";
 
 /**
  * The one Family of this installation (ADR-0001) and its Family-wide settings.
@@ -25,6 +26,11 @@ export const family = sqliteTable("family", {
     .$type<HolidayPlace[]>()
     .notNull()
     .default([{ country: "PT" }]),
+  /** Which bins are collected on which weekdays, for the Waste Layer. */
+  wasteCollection: text("waste_collection", { mode: "json" })
+    .$type<WasteCollection>()
+    .notNull()
+    .default([]),
   /** The Weather Location whose forecast every device shows; none shows no weather. */
   selectedWeatherLocationId: text("selected_weather_location_id"),
   /** When a full Export was last downloaded, shown in Settings. */

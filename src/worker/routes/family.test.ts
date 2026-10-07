@@ -28,3 +28,25 @@ describe("Public Holiday places", () => {
     expect(stranger.status).toBe(401);
   });
 });
+
+describe("Rubbish collection", () => {
+  it("starts empty, can be set by any signed-in device and refuses bad days", async () => {
+    const browser = await setUpFamily();
+    const status = (await (await browser.get("/status")).json()) as {
+      family: { wasteCollection: unknown };
+    };
+    expect(status.family.wasteCollection).toEqual([]);
+
+    const collection = [{ bin: "paper", weekdays: [1, 4] }];
+    expect((await browser.request("PUT", "/family/waste", { collection })).status).toBe(200);
+    const after = (await (await browser.get("/status")).json()) as {
+      family: { wasteCollection: unknown };
+    };
+    expect(after.family.wasteCollection).toEqual(collection);
+
+    const bad = await browser.request("PUT", "/family/waste", {
+      collection: [{ bin: "paper", weekdays: [9] }],
+    });
+    expect(bad.status).toBe(400);
+  });
+});

@@ -30,3 +30,24 @@ test("Calendar Layers turned on in the filter panel mark the days", async ({ pag
   }
   await expect(page.getByTestId("note-2026-10-26")).toHaveCount(0);
 });
+
+test("rubbish collection days set in Settings show on the calendar", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/settings/calendar");
+  const glass = page.getByLabel("Glass (green) · Wed");
+  await glass.check();
+  await expect(glass).toBeChecked();
+
+  await page.goto("/month/2026-10");
+  await page.getByLabel("Person filter").first().click();
+  const panel = page.getByRole("group", { name: "Person filter" });
+  await panel.getByLabel("Rubbish collection").check();
+  // 2026-10-14 is a Wednesday.
+  await expect(page.getByTestId("note-2026-10-14")).toContainText("Collection: Glass (green)");
+  await expect(page.getByTestId("note-2026-10-15")).toHaveCount(0);
+  await panel.getByLabel("Rubbish collection").uncheck();
+
+  await page.goto("/settings/calendar");
+  await page.getByLabel("Glass (green) · Wed").uncheck();
+  await expect(page.getByLabel("Glass (green) · Wed")).not.toBeChecked();
+});

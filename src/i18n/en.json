@@ -455,7 +455,8 @@
       "clock": "Clock change",
       "special": "Special days",
       "sky": "Eclipses and meteor showers",
-      "sun": "Sunrise and sunset (Day view)"
+      "sun": "Sunrise and sunset (Day view)",
+      "waste": "Rubbish collection"
     },
     "notes": {
       "moon": {
@@ -511,7 +512,21 @@
         "endMiddle": "Last day of school: years 5 to 8 and 10",
         "endPrimary": "Last day of school: pre-school and years 1 to 4",
         "start": "School starts (between 11 and 15 September)"
+      },
+      "waste": {
+        "collection": "Collection: {{bins}}"
       }
+    }
+  },
+  "waste": {
+    "title": "Rubbish collection",
+    "hint": "The days each bin is collected in your street. They show on the calendar when \"Rubbish collection\" is on in the filter.",
+    "bins": {
+      "general": "General waste",
+      "packaging": "Packaging (yellow)",
+      "paper": "Paper (blue)",
+      "glass": "Glass (green)",
+      "organic": "Food waste (brown)"
     }
   }
 }

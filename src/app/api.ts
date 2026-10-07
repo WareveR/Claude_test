@@ -1,4 +1,5 @@
 import type { HolidayPlace } from "../core/holidays";
+import type { WasteCollection } from "../core/waste";
 export class ApiError extends Error {
   constructor(
     readonly status: number,
@@ -45,6 +46,7 @@ export type Family = {
   language: string;
   timeZone: string;
   holidayPlaces: HolidayPlace[];
+  wasteCollection: WasteCollection;
   lastExportAt: string | null;
 };
 export type Device = { id: string; name: string; language: string | null };

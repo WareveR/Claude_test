@@ -1,0 +1,1 @@
+ALTER TABLE `family` ADD `waste_collection` text DEFAULT '[]' NOT NULL;

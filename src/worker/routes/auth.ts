@@ -29,6 +29,7 @@ authRoutes.get("/status", async (c) => {
             language: family.language,
             timeZone: family.timeZone,
             holidayPlaces: family.holidayPlaces,
+            wasteCollection: family.wasteCollection,
             lastExportAt: family.lastExportAt,
           }
         : null,
