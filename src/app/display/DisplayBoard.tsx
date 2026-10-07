@@ -7,7 +7,6 @@ import { daySpan } from "../../core/entry-time";
 import { formatLocale } from "../../core/languages";
 import { matchesFilter } from "../../core/person-filter";
 import { formatPlainDate, minutesNowIn } from "../../core/plain-date";
-import { BriefingBand } from "../briefing/BriefingBand";
 import { entriesOn } from "../calendar/MonthGrid";
 import { importanceClass } from "../calendar/EntryBlock";
 import { useEntryTypes } from "../entry-types/model";
@@ -17,12 +16,10 @@ import { FilterButton } from "../filter/FilterButton";
 import { usePersonFilter } from "../filter/model";
 import { usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
+import { GRID_BOX, SidePanelLayout, TodayPanel } from "../shell/SidePanel";
 import { useNow } from "../shell/useNow";
-import { TasksAccordion } from "../tasks/TasksAccordion";
 import { CalendarGrid } from "../views/Views";
 import { ForecastButton } from "../weather/ForecastButton";
-import { HourlyStrip } from "../weather/HourlyStrip";
-import { SunBand } from "../weather/SunBand";
 import { useForecastDays } from "../weather/model";
 import { WeatherBadge } from "../weather/WeatherBadge";
 import { useRolloverToday } from "./hooks";
@@ -108,18 +105,18 @@ export function DisplayBoard() {
   return (
     <div
       data-testid="display-board"
-      className="flex min-h-0 flex-1 flex-col md:flex-row"
+      className="flex flex-col md:min-h-0 md:flex-1"
       onPointerDownCapture={() => setTouches((n) => n + 1)}
       onScrollCapture={() => setTouches((n) => n + 1)}
     >
-      <aside className="flex min-h-0 flex-col gap-3 overflow-y-auto border-line py-3 md:w-[28rem] md:shrink-0 md:border-r">
-        <HourlyStrip />
-        <SunBand />
-        <BriefingBand readOnly />
-        <TasksAccordion from={today} to={today} open />
-        <TodayEntries today={today} />
-      </aside>
-      <section className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <SidePanelLayout
+        wideAt="md"
+        panel={
+          <TodayPanel readOnly>
+            <TodayEntries today={today} />
+          </TodayPanel>
+        }
+      >
         <nav className="flex flex-wrap items-center gap-2 px-4 py-2">
           <button
             type="button"
@@ -154,29 +151,31 @@ export function DisplayBoard() {
             <FilterButton />
           </div>
         </nav>
-        <CalendarGrid
-          days={days}
-          readOnly
-          dayExtra={(day) => {
-            const weather = forecast.get(day);
-            return (
-              weather && (
-                <div data-testid={`week-weather-${day}`}>
-                  <ForecastButton>
-                    <WeatherBadge
-                      day={weather}
-                      faded={weather.faded}
-                      size={16}
-                      rain
-                      className="flex-wrap justify-center text-xs"
-                    />
-                  </ForecastButton>
-                </div>
-              )
-            );
-          }}
-        />
-      </section>
+        <div className={GRID_BOX.md}>
+          <CalendarGrid
+            days={days}
+            readOnly
+            dayExtra={(day) => {
+              const weather = forecast.get(day);
+              return (
+                weather && (
+                  <div data-testid={`week-weather-${day}`}>
+                    <ForecastButton>
+                      <WeatherBadge
+                        day={weather}
+                        faded={weather.faded}
+                        size={16}
+                        rain
+                        className="flex-wrap justify-center text-xs"
+                      />
+                    </ForecastButton>
+                  </div>
+                )
+              );
+            }}
+          />
+        </div>
+      </SidePanelLayout>
     </div>
   );
 }

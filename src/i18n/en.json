@@ -390,10 +390,19 @@
     "never": "No full Export yet."
   },
   "briefing": {
-    "title": "Briefing",
     "refresh": "Refresh",
     "none": "No briefing yet.",
     "failed": "The briefing could not be refreshed. Try again."
+  },
+  "comingUp": {
+    "title": "Coming up",
+    "toDo_one": "Still to do · {{count}}",
+    "toDo_other": "Still to do · {{count}}"
+  },
+  "sidePanel": {
+    "label": "Today's side panel",
+    "hide": "Hide panel",
+    "show": "Show panel"
   },
   "weather": {
     "title": "Weather",

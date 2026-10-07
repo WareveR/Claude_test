@@ -5,8 +5,9 @@ import { useWeather } from "./model";
 import { RainChance, WeatherIcon } from "./WeatherIcon";
 
 /**
- * Today's remaining hours in the place's own clock, or the given `past` hours of a day gone by:
- * spread across wide screens, scrolling sideways on narrow ones.
+ * Today's remaining hours in the place's own clock, or the given `past` hours of a day gone by,
+ * as a row of fixed-width hour cards: they share out a wide row and scroll sideways in a narrow
+ * one, never squeezing into each other.
  */
 export function HourlyStrip({ past }: { past?: HourWeather[] }) {
   const { data } = useWeather();
@@ -21,22 +22,24 @@ export function HourlyStrip({ past }: { past?: HourWeather[] }) {
   if (hours.length === 0) return null;
   return (
     <div data-testid="hourly-strip" className="px-4">
-      <ForecastButton className="flex w-full gap-3 overflow-x-auto rounded-md border border-line py-2 px-2 text-left">
-        {hours.map((h) => (
-          <span
-            key={h.time}
-            data-testid="hour-cell"
-            className="flex min-w-12 flex-1 shrink-0 basis-0 flex-col items-center gap-0.5 text-xs tabular-nums lg:flex-row lg:justify-center lg:gap-2 lg:text-sm"
-          >
-            <span className="font-semibold">{Number(h.time.slice(11, 13))}h</span>
-            <WeatherIcon code={h.code} size={20} />
-            <span>{h.temp}°</span>
-            <span className="text-muted">
-              <RainChance percent={h.rain} size={12} />
+      <div className="overflow-x-auto overscroll-x-contain rounded-md border border-line bg-surface [scrollbar-width:thin]">
+        <ForecastButton className="flex w-max min-w-full gap-1 p-1 text-left">
+          {hours.map((h) => (
+            <span
+              key={h.time}
+              data-testid="hour-cell"
+              className="flex w-14 shrink-0 grow flex-col items-center gap-1 rounded-md py-1.5 text-xs tabular-nums"
+            >
+              <span className="font-semibold text-muted">{Number(h.time.slice(11, 13))}h</span>
+              <WeatherIcon code={h.code} size={22} />
+              <span className="text-sm font-semibold">{h.temp}°</span>
+              <span className="text-muted">
+                <RainChance percent={h.rain} size={12} />
+              </span>
             </span>
-          </span>
-        ))}
-      </ForecastButton>
+          ))}
+        </ForecastButton>
+      </div>
     </div>
   );
 }

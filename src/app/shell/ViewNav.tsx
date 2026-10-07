@@ -36,8 +36,10 @@ export function ViewNav({
   const view = pathname.split("/")[1];
   const todayPath =
     view === "week" || view === "month" || view === "year" ? paths[view](today) : paths.day(today);
+  // Sticky, so a long stacked page (a phone, a big zoom) can always move on or switch view;
+  // above the grid's now line, so the Person Filter panel opens over it.
   return (
-    <nav className="flex flex-wrap items-center gap-2 px-4 py-2">
+    <nav className="sticky top-0 z-20 flex flex-wrap items-center gap-2 border-b border-line bg-bg px-4 py-2">
       <div className="flex rounded-md border border-line">
         {VIEWS.map((view) => (
           <NavLink

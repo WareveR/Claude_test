@@ -12,7 +12,6 @@ import {
   todayIn,
   type PlainDate,
 } from "../../core/plain-date";
-import { BriefingBand } from "../briefing/BriefingBand";
 import { EntryBlock } from "../calendar/EntryBlock";
 import { monthWeeks } from "../../core/layout";
 import { entriesOn, MonthGrid } from "../calendar/MonthGrid";
@@ -30,10 +29,10 @@ import { useSignedIn } from "../family";
 import { usePersons } from "../persons/model";
 import { useNow } from "../shell/useNow";
 import { paths } from "../paths";
+import { GRID_BOX, SidePanelLayout, TodayPanel } from "../shell/SidePanel";
 import { ViewNav } from "../shell/ViewNav";
 import { ForecastButton } from "../weather/ForecastButton";
 import { HourlyStrip } from "../weather/HourlyStrip";
-import { SunBand } from "../weather/SunBand";
 import { useDayWeather, usePastWeather } from "../weather/model";
 import { WeatherBadge } from "../weather/WeatherBadge";
 import { TasksAccordion } from "../tasks/TasksAccordion";
@@ -92,19 +91,16 @@ export function DayView() {
           </>
         }
       />
-      {date === today && <HourlyStrip />}
-      {past && <HourlyStrip past={past.hours} />}
-      {date === today && <SunBand />}
-      {/* On wide screens the Briefing and Tasks sit beside the grid instead of above it. */}
-      <div className="flex min-h-0 flex-1 flex-col lg:flex-row-reverse">
-        <aside className="flex flex-col lg:w-[26rem] lg:shrink-0 lg:gap-2 lg:overflow-y-auto lg:border-l lg:border-line lg:py-2">
-          {date === today && <BriefingBand />}
-          <TasksAccordion from={date} to={date} />
-        </aside>
-        <div className="flex min-h-0 flex-1 flex-col">
+      <SidePanelLayout panel={<TodayPanel />}>
+        {/* Today's hours and Tasks are in the panel; another day's sit above its grid. */}
+        <div className="flex flex-col gap-2 pb-2 empty:hidden">
+          {past && <HourlyStrip past={past.hours} />}
+          {date !== today && <TasksAccordion from={date} to={date} />}
+        </div>
+        <div className={GRID_BOX.lg}>
           <CalendarGrid days={[date]} />
         </div>
-      </div>
+      </SidePanelLayout>
     </>
   );
 }
@@ -146,28 +142,34 @@ function Week({ monday }: { monday: PlainDate }) {
         previous={paths.week(addDays(monday, -7))}
         next={paths.week(addDays(monday, 7))}
       />
-      <TasksAccordion from={monday} to={days[6]} />
-      <CalendarGrid
-        days={days}
-        dayExtra={(day) => {
-          const weather = forecast.get(day);
-          return (
-            weather && (
-              <div data-testid={`week-weather-${day}`}>
-                <ForecastButton>
-                  <WeatherBadge
-                    day={weather}
-                    faded={weather.faded}
-                    size={16}
-                    rain
-                    className="flex-wrap justify-center text-xs"
-                  />
-                </ForecastButton>
-              </div>
-            )
-          );
-        }}
-      />
+      <SidePanelLayout panel={<TodayPanel />}>
+        <div className="pb-2 empty:hidden">
+          <TasksAccordion from={monday} to={days[6]} />
+        </div>
+        <div className={GRID_BOX.lg}>
+          <CalendarGrid
+            days={days}
+            dayExtra={(day) => {
+              const weather = forecast.get(day);
+              return (
+                weather && (
+                  <div data-testid={`week-weather-${day}`}>
+                    <ForecastButton>
+                      <WeatherBadge
+                        day={weather}
+                        faded={weather.faded}
+                        size={16}
+                        rain
+                        className="flex-wrap justify-center text-xs"
+                      />
+                    </ForecastButton>
+                  </div>
+                )
+              );
+            }}
+          />
+        </div>
+      </SidePanelLayout>
     </>
   );
 }
@@ -243,66 +245,69 @@ function Month({ first }: { first: PlainDate }) {
         previous={paths.month(addMonths(first, -1))}
         next={paths.month(addMonths(first, 1))}
       />
-      {/* On wide screens the grid fills the height and the picked day sits beside it. */}
-      <div className="flex flex-1 flex-col lg:min-h-0 lg:flex-row">
-        <MonthGrid
-          month={first}
-          entries={entries}
-          types={types}
-          today={today}
-          selected={selected}
-          locale={locale}
-          holidays={holidays}
-          notes={notes}
-          weather={forecast}
-          dayLink={(day) => `${paths.month(day)}?day=${day}`}
-        />
-        <section
-          className="flex flex-col gap-1 p-4 lg:w-[26rem] lg:shrink-0 lg:overflow-y-auto lg:border-l lg:border-line"
-          data-testid="picked-day"
-        >
-          <div className="flex items-center gap-2">
-            <h2 className="font-semibold first-letter:uppercase">
-              {formatPlainDate(selected, locale, {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-              })}
-            </h2>
-            {forecast.get(selected) && (
-              <ForecastButton>
-                <WeatherBadge
-                  day={forecast.get(selected)!}
-                  faded={forecast.get(selected)!.faded}
-                  rain
-                />
-              </ForecastButton>
+      <SidePanelLayout panel={<TodayPanel />}>
+        {/* On wide screens the grid fills the height; the picked day sits below it, or beside it
+          on the widest screens. */}
+        <div className="flex flex-1 flex-col lg:min-h-0 2xl:flex-row">
+          <MonthGrid
+            month={first}
+            entries={entries}
+            types={types}
+            today={today}
+            selected={selected}
+            locale={locale}
+            holidays={holidays}
+            notes={notes}
+            weather={forecast}
+            dayLink={(day) => `${paths.month(day)}?day=${day}`}
+          />
+          <section
+            className="flex flex-col gap-1 border-line p-4 lg:max-h-[40dvh] lg:shrink-0 lg:overflow-y-auto lg:border-t 2xl:max-h-none 2xl:w-[22rem] 2xl:border-t-0 2xl:border-l"
+            data-testid="picked-day"
+          >
+            <div className="flex items-center gap-2">
+              <h2 className="font-semibold first-letter:uppercase">
+                {formatPlainDate(selected, locale, {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                })}
+              </h2>
+              {forecast.get(selected) && (
+                <ForecastButton>
+                  <WeatherBadge
+                    day={forecast.get(selected)!}
+                    faded={forecast.get(selected)!.faded}
+                    rain
+                  />
+                </ForecastButton>
+              )}
+            </div>
+            {holidays.get(selected) && (
+              <p className="text-sm text-holiday-ink">{holidays.get(selected)?.join(" · ")}</p>
             )}
-          </div>
-          {holidays.get(selected) && (
-            <p className="text-sm text-holiday-ink">{holidays.get(selected)?.join(" · ")}</p>
-          )}
-          {notes.get(selected)?.map((note) => (
-            <p key={note} className="text-sm text-muted">
-              {note}
-            </p>
-          ))}
-          <div className="-mx-4">
-            <TasksAccordion from={selected} to={selected} />
-          </div>
-          {dayEntries.length === 0 && <p className="text-sm text-muted">{t("views.nothing")}</p>}
-          {dayEntries.map((e) => (
-            <EntryBlock
-              key={e.key}
-              entry={e}
-              type={types.find((ty) => ty.id === e.entryTypeId)}
-              persons={persons.data ?? []}
-              label={e.time.allDay ? t("entries.allDay") : e.time.startTime}
-              className="py-1 text-sm"
-            />
-          ))}
-        </section>
-      </div>
+            {notes.get(selected)?.map((note) => (
+              <p key={note} className="text-sm text-muted">
+                {note}
+              </p>
+            ))}
+            <div className="-mx-4">
+              <TasksAccordion from={selected} to={selected} />
+            </div>
+            {dayEntries.length === 0 && <p className="text-sm text-muted">{t("views.nothing")}</p>}
+            {dayEntries.map((e) => (
+              <EntryBlock
+                key={e.key}
+                entry={e}
+                type={types.find((ty) => ty.id === e.entryTypeId)}
+                persons={persons.data ?? []}
+                label={e.time.allDay ? t("entries.allDay") : e.time.startTime}
+                className="py-1 text-sm"
+              />
+            ))}
+          </section>
+        </div>
+      </SidePanelLayout>
     </>
   );
 }
@@ -343,27 +348,31 @@ function Year({ year }: { year: number }) {
           </Link>
         }
       />
-      {detail ? (
-        <YearDetail
-          year={year}
-          entries={entries}
-          types={types}
-          persons={persons.data ?? []}
-          today={today}
-          locale={locale}
-          familyLabel={t("views.family")}
-          holidays={holidays}
-        />
-      ) : (
-        <YearGrid
-          year={year}
-          entries={entries}
-          types={types}
-          today={today}
-          locale={locale}
-          holidays={holidays}
-        />
-      )}
+      <SidePanelLayout panel={<TodayPanel />}>
+        <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+          {detail ? (
+            <YearDetail
+              year={year}
+              entries={entries}
+              types={types}
+              persons={persons.data ?? []}
+              today={today}
+              locale={locale}
+              familyLabel={t("views.family")}
+              holidays={holidays}
+            />
+          ) : (
+            <YearGrid
+              year={year}
+              entries={entries}
+              types={types}
+              today={today}
+              locale={locale}
+              holidays={holidays}
+            />
+          )}
+        </div>
+      </SidePanelLayout>
     </>
   );
 }
