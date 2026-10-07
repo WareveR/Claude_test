@@ -137,6 +137,8 @@ test("a Task can be ticked on the wall", async ({ page }) => {
   const box = page.getByRole("checkbox", { name: "Done: Water the plants" });
   await box.check();
   await expect(box).toBeChecked();
+  // The tick shows before the server answers; the box is disabled until it has.
+  await expect(box).toBeEnabled();
   await page.reload();
   await expect(page.getByRole("checkbox", { name: "Done: Water the plants" })).toBeChecked();
   // The title is not a link to the Task form.
