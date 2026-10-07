@@ -43,7 +43,7 @@ export function EntryBlock({
       to={entryPath(entry)}
       data-testid="entry"
       style={{ backgroundColor: type?.color ?? "#607d8b", ...style }}
-      className={`flex min-w-0 items-start gap-1 overflow-hidden rounded-md px-1 py-0.5 text-[11px] leading-tight text-white ${importanceClass(entry)} ${className}`}
+      className={`flex min-w-0 items-start gap-1 overflow-hidden rounded-md px-1 py-0.5 text-xs leading-tight text-white lg:px-1.5 lg:text-sm ${importanceClass(entry)} ${className}`}
     >
       {discreet ? null : entry.icon ? (
         <Icon name={entry.icon} size={12} />

@@ -126,6 +126,13 @@
   }
 }
 
+/* Big desktop screens are read from further away: everything grows a little with them. */
+@media (min-width: 1536px) {
+  html {
+    font-size: 112.5%;
+  }
+}
+
 /* Display Mode: a wall tablet read from a distance, so everything scales up. */
 html.display-mode {
   font-size: 125%;
