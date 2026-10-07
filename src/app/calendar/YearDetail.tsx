@@ -1,20 +1,16 @@
 import { Link } from "react-router";
-import {
-  addDays,
-  daysInMonth,
-  formatPlainDate,
-  weekday,
-  type PlainDate,
-} from "../../core/plain-date";
+import { formatPlainDate, type PlainDate } from "../../core/plain-date";
 import type { EntryType } from "../entry-types/model";
 import type { Shown as Entry } from "../entries/model";
 import type { Person } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
 import { entriesOn } from "./MonthGrid";
+import { isWeekendColumn, monthColumns, yearWeekdayLetters } from "./YearGrid";
 
 /**
- * The year in detail: for each month, one line per Person (and one for the whole Family)
- * with a cell per day, coloured by the Entry Type of that day's first Entry.
+ * The year in detail, in the same 37 Saturday-to-Sunday columns as the year grid: each month
+ * has a row of day numbers and under it one line per Person (and one for the whole Family),
+ * each day coloured by the Entry Type of that line's first Entry.
  */
 export function YearDetail({
   year,
@@ -44,36 +40,44 @@ export function YearDetail({
       .map((p) => ({ id: p.id, person: p, owns: (e: Entry) => e.personIds.includes(p.id) })),
     { id: "family", person: null, owns: (e: Entry) => e.personIds.length === 0 },
   ];
+  const shade = (day: PlainDate | null, c: number) =>
+    day && holidays.has(day) ? "bg-holiday" : isWeekendColumn(c) ? "bg-weekend" : "";
 
   return (
-    <div className="flex flex-col gap-4 overflow-x-auto bg-surface p-2" data-testid="year-detail">
-      {Array.from({ length: 12 }, (_, m) => {
-        const first = `${year}-${String(m + 1).padStart(2, "0")}-01`;
-        const days = Array.from({ length: daysInMonth(year, m + 1) }, (_, i) => addDays(first, i));
-        const shade = (day: PlainDate) =>
-          holidays.has(day) ? "bg-holiday" : weekday(day) >= 5 ? "bg-weekend" : "";
-        return (
-          <table key={m} className="w-full min-w-[48rem] table-fixed border-collapse text-[10px]">
-            <thead>
+    <div className="overflow-x-auto bg-surface p-2" data-testid="year-detail">
+      <table className="w-full min-w-[56rem] table-fixed border-collapse text-[10px] lg:text-xs">
+        <thead>
+          <tr>
+            <th className="w-28" />
+            {yearWeekdayLetters(locale).map((letter, c) => (
+              <th
+                key={c}
+                className={`font-semibold ${isWeekendColumn(c) ? "bg-weekend text-weekend-ink" : "text-muted"}`}
+              >
+                {letter}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        {Array.from({ length: 12 }, (_, m) => {
+          const columns = monthColumns(year, m + 1);
+          return (
+            <tbody key={m} className="border-t-2 border-line">
               <tr>
-                <th className="w-28 pr-1 text-left text-sm font-semibold first-letter:uppercase">
-                  {formatPlainDate(first, locale, { month: "long" })}
+                <th className="pt-1 pr-1 text-left text-sm font-semibold first-letter:uppercase">
+                  {formatPlainDate(`${year}-${String(m + 1).padStart(2, "0")}-01`, locale, {
+                    month: "long",
+                  })}
                 </th>
-                {days.map((day) => (
+                {columns.map((day, c) => (
                   <th
-                    key={day}
-                    className={`font-semibold tabular-nums ${shade(day)} ${day === today ? "text-accent" : holidays.has(day) ? "text-holiday-ink" : weekday(day) >= 5 ? "text-weekend-ink" : "text-muted"}`}
+                    key={c}
+                    className={`pt-1 font-semibold tabular-nums ${shade(day, c)} ${day === today ? "text-accent" : day && holidays.has(day) ? "text-holiday-ink" : isWeekendColumn(c) ? "text-weekend-ink" : "text-muted"}`}
                   >
-                    {Number(day.slice(8))}
+                    {day ? Number(day.slice(8)) : ""}
                   </th>
                 ))}
-                {/* Short months keep their columns as wide as long ones. */}
-                {Array.from({ length: 31 - days.length }, (_, i) => (
-                  <th key={`pad-${i}`} />
-                ))}
               </tr>
-            </thead>
-            <tbody>
               {lines.map((line) => (
                 <tr key={line.id} data-testid={`year-line-${m + 1}-${line.id}`}>
                   <th className="truncate py-px pr-1 text-left font-normal">
@@ -84,11 +88,14 @@ export function YearDetail({
                       <span className="truncate">{line.person?.name ?? familyLabel}</span>
                     </span>
                   </th>
-                  {days.map((day) => {
-                    const mine = entriesOn(entries, day).filter(line.owns);
+                  {columns.map((day, c) => {
+                    const mine = day ? entriesOn(entries, day).filter(line.owns) : [];
                     return (
-                      <td key={day} className={`border-l border-line/60 p-px ${shade(day)}`}>
-                        {mine.length > 0 && (
+                      <td
+                        key={c}
+                        className={`border-l border-line/60 p-px ${day ? shade(day, c) : isWeekendColumn(c) ? "bg-weekend/45" : ""}`}
+                      >
+                        {day && mine.length > 0 && (
                           <Link
                             to={`/month/${day.slice(0, 7)}?day=${day}`}
                             title={mine.map((e) => e.title).join(", ")}
@@ -104,15 +111,12 @@ export function YearDetail({
                       </td>
                     );
                   })}
-                  {Array.from({ length: 31 - days.length }, (_, i) => (
-                    <td key={`pad-${i}`} />
-                  ))}
                 </tr>
               ))}
             </tbody>
-          </table>
-        );
-      })}
+          );
+        })}
+      </table>
     </div>
   );
 }
