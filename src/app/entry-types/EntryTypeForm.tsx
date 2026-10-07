@@ -14,6 +14,7 @@ import { EntryTypeBadge } from "./EntryTypeBadge";
 import { REMINDER_CHOICES, reminderLabel, typeName, useEntryTypes, type EntryType } from "./model";
 import { readyToEdit } from "../offline/fresh";
 import { BUTTON, BUTTON_DANGER } from "../ui/button";
+import { TimeSelect } from "../ui/TimeSelect";
 
 const FREQUENCIES = ["none", "daily", "weekly", "monthly", "yearly"] as const;
 const SELECT = "rounded-md border border-line bg-surface px-3 py-2";
@@ -175,8 +176,8 @@ function EntryTypeForm({ type }: { type?: EntryType }) {
         {!defaults.allDay && (
           <div className="flex gap-3">
             <Field label={t("entryTypes.startTime")}>
-              <TextInput
-                type="time"
+              <TimeSelect
+                optional
                 value={defaults.startTime ?? ""}
                 onChange={(e) => set({ startTime: e.target.value || undefined })}
               />
