@@ -516,7 +516,8 @@
       "waste": {
         "collection": "Collection: {{bins}}"
       }
-    }
+    },
+    "daylight": "Daylight {{hours}} h {{minutes}}"
   },
   "waste": {
     "title": "Rubbish collection",

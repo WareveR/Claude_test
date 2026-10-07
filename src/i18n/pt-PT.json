@@ -516,7 +516,8 @@
       "waste": {
         "collection": "Recolha: {{bins}}"
       }
-    }
+    },
+    "daylight": "{{hours}} h {{minutes}} de luz do dia"
   },
   "waste": {
     "title": "Recolha do lixo",

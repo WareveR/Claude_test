@@ -22,6 +22,7 @@ import { TasksAccordion } from "../tasks/TasksAccordion";
 import { CalendarGrid } from "../views/Views";
 import { ForecastButton } from "../weather/ForecastButton";
 import { HourlyStrip } from "../weather/HourlyStrip";
+import { SunBand } from "../weather/SunBand";
 import { useForecastDays } from "../weather/model";
 import { WeatherBadge } from "../weather/WeatherBadge";
 import { useRolloverToday } from "./hooks";
@@ -113,6 +114,7 @@ export function DisplayBoard() {
     >
       <aside className="flex min-h-0 flex-col gap-3 overflow-y-auto border-line py-3 md:w-[28rem] md:shrink-0 md:border-r">
         <HourlyStrip />
+        <SunBand />
         <BriefingBand readOnly />
         <TasksAccordion from={today} to={today} open />
         <TodayEntries today={today} />

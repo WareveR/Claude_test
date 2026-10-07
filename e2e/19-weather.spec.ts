@@ -14,6 +14,7 @@ test("without a saved place nothing shows weather", async ({ page }) => {
   await signIn(page);
   await expect(page.getByTestId("header-weather")).toHaveCount(0);
   await expect(page.getByTestId("hourly-strip")).toHaveCount(0);
+  await expect(page.getByTestId("sun-band")).toHaveCount(0);
 });
 
 test("the first saved place is selected and its weather shows in every view", async ({ page }) => {
@@ -27,6 +28,9 @@ test("the first saved place is selected and its weather shows in every view", as
   await page.goto("/");
   await expect(page.getByTestId("hourly-strip")).toBeVisible();
   await expect(page.getByTestId("hour-cell").first()).toContainText("%");
+  // Today's sunrise and sunset show without turning the Sun Layer on.
+  await expect(page.getByTestId("sun-band")).toContainText(/Sunrise \d\d:\d\d/);
+  await expect(page.getByTestId("sun-band")).toContainText(/Daylight \d+ h \d\d/);
 
   await page.getByRole("link", { name: "Week", exact: true }).click();
   await expect(page.locator('[data-testid^="week-weather-"]').first()).toBeVisible();

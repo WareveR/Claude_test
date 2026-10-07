@@ -83,6 +83,7 @@ test("the Wall view shows the board", async ({ page }) => {
   // Today on the left, a seven-day grid starting today on the right.
   const board = page.getByTestId("display-board");
   await expect(board.getByTestId("hourly-strip")).toBeVisible();
+  await expect(board.getByTestId("sun-band")).toContainText("Sunset");
   await expect(board.getByTestId("briefing")).toBeVisible();
   await expect(board.getByTestId("tasks-accordion")).toHaveAttribute("open", "");
   await expect(board.getByTestId("today-entry").filter({ hasText: "Family lunch" })).toBeVisible();
