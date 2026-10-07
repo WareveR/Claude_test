@@ -20,7 +20,9 @@ test("Calendar Layers turned on in the filter panel mark the days", async ({ pag
   );
   await expect(page.getByTestId("note-2026-10-31")).toContainText("Halloween");
 
-  // Remembered on this device.
+  // Remembered on this device, and the stored offline copy still starts the app: the
+  // copy is written at most once a second.
+  await page.waitForTimeout(1500);
   await page.reload();
   await expect(page.getByTestId("note-2026-10-26")).toContainText("Full moon");
 
