@@ -89,8 +89,9 @@ export function nextRepeat(
 /**
  * The Tasks a calendar period's accordion holds: those due in the period (done ones too, struck
  * through) and, when the period includes today, every overdue Task. Ordered by due date.
+ * A Checklist's items never show on their own: they show with their Checklist.
  */
-export function periodTasks<T extends TaskTiming>(
+export function periodTasks<T extends TaskTiming & { checklistId?: string | null }>(
   tasks: T[],
   from: PlainDate,
   to: PlainDate,
@@ -100,8 +101,9 @@ export function periodTasks<T extends TaskTiming>(
   return tasks
     .filter(
       (task) =>
-        (task.dueDate !== null && from <= task.dueDate && task.dueDate <= to) ||
-        (includesToday && isOverdue(task, now)),
+        !task.checklistId &&
+        ((task.dueDate !== null && from <= task.dueDate && task.dueDate <= to) ||
+          (includesToday && isOverdue(task, now))),
     )
     .sort(byDue);
 }

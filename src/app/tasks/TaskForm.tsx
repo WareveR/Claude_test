@@ -1,10 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { useLocation, useNavigate, useParams, useSearchParams } from "react-router";
+import { Navigate, useLocation, useNavigate, useParams, useSearchParams } from "react-router";
 import { isPlainDate } from "../../core/plain-date";
 import { api } from "../api";
-import { useChecklist, type Checklist } from "../checklists/model";
 import { RepetitionFields } from "../entries/RepetitionFields";
 import { usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
@@ -24,19 +23,13 @@ export function TaskPage() {
   const location = useLocation();
   const task = useTask(isNew ? undefined : id);
   const checklistId = isNew ? search.get("checklist") : task.data?.checklistId;
-  const checklist = useChecklist(checklistId ?? undefined);
+  // A Checklist's items are simple and live on their Checklist's page.
+  if (checklistId) return <Navigate to={`/checklists/${checklistId}`} replace />;
   if (!isNew && !readyToEdit(task)) return null;
-  if (checklistId && !checklist.data) return null;
-  return (
-    <TaskForm
-      key={isNew ? `new:${location.key}` : id}
-      task={isNew ? undefined : task.data}
-      checklist={checklist.data}
-    />
-  );
+  return <TaskForm key={isNew ? `new:${location.key}` : id} task={isNew ? undefined : task.data} />;
 }
 
-function TaskForm({ task, checklist }: { task?: Task; checklist?: Checklist }) {
+function TaskForm({ task }: { task?: Task }) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -51,11 +44,10 @@ function TaskForm({ task, checklist }: { task?: Task; checklist?: Checklist }) {
         notes: "",
         dueDate: date && isPlainDate(date) ? date : null,
         dueTime: null,
-        // A Checklist's Persons are only the default for its new Tasks.
-        personIds: checklist?.personIds ?? [],
+        personIds: [],
         private: false,
         repetition: null,
-        checklistId: checklist?.id ?? null,
+        checklistId: null,
         ...given,
       },
   );
@@ -132,11 +124,7 @@ function TaskForm({ task, checklist }: { task?: Task; checklist?: Checklist }) {
           </Field>
         </div>
 
-        {checklist ? (
-          <p className="text-sm text-muted">
-            {t("checklists.inChecklist", { name: checklist.name })}
-          </p>
-        ) : draft.dueDate ? (
+        {draft.dueDate ? (
           <RepetitionFields
             value={draft.repetition}
             start={draft.dueDate}

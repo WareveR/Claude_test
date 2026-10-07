@@ -126,6 +126,24 @@ describe("briefingCandidates", () => {
       { kind: "entry", title: "Bia, 10", date: "2026-10-20" },
     ]);
   });
+
+  it("gives a repeating Checklist without an end its round's start day, never its items alone", () => {
+    const candidates = briefingCandidates(
+      input({
+        checklists: [
+          {
+            id: "c1",
+            name: "Sunday chores",
+            startDate: TODAY,
+            endDate: null,
+            repetition: { frequency: "weekly", interval: 1, end: { type: "never" } },
+          },
+        ],
+        tasks: [task({ id: "t1", checklistId: "c1", dueDate: TODAY })],
+      }),
+    );
+    expect(candidates).toMatchObject([{ kind: "checklist", date: TODAY, detail: "0/1" }]);
+  });
 });
 
 describe("countdown", () => {

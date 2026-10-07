@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { todayIn } from "../../core/plain-date";
 import { setUpFamily } from "../test/client";
 
 type Checklist = {
@@ -44,7 +45,7 @@ describe("Checklists", () => {
     expect(await (await browser.get("/checklists")).json()).toHaveLength(1);
   });
 
-  it("refuses a period that ends before it starts or has no end", async () => {
+  it("takes a start or an end on its own, but refuses an end before the start", async () => {
     const { browser } = await family();
     const backwards = await browser.post("/checklists", {
       name: "Packing",
@@ -53,7 +54,9 @@ describe("Checklists", () => {
     });
     expect(await backwards.json()).toMatchObject({ field: "endDate" });
     const open = await browser.post("/checklists", { name: "Packing", startDate: "2026-08-10" });
-    expect(open.status).toBe(400);
+    expect(await open.json()).toMatchObject({ startDate: "2026-08-10", endDate: null });
+    const deadline = await browser.post("/checklists", { name: "Forms", endDate: "2026-09-01" });
+    expect(await deadline.json()).toMatchObject({ startDate: null, endDate: "2026-09-01" });
   });
 
   it("holds ordinary Tasks, each keeping its own Persons, and never repeating ones", async () => {
@@ -150,11 +153,12 @@ describe("Checklist rounds", () => {
     expect(rolled.rounds).toEqual([{ label: "2025", done: 1, total: 2 }]);
     const tasks = await tasksOf(browser);
     expect(tasks.every((t) => t.doneAt === null)).toBe(true);
-    expect(tasks.find((t) => t.title === "Windows")!.dueDate!.slice(5)).toBe("07-05");
+    // Items' own stored dates are ignored, and left as they were.
+    expect(tasks.find((t) => t.title === "Windows")!.dueDate).toBe("2025-07-05");
     expect(tasks.find((t) => t.title === "Garage")!.dueDate).toBeNull();
   });
 
-  it("starts a new round by hand with Use again, moving the dates", async () => {
+  it("starts a new round by hand with Use again, moving the period", async () => {
     const { browser, checklist } = await summer();
     const res = await browser.post(`/checklists/${checklist.id}/rounds`, {
       startDate: "2026-07-03",
@@ -166,15 +170,27 @@ describe("Checklist rounds", () => {
       rounds: [{ label: "2025", done: 1, total: 2 }],
     });
     const windows = (await tasksOf(browser)).find((t) => t.title === "Windows")!;
-    expect(windows).toMatchObject({ dueDate: "2026-07-07", doneAt: null });
+    expect(windows).toMatchObject({ dueDate: "2025-07-05", doneAt: null });
   });
 
-  it("only repeats a Checklist with a period", async () => {
+  it("counts a repeating Checklist's rounds from today when it has no start", async () => {
     const { browser } = await family();
-    const res = await browser.post("/checklists", {
-      name: "Packing",
-      repetition: { frequency: "yearly", interval: 1, end: { type: "never" } },
+    const repetition = { frequency: "daily", interval: 1, end: { type: "never" } };
+    const res = await browser.post("/checklists", { name: "Tidy up", repetition });
+    expect(res.status).toBe(201);
+    expect(await res.json()).toMatchObject({
+      startDate: todayIn("Europe/Lisbon"),
+      endDate: null,
+      repetition,
     });
-    expect(await res.json()).toMatchObject({ field: "repetition" });
+    // Every Sunday: the first round starts on the first Sunday from today.
+    const sundays = { frequency: "weekly", interval: 1, weekdays: [6], end: { type: "never" } };
+    const sunday = (await (
+      await browser.post("/checklists", { name: "Sunday chores", repetition: sundays })
+    ).json()) as Checklist;
+    expect(new Date(`${sunday.startDate}T12:00:00Z`).getUTCDay()).toBe(0);
+    expect(sunday.startDate! >= todayIn("Europe/Lisbon")).toBe(true);
+    const bad = await browser.post("/checklists", { name: "x", repetition: { frequency: "x" } });
+    expect(await bad.json()).toMatchObject({ field: "repetition" });
   });
 });
