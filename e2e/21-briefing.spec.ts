@@ -22,7 +22,7 @@ test("Refresh writes the countdown list, whose Entries open in a popup", async (
   await expect(page).toHaveURL(/\/tasks$/);
 
   await page.goto("/");
-  const band = page.getByTestId("briefing");
+  const band = page.getByTestId("coming-up");
   await expect(band).toContainText("No briefing yet");
   await band.getByRole("button", { name: "Refresh" }).click();
   const line = band.getByTestId("briefing-line").filter({ hasText: "Book the vet" });
@@ -42,24 +42,28 @@ test("Refresh writes the countdown list, whose Entries open in a popup", async (
   await expect(page).toHaveURL(/\/entries\/[^/]+\?occurrence=/);
 });
 
-test("the band is only on today and its collapsed state is remembered", async ({ page }) => {
+test("Coming up is beside every view and hiding the panel is remembered", async ({ page }) => {
   await signIn(page);
-  const band = page.getByTestId("briefing");
-  await expect(band.getByTestId("briefing-line").first()).toBeVisible();
+  const panel = page.getByTestId("coming-up");
+  await expect(panel.getByRole("heading", { name: "Coming up" })).toBeVisible();
+  await expect(panel.getByTestId("briefing-line").first()).toBeVisible();
 
+  // Not only today: what is coming up is beside any day, week, month or year.
   await page.goto(`/day/${lisbonDate(1)}`);
-  await expect(page.getByTestId("briefing")).toHaveCount(0);
+  await expect(panel.getByTestId("briefing-line").first()).toBeVisible();
+  await page.getByRole("link", { name: "Month", exact: true }).click();
+  await expect(panel.getByTestId("briefing-line").first()).toBeVisible();
 
-  await page.goto("/");
-  await page.getByRole("button", { name: "Briefing" }).click();
-  await expect(page.getByRole("button", { name: "Briefing" })).toHaveAttribute(
+  await page.getByRole("button", { name: "Hide panel" }).click();
+  await expect(page.getByTestId("side-panel")).toBeHidden();
+  await expect(page.getByRole("button", { name: "Show panel" })).toHaveAttribute(
     "aria-expanded",
     "false",
   );
-  await expect(band.getByTestId("briefing-line").first()).toBeHidden();
   await page.reload();
-  await expect(page.getByRole("button", { name: "Briefing" })).toHaveAttribute(
-    "aria-expanded",
-    "false",
-  );
+  await expect(page.getByTestId("side-panel")).toBeHidden();
+  await page.getByRole("link", { name: "Week", exact: true }).click();
+  await expect(page.getByTestId("side-panel")).toBeHidden();
+  await page.getByRole("button", { name: "Show panel" }).click();
+  await expect(panel.getByTestId("briefing-line").first()).toBeVisible();
 });

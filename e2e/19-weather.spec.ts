@@ -43,7 +43,8 @@ test("the first saved place is selected and its weather shows in every view", as
   );
   await page.goto(`/day/${yesterday}`);
   await expect(page.locator("nav").getByText("15°/8°")).toBeVisible();
-  await expect(page.getByTestId("hourly-strip")).toContainText("9°");
+  // Below today's strip in the side panel, the past day's own strip above its grid.
+  await expect(page.getByTestId("hourly-strip").last()).toContainText("9°");
 
   await page.goto("/");
   await page.getByRole("link", { name: "Month", exact: true }).click();

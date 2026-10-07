@@ -85,7 +85,7 @@ test("the Wall view shows the board", async ({ page }) => {
   await expect(board.getByTestId("hourly-strip")).toBeVisible();
   await expect(board.getByTestId("sun-band")).toContainText("Sunset");
   await expect(board.getByTestId("briefing")).toBeVisible();
-  await expect(board.getByTestId("tasks-accordion")).toHaveAttribute("open", "");
+  await expect(board.getByTestId("coming-up-tasks")).toContainText("Water the plants");
   await expect(board.getByTestId("today-entry").filter({ hasText: "Family lunch" })).toBeVisible();
   for (let i = 0; i < 7; i++) {
     await expect(board.getByTestId(`day-column-${lisbonDate(i)}`)).toBeVisible();
@@ -143,7 +143,7 @@ test("a Task can be ticked on the wall", async ({ page }) => {
   await page.reload();
   await expect(page.getByRole("checkbox", { name: "Done: Water the plants" })).toBeChecked();
   // The title is not a link to the Task form.
-  await expect(page.getByTestId("tasks-accordion").getByRole("link")).toHaveCount(0);
+  await expect(page.getByTestId("coming-up-tasks").getByRole("link")).toHaveCount(0);
 });
 
 test("‹ › move the grid a week, a pill returns, and three idle minutes return too", async ({

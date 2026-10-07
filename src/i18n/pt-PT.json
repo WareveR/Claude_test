@@ -381,10 +381,19 @@
     "never": "Ainda não foi feita nenhuma exportação completa."
   },
   "briefing": {
-    "title": "Resumo do dia",
     "refresh": "Atualizar",
     "none": "Ainda não há resumo.",
     "failed": "Não foi possível atualizar o resumo. Tente de novo."
+  },
+  "comingUp": {
+    "title": "A seguir",
+    "toDo_one": "Por fazer · {{count}}",
+    "toDo_other": "Por fazer · {{count}}"
+  },
+  "sidePanel": {
+    "label": "Painel de hoje",
+    "hide": "Esconder painel",
+    "show": "Mostrar painel"
   },
   "weather": {
     "title": "Meteorologia",

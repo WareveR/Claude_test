@@ -1,36 +1,25 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Segment } from "../../core/briefing";
+import { todayIn } from "../../core/plain-date";
+import { isOverdue } from "../../core/task";
 import { api } from "../api";
 import { EntryPopup } from "../entries/EntryPopup";
+import { useSignedIn } from "../family";
 import { usePersonFilter } from "../filter/model";
+import { usePeriodTasks } from "../tasks/TasksAccordion";
+import { TaskRow } from "../tasks/TaskRow";
+import { BUTTON } from "../ui/button";
 
 type Briefing = { segments: Segment[]; fallback: boolean; writtenAt: string } | null;
-
-const COLLAPSED_KEY = "briefing-collapsed";
-
-function readCollapsed(): boolean {
-  try {
-    return localStorage.getItem(COLLAPSED_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-
-function writeCollapsed(collapsed: boolean) {
-  try {
-    localStorage.setItem(COLLAPSED_KEY, collapsed ? "1" : "0");
-  } catch {
-    // Not remembered; the band still works.
-  }
-}
 
 type Open = { id: string; date: string } | null;
 
 /**
  * A phrase of the Briefing. One about an Entry opens that Entry in a popup; the rest is plain
- * text, as the Tasks are a tap away below.
+ * text, as the Tasks are right below.
  */
 function SegmentText({ segment, onOpen }: { segment: Segment; onOpen: (open: Open) => void }) {
   const link = segment.link;
@@ -47,15 +36,14 @@ function SegmentText({ segment, onOpen }: { segment: Segment; onOpen: (open: Ope
 }
 
 /**
- * The AI-written Briefing atop today's day view; never written on load, only by Refresh. With
- * exactly one Person filtered it is that Person's, otherwise the Family's.
+ * "Coming up": the AI-written Briefing of the next seven days and, below it, what is left to do
+ * (today's and overdue Tasks, tickable). The Briefing is never written on load, only by Refresh;
+ * with exactly one Person filtered it is that Person's, otherwise the Family's.
  */
-export function BriefingBand({ readOnly = false }: { readOnly?: boolean }) {
+export function ComingUp({ readOnly = false }: { readOnly?: boolean }) {
   const { t, i18n } = useTranslation();
   const client = useQueryClient();
-  const [storedCollapsed, setCollapsed] = useState(readCollapsed);
-  // On the wall the band stays open and cannot be refreshed.
-  const collapsed = !readOnly && storedCollapsed;
+  const { family } = useSignedIn();
   const { personIds } = usePersonFilter();
   const person = personIds.length === 1 ? personIds[0] : null;
   const query = person ? `?person=${encodeURIComponent(person)}` : "";
@@ -68,47 +56,35 @@ export function BriefingBand({ readOnly = false }: { readOnly?: boolean }) {
     mutationFn: () => api<Briefing>(`/briefing/refresh${query}`, { method: "POST" }),
     onSuccess: (data) => client.setQueryData(key, data),
   });
+  const today = todayIn(family.timeZone);
+  const { tasks, now, persons } = usePeriodTasks(today, today);
+  const overdue = tasks.filter((task) => isOverdue(task, now)).length;
   const data = briefing.data;
   const [open, setOpen] = useState<Open>(null);
   return (
     <section
-      aria-labelledby="briefing-title"
-      data-testid="briefing"
-      className="mx-4 rounded-md border border-line p-3"
+      aria-labelledby="coming-up-title"
+      data-testid="coming-up"
+      className="mx-4 flex flex-col gap-3 rounded-xl border-2 border-accent/60 bg-surface p-4 shadow-sm"
     >
       <div className="flex items-center gap-2">
-        <h2 id="briefing-title" className="flex-1 font-semibold">
-          {readOnly ? (
-            t("briefing.title")
-          ) : (
-            <button
-              type="button"
-              aria-expanded={!collapsed}
-              aria-controls="briefing-body"
-              className="flex w-full items-center gap-2 text-left"
-              onClick={() => {
-                writeCollapsed(!collapsed);
-                setCollapsed(!collapsed);
-              }}
-            >
-              <span aria-hidden="true">{collapsed ? "▸" : "▾"}</span>
-              {t("briefing.title")}
-            </button>
-          )}
+        <h2 id="coming-up-title" className="flex-1 text-xl font-bold">
+          {t("comingUp.title")}
         </h2>
-        {!collapsed && !readOnly && (
+        {!readOnly && (
           <button
             type="button"
-            className="rounded-md border border-line px-3 py-1 text-sm disabled:opacity-50"
+            className={BUTTON}
             disabled={refresh.isPending}
             onClick={() => refresh.mutate()}
           >
+            <RefreshCw aria-hidden size={14} className={refresh.isPending ? "animate-spin" : ""} />
             {t("briefing.refresh")}
           </button>
         )}
       </div>
-      <div id="briefing-body" hidden={collapsed} className="mt-2 text-sm">
-        {data === null && <p className="text-muted">{t("briefing.none")}</p>}
+      <div data-testid="briefing" className="leading-relaxed">
+        {data === null && <p className="text-sm text-muted">{t("briefing.none")}</p>}
         {data && !data.fallback && (
           <p>
             {data.segments.map((s, i) => (
@@ -126,11 +102,30 @@ export function BriefingBand({ readOnly = false }: { readOnly?: boolean }) {
           </ul>
         )}
         {refresh.isError && (
-          <p role="alert" className="text-muted">
+          <p role="alert" className="text-sm text-muted">
             {t("briefing.failed")}
           </p>
         )}
       </div>
+      {tasks.length > 0 && (
+        <section
+          aria-labelledby="coming-up-tasks-title"
+          data-testid="coming-up-tasks"
+          className="border-t border-line pt-2"
+        >
+          <h3 id="coming-up-tasks-title" className="text-sm font-semibold">
+            {t("comingUp.toDo", { count: tasks.length })}
+            {overdue > 0 && (
+              <span className="text-overdue"> · {t("tasks.overdueCount", { count: overdue })}</span>
+            )}
+          </h3>
+          <ul className="divide-y divide-line">
+            {tasks.map((task) => (
+              <TaskRow key={task.id} task={task} overdue={isOverdue(task, now)} persons={persons} />
+            ))}
+          </ul>
+        </section>
+      )}
       {open && <EntryPopup id={open.id} occurrence={open.date} onClose={() => setOpen(null)} />}
     </section>
   );

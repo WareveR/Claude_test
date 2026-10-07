@@ -11,20 +11,10 @@ import { useTasks } from "./model";
 import { TaskRow } from "./TaskRow";
 
 /**
- * "Tasks 7 · 2 overdue": one collapsible line with the period's dated Tasks and, when the period
- * includes today, every overdue Task. Dated Tasks are never drawn inside the time grid.
+ * The period's dated Tasks through the Person Filter and, when the period includes today, every
+ * overdue Task; with the Family's clock and the Persons to draw them.
  */
-export function TasksAccordion({
-  from,
-  to,
-  open = false,
-}: {
-  from: PlainDate;
-  to: PlainDate;
-  /** Starts open, as on the Display Mode board. */
-  open?: boolean;
-}) {
-  const { t } = useTranslation();
+export function usePeriodTasks(from: PlainDate, to: PlainDate) {
   const { family } = useSignedIn();
   const now = familyNow(family.timeZone, useNow(60_000));
   const filter = usePersonFilter();
@@ -35,14 +25,20 @@ export function TasksAccordion({
     now,
   );
   const persons = usePersons().data ?? [];
+  return { tasks, now, persons };
+}
+
+/**
+ * "Tasks 7 · 2 overdue": one collapsible line with the period's dated Tasks and, when the period
+ * includes today, every overdue Task. Dated Tasks are never drawn inside the time grid.
+ */
+export function TasksAccordion({ from, to }: { from: PlainDate; to: PlainDate }) {
+  const { t } = useTranslation();
+  const { tasks, now, persons } = usePeriodTasks(from, to);
   if (tasks.length === 0) return null;
   const overdue = tasks.filter((task) => isOverdue(task, now)).length;
   return (
-    <details
-      className="group mx-4 rounded-md border border-line"
-      data-testid="tasks-accordion"
-      open={open || undefined}
-    >
+    <details className="group mx-4 rounded-md border border-line" data-testid="tasks-accordion">
       <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2 text-sm font-medium">
         <ChevronDown
           aria-hidden
