@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { BookmarkPlus, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, BookmarkPlus, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, Navigate, useParams } from "react-router";
+import { Link, Navigate, useNavigate, useParams } from "react-router";
 import { checklistProgress, isChecklistTaskOverdue } from "../../core/checklist";
 import { familyNow } from "../../core/task";
 import { api } from "../api";
@@ -46,9 +46,13 @@ function ChecklistDetail({ checklist, items: all }: { checklist: Checklist; item
   const period = usePeriodText(checklist);
   const progress = checklistProgress(items);
   const overdue = items.some((task) => isChecklistTaskOverdue(task, checklist, now));
+  const navigate = useNavigate();
+  // Back where the Checklist was opened from, or to the Tasks view when opened directly.
+  const back = () =>
+    (window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate(paths.tasks());
   return (
     <main
-      className="mx-auto flex w-full max-w-xl flex-col gap-4 p-4"
+      className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-4 p-4 pb-0"
       data-testid="checklist-detail"
     >
       <div className="flex items-start gap-3">
@@ -85,6 +89,12 @@ function ChecklistDetail({ checklist, items: all }: { checklist: Checklist; item
         </ul>
       )}
       <AddItem checklist={checklist} />
+      <div className="sticky bottom-0 z-[5] -mx-4 mt-auto flex justify-end gap-3 border-t border-line bg-bg/95 px-4 py-3 backdrop-blur">
+        <button type="button" className={BUTTON} onClick={back}>
+          <ArrowLeft aria-hidden size={16} />
+          {t("settings.back")}
+        </button>
+      </div>
       {removal.waiting && (
         <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center p-3">
           <div
@@ -356,7 +366,11 @@ function AddItem({ checklist }: { checklist: Checklist }) {
       <div className="flex items-end gap-2">
         <div className="min-w-0 flex-1">
           <Field label={t("checklists.newItem")}>
-            <TextInput value={title} onChange={(e) => setTitle(e.target.value)} />
+            <TextInput
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              onKeyDown={(e) => e.key === "Escape" && setTitle("")}
+            />
           </Field>
         </div>
         <button type="submit" className={BUTTON_PRIMARY} disabled={!online || !title.trim()}>

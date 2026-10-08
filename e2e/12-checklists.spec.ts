@@ -50,6 +50,9 @@ test("a Checklist's page holds its items to tick, add, rename and remove", async
   await expect(page.getByTestId("task").filter({ hasText: "Clear out the garage" })).toHaveCount(0);
   await checklist.click();
   await expect(page.getByTestId("checklist-detail")).toContainText("Clear out the garage");
+  // Back returns to where the Checklist was opened.
+  await page.getByRole("button", { name: "Back" }).click();
+  await expect(page).toHaveURL(/\/tasks$/);
 });
 
 test("a Checklist's bar opens its page, and Use again starts a new round", async ({ page }) => {
