@@ -106,3 +106,19 @@ export function moveStart(time: EntryTime, startDate: PlainDate, startTime?: Clo
     endTime: clockTime(((end % 1440) + 1440) % 1440),
   };
 }
+
+/** The step a dragged Entry's start snaps to, in minutes. */
+export const DRAG_STEP_MINUTES = 15;
+
+/**
+ * Moves an Entry by whole days and, for a Timed Entry, by some minutes, keeping its length. A
+ * move in minutes lands the start on a 15-minute step; a move of whole days keeps the time.
+ */
+export function shiftTime(time: EntryTime, days: number, minutes = 0): EntryTime {
+  const date = addDays(time.startDate, days);
+  if (time.allDay || minutes === 0) return moveStart(time, date);
+  const moved = minutesOf(time.startTime) + minutes;
+  const start = Math.round(moved / DRAG_STEP_MINUTES) * DRAG_STEP_MINUTES;
+  const dayShift = Math.floor(start / 1440);
+  return moveStart(time, addDays(date, dayShift), clockTime(start - dayShift * 1440));
+}

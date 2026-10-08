@@ -22,6 +22,7 @@ export function EntryBlock({
   type,
   persons,
   label,
+  movable = false,
   className = "",
   style,
 }: {
@@ -29,6 +30,8 @@ export function EntryBlock({
   type: EntryType | undefined;
   persons: Person[];
   label?: string;
+  /** It can be dragged to another day or time. */
+  movable?: boolean;
   className?: string;
   style?: React.CSSProperties;
 }) {
@@ -42,6 +45,7 @@ export function EntryBlock({
     <Link
       to={entryPath(entry)}
       data-testid="entry"
+      data-drag-entry={movable && "key" in entry ? entry.key : undefined}
       style={{ backgroundColor: type?.color ?? "#607d8b", ...style }}
       className={`flex min-w-0 items-start gap-1 overflow-hidden rounded-md px-1 py-0.5 text-xs leading-tight text-white lg:px-1.5 lg:text-sm ${importanceClass(entry)} ${className}`}
     >

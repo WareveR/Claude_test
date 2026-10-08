@@ -8,6 +8,7 @@ import type { ShownDay } from "../weather/model";
 import { WeatherBadge } from "../weather/WeatherBadge";
 import { importanceClass } from "./EntryBlock";
 import { NoteLine } from "../layers/NoteLine";
+import { isMovable, useEntryDrag } from "./useEntryDrag";
 
 /** How many Entry lines a day shows before "+N", on narrow and on wide screens. */
 const NARROW = 3;
@@ -27,7 +28,7 @@ export function entriesOn(entries: Entry[], day: PlainDate): Entry[] {
 /** A month grid: each day shows its first Entries as coloured lines; tapping picks the day. */
 export function MonthGrid({
   month,
-  entries,
+  entries: given,
   types,
   today,
   selected,
@@ -52,9 +53,14 @@ export function MonthGrid({
   weather?: Map<string, ShownDay>;
 }) {
   const weeks = monthWeeks(month);
+  const drag = useEntryDrag({ entries: given, locale });
+  const entries = drag.shown(given);
+  const preview = drag.preview;
+  const landsOn = (day: PlainDate) =>
+    preview !== null && preview.startDate <= day && lastDate(preview) >= day;
   const colorOf = (e: Entry) => types.find((t) => t.id === e.entryTypeId)?.color ?? "#607d8b";
   return (
-    <div className="flex flex-col bg-surface lg:min-h-0 lg:flex-1">
+    <div className="flex flex-col bg-surface lg:min-h-0 lg:flex-1" {...drag.zone}>
       <div className="grid grid-cols-7 border-b border-line text-center text-xs font-semibold lg:text-sm">
         {weeks[0].map((day) => (
           <div
@@ -76,8 +82,9 @@ export function MonthGrid({
               key={day}
               to={dayLink(day)}
               data-testid={`month-day-${day}`}
+              data-drop-date={day}
               aria-current={day === selected ? "date" : undefined}
-              className={`flex min-h-16 flex-col gap-0.5 border-b border-l border-line p-0.5 text-left ${names ? "bg-holiday" : weekday(day) >= 5 ? "bg-weekend" : ""} ${inMonth ? "" : "opacity-40"} ${day === selected ? "outline-2 -outline-offset-2 outline-accent" : ""}`}
+              className={`flex min-h-16 flex-col gap-0.5 border-b border-l border-line p-0.5 text-left ${names ? "bg-holiday" : weekday(day) >= 5 ? "bg-weekend" : ""} ${inMonth ? "" : "opacity-40"} ${day === selected ? "outline-2 -outline-offset-2 outline-accent" : ""} ${landsOn(day) ? "ring-2 ring-accent ring-inset" : ""}`}
             >
               {/* The day's number and its weather share the top line. */}
               <span className="flex items-start justify-between gap-1">
@@ -116,8 +123,9 @@ export function MonthGrid({
               {dayEntries.slice(0, WIDE).map((e, i) => (
                 <span
                   key={e.key}
+                  data-drag-entry={isMovable(e) ? e.key : undefined}
                   style={{ backgroundColor: colorOf(e) }}
-                  className={`truncate rounded px-0.5 text-[10px] leading-tight text-white lg:px-1 lg:py-0.5 lg:text-xs ${i >= NARROW ? "hidden lg:block" : ""} ${importanceClass(e)}`}
+                  className={`truncate rounded ${drag.dragged?.key === e.key ? "opacity-50" : ""} px-0.5 text-[10px] leading-tight text-white lg:px-1 lg:py-0.5 lg:text-xs ${i >= NARROW ? "hidden lg:block" : ""} ${importanceClass(e)}`}
                 >
                   {e.title}
                 </span>
@@ -134,6 +142,7 @@ export function MonthGrid({
           );
         })}
       </div>
+      {drag.overlay}
     </div>
   );
 }

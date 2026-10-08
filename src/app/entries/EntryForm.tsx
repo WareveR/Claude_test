@@ -20,7 +20,7 @@ import { usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
 import { ErrorText, Field, FormActions, TextInput } from "../screens/form";
 import { Icon } from "../ui/Icon";
-import { occurrenceValues, useEntry, type Entry, type EntryDraft } from "./model";
+import { occurrenceValues, saveEntry, useEntry, type Entry, type EntryDraft } from "./model";
 import { ScopeDialog, type Scope } from "./ScopeDialog";
 import { RepetitionFields } from "./RepetitionFields";
 import { readyToEdit } from "../offline/fresh";
@@ -160,26 +160,10 @@ function EntryForm({
   const repetitionChanged =
     JSON.stringify(draft.repetition) !== JSON.stringify(entry?.repetition ?? null);
   const save = useMutation({
-    mutationFn: (scope: Scope | null) => {
-      if (!entry) return api("/entries", { method: "POST", body: draft });
-      if (!occurrence || scope === null) {
-        return api(`/entries/${entry.id}`, { method: "PUT", body: draft });
-      }
-      const at = `/entries/${entry.id}`;
-      if (scope === "this") {
-        return api(`${at}/occurrences/${occurrence.date}`, {
-          method: "PUT",
-          body: { ...draft, repetition: null },
-        });
-      }
-      if (scope === "following") {
-        return api(`${at}/following/${occurrence.date}`, { method: "POST", body: draft });
-      }
-      // "All": move the series by however far this Occurrence was moved.
-      const shift = dayDifference(occurrence.date, draft.time.startDate);
-      const time = moveStart(draft.time, addDays(entry.time.startDate, shift));
-      return api(at, { method: "PUT", body: { ...draft, time } });
-    },
+    mutationFn: (scope: Scope | null) =>
+      entry
+        ? saveEntry(entry, draft, occurrence && scope ? { date: occurrence.date, scope } : null)
+        : api("/entries", { method: "POST", body: draft }),
     onSuccess: leave,
   });
   const remove = useMutation({
@@ -525,8 +509,4 @@ function EntryForm({
       )}
     </main>
   );
-}
-
-function dayDifference(from: string, to: string): number {
-  return Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000);
 }
