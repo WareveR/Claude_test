@@ -39,7 +39,10 @@ test("an Entry dragged in the week view moves to another day and time", async ({
   await drag(page, from, { x: thursday.x, y: from.y + 2 * HOUR_PX });
   await expect(page.getByTestId("drop-preview")).toBeVisible();
   await expect(page.getByTestId("drag-ghost")).toContainText("12:00");
+  // The moved Entry shows at once; wait for the save before leaving the page.
+  const savedWeek = page.waitForResponse((r) => r.request().method() === "PUT" && r.ok());
   await page.mouse.up();
+  await savedWeek;
 
   const moved = page.getByTestId("day-column-2027-03-04").getByTestId("entry");
   await expect(moved).toContainText("Dentist");
@@ -79,7 +82,9 @@ test("a repeating Entry dragged asks which Occurrences move", async ({ page }) =
   const tuesday = await centre(page.getByTestId("day-column-2027-03-16"));
   await drag(page, from, { x: tuesday.x, y: from.y });
   await page.mouse.up();
+  const savedOne = page.waitForResponse((r) => r.request().method() === "PUT" && r.ok());
   await page.getByRole("button", { name: "This Occurrence only" }).click();
+  await savedOne;
 
   await expect(page.getByTestId("day-column-2027-03-16").getByTestId("entry")).toContainText(
     "Swimming",
