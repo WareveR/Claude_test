@@ -4,9 +4,11 @@ import { birthdayAge, birthdayTitle } from "../../core/birthday";
 import { occurrencesOf, type OccurrenceException } from "../../core/occurrences";
 import type { EntryTime } from "../../core/entry-time";
 import type { Importance } from "../../core/entry-type";
-import { addDays, type PlainDate } from "../../core/plain-date";
+import { moveStart } from "../../core/entry-time";
+import { addDays, daysBetween, type PlainDate } from "../../core/plain-date";
 import type { Repetition } from "../../core/repetition";
 import { api } from "../api";
+import type { Scope } from "./ScopeDialog";
 
 export type Entry = {
   id: string;
@@ -91,4 +93,31 @@ export function occurrenceValues(entry: Entry, date: PlainDate): Entry | null {
     (o) => o.date === date,
   );
   return occurrence ? { ...entry, ...occurrence.override, time: occurrence.time } : null;
+}
+
+/**
+ * Saves an edited Entry. A repeating Entry's change applies to the Occurrence it was made on,
+ * to it and the following, or to every Occurrence.
+ */
+export function saveEntry(
+  entry: Entry,
+  draft: EntryDraft,
+  occurrence: { date: PlainDate; scope: Scope } | null,
+) {
+  const at = `/entries/${entry.id}`;
+  if (!occurrence) return api(at, { method: "PUT", body: draft });
+  const { date, scope } = occurrence;
+  if (scope === "this") {
+    return api(`${at}/occurrences/${date}`, {
+      method: "PUT",
+      body: { ...draft, repetition: null },
+    });
+  }
+  if (scope === "following") {
+    return api(`${at}/following/${date}`, { method: "POST", body: draft });
+  }
+  // "All": move the series by however far this Occurrence was moved.
+  const shift = daysBetween(date, draft.time.startDate);
+  const time = moveStart(draft.time, addDays(entry.time.startDate, shift));
+  return api(at, { method: "PUT", body: { ...draft, time } });
 }

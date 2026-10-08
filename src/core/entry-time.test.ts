@@ -5,6 +5,7 @@ import {
   lastDate,
   moveStart,
   overlaps,
+  shiftTime,
   type EntryTime,
 } from "./entry-time";
 
@@ -86,5 +87,32 @@ describe("moveStart", () => {
     expect(
       moveStart({ allDay: true, startDate: "2026-08-01", endDate: "2026-08-15" }, "2026-08-03"),
     ).toEqual({ allDay: true, startDate: "2026-08-03", endDate: "2026-08-17" });
+  });
+});
+
+describe("shiftTime", () => {
+  it("moves a Timed Entry to another day and keeps its time and length", () => {
+    const dinner = timed("2026-10-09", "20:10", "2026-10-09", "23:10");
+    expect(shiftTime(dinner, 3)).toEqual(timed("2026-10-12", "20:10", "2026-10-12", "23:10"));
+  });
+
+  it("lands a start moved in minutes on a 15-minute step", () => {
+    const call = timed("2026-10-09", "10:00", "2026-10-09", "10:30");
+    expect(shiftTime(call, 0, 52)).toEqual(timed("2026-10-09", "10:45", "2026-10-09", "11:15"));
+    expect(shiftTime(call, 1, -38)).toEqual(timed("2026-10-10", "09:15", "2026-10-10", "09:45"));
+  });
+
+  it("crosses midnight when moved late or early enough", () => {
+    expect(shiftTime(timed("2026-10-09", "23:00"), 0, 75)).toEqual(timed("2026-10-10", "00:15"));
+    expect(shiftTime(timed("2026-10-09", "00:30"), 0, -60)).toEqual(timed("2026-10-08", "23:30"));
+  });
+
+  it("moves an All-day Entry by whole days only", () => {
+    const trip = { allDay: true, startDate: "2026-08-01", endDate: "2026-08-03" } as const;
+    expect(shiftTime(trip, 2, 90)).toEqual({
+      allDay: true,
+      startDate: "2026-08-03",
+      endDate: "2026-08-05",
+    });
   });
 });

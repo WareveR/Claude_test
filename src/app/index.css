@@ -139,7 +139,8 @@ html.display-mode {
 }
 
 /* A long press on a Task row starts dragging it, not the phone's link menu or text selection. */
-.task-drag-zone [data-testid="task"] a {
+.task-drag-zone [data-testid="task"] a,
+[data-drag-entry] {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
