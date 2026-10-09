@@ -22,7 +22,7 @@ export function HourlyStrip({ past }: { past?: HourWeather[] }) {
   if (hours.length === 0) return null;
   return (
     <div data-testid="hourly-strip" className="px-4">
-      <div className="overflow-x-auto overscroll-x-contain rounded-md border border-line bg-surface [scrollbar-width:thin]">
+      <div className="relative overflow-x-auto overscroll-x-contain rounded-md border border-line bg-surface [scrollbar-width:thin]">
         <ForecastButton className="flex w-max min-w-full gap-1 p-1 text-left">
           {hours.map((h) => (
             <span

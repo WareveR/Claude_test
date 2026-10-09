@@ -272,7 +272,7 @@ export function ForecastDetail({
 
           {hours.length > 0 && (
             <Section title={t("weather.detail.hours")}>
-              <ol className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+              <ol className="relative -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
                 {hours.map((h) => (
                   <li
                     key={h.time}
