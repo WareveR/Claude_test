@@ -46,7 +46,7 @@ export function WasteSection() {
     <section className="flex flex-col gap-2">
       <h2 className="font-semibold">{t("waste.title")}</h2>
       <p className="text-sm text-muted">{t("waste.hint")}</p>
-      <div className="overflow-x-auto">
+      <div className="relative overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr>
