@@ -70,6 +70,11 @@ test("tapping the weather asks before leaving for the forecast site", async ({ p
   await expect(dialog.getByTestId("forecast-hour").first()).toContainText("12km/h");
   await expect(dialog.getByTestId("forecast-day").first()).toContainText("Today");
   await expect(dialog.getByTestId("forecast-day").nth(1)).toContainText("21°");
+  // Two columns read top to bottom: tomorrow sits under today, not beside it.
+  const today = await dialog.getByTestId("forecast-day").first().boundingBox();
+  const tomorrow = await dialog.getByTestId("forecast-day").nth(1).boundingBox();
+  expect(tomorrow!.x).toBe(today!.x);
+  expect(tomorrow!.y).toBeGreaterThan(today!.y);
   await page.keyboard.press("Escape");
   await expect(dialog).toHaveCount(0);
   await page.getByTestId("header-weather").click();
