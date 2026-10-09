@@ -4,8 +4,10 @@ import { ForecastButton } from "./ForecastButton";
 import { useWeather } from "./model";
 import { RainChance, WeatherIcon } from "./WeatherIcon";
 
+const HOURS_SHOWN = 24;
+
 /**
- * Today's remaining hours in the place's own clock, or the given `past` hours of a day gone by,
+ * The next 24 hours in the place's own clock, as in the forecast detail, or the given `past` hours of a day gone by,
  * as a row of fixed-width hour cards: they share out a wide row and scroll sideways in a narrow
  * one, never squeezing into each other.
  */
@@ -15,10 +17,7 @@ export function HourlyStrip({ past }: { past?: HourWeather[] }) {
   if (!data && !past) return null;
   const clock = data ? placeClock(data.utcOffset, now) : "";
   const hours =
-    past ??
-    (data?.hourly ?? []).filter(
-      (h) => h.time.startsWith(clock.slice(0, 10)) && h.time >= clock.slice(0, 13),
-    );
+    past ?? (data?.hourly ?? []).filter((h) => h.time >= clock.slice(0, 13)).slice(0, HOURS_SHOWN);
   if (hours.length === 0) return null;
   return (
     <div data-testid="hourly-strip" className="px-4">
