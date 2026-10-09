@@ -124,7 +124,7 @@ test("Private items show only Private and their time; Entries open read-only", a
   await expect(details).toContainText("Bring the wine");
   await expect(page.getByRole("button", { name: /Save|Delete/ })).toHaveCount(0);
   await expect(page.getByRole("link", { name: /Edit/ })).toHaveCount(0);
-  await page.getByRole("link", { name: "Back to the board" }).click();
+  await page.getByRole("button", { name: "Back to the board" }).click();
 
   await list.filter({ hasText: "Private" }).click();
   await expect(page.getByTestId("entry-details")).toContainText("Private");
@@ -185,6 +185,30 @@ test("‹ › move the grid a week, a pill returns, and three idle minutes retur
   await expect(
     page.getByTestId("display-board").locator("summary").getByRole("img", { name: "Caio" }),
   ).toBeVisible();
+});
+
+test("Back from an Entry returns to the week the board showed", async ({ page }) => {
+  await signIn(page);
+  await addEntry(page, "Piano recital", "18:00", {
+    time: {
+      allDay: false,
+      startDate: lisbonDate(8),
+      startTime: "18:00",
+      endDate: null,
+      endTime: null,
+    },
+  });
+  await turnOnDisplayMode(page);
+  const board = page.getByTestId("display-board");
+  await board.getByRole("button", { name: "Next" }).click();
+  await board
+    .getByTestId(`day-column-${lisbonDate(8)}`)
+    .getByTestId("entry")
+    .click();
+  await expect(page.getByTestId("entry-details")).toContainText("Piano recital");
+  await page.getByRole("button", { name: "Back to the board" }).click();
+  await expect(board.getByTestId(`day-column-${lisbonDate(8)}`)).toBeVisible();
+  await expect(board.getByTestId("back-to-today")).toBeVisible();
 });
 
 test("the Leave wall view button leaves Display Mode", async ({ page }) => {

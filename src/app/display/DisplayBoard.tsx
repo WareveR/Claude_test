@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { AUTO_RETURN_MS, boardDays } from "../../core/display";
 import { daySpan } from "../../core/entry-time";
 import { formatLocale } from "../../core/languages";
@@ -90,13 +90,17 @@ export function DisplayBoard() {
   const locale = formatLocale(language);
   const today = useRolloverToday(family.timeZone);
   const forecast = useForecastDays();
-  const [weeksAway, setWeeksAway] = useState(0);
+  // The week shown is in the address, so Back from an Entry returns to it.
+  const [search, setSearch] = useSearchParams();
+  const weeksAway = Number(search.get("week")) || 0;
+  const setWeeksAway = (weeks: number) =>
+    setSearch(weeks === 0 ? {} : { week: String(weeks) }, { replace: true });
   const [touches, setTouches] = useState(0);
   useEffect(() => {
     if (weeksAway === 0) return;
-    const id = setTimeout(() => setWeeksAway(0), AUTO_RETURN_MS);
+    const id = setTimeout(() => setSearch({}, { replace: true }), AUTO_RETURN_MS);
     return () => clearTimeout(id);
-  }, [weeksAway, touches]);
+  }, [weeksAway, touches, setSearch]);
 
   const days = boardDays(today, weeksAway);
   const short = { day: "numeric", month: "short" } as const;
@@ -122,7 +126,7 @@ export function DisplayBoard() {
             type="button"
             aria-label={t("views.previous")}
             className={arrow}
-            onClick={() => setWeeksAway((w) => w - 1)}
+            onClick={() => setWeeksAway(weeksAway - 1)}
           >
             <ChevronLeft aria-hidden size={24} strokeWidth={1.75} />
           </button>
@@ -133,7 +137,7 @@ export function DisplayBoard() {
             type="button"
             aria-label={t("views.next")}
             className={arrow}
-            onClick={() => setWeeksAway((w) => w + 1)}
+            onClick={() => setWeeksAway(weeksAway + 1)}
           >
             <ChevronRight aria-hidden size={24} strokeWidth={1.75} />
           </button>
