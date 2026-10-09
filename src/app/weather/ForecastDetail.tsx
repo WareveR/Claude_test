@@ -1,4 +1,13 @@
-import { ArrowUp, Droplets, ExternalLink, Sun, Sunrise, Sunset, Wind } from "lucide-react";
+import {
+  ArrowUp,
+  Droplets,
+  ExternalLink,
+  Sun,
+  Sunrise,
+  Sunset,
+  Umbrella,
+  Wind,
+} from "lucide-react";
 import { useEffect, useMemo, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
@@ -51,7 +60,7 @@ function WindReading({ speed, from, size = 14 }: { speed: number; from?: number;
   );
 }
 
-/** One round indicator under the current conditions, like a dial. */
+/** One small reading under the current conditions: its icon, its value and what it is. */
 function Indicator({
   label,
   icon,
@@ -62,12 +71,10 @@ function Indicator({
   children: ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center gap-1 text-center">
-      <div className="flex size-18 flex-col items-center justify-center rounded-full border-2 border-line bg-surface text-sm font-semibold tabular-nums">
-        {icon}
-        {children}
-      </div>
-      <span className="text-xs text-muted">{label}</span>
+    <div className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1 text-sm tabular-nums">
+      {icon}
+      <span className="font-semibold">{children}</span>
+      <span className="text-muted">{label}</span>
     </div>
   );
 }
@@ -174,7 +181,7 @@ export function ForecastDetail({
                     )}
                   </div>
                 </div>
-                <div className="flex flex-wrap justify-around gap-3">
+                <div className="flex flex-wrap gap-2">
                   {current.wind !== undefined && (
                     <Indicator
                       label={
@@ -210,8 +217,11 @@ export function ForecastDetail({
                     </Indicator>
                   )}
                   {rainNow !== undefined && (
-                    <Indicator label={t("weather.rainChance")} icon={null}>
-                      <RainChance percent={rainNow} size={16} />
+                    <Indicator
+                      label={t("weather.detail.rain")}
+                      icon={<Umbrella aria-hidden size={16} color="#3b82f6" />}
+                    >
+                      {rainNow}%
                     </Indicator>
                   )}
                   {today?.uv !== undefined && (
