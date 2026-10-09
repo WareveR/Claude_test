@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { signIn } from "./helpers";
+import { openToEdit, signIn } from "./helpers";
 
 test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 
@@ -116,8 +116,8 @@ test("a Task dragged onto a Checklist moves in, and items swipe away with Undo",
   await expect(task).toHaveCount(0);
   await expect(school).toContainText("0 of 10");
 
-  // A plain click still opens the Checklist.
-  await school.click();
+  // A plain click still opens the Checklist, through its preview.
+  await openToEdit(page, school);
   const detail = page.getByTestId("checklist-detail");
   const items = detail.getByTestId("checklist-item");
   await expect(items.last()).toContainText("Pack the pencil case");
@@ -148,7 +148,10 @@ test("a loose Task's form adds a copy of it to a Checklist", async ({ page }) =>
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page).not.toHaveURL(/\/tasks\/new$/);
   await page.goto("/tasks");
-  await page.getByTestId("task").filter({ hasText: "Buy glue sticks" }).getByRole("link").click();
+  await openToEdit(
+    page,
+    page.getByTestId("task").filter({ hasText: "Buy glue sticks" }).getByRole("link"),
+  );
   await page.getByLabel("Which checklist").selectOption({ label: "Back to school" });
   await page.getByRole("button", { name: "Duplicate" }).click();
   await expect(page.getByRole("status")).toContainText('Added a copy to "Back to school"');

@@ -624,5 +624,10 @@
   },
   "time": {
     "minutesOf": "{{label}}: minutos"
+  },
+  "preview": {
+    "edit": "Editar",
+    "cancel": "Cancelar",
+    "inChecklist": "Em {{name}}"
   }
 }

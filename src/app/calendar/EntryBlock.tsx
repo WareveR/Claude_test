@@ -8,6 +8,7 @@ import { entryPath, type Entry, type Shown } from "../entries/model";
 import type { Person } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
 import { Icon } from "../ui/Icon";
+import { previewClick, targetOf, usePreview } from "../preview/Preview";
 
 /** How Importance shows: High bolder, Low lighter (assembly default). */
 export function importanceClass(entry: Pick<Entry, "importance">) {
@@ -36,6 +37,9 @@ export function EntryBlock({
   style?: React.CSSProperties;
 }) {
   const { t } = useTranslation();
+  const preview = usePreview();
+  const href = entryPath(entry);
+  const target = targetOf(href);
   // On the wall a Private Entry shows only "Private" and its time.
   const discreet = useDisplayMode() && entry.private;
   const people = entry.personIds
@@ -43,7 +47,8 @@ export function EntryBlock({
     .filter((p): p is Person => Boolean(p));
   return (
     <Link
-      to={entryPath(entry)}
+      to={href}
+      onClick={target ? previewClick(preview, target) : undefined}
       data-testid="entry"
       data-drag-entry={movable && "key" in entry ? entry.key : undefined}
       style={{ backgroundColor: type?.color ?? "#607d8b", ...style }}

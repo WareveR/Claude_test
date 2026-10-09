@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { signIn } from "./helpers";
+import { openToEdit, signIn } from "./helpers";
 
 test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 
@@ -48,7 +48,7 @@ test("a Checklist's page holds its items to tick, add, rename and remove", async
   const checklist = page.getByTestId("checklist").filter({ hasText: "Summer cleaning" });
   await expect(checklist).toContainText("1 of 2");
   await expect(page.getByTestId("task").filter({ hasText: "Clear out the garage" })).toHaveCount(0);
-  await checklist.click();
+  await openToEdit(page, checklist);
   await expect(page.getByTestId("checklist-detail")).toContainText("Clear out the garage");
   // Back returns to where the Checklist was opened.
   await page.getByRole("button", { name: "Back" }).click();
@@ -66,7 +66,7 @@ test("a Checklist's bar opens its page, and Use again starts a new round", async
   await page.getByRole("link", { name: "Week" }).click();
   const bar = page.getByRole("link", { name: /Summer cleaning 1\/2/ }).first();
   await expect(bar).toBeVisible();
-  await bar.click();
+  await openToEdit(page, bar);
   await expect(page).toHaveURL(/\/checklists\/[^/]+$/);
   await expect(page.getByTestId("checklist-detail")).toContainText("1 of 2");
 

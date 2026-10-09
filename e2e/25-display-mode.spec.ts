@@ -116,19 +116,19 @@ test("Private items show only Private and their time; Entries open read-only", a
   await expect(board.getByText("Secret errand")).toHaveCount(0);
   await expect(board.getByTestId("task").filter({ hasText: "Private" })).toBeVisible();
 
+  // On the wall an Entry opens as a preview to read, with nothing to edit.
   await list.filter({ hasText: "Family lunch" }).click();
-  await expect(page).toHaveURL(/\/entries\/[^/]+$/);
-  const details = page.getByTestId("entry-details");
-  await expect(details).toContainText("Family lunch");
-  await expect(details).toContainText("12:00");
-  await expect(details).toContainText("Bring the wine");
-  await expect(page.getByRole("button", { name: /Save|Delete/ })).toHaveCount(0);
-  await expect(page.getByRole("link", { name: /Edit/ })).toHaveCount(0);
-  await page.getByRole("link", { name: "Back to the board" }).click();
+  const preview = page.getByTestId("preview");
+  await expect(preview).toContainText("Family lunch");
+  await expect(preview).toContainText("12:00");
+  await expect(preview).toContainText("Bring the wine");
+  await expect(preview.getByRole("link", { name: /Edit/ })).toHaveCount(0);
+  await preview.getByRole("button", { name: "Cancel" }).click();
+  await expect(preview).toHaveCount(0);
 
   await list.filter({ hasText: "Private" }).click();
-  await expect(page.getByTestId("entry-details")).toContainText("Private");
-  await expect(page.getByTestId("entry-details")).toContainText("10:00");
+  await expect(preview).toContainText("Private");
+  await expect(preview).toContainText("10:00");
   await expect(page.getByText("Therapy with Dr Silva")).toHaveCount(0);
 });
 

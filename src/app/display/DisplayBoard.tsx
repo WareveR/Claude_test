@@ -22,12 +22,14 @@ import { CalendarGrid } from "../views/Views";
 import { ForecastButton } from "../weather/ForecastButton";
 import { useForecastDays } from "../weather/model";
 import { WeatherBadge } from "../weather/WeatherBadge";
+import { previewClick, targetOf, usePreview } from "../preview/Preview";
 import { useRolloverToday } from "./hooks";
 
 /** Today's Entries as a large list; the ones already over are dimmed. */
 function TodayEntries({ today }: { today: string }) {
   const { t } = useTranslation();
   const { family } = useSignedIn();
+  const preview = usePreview();
   const now = useNow(60_000);
   const nowMinutes = minutesNowIn(family.timeZone, now);
   const filter = usePersonFilter();
@@ -53,6 +55,10 @@ function TodayEntries({ today }: { today: string }) {
           <Link
             key={entry.key}
             to={entryPath(entry)}
+            onClick={(e) => {
+              const target = targetOf(entryPath(entry));
+              if (target) previewClick(preview, target)(e);
+            }}
             data-testid="today-entry"
             data-past={past || undefined}
             className={`flex items-center gap-3 rounded-lg border border-line bg-surface px-3 py-2 ${past ? "opacity-50" : ""} ${importanceClass(entry)}`}

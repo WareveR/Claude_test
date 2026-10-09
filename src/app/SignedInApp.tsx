@@ -22,6 +22,7 @@ import { ChecklistPage } from "./checklists/ChecklistForm";
 import { TemplatePage } from "./checklists/TemplateForm";
 import { TaskPage } from "./tasks/TaskForm";
 import { TasksView } from "./tasks/TasksView";
+import { PreviewProvider } from "./preview/Preview";
 import { DayView, MonthView, TodayRedirect, WeekView, YearView } from "./views/Views";
 
 /** On a wall tablet the entry address shows read-only details instead of the form. */
@@ -41,9 +42,11 @@ function Layout() {
       {display && <DisplayEffects />}
       <Header showVoice={!display} />
       <OfflineBanner />
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-        <Outlet />
-      </div>
+      <PreviewProvider>
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+          <Outlet />
+        </div>
+      </PreviewProvider>
     </div>
   );
 }
