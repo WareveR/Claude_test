@@ -35,7 +35,10 @@ test("create, see, edit and delete Entries in the week view", async ({ page }) =
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page.getByTestId("all-day-row").getByTestId("entry")).toHaveText(/Autumn break/);
 
+  // Selecting it shows its preview first; Edit opens its form.
   await dentist.click();
+  await expect(page.getByTestId("preview")).toContainText("Dentist");
+  await page.getByTestId("preview").getByRole("link", { name: "Edit" }).click();
   await expect(page.getByLabel("Title")).toHaveValue("Dentist");
   page.on("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Delete entry" }).click();

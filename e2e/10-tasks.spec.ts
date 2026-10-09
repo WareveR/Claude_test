@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { signIn } from "./helpers";
+import { openToEdit, signIn } from "./helpers";
 
 test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 
@@ -39,7 +39,7 @@ test("the Tasks view groups Tasks and ticks them done", async ({ page }) => {
   await done.getByRole("checkbox", { name: "Done: Fix the bike" }).click();
   await expect(page.getByRole("region", { name: "No date" })).toContainText("Fix the bike");
 
-  await page.getByRole("link", { name: /Buy school books/ }).click();
+  await openToEdit(page, page.getByRole("link", { name: /Buy school books/ }));
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Delete task" }).click();
   await expect(page).toHaveURL(/\/tasks$/);

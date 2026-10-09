@@ -625,5 +625,10 @@
   },
   "time": {
     "minutesOf": "{{label}}: minutes"
+  },
+  "preview": {
+    "edit": "Edit",
+    "cancel": "Cancel",
+    "inChecklist": "In {{name}}"
   }
 }

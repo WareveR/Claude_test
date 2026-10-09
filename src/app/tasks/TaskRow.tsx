@@ -11,6 +11,7 @@ import type { Person } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
 import { useTick, type Task } from "./model";
 import { Tick } from "../ui/Toggle";
+import { previewClick, usePreview } from "../preview/Preview";
 
 /** One Task with its tick box; done ones are struck through. */
 export function TaskRow({
@@ -82,11 +83,16 @@ export function TaskRow({
 }
 
 function Wrapper({ wall, id, children }: { wall: boolean; id: string; children: ReactNode }) {
+  const preview = usePreview();
   const className = "flex min-w-0 flex-1 flex-col";
   return wall ? (
     <div className={className}>{children}</div>
   ) : (
-    <Link to={`/tasks/${id}`} className={className}>
+    <Link
+      to={`/tasks/${id}`}
+      className={className}
+      onClick={previewClick(preview, { kind: "task", id })}
+    >
       {children}
     </Link>
   );

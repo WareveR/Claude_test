@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { signIn } from "./helpers";
+import { openToEdit, signIn } from "./helpers";
 
 test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 
@@ -13,7 +13,7 @@ test("a date of birth keeps a Birthday with the age on the calendar", async ({ p
 
   await page.goto("/month/2026-10?day=2026-10-20");
   const birthday = page.getByTestId("picked-day").getByRole("link", { name: /Bia, 10/ });
-  await birthday.click();
+  await openToEdit(page, birthday);
   await expect(page.getByText("This Birthday follows Bia's date of birth")).toBeVisible();
   await expect(page.getByLabel("Title")).toBeDisabled();
   await expect(page.getByRole("button", { name: "Delete entry" })).toHaveCount(0);
@@ -28,10 +28,7 @@ test("a date of birth keeps a Birthday with the age on the calendar", async ({ p
   await page.getByRole("button", { name: "Archive" }).click();
   await expect(page).toHaveURL(/\/settings\/family$/);
   await page.goto("/month/2026-10?day=2026-10-20");
-  await page
-    .getByTestId("picked-day")
-    .getByRole("link", { name: /Bia, 10/ })
-    .click();
+  await openToEdit(page, page.getByTestId("picked-day").getByRole("link", { name: /Bia, 10/ }));
   await expect(page.getByLabel("Title")).toBeEnabled();
   await expect(page.getByLabel("Notes")).toHaveValue("Loves drawing");
 });
