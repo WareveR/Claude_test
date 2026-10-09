@@ -296,7 +296,11 @@ export function ForecastDetail({
 
           {days.length > 0 && (
             <Section title={t("weather.detail.days")}>
-              <ol className="grid gap-x-6 sm:grid-cols-2">
+              {/* Two columns read top to bottom: today down the first, the later days down the second. */}
+              <ol
+                className="grid gap-x-6 sm:grid-flow-col sm:grid-cols-2"
+                style={{ gridTemplateRows: `repeat(${Math.ceil(days.length / 2)}, auto)` }}
+              >
                 {days.map((d) => (
                   <li
                     key={d.date}
