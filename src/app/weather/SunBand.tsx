@@ -9,25 +9,9 @@ function minutes(clock: string): number {
   return Number(clock.slice(0, 2)) * 60 + Number(clock.slice(3, 5));
 }
 
-/** The day's arc in the drawing: a half ellipse standing on the horizon. */
-const CX = 100;
-const HORIZON = 58;
-const RX = 84;
-const RY = 48;
-const ARC = `M${CX - RX},${HORIZON} A${RX},${RY} 0 0 1 ${CX + RX},${HORIZON}`;
-
-/** Where the sun sits on the arc once `share` (0 at sunrise, 1 at sunset) of the day has gone. */
-function onArc(share: number): { x: number; y: number } {
-  const angle = Math.PI * (1 - share);
-  return {
-    x: Number((CX + RX * Math.cos(angle)).toFixed(1)),
-    y: Number((HORIZON - RY * Math.sin(angle)).toFixed(1)),
-  };
-}
-
 /**
- * Today's sunrise, sunset and hours of daylight at the Weather Location: the sun on its arc
- * between the two, the part of the day already gone drawn solid and the rest dashed.
+ * Today's sunrise, sunset and hours of daylight at the Weather Location, on one slim line: the
+ * sun on a track between the two times, the part of the day already gone filled in.
  */
 export function SunBand() {
   const { t } = useTranslation();
@@ -42,71 +26,52 @@ export function SunBand() {
   return (
     <div
       data-testid="sun-band"
-      className="mx-4 rounded-md border border-line px-3 py-2 text-sm tabular-nums"
+      className="mx-4 flex items-center gap-3 rounded-md border border-line px-3 py-2 text-sm tabular-nums"
     >
-      <div className="mx-auto flex max-w-xs flex-col">
+      <span className="inline-flex shrink-0 items-center gap-1">
+        <SunriseIcon size={16} />
+        <span className="sr-only">{t("layers.sunrise")}</span> <strong>{sun.rise ?? "–"}</strong>
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col items-center gap-1">
         {rise !== null && daylight !== null && (
-          <SunArc share={(minutesNowIn(timeZone, now) - rise) / daylight} />
+          <SunTrack share={(minutesNowIn(timeZone, now) - rise) / daylight} />
         )}
-        <div className="flex items-center justify-between gap-2">
-          <span className="inline-flex items-center gap-1">
-            <SunriseIcon />
-            <span className="sr-only">{t("layers.sunrise")}</span>{" "}
-            <strong>{sun.rise ?? "–"}</strong>
+        {daylight !== null && (
+          <span className="text-xs text-muted">
+            {t("layers.daylight", {
+              hours: Math.floor(daylight / 60),
+              minutes: String(daylight % 60).padStart(2, "0"),
+            })}
           </span>
-          {daylight !== null && (
-            <span className="text-center text-xs text-muted">
-              {t("layers.daylight", {
-                hours: Math.floor(daylight / 60),
-                minutes: String(daylight % 60).padStart(2, "0"),
-              })}
-            </span>
-          )}
-          <span className="inline-flex items-center gap-1">
-            <span className="sr-only">{t("layers.sunset")}</span> <strong>{sun.set ?? "–"}</strong>
-            <SunsetIcon />
-          </span>
-        </div>
-      </div>
+        )}
+      </span>
+      <span className="inline-flex shrink-0 items-center gap-1">
+        <span className="sr-only">{t("layers.sunset")}</span> <strong>{sun.set ?? "–"}</strong>
+        <SunsetIcon size={16} />
+      </span>
     </div>
   );
 }
 
-/** The drawing: horizon, the day's arc, and the sun where it is now (resting at an end by night). */
-function SunArc({ share }: { share: number }) {
+/** The track: the day gone so far filled in, and the sun where it is now (at an end by night). */
+function SunTrack({ share }: { share: number }) {
+  const at = Math.min(1, Math.max(0, share)) * 100;
   const up = share > 0 && share < 1;
-  const sun = onArc(Math.min(1, Math.max(0, share)));
   return (
-    <svg viewBox="0 0 200 64" className="h-auto w-full" aria-hidden>
-      <line x1="4" x2="196" y1={HORIZON} y2={HORIZON} className="stroke-line" strokeWidth="1.5" />
-      <path
-        d={ARC}
-        fill="none"
-        className="stroke-muted"
-        strokeOpacity="0.6"
-        strokeWidth="1.5"
-        strokeDasharray="3 4"
-        strokeLinecap="round"
+    <span aria-hidden className="relative block h-1 w-full rounded-full bg-line">
+      <span
+        className="absolute inset-y-0 left-0 rounded-full"
+        style={{ width: `${at}%`, backgroundColor: SUNRISE_COLOR }}
       />
-      {share > 0 && (
-        <path
-          d={`M${CX - RX},${HORIZON} A${RX},${RY} 0 0 1 ${sun.x},${sun.y}`}
-          fill="none"
-          stroke={SUNRISE_COLOR}
-          strokeWidth="2.5"
-          strokeLinecap="round"
-        />
-      )}
-      {up && <circle cx={sun.x} cy={sun.y} r="10" fill={SUNRISE_COLOR} fillOpacity="0.25" />}
-      <circle
+      <span
         data-testid="sun-dot"
-        cx={sun.x}
-        cy={sun.y}
-        r="5.5"
-        fill={up ? SUNRISE_COLOR : "none"}
-        stroke={SUNRISE_COLOR}
-        strokeWidth="2"
+        className="absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2"
+        style={{
+          left: `${at}%`,
+          borderColor: SUNRISE_COLOR,
+          backgroundColor: up ? SUNRISE_COLOR : "var(--color-bg)",
+        }}
       />
-    </svg>
+    </span>
   );
 }

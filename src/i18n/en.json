@@ -475,6 +475,7 @@
       "wind": "Wind",
       "windFrom": "Wind from {{point}}",
       "humidity": "Humidity",
+      "rain": "Rain",
       "uv": "UV index",
       "sunMoon": "Sun and Moon",
       "moonLit": "{{percent}}% lit",

@@ -61,7 +61,7 @@ export function MonthGrid({
   const colorOf = (e: Entry) => types.find((t) => t.id === e.entryTypeId)?.color ?? "#607d8b";
   return (
     <div className="flex flex-col bg-surface lg:min-h-0 lg:flex-1" {...drag.zone}>
-      <div className="grid grid-cols-7 border-b border-line text-center text-xs font-semibold lg:text-sm">
+      <div className="grid grid-cols-[repeat(7,minmax(0,1fr))] border-b border-line text-center text-xs font-semibold lg:text-sm">
         {weeks[0].map((day) => (
           <div
             key={day}
@@ -71,7 +71,7 @@ export function MonthGrid({
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-7 lg:flex-1 lg:auto-rows-fr">
+      <div className="grid grid-cols-[repeat(7,minmax(0,1fr))] lg:flex-1 lg:auto-rows-fr">
         {weeks.flat().map((day) => {
           const inMonth = day.slice(0, 7) === month.slice(0, 7);
           const dayEntries = entriesOn(entries, day);
@@ -84,7 +84,7 @@ export function MonthGrid({
               data-testid={`month-day-${day}`}
               data-drop-date={day}
               aria-current={day === selected ? "date" : undefined}
-              className={`flex min-h-16 flex-col gap-0.5 border-b border-l border-line p-0.5 text-left ${names ? "bg-holiday" : weekday(day) >= 5 ? "bg-weekend" : ""} ${inMonth ? "" : "opacity-40"} ${day === selected ? "outline-2 -outline-offset-2 outline-accent" : ""} ${landsOn(day) ? "ring-2 ring-accent ring-inset" : ""}`}
+              className={`flex min-h-16 min-w-0 flex-col gap-0.5 border-b border-l border-line p-0.5 text-left ${names ? "bg-holiday" : weekday(day) >= 5 ? "bg-weekend" : ""} ${inMonth ? "" : "opacity-40"} ${day === selected ? "outline-2 -outline-offset-2 outline-accent" : ""} ${landsOn(day) ? "ring-2 ring-accent ring-inset" : ""}`}
             >
               {/* The day's number and its weather share the top line. */}
               <span className="flex items-start justify-between gap-1">
@@ -98,6 +98,7 @@ export function MonthGrid({
                     day={forecast}
                     faded={forecast.faded}
                     size={14}
+                    iconOnPhone
                     className="min-w-0 overflow-hidden text-[10px] leading-tight lg:text-xs"
                   />
                 )}

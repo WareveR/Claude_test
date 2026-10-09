@@ -187,6 +187,30 @@ test("‹ › move the grid a week, a pill returns, and three idle minutes retur
   ).toBeVisible();
 });
 
+test("an Entry opened on another week leaves the board on that week", async ({ page }) => {
+  await signIn(page);
+  await addEntry(page, "Piano recital", "18:00", {
+    time: {
+      allDay: false,
+      startDate: lisbonDate(8),
+      startTime: "18:00",
+      endDate: null,
+      endTime: null,
+    },
+  });
+  await turnOnDisplayMode(page);
+  const board = page.getByTestId("display-board");
+  await board.getByRole("button", { name: "Next" }).click();
+  await board
+    .getByTestId(`day-column-${lisbonDate(8)}`)
+    .getByTestId("entry")
+    .click();
+  await expect(page.getByTestId("preview")).toContainText("Piano recital");
+  await page.getByTestId("preview").getByRole("button", { name: "Cancel" }).click();
+  await expect(board.getByTestId(`day-column-${lisbonDate(8)}`)).toBeVisible();
+  await expect(board.getByTestId("back-to-today")).toBeVisible();
+});
+
 test("the Leave wall view button leaves Display Mode", async ({ page }) => {
   await signIn(page);
   await turnOnDisplayMode(page);

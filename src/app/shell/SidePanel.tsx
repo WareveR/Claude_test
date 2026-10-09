@@ -24,15 +24,8 @@ function writeCollapsed(collapsed: boolean) {
   }
 }
 
-/** Where the panel moves beside the view: the wall's board at md, the views at lg. */
+/** Where the panel moves beside the view. */
 const WIDE = {
-  md: {
-    row: "md:min-h-0 md:flex-1 md:flex-row",
-    aside: "md:w-[28rem] md:shrink-0 md:overflow-y-auto md:border-r md:border-b-0",
-    rail: "md:border-r md:border-b-0 md:px-1 md:py-2",
-    label: "md:sr-only",
-    main: "md:min-h-0 md:flex-1",
-  },
   lg: {
     row: "lg:min-h-0 lg:flex-1 lg:flex-row",
     aside: "lg:w-[22rem] lg:shrink-0 lg:overflow-y-auto lg:border-r lg:border-b-0 2xl:w-[26rem]",
@@ -125,6 +118,5 @@ export function SidePanelLayout({
  * zoom) a fixed share of the screen, so the stacked page scrolls and the grid keeps its own room.
  */
 export const GRID_BOX = {
-  md: "flex h-[calc(100dvh-9rem)] min-h-72 flex-col md:h-auto md:min-h-0 md:flex-1",
   lg: "flex h-[calc(100dvh-11rem)] min-h-72 flex-col lg:h-auto lg:min-h-0 lg:flex-1",
 } as const;

@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { AUTO_RETURN_MS, boardDays } from "../../core/display";
 import { daySpan } from "../../core/entry-time";
 import { formatLocale } from "../../core/languages";
@@ -87,8 +87,9 @@ function TodayEntries({ today }: { today: string }) {
 }
 
 /**
- * Display Mode: today on the left, always; a seven-day time grid starting today on the right,
- * movable a week at a time and back to today by itself after three untouched minutes.
+ * Display Mode: today on the left, always, on a wide screen (above the grid on a narrower one); a
+ * seven-day time grid starting today, movable a week at a time and back to today by itself after
+ * three untouched minutes.
  */
 export function DisplayBoard() {
   const { t } = useTranslation();
@@ -96,13 +97,17 @@ export function DisplayBoard() {
   const locale = formatLocale(language);
   const today = useRolloverToday(family.timeZone);
   const forecast = useForecastDays();
-  const [weeksAway, setWeeksAway] = useState(0);
+  // The week shown is in the address, so Back from an Entry returns to it.
+  const [search, setSearch] = useSearchParams();
+  const weeksAway = Number(search.get("week")) || 0;
+  const setWeeksAway = (weeks: number) =>
+    setSearch(weeks === 0 ? {} : { week: String(weeks) }, { replace: true });
   const [touches, setTouches] = useState(0);
   useEffect(() => {
     if (weeksAway === 0) return;
-    const id = setTimeout(() => setWeeksAway(0), AUTO_RETURN_MS);
+    const id = setTimeout(() => setSearch({}, { replace: true }), AUTO_RETURN_MS);
     return () => clearTimeout(id);
-  }, [weeksAway, touches]);
+  }, [weeksAway, touches, setSearch]);
 
   const days = boardDays(today, weeksAway);
   const short = { day: "numeric", month: "short" } as const;
@@ -111,12 +116,12 @@ export function DisplayBoard() {
   return (
     <div
       data-testid="display-board"
-      className="flex flex-col md:min-h-0 md:flex-1"
+      className="flex flex-col lg:min-h-0 lg:flex-1"
       onPointerDownCapture={() => setTouches((n) => n + 1)}
       onScrollCapture={() => setTouches((n) => n + 1)}
     >
       <SidePanelLayout
-        wideAt="md"
+        wideAt="lg"
         panel={
           <TodayPanel readOnly>
             <TodayEntries today={today} />
@@ -128,7 +133,7 @@ export function DisplayBoard() {
             type="button"
             aria-label={t("views.previous")}
             className={arrow}
-            onClick={() => setWeeksAway((w) => w - 1)}
+            onClick={() => setWeeksAway(weeksAway - 1)}
           >
             <ChevronLeft aria-hidden size={24} strokeWidth={1.75} />
           </button>
@@ -139,7 +144,7 @@ export function DisplayBoard() {
             type="button"
             aria-label={t("views.next")}
             className={arrow}
-            onClick={() => setWeeksAway((w) => w + 1)}
+            onClick={() => setWeeksAway(weeksAway + 1)}
           >
             <ChevronRight aria-hidden size={24} strokeWidth={1.75} />
           </button>
@@ -157,29 +162,37 @@ export function DisplayBoard() {
             <FilterButton />
           </div>
         </nav>
-        <div className={GRID_BOX.md}>
-          <CalendarGrid
-            days={days}
-            readOnly
-            dayExtra={(day) => {
-              const weather = forecast.get(day);
-              return (
-                weather && (
-                  <div data-testid={`week-weather-${day}`}>
-                    <ForecastButton>
-                      <WeatherBadge
-                        day={weather}
-                        faded={weather.faded}
-                        size={16}
-                        rain
-                        className="flex-wrap justify-center text-xs"
-                      />
-                    </ForecastButton>
-                  </div>
-                )
-              );
-            }}
-          />
+        <div className={GRID_BOX.lg}>
+          {/* On a phone the seven days keep a readable width and scroll sideways. */}
+          <div className="relative flex min-h-0 flex-1 overflow-x-auto">
+            <div
+              data-testid="wall-days"
+              className="flex min-h-0 min-w-[46rem] flex-1 flex-col md:min-w-0"
+            >
+              <CalendarGrid
+                days={days}
+                readOnly
+                dayExtra={(day) => {
+                  const weather = forecast.get(day);
+                  return (
+                    weather && (
+                      <div data-testid={`week-weather-${day}`}>
+                        <ForecastButton>
+                          <WeatherBadge
+                            day={weather}
+                            faded={weather.faded}
+                            size={16}
+                            rain
+                            className="flex-wrap justify-center text-xs"
+                          />
+                        </ForecastButton>
+                      </div>
+                    )
+                  );
+                }}
+              />
+            </div>
+          </div>
         </div>
       </SidePanelLayout>
     </div>

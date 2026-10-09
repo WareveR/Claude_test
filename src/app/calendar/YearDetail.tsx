@@ -44,7 +44,7 @@ export function YearDetail({
     day && holidays.has(day) ? "bg-holiday" : isWeekendColumn(c) ? "bg-weekend" : "";
 
   return (
-    <div className="overflow-x-auto bg-surface p-2" data-testid="year-detail">
+    <div className="relative overflow-x-auto bg-surface p-2" data-testid="year-detail">
       <table className="w-full min-w-[56rem] table-fixed border-collapse text-[10px] lg:text-xs">
         <thead>
           <tr>

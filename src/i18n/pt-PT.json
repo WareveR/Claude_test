@@ -475,6 +475,7 @@
       "wind": "Vento",
       "windFrom": "Vento de {{point}}",
       "humidity": "Humidade",
+      "rain": "Chuva",
       "uv": "Índice UV",
       "sunMoon": "Sol e Lua",
       "moonLit": "{{percent}}% iluminada",
