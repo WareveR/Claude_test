@@ -69,10 +69,11 @@ export function Header({
             setDisplayMode(false);
             navigate(paths.today());
           }}
-          className="ml-auto flex items-center gap-1.5 rounded-md border border-header-ink/40 px-3 py-1.5 hover:bg-header-ink/15"
+          className="ml-auto flex shrink-0 items-center gap-1.5 rounded-md border border-header-ink/40 px-3 py-1.5 hover:bg-header-ink/15"
         >
           <X aria-hidden size={20} strokeWidth={1.75} />
-          {t("display.leave")}
+          {/* On a phone only the cross shows; its name stays for screen readers. */}
+          <span className="max-sm:sr-only">{t("display.leave")}</span>
         </button>
       ) : (
         // The same button opens Settings and, from inside them, closes them.
