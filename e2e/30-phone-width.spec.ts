@@ -19,3 +19,12 @@ test("on a phone no view is wider than the screen", async ({ page }) => {
     expect(sideways, `${view} scrolls sideways`).toBe(0);
   }
 });
+
+test("on a phone the header stays one line, Suggestions included", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/suggestions");
+  const header = page.locator("header").first();
+  await expect(header.getByTestId("header-date")).toBeVisible();
+  const box = await header.boundingBox();
+  expect(box?.height).toBeLessThan(64);
+});
