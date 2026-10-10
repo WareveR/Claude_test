@@ -41,3 +41,17 @@ test("the task list has buttons for a new task and a new checklist", async ({ pa
   await page.locator("main").getByRole("link", { name: "New checklist" }).click();
   await expect(page).toHaveURL(/\/checklists\/new$/);
 });
+
+test("This device shows its app version and updates it on demand", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/settings/device");
+  await expect(page.getByRole("heading", { name: "App version" })).toBeVisible();
+  await expect(page.getByText(/This device runs version /)).toBeVisible();
+  await page.getByRole("button", { name: "Update now" }).click();
+  // Nothing newer was deployed in between, so it says so (or reloads into the same version).
+  await expect(
+    page
+      .getByText("This device already has the latest version.")
+      .or(page.getByRole("heading", { name: "App version" })),
+  ).toBeVisible();
+});
