@@ -625,5 +625,197 @@
   },
   "time": {
     "minutesOf": "{{label}}: minutes"
+  },
+  "suggestions": {
+    "title": "Suggestions",
+    "lead": "Write or say what repeats in the family's life, or open a theme, and create it all at once after a review.",
+    "box": "What repeats?",
+    "placeholder": "gym on Monday and Wednesday at 7pm, groceries on Tuesday and Thursday at 10am, water the plants on Saturday, car, dog",
+    "listen": "Dictate",
+    "read": "Read",
+    "reading": "Reading…",
+    "failed": "Could not understand that. Try again or pick from the themes below.",
+    "written": "From what you wrote",
+    "themes": "Themes",
+    "switchKind": "Switch between Task and Entry: {{title}}",
+    "kinds": {
+      "task": "Task",
+      "entry": "Entry",
+      "debit": "Notice"
+    },
+    "payment": {
+      "label": "How you pay",
+      "manual": "Paid by hand",
+      "debit": "Direct debit"
+    },
+    "debitTitle": "Debit: {{name}}",
+    "part": "instalment {{n}}",
+    "questions": {
+      "registration": "Registration date",
+      "iucBand": "IUC per year",
+      "imiBand": "IMI per year",
+      "expiry": "Expires on"
+    },
+    "bands": {
+      "upTo100": "Up to €100",
+      "upTo500": "€100 to €500",
+      "over500": "Over €500"
+    },
+    "needsAnswer": "Answer above to work out the dates.",
+    "once": "Once, on {{date}}",
+    "first": "first on {{date}}",
+    "until": "until {{date}}",
+    "every": {
+      "daily_one": "Every day",
+      "daily_other": "Every {{count}} days",
+      "weekly_one": "Every week",
+      "weekly_other": "Every {{count}} weeks",
+      "monthly_one": "Every month",
+      "monthly_other": "Every {{count}} months",
+      "yearly_one": "Every year",
+      "yearly_other": "Every {{count}} years"
+    },
+    "count_one": "1 to create",
+    "count_other": "{{count}} to create",
+    "review": "Review and create",
+    "reviewTitle_one": "About to create 1",
+    "reviewTitle_other": "About to create {{count}}",
+    "reviewHint": "Soonest first. Nothing is saved until you tap Create.",
+    "change": "Change {{title}}",
+    "changeShort": "Change",
+    "done": "Done",
+    "firstDate": "First time",
+    "back": "Back",
+    "create_one": "Create 1",
+    "create_other": "Create {{count}}",
+    "creating": "Creating…",
+    "created_one": "Created 1 Task or Entry.",
+    "created_other": "Created {{count}} Tasks and Entries.",
+    "createFailed": "Could not create everything, so nothing was saved. Try again.",
+    "undo": "Undo",
+    "undone": "Undone: nothing was kept.",
+    "seeTasks": "See tasks",
+    "areas": {
+      "car": {
+        "name": "Car",
+        "intro": "With the registration date, the app works out the IUC and the inspections."
+      },
+      "home": {
+        "name": "Home",
+        "intro": "Taxes, insurance and the upkeep you only remember when something breaks."
+      },
+      "bills": {
+        "name": "Monthly bills",
+        "intro": "The ones you pay by hand become Tasks; direct debits only show as a notice on the calendar."
+      },
+      "paperwork": {
+        "name": "Paperwork",
+        "intro": "Deadlines not to miss."
+      },
+      "health": {
+        "name": "Health",
+        "intro": "Appointments booked once a year."
+      },
+      "school": {
+        "name": "School",
+        "intro": "What falls to the family each school year."
+      },
+      "pets": {
+        "name": "Pets",
+        "intro": "Vaccines and regular care."
+      },
+      "routine": {
+        "name": "Weekly routine",
+        "intro": "Change the days and times in the review, before creating."
+      }
+    },
+    "ideas": {
+      "iuc": "Pay the IUC (road tax)",
+      "inspection": "Car inspection",
+      "carInsurance": "Pay the car insurance",
+      "carService": "Car service",
+      "tyres": "Check the tyre pressure",
+      "imi": "Pay the IMI (property tax)",
+      "homeInsurance": "Pay the home insurance",
+      "condominium": "Pay the building fees",
+      "boiler": "Service the boiler or water heater",
+      "chimney": "Sweep the chimney",
+      "blinds": "Clean the blinds and windows",
+      "radiators": "Bleed the radiators",
+      "gutters": "Clear the gutters",
+      "smokeAlarm": "Change the smoke alarm batteries",
+      "airCon": "Clean the air conditioning filters",
+      "electricity": "Pay the electricity",
+      "water": "Pay the water",
+      "gas": "Pay the gas",
+      "internet": "Pay the internet and phone",
+      "rent": "Pay the rent or mortgage",
+      "schoolFees": "Pay the school or after-school club",
+      "gymFees": "Pay the gym",
+      "irs": "File the IRS (income tax) return",
+      "idCard": "Renew the Citizen Card",
+      "drivingLicence": "Renew the driving licence",
+      "passport": "Renew the passport",
+      "healthInsurance": "Pay the health insurance",
+      "dentist": "Book the dentist",
+      "gp": "Book the family doctor",
+      "eyes": "Book the eye doctor",
+      "bloodTests": "Have the yearly blood tests",
+      "vaccines": "Check the vaccination record",
+      "enrolment": "Renew the school enrolment",
+      "textbooks": "Request the textbook vouchers",
+      "schoolSupplies": "Buy the school supplies",
+      "activities": "Sign up for activities",
+      "rabies": "Rabies vaccine",
+      "deworming": "Deworm",
+      "vet": "Vet check-up",
+      "gym": "Gym",
+      "groceries": "Groceries",
+      "swimming": "Swimming",
+      "catechism": "Catechism",
+      "music": "Music lesson",
+      "scouts": "Scouts",
+      "plants": "Water the plants",
+      "sheets": "Change the bed sheets",
+      "cleaning": "Clean the house"
+    },
+    "short": {
+      "iuc": "IUC",
+      "carInsurance": "car insurance",
+      "imi": "IMI",
+      "homeInsurance": "home insurance",
+      "condominium": "building fees",
+      "electricity": "electricity",
+      "water": "water",
+      "gas": "gas",
+      "internet": "internet and phone",
+      "rent": "rent or mortgage",
+      "schoolFees": "school fees",
+      "gymFees": "gym",
+      "healthInsurance": "health insurance"
+    },
+    "hints": {
+      "iuc": "In 2026 in the registration month; in 2027 in October; from 2028 in April",
+      "inspection": "When the car is 4, 6 and 8, then every year",
+      "imi": "May, or May and November, or May, August and November",
+      "irs": "From 1 April to 30 June",
+      "idCard": "A month before it expires",
+      "drivingLicence": "A month before it expires",
+      "passport": "A month before it expires",
+      "blinds": "In spring",
+      "radiators": "In autumn",
+      "gutters": "After the leaves fall",
+      "smokeAlarm": "When the clocks change",
+      "boiler": "Before winter",
+      "airCon": "Before summer",
+      "deworming": "Every 3 months"
+    },
+    "notes": {
+      "inspection": "It can be done in the 3 months before this date.",
+      "irs": "The return is filed from 1 April to 30 June.",
+      "iuc": "It is paid on the Portal das Finanças.",
+      "imi": "It is paid on the Portal das Finanças."
+    },
+    "time": "Time (optional)"
   }
 }

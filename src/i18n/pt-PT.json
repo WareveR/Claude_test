@@ -625,5 +625,197 @@
   },
   "time": {
     "minutesOf": "{{label}}: minutos"
+  },
+  "suggestions": {
+    "title": "Sugestões",
+    "lead": "Escreva ou diga o que se repete na vida da família, ou abra um tema, e crie tudo de uma vez depois de rever.",
+    "box": "O que se repete?",
+    "placeholder": "ginásio 2a e 4a às 19h, supermercado 3a e 5a às 10h, regar as plantas ao sábado, carro, cão",
+    "listen": "Ditar",
+    "read": "Ler",
+    "reading": "A ler…",
+    "failed": "Não foi possível perceber. Tente de novo ou escolha nos temas abaixo.",
+    "written": "Do que escreveu",
+    "themes": "Temas",
+    "switchKind": "Mudar entre Tarefa e Entrada: {{title}}",
+    "kinds": {
+      "task": "Tarefa",
+      "entry": "Entrada",
+      "debit": "Aviso"
+    },
+    "payment": {
+      "label": "Como paga",
+      "manual": "Pago à mão",
+      "debit": "Débito direto"
+    },
+    "debitTitle": "Débito: {{name}}",
+    "part": "{{n}}.ª prestação",
+    "questions": {
+      "registration": "Data da matrícula",
+      "iucBand": "IUC por ano",
+      "imiBand": "IMI por ano",
+      "expiry": "Caduca em"
+    },
+    "bands": {
+      "upTo100": "Até 100 €",
+      "upTo500": "De 100 € a 500 €",
+      "over500": "Mais de 500 €"
+    },
+    "needsAnswer": "Responda acima para calcular as datas.",
+    "once": "Uma vez, a {{date}}",
+    "first": "primeira a {{date}}",
+    "until": "até {{date}}",
+    "every": {
+      "daily_one": "Todos os dias",
+      "daily_other": "De {{count}} em {{count}} dias",
+      "weekly_one": "Todas as semanas",
+      "weekly_other": "De {{count}} em {{count}} semanas",
+      "monthly_one": "Todos os meses",
+      "monthly_other": "De {{count}} em {{count}} meses",
+      "yearly_one": "Todos os anos",
+      "yearly_other": "De {{count}} em {{count}} anos"
+    },
+    "count_one": "1 para criar",
+    "count_other": "{{count}} para criar",
+    "review": "Rever e criar",
+    "reviewTitle_one": "Vai criar 1",
+    "reviewTitle_other": "Vai criar {{count}}",
+    "reviewHint": "Pela primeira vez que acontece. Nada é guardado até tocar em Criar.",
+    "change": "Mudar {{title}}",
+    "changeShort": "Mudar",
+    "done": "Feito",
+    "firstDate": "Primeira vez",
+    "back": "Voltar",
+    "create_one": "Criar 1",
+    "create_other": "Criar {{count}}",
+    "creating": "A criar…",
+    "created_one": "Criada 1 Tarefa ou Entrada.",
+    "created_other": "Criadas {{count}} Tarefas e Entradas.",
+    "createFailed": "Não foi possível criar tudo, por isso nada ficou guardado. Tente de novo.",
+    "undo": "Desfazer",
+    "undone": "Desfeito: nada ficou guardado.",
+    "seeTasks": "Ver tarefas",
+    "areas": {
+      "car": {
+        "name": "Carro",
+        "intro": "Com a data da matrícula, a aplicação calcula o IUC e as inspeções."
+      },
+      "home": {
+        "name": "Casa",
+        "intro": "Impostos, seguros e a manutenção que só se lembra quando avaria."
+      },
+      "bills": {
+        "name": "Contas do mês",
+        "intro": "As que paga à mão ficam como Tarefa; as de débito direto ficam só como aviso no calendário."
+      },
+      "paperwork": {
+        "name": "Papelada",
+        "intro": "Prazos que não se podem perder."
+      },
+      "health": {
+        "name": "Saúde",
+        "intro": "Consultas que se marcam uma vez por ano."
+      },
+      "school": {
+        "name": "Escola",
+        "intro": "O que fica à família em cada ano letivo."
+      },
+      "pets": {
+        "name": "Animais",
+        "intro": "Vacinas e cuidados regulares."
+      },
+      "routine": {
+        "name": "Rotina da semana",
+        "intro": "Os dias e as horas mudam-se na revisão, antes de criar."
+      }
+    },
+    "ideas": {
+      "iuc": "Pagar o IUC",
+      "inspection": "Inspeção do carro",
+      "carInsurance": "Pagar o seguro do carro",
+      "carService": "Revisão do carro",
+      "tyres": "Ver a pressão dos pneus",
+      "imi": "Pagar o IMI",
+      "homeInsurance": "Pagar o seguro da casa",
+      "condominium": "Pagar o condomínio",
+      "boiler": "Revisão da caldeira ou do esquentador",
+      "chimney": "Limpar a chaminé",
+      "blinds": "Limpar estores e vidros",
+      "radiators": "Purgar os radiadores",
+      "gutters": "Limpar as caleiras",
+      "smokeAlarm": "Trocar as pilhas do detetor de fumo",
+      "airCon": "Limpar os filtros do ar condicionado",
+      "electricity": "Pagar a luz",
+      "water": "Pagar a água",
+      "gas": "Pagar o gás",
+      "internet": "Pagar a internet e o telemóvel",
+      "rent": "Pagar a renda ou a prestação da casa",
+      "schoolFees": "Pagar a escola ou o ATL",
+      "gymFees": "Pagar o ginásio",
+      "irs": "Entregar o IRS",
+      "idCard": "Renovar o Cartão de Cidadão",
+      "drivingLicence": "Renovar a carta de condução",
+      "passport": "Renovar o passaporte",
+      "healthInsurance": "Pagar o seguro de saúde",
+      "dentist": "Marcar o dentista",
+      "gp": "Marcar o médico de família",
+      "eyes": "Marcar o oftalmologista",
+      "bloodTests": "Fazer as análises anuais",
+      "vaccines": "Ver o boletim de vacinas",
+      "enrolment": "Renovar a matrícula da escola",
+      "textbooks": "Pedir os vales dos manuais",
+      "schoolSupplies": "Comprar o material escolar",
+      "activities": "Inscrever nas atividades",
+      "rabies": "Vacina antirrábica",
+      "deworming": "Desparasitar",
+      "vet": "Consulta no veterinário",
+      "gym": "Ginásio",
+      "groceries": "Supermercado",
+      "swimming": "Natação",
+      "catechism": "Catequese",
+      "music": "Aula de música",
+      "scouts": "Escuteiros",
+      "plants": "Regar as plantas",
+      "sheets": "Mudar os lençóis",
+      "cleaning": "Limpeza da casa"
+    },
+    "short": {
+      "iuc": "IUC",
+      "carInsurance": "seguro do carro",
+      "imi": "IMI",
+      "homeInsurance": "seguro da casa",
+      "condominium": "condomínio",
+      "electricity": "luz",
+      "water": "água",
+      "gas": "gás",
+      "internet": "internet e telemóvel",
+      "rent": "renda ou prestação da casa",
+      "schoolFees": "escola ou ATL",
+      "gymFees": "ginásio",
+      "healthInsurance": "seguro de saúde"
+    },
+    "hints": {
+      "iuc": "Em 2026 no mês da matrícula; em 2027 em outubro; a partir de 2028 em abril",
+      "inspection": "Aos 4, 6 e 8 anos do carro, depois todos os anos",
+      "imi": "Maio, ou maio e novembro, ou maio, agosto e novembro",
+      "irs": "De 1 de abril a 30 de junho",
+      "idCard": "Um mês antes de caducar",
+      "drivingLicence": "Um mês antes de caducar",
+      "passport": "Um mês antes de caducar",
+      "blinds": "Na primavera",
+      "radiators": "No outono",
+      "gutters": "Depois de caírem as folhas",
+      "smokeAlarm": "Quando muda a hora",
+      "boiler": "Antes do inverno",
+      "airCon": "Antes do verão",
+      "deworming": "A cada 3 meses"
+    },
+    "notes": {
+      "inspection": "Pode fazer-se nos 3 meses antes desta data.",
+      "irs": "A entrega é de 1 de abril a 30 de junho.",
+      "iuc": "Paga-se no Portal das Finanças.",
+      "imi": "Paga-se no Portal das Finanças."
+    },
+    "time": "Hora (opcional)"
   }
 }

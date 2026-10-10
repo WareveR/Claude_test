@@ -1,4 +1,4 @@
-import { Settings, X } from "lucide-react";
+import { Lightbulb, Settings, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
@@ -76,14 +76,23 @@ export function Header({
           <span className="max-sm:sr-only">{t("display.leave")}</span>
         </button>
       ) : (
-        // The same button opens Settings and, from inside them, closes them.
-        <Link
-          to={inSettings ? outsideSettings : paths.settings()}
-          aria-label={inSettings ? t("settings.close") : t("settings.title")}
-          className={`${showVoice ? "" : "ml-auto "}rounded-md p-2 hover:bg-header-ink/15 ${inSettings ? "bg-header-ink/20" : ""}`}
-        >
-          <Settings aria-hidden size={20} strokeWidth={1.75} />
-        </Link>
+        <>
+          <Link
+            to={paths.suggestions()}
+            aria-label={t("suggestions.title")}
+            className={`rounded-md p-2 hover:bg-header-ink/15 ${location.pathname === paths.suggestions() ? "bg-header-ink/20" : ""}`}
+          >
+            <Lightbulb aria-hidden size={20} strokeWidth={1.75} />
+          </Link>
+          {/* The same button opens Settings and, from inside them, closes them. */}
+          <Link
+            to={inSettings ? outsideSettings : paths.settings()}
+            aria-label={inSettings ? t("settings.close") : t("settings.title")}
+            className={`${showVoice ? "" : "ml-auto "}rounded-md p-2 hover:bg-header-ink/15 ${inSettings ? "bg-header-ink/20" : ""}`}
+          >
+            <Settings aria-hidden size={20} strokeWidth={1.75} />
+          </Link>
+        </>
       )}
     </header>
   );

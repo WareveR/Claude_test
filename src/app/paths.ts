@@ -9,6 +9,7 @@ export const paths = {
   year: (date: PlainDate) => `/year/${date.slice(0, 4)}`,
   display: () => "/display",
   tasks: () => "/tasks",
+  suggestions: () => "/suggestions",
   settings: () => "/settings",
   settingsArea: (area: string) => `/settings/${area}`,
   errorLog: () => "/settings/errors",
