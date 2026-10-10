@@ -157,12 +157,9 @@ export function DisplayBoard() {
           </div>
         </nav>
         <div className={GRID_BOX.lg}>
-          {/* On a phone the seven days keep a readable width and scroll sideways. */}
-          <div className="relative flex min-h-0 flex-1 overflow-x-auto">
-            <div
-              data-testid="wall-days"
-              className="flex min-h-0 min-w-[46rem] flex-1 flex-col md:min-w-0"
-            >
+          {/* All seven days fit the screen, a phone's too: never a sideways scroll. */}
+          <div className="relative flex min-h-0 flex-1">
+            <div data-testid="wall-days" className="flex min-h-0 min-w-0 flex-1 flex-col">
               <CalendarGrid
                 days={days}
                 readOnly
@@ -177,6 +174,7 @@ export function DisplayBoard() {
                             faded={weather.faded}
                             size={16}
                             rain
+                            iconOnPhone
                             className="flex-wrap justify-center text-xs"
                           />
                         </ForecastButton>
