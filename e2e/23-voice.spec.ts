@@ -68,6 +68,33 @@ test("readback shows the summary, Save saves and Undo removes it", async ({ page
   await expect(page.getByText("Voice buy stamps")).toHaveCount(0);
 });
 
+test("readback speaks the summary and the question as two sentences", async ({ page }) => {
+  // A stand-in voice that records each sentence and finishes it at once.
+  await page.addInitScript(`
+    window.spoken = [];
+    window.SpeechSynthesisUtterance = function (text) { this.text = text; };
+    Object.defineProperty(window, "speechSynthesis", {
+      value: {
+        cancel() {},
+        speak(u) { window.spoken.push(u.text); setTimeout(() => u.onend && u.onend(), 0); },
+      },
+    });
+  `);
+  // Only a spoken sentence is read back.
+  await fakeMicrophone(page, "task post letters", undefined, false);
+  await signIn(page);
+  await page.goto("/tasks");
+  await fakeTask(page, "Voice post letters");
+  await page.getByRole("button", { name: "Voice Entry" }).click();
+  await page
+    .getByRole("dialog", { name: "Voice Entry" })
+    .getByRole("button", { name: "Speak" })
+    .click();
+  await expect
+    .poll(() => page.evaluate("window.spoken"))
+    .toEqual(["New task: Voice post letters, 20 October.", "Save?"]);
+});
+
 test("an Entry created by voice saves with its values and can be undone", async ({ page }) => {
   await signIn(page);
   const types = await (await page.request.get("/api/entry-types")).json();
@@ -142,9 +169,9 @@ test("Edit opens the form filled in, and readback can be switched off", async ({
 });
 
 /** A stand-in for the browser's speech recognition: hears `words` in pieces, never marked final. */
-async function fakeMicrophone(page: Page, words: string | null, error?: string) {
+async function fakeMicrophone(page: Page, words: string | null, error?: string, quiet = true) {
   await page.addInitScript(
-    ({ words, error }) => {
+    ({ words, error, quiet }) => {
       class Fake {
         lang = "";
         interimResults = false;
@@ -186,11 +213,12 @@ async function fakeMicrophone(page: Page, words: string | null, error?: string) 
       w.SpeechRecognition = Fake;
       w.webkitSpeechRecognition = Fake;
       // The readback speaks; keep it instant and silent.
-      w.speechSynthesis.speak = (u) => {
-        setTimeout(() => u.onend?.(), 0);
-      };
+      if (quiet)
+        w.speechSynthesis.speak = (u) => {
+          setTimeout(() => u.onend?.(), 0);
+        };
     },
-    { words, error },
+    { words, error, quiet },
   );
 }
 

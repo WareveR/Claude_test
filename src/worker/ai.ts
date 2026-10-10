@@ -240,3 +240,74 @@ export async function readVoice(env: Env, context: VoiceContext): Promise<unknow
     return null;
   }
 }
+
+const SUGGESTIONS_SCHEMA = {
+  type: "object",
+  properties: {
+    items: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          kind: { type: "string", enum: ["entry", "task"] },
+          title: { type: "string" },
+          date: { type: ["string", "null"] },
+          time: { type: ["string", "null"] },
+          repeat: VOICE_SCHEMA.properties.repeat,
+        },
+        required: ["kind", "title", "date", "time", "repeat"],
+      },
+    },
+  },
+  required: ["items"],
+};
+
+/** The prompt that turns the phrases of the Suggestions box into repeating Tasks and Entries. */
+export function suggestionsPrompt(phrases: string[], today: PlainDate, language: Language) {
+  const locale = language === "en" ? "en-GB" : "pt-PT";
+  const day = formatPlainDate(today, locale, { weekday: "long" });
+  return [
+    {
+      role: "system",
+      content: [
+        "A family is filling in its calendar with the things that repeat in its life. Read each numbered phrase.",
+        `The phrases are in ${LANGUAGE_NAMES[language]}; write titles in that language, short, without the date, time or names.`,
+        'A phrase about one thing ("gym on Monday and Wednesday at 7pm", "pay the water bill on the 15th") gives one item.',
+        'A phrase naming a whole topic ("baby", "garden", "swimming pool") gives up to 8 items a family in Portugal commonly has to remember for it, each with a sensible repeat.',
+        'An "entry" happens at a time (class, gym, appointment); a "task" is something to do or pay by a date.',
+        'Give "repeat" whenever the thing repeats; weekdays are 0 = Monday … 6 = Sunday. Give the first date as YYYY-MM-DD and times as HH:mm (24-hour), worked out from today; null when not said.',
+        "Answer only with JSON matching the schema.",
+      ].join(" "),
+    },
+    {
+      role: "user",
+      content: `Today is ${day} ${today}.\n\n${phrases.map((p, i) => `${i + 1}. ${p}`).join("\n")}`,
+    },
+  ];
+}
+
+/** Asks the model to read the Suggestions box; null on any failure. */
+export async function readSuggestions(
+  env: Env,
+  phrases: string[],
+  today: PlainDate,
+  language: Language,
+): Promise<unknown | null> {
+  try {
+    const result = await model.run(env, {
+      messages: suggestionsPrompt(phrases, today, language),
+      response_format: { type: "json_schema", json_schema: SUGGESTIONS_SCHEMA },
+    });
+    if (result && "usage" in result) console.log("suggestions usage", JSON.stringify(result.usage));
+    const response = result?.response;
+    if (typeof response !== "string") return response ?? null;
+    try {
+      return JSON.parse(response);
+    } catch {
+      return null;
+    }
+  } catch (error) {
+    console.warn("suggestions model", error);
+    return null;
+  }
+}

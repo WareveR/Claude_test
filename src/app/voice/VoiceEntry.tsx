@@ -190,7 +190,7 @@ export function VoiceEntry() {
     setPhase("readback");
     if (!talk()) return;
     const mine = ++run.current;
-    await speak(`${chosen.summary} ${t("voice.saveQuestion")}`, lang);
+    await speak([chosen.summary, t("voice.saveQuestion")], lang);
     if (run.current !== mine || !canListen()) return;
     const answer = await listenOnce(lang);
     if (run.current !== mine) return;
@@ -219,7 +219,7 @@ export function VoiceEntry() {
     if (!talk()) return;
     const mine = ++run.current;
     const labels = options.map((o) => o.label);
-    await speak(`${t("voice.which")} ${labels.map((l, i) => `${i + 1}. ${l}`).join(". ")}`, lang);
+    await speak([t("voice.which"), ...labels.map((l, i) => `${i + 1}. ${l}`)], lang);
     if (run.current !== mine || !canListen()) return;
     const index = matchOption(await listenOnce(lang), labels);
     const picked = index === null ? undefined : options[index];
@@ -229,7 +229,7 @@ export function VoiceEntry() {
 
   async function readBack(create: Create) {
     const mine = ++run.current;
-    await speak(`${create.summary} ${t("voice.saveQuestion")}`, lang);
+    await speak([create.summary, t("voice.saveQuestion")], lang);
     if (run.current !== mine || !canListen()) return;
     const answer = await listenOnce(lang);
     if (run.current !== mine) return;
@@ -309,7 +309,7 @@ export function VoiceEntry() {
       <button
         type="button"
         aria-label={t("voice.open")}
-        className="ml-auto rounded-md p-2 hover:bg-header-ink/15"
+        className="ml-auto shrink-0 rounded-md p-1.5 hover:bg-header-ink/15 sm:p-2"
         onClick={() => setOpen(true)}
       >
         <Mic aria-hidden size={20} strokeWidth={1.75} />
