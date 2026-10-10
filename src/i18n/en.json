@@ -698,6 +698,7 @@
     "createFailed": "Could not create everything, so nothing was saved. Try again.",
     "undo": "Undo",
     "undone": "Undone: nothing was kept.",
+    "made": "Already created",
     "seeTasks": "See tasks",
     "areas": {
       "car": {

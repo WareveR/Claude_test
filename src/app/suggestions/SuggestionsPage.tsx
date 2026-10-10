@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { Lightbulb, Mic } from "lucide-react";
-import { useState } from "react";
+import { Check, Lightbulb, Mic } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { formatLocale } from "../../core/languages";
@@ -24,6 +24,7 @@ import { api } from "../api";
 import { useEntryTypes } from "../entry-types/model";
 import { useSignedIn } from "../family";
 import { paths } from "../paths";
+import { useTasks } from "../tasks/model";
 import { Field } from "../screens/form";
 import { BUTTON, BUTTON_PRIMARY } from "../ui/button";
 import { canListen, listenOnce } from "../voice/speech";
@@ -66,6 +67,16 @@ export function SuggestionsPage() {
   const [reviewing, setReviewing] = useState(false);
   const [creating, setCreating] = useState(false);
   const [created, setCreated] = useState<Created[] | null>(null);
+  // Ideas created on this visit, and those whose Task is already there from an earlier one.
+  const [madeNow, setMadeNow] = useState<string[]>([]);
+  const taskTitles = (useTasks().data ?? []).map((task) => task.title);
+  const isMade = (idea: Idea) =>
+    madeNow.includes(idea.id) ||
+    taskTitles.some((title) => title.startsWith(t(`suggestions.ideas.${idea.id}`)));
+  const banner = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (created) banner.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [created]);
 
   const draftsOf = (idea: Idea) => draftsFor(idea, payment[idea.id] ?? "manual", answers, today);
   const items: Item[] = (() => {
@@ -144,6 +155,7 @@ export function SuggestionsPage() {
         const saved = await api<{ id: string }>(`/${route}`, { method: "POST", body });
         done.push({ route, id: saved.id });
       }
+      setMadeNow((ids) => [...ids, ...IDEAS.filter((idea) => picked[idea.id]).map((i) => i.id)]);
       setPicked({});
       setWritten([]);
       setEdits({});
@@ -163,6 +175,7 @@ export function SuggestionsPage() {
     if (!created) return;
     const list = created;
     setCreated(null);
+    setMadeNow([]);
     for (const c of list) await api(`/${c.route}/${c.id}`, { method: "DELETE" }).catch(() => {});
     await invalidate();
     setMessage(t("suggestions.undone"));
@@ -222,6 +235,7 @@ export function SuggestionsPage() {
 
       {created && (
         <div
+          ref={banner}
           role="status"
           className="flex flex-wrap items-center gap-3 rounded-lg border border-accent bg-surface p-3 text-sm"
         >
@@ -309,7 +323,15 @@ export function SuggestionsPage() {
                       onChange={(e) => setPicked((p) => ({ ...p, [idea.id]: e.target.checked }))}
                     />
                     <span className="min-w-0 flex-1">
-                      <span className="block font-medium">{t(`suggestions.ideas.${idea.id}`)}</span>
+                      <span className="block font-medium">
+                        {t(`suggestions.ideas.${idea.id}`)}
+                        {isMade(idea) && (
+                          <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 align-middle text-xs font-semibold text-accent-ink">
+                            <Check aria-hidden size={12} strokeWidth={3} />
+                            {t("suggestions.made")}
+                          </span>
+                        )}
+                      </span>
                       <span className="block text-sm text-muted">
                         {!on
                           ? t(`suggestions.hints.${idea.id}`, { defaultValue: "" })
