@@ -521,7 +521,7 @@
     "failed": "Não consegui perceber. Tente outra vez.",
     "saveFailed": "Não foi possível guardar. Tente outra vez.",
     "hint": "Diga ou escreva uma frase para adicionar uma entrada ou tarefa. Só neste dispositivo.",
-    "readback": "Ler em voz alta e perguntar antes de guardar",
+    "readback": "Ler o resumo em voz alta e ouvir a resposta",
     "which": "Qual deles?",
     "scopeQuestion": "Só desta vez ou daqui em diante?",
     "onlyThis": "Só desta vez",
@@ -529,7 +529,11 @@
     "notFound": "Não encontrado",
     "oneAtATime": "Uma coisa de cada vez, por favor",
     "refused": "A entrada por voz não apaga; abra o item para o apagar",
-    "locked": "A data e a pessoa de um aniversário mudam na pessoa"
+    "locked": "A data e a pessoa de um aniversário mudam na pessoa",
+    "stop": "Parar e enviar",
+    "micDenied": "O microfone está bloqueado. Permita-o para este site nas definições do browser, ou escreva a frase.",
+    "notHeard": "Não ouvi nada. Carregue no microfone e fale, ou escreva a frase.",
+    "micFailed": "O reconhecimento de voz não funciona aqui ({{code}}). Use o microfone do teclado para ditar, ou escreva a frase."
   },
   "display": {
     "today": "Hoje",

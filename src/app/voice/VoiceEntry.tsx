@@ -9,14 +9,17 @@ import { reportFailure } from "../errors/store";
 import { Field, TextInput } from "../screens/form";
 import {
   canListen,
+  finishListening,
   getReadback,
   isYes,
+  listen,
   listenOnce,
   matchOption,
   matchScope,
   speak,
   stopListening,
   stopSpeaking,
+  wantsEdit,
 } from "./speech";
 import { BUTTON } from "../ui/button";
 
@@ -60,7 +63,10 @@ export function VoiceEntry() {
   const [scope, setScope] = useState<Scope | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
+  const [unheard, setUnheard] = useState<string | null>(null);
   const run = useRef(0);
+  /** Whether the sentence was spoken; only then does the sheet talk back and listen. */
+  const voiced = useRef(false);
   const saving = useRef(false);
   const lang = i18n.language;
 
@@ -85,6 +91,7 @@ export function VoiceEntry() {
     setScope(null);
     setNotice(null);
     setError(false);
+    setUnheard(null);
     setText("");
   };
   useEffect(() => {
@@ -95,6 +102,8 @@ export function VoiceEntry() {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   });
+
+  const talk = () => voiced.current && getReadback();
 
   const invalidate = () =>
     Promise.all([
@@ -179,7 +188,7 @@ export function VoiceEntry() {
     setScope(how);
     setChoices(null);
     setPhase("readback");
-    if (!getReadback()) return;
+    if (!talk()) return;
     const mine = ++run.current;
     await speak([chosen.summary, t("voice.saveQuestion")], lang);
     if (run.current !== mine || !canListen()) return;
@@ -194,7 +203,7 @@ export function VoiceEntry() {
     setScope(null);
     setChoices(null);
     setPhase("readback");
-    if (!getReadback()) return;
+    if (!talk()) return;
     const mine = ++run.current;
     await speak(t("voice.scopeQuestion"), lang);
     if (run.current !== mine || !canListen()) return;
@@ -207,7 +216,7 @@ export function VoiceEntry() {
     setChoices(options);
     setPlan(null);
     setPhase("readback");
-    if (!getReadback()) return;
+    if (!talk()) return;
     const mine = ++run.current;
     const labels = options.map((o) => o.label);
     await speak([t("voice.which"), ...labels.map((l, i) => `${i + 1}. ${l}`)], lang);
@@ -225,13 +234,16 @@ export function VoiceEntry() {
     const answer = await listenOnce(lang);
     if (run.current !== mine) return;
     if (isYes(answer)) void save(create);
-    else openForm(create.kind, create.values);
+    else if (wantsEdit(answer)) openForm(create.kind, create.values);
+    // Silence or an unclear answer leaves the summary up, with Save and Edit.
   }
 
-  async function send(sentence: string) {
+  async function send(sentence: string, spoken = false) {
     const trimmed = sentence.trim().slice(0, 300);
     if (!trimmed) return;
     stopAll();
+    voiced.current = spoken;
+    setUnheard(null);
     setText(trimmed);
     setNotice(null);
     setError(false);
@@ -253,24 +265,31 @@ export function VoiceEntry() {
     if (answer.outcome !== "create") {
       setNotice(answer.outcome);
       setPhase("idle");
-      if (getReadback()) void speak(t(`voice.${answer.outcome}`), lang);
+      if (talk()) void speak(t(`voice.${answer.outcome}`), lang);
       return;
     }
-    if (!getReadback()) return openForm(answer.kind, answer.values);
     setPending(answer);
     setPhase("readback");
-    void readBack(answer);
+    if (talk()) void readBack(answer);
   }
 
   async function dictate() {
+    // A second press while listening ends it and sends what was heard.
+    if (phase === "listening") return finishListening();
     stopAll();
     const mine = run.current;
     setError(false);
+    setNotice(null);
+    setUnheard(null);
+    setText("");
     setPhase("listening");
-    const heard = await listenOnce(lang);
+    const heard = await listen(lang, (words) => {
+      if (run.current === mine) setText(words);
+    });
     if (run.current !== mine) return;
     setPhase("idle");
-    if (heard) void send(heard);
+    if (heard.text) return void send(heard.text, true);
+    setUnheard(heard.error ?? "silence");
   }
 
   const submit = (e: FormEvent) => {
@@ -412,6 +431,15 @@ export function VoiceEntry() {
                       {t("voice.listening")}
                     </p>
                   )}
+                  {unheard && (
+                    <p role="alert" className="text-sm text-overdue">
+                      {unheard === "denied"
+                        ? t("voice.micDenied")
+                        : unheard === "silence" || unheard === "no-speech" || unheard === "aborted"
+                          ? t("voice.notHeard")
+                          : t("voice.micFailed", { code: unheard })}
+                    </p>
+                  )}
                   {notice && (
                     <p data-testid="voice-notice" className="text-sm">
                       {t(`voice.${notice}`)}
@@ -433,9 +461,14 @@ export function VoiceEntry() {
                     {canListen() && (
                       <button
                         type="button"
-                        aria-label={t("voice.listen")}
+                        aria-label={phase === "listening" ? t("voice.stop") : t("voice.listen")}
+                        aria-pressed={phase === "listening"}
                         disabled={phase === "sending"}
-                        className="rounded-md border border-line p-2 disabled:opacity-60"
+                        className={`rounded-md border p-2 disabled:opacity-60 ${
+                          phase === "listening"
+                            ? "animate-pulse border-accent bg-accent text-accent-ink"
+                            : "border-line"
+                        }`}
                         onClick={() => void dictate()}
                       >
                         <Mic aria-hidden size={20} strokeWidth={1.75} />

@@ -80,10 +80,16 @@ test("readback speaks the summary and the question as two sentences", async ({ p
       },
     });
   `);
+  // Only a spoken sentence is read back.
+  await fakeMicrophone(page, "task post letters", undefined, false);
   await signIn(page);
   await page.goto("/tasks");
   await fakeTask(page, "Voice post letters");
-  await say(page, "task post letters");
+  await page.getByRole("button", { name: "Voice Entry" }).click();
+  await page
+    .getByRole("dialog", { name: "Voice Entry" })
+    .getByRole("button", { name: "Speak" })
+    .click();
   await expect
     .poll(() => page.evaluate("window.spoken"))
     .toEqual(["New task: Voice post letters, 20 October.", "Save?"]);
@@ -132,7 +138,7 @@ test("an Entry created by voice saves with its values and can be undone", async 
   await expect(page.getByTestId("entry").filter({ hasText: "Voice dentist" })).toHaveCount(0);
 });
 
-test("Edit, and turning readback off, open the form filled in", async ({ page }) => {
+test("Edit opens the form filled in, and readback can be switched off", async ({ page }) => {
   await signIn(page);
   await fakeTask(page, "Voice call plumber");
   const dialog = await say(page, "task call plumber");
@@ -151,11 +157,110 @@ test("Edit, and turning readback off, open the form filled in", async ({ page })
   await page.reload();
   await expect(readback).not.toBeChecked();
 
-  await say(page, "task call plumber");
-  await expect(page).toHaveURL(/\/tasks\/new$/);
-  await expect(page.getByLabel("Title")).toHaveValue("Voice call plumber");
+  // Readback off still shows the summary first; nothing opens on its own.
+  const quiet = await say(page, "task call plumber");
+  await expect(quiet.getByText("New task: Voice call plumber, 20 October")).toBeVisible();
+  await expect(page).toHaveURL(/\/settings\/device$/);
+  await quiet.getByRole("button", { name: "Cancel" }).click();
 
   await page.goto("/settings/device");
   await readback.click();
   await expect(readback).toBeChecked();
+});
+
+/** A stand-in for the browser's speech recognition: hears `words` in pieces, never marked final. */
+async function fakeMicrophone(page: Page, words: string | null, error?: string, quiet = true) {
+  await page.addInitScript(
+    ({ words, error, quiet }) => {
+      class Fake {
+        lang = "";
+        interimResults = false;
+        maxAlternatives = 1;
+        continuous = false;
+        onresult: ((e: unknown) => void) | null = null;
+        onerror: ((e: unknown) => void) | null = null;
+        onend: (() => void) | null = null;
+        private ended = false;
+        start() {
+          setTimeout(() => {
+            if (error) this.onerror?.({ error });
+            else if (words && this.interimResults) {
+              // Like iOS Safari: interim pieces only, then the end.
+              const half = words.slice(0, Math.ceil(words.length / 2));
+              this.onresult?.({ results: [[{ transcript: half }]] });
+              this.onresult?.({ results: [[{ transcript: words }]] });
+            }
+            this.end();
+          }, 50);
+        }
+        stop() {
+          this.end();
+        }
+        abort() {
+          this.end();
+        }
+        private end() {
+          if (this.ended) return;
+          this.ended = true;
+          this.onend?.();
+        }
+      }
+      const w = globalThis as unknown as {
+        SpeechRecognition: unknown;
+        webkitSpeechRecognition: unknown;
+        speechSynthesis: { speak: (u: { onend?: (() => void) | null }) => void };
+      };
+      w.SpeechRecognition = Fake;
+      w.webkitSpeechRecognition = Fake;
+      // The readback speaks; keep it instant and silent.
+      if (quiet)
+        w.speechSynthesis.speak = (u) => {
+          setTimeout(() => u.onend?.(), 0);
+        };
+    },
+    { words, error, quiet },
+  );
+}
+
+test("a typed sentence shows the summary and waits for Save or Edit", async ({ page }) => {
+  await fakeMicrophone(page, null);
+  await signIn(page);
+  await page.goto("/tasks");
+  await fakeTask(page, "Voice typed stamps");
+  const dialog = await say(page, "task buy stamps");
+  await expect(dialog.getByText("New task: Voice typed stamps, 20 October")).toBeVisible();
+  // Nothing listens for an answer after typing, so the form never opens on its own.
+  await page.waitForTimeout(500);
+  await expect(page).toHaveURL(/\/tasks$/);
+  await expect(dialog.getByRole("button", { name: "Save" })).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "Edit" })).toBeVisible();
+});
+
+test("speaking into the microphone sends what was heard", async ({ page }) => {
+  await fakeMicrophone(page, "task buy stamps");
+  await signIn(page);
+  await page.goto("/tasks");
+  await fakeTask(page, "Voice spoken stamps");
+  let sent = "";
+  await page.route("**/api/voice", async (route) => {
+    sent = (route.request().postDataJSON() as { sentence: string }).sentence;
+    await route.fallback();
+  });
+  await page.getByRole("button", { name: "Voice Entry" }).click();
+  const dialog = page.getByRole("dialog", { name: "Voice Entry" });
+  await dialog.getByRole("button", { name: "Speak" }).click();
+  await expect(dialog.getByText("New task: Voice spoken stamps, 20 October")).toBeVisible();
+  expect(sent).toBe("task buy stamps");
+  // Silence after the readback leaves the summary up.
+  await page.waitForTimeout(500);
+  await expect(page).toHaveURL(/\/tasks$/);
+});
+
+test("a blocked microphone says so", async ({ page }) => {
+  await fakeMicrophone(page, null, "not-allowed");
+  await signIn(page);
+  await page.getByRole("button", { name: "Voice Entry" }).click();
+  const dialog = page.getByRole("dialog", { name: "Voice Entry" });
+  await dialog.getByRole("button", { name: "Speak" }).click();
+  await expect(dialog.getByRole("alert")).toContainText("The microphone is blocked");
 });

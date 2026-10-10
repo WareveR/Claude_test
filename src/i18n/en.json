@@ -521,7 +521,7 @@
     "failed": "Could not understand that. Try again.",
     "saveFailed": "Could not save. Try again.",
     "hint": "Say or type a sentence to add an Entry or Task. This device only.",
-    "readback": "Read back aloud and ask before saving",
+    "readback": "Read the summary aloud and listen for the answer",
     "which": "Which one?",
     "scopeQuestion": "Only this time or from now on?",
     "onlyThis": "Only this time",
@@ -529,7 +529,11 @@
     "notFound": "Not found",
     "oneAtATime": "One thing at a time, please",
     "refused": "Voice Entry doesn't delete; open the item to delete it",
-    "locked": "A Birthday's date and Person change on the Person"
+    "locked": "A Birthday's date and Person change on the Person",
+    "stop": "Stop and send",
+    "micDenied": "The microphone is blocked. Allow it for this site in the browser settings, or type the sentence.",
+    "notHeard": "I didn't hear anything. Press the microphone and speak, or type the sentence.",
+    "micFailed": "Speech recognition isn't working here ({{code}}). Use the keyboard's microphone to dictate, or type the sentence."
   },
   "display": {
     "today": "Today",
