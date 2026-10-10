@@ -32,6 +32,14 @@ export function ReviewDialog({
   const { t } = useTranslation();
   const locale = formatLocale(useSignedIn().language);
   const [open, setOpen] = useState<string | null>(null);
+  // The order stays as it opened: a changed date never moves a line from under the finger (on a
+  // phone, a line moved while its date picker is open loses the date picked).
+  const [order] = useState(() => items.map((item) => item.key));
+  const place = (key: string) => {
+    const i = order.indexOf(key);
+    return i === -1 ? order.length : i;
+  };
+  const shown = [...items].sort((a, b) => place(a.key) - place(b.key));
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && !busy && onClose();
@@ -54,7 +62,7 @@ export function ReviewDialog({
           <p className="text-sm text-muted">{t("suggestions.reviewHint")}</p>
         </div>
         <ul className="min-h-0 flex-1 divide-y divide-line overflow-y-auto border-y border-line">
-          {items.map((item) => (
+          {shown.map((item) => (
             <li key={item.key} className="flex flex-col gap-3 px-4 py-2">
               <div className="flex items-start gap-3">
                 <span

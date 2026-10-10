@@ -698,6 +698,7 @@
     "createFailed": "Não foi possível criar tudo, por isso nada ficou guardado. Tente de novo.",
     "undo": "Desfazer",
     "undone": "Desfeito: nada ficou guardado.",
+    "made": "Já criada",
     "seeTasks": "Ver tarefas",
     "areas": {
       "car": {

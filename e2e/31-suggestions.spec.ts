@@ -65,10 +65,26 @@ test("a theme opens its ideas, the box reads phrases, and everything is created 
   await dialog.getByRole("button", { name: "Done" }).click();
   await expect(dialog.getByText(/Every month · 19:00 · first on 7 Jan 2030/)).toBeVisible();
 
+  // A changed first date leaves every line where it was.
+  const lines = dialog.getByRole("listitem");
+  const before = await lines.allInnerTexts();
+  await dialog.getByRole("button", { name: "Change Suggested gym" }).click();
+  await dialog.getByLabel("First time").fill("2026-12-01");
+  await dialog.getByRole("button", { name: "Done" }).click();
+  await expect(dialog.getByText(/first on 1 Dec 2026/)).toBeVisible();
+  expect((await lines.allInnerTexts()).map((x) => x.split("\n")[1])).toEqual(
+    before.map((x) => x.split("\n")[1]),
+  );
+
   await dialog.getByRole("button", { name: /^Create \d+$/ }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   const done = page.getByRole("status").filter({ hasText: /Created \d+ Tasks and Entries/ });
   await expect(done).toBeVisible();
+
+  // What was created stays marked on its idea.
+  await expect(
+    page.getByRole("listitem").filter({ hasText: "Car inspection" }).getByText("Already created"),
+  ).toBeVisible();
 
   const tasks = (await (await page.request.get("/api/tasks")).json()) as { title: string }[];
   expect(tasks.map((t) => t.title)).toEqual(
