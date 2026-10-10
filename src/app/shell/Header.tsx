@@ -49,8 +49,8 @@ export function Header({
   }).format(now);
 
   return (
-    <header className="sticky top-0 z-10 flex items-center gap-3 bg-header px-4 py-2 text-header-ink shadow-sm">
-      <time data-testid="header-time" className="text-2xl font-semibold tabular-nums">
+    <header className="sticky top-0 z-10 flex items-center gap-3 bg-header px-4 py-2 text-header-ink shadow-sm short:py-1">
+      <time data-testid="header-time" className="text-2xl font-semibold tabular-nums short:text-xl">
         {time}
       </time>
       <span data-testid="header-date" className="first-letter:uppercase">
