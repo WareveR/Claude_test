@@ -68,6 +68,27 @@ test("readback shows the summary, Save saves and Undo removes it", async ({ page
   await expect(page.getByText("Voice buy stamps")).toHaveCount(0);
 });
 
+test("readback speaks the summary and the question as two sentences", async ({ page }) => {
+  // A stand-in voice that records each sentence and finishes it at once.
+  await page.addInitScript(`
+    window.spoken = [];
+    window.SpeechSynthesisUtterance = function (text) { this.text = text; };
+    Object.defineProperty(window, "speechSynthesis", {
+      value: {
+        cancel() {},
+        speak(u) { window.spoken.push(u.text); setTimeout(() => u.onend && u.onend(), 0); },
+      },
+    });
+  `);
+  await signIn(page);
+  await page.goto("/tasks");
+  await fakeTask(page, "Voice post letters");
+  await say(page, "task post letters");
+  await expect
+    .poll(() => page.evaluate("window.spoken"))
+    .toEqual(["New task: Voice post letters, 20 October.", "Save?"]);
+});
+
 test("an Entry created by voice saves with its values and can be undone", async ({ page }) => {
   await signIn(page);
   const types = await (await page.request.get("/api/entry-types")).json();

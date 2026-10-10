@@ -1,3 +1,5 @@
+import { readbackSentences } from "../../core/readback";
+
 /** Thin, failure-proof wrappers over the browser's speech APIs; every call may be absent or throw. */
 
 type Alternative = { transcript: string };
@@ -82,23 +84,38 @@ export function listenOnce(lang: string): Promise<string | null> {
   });
 }
 
-/** Speaks the text; resolves when done (or at once if speech is unavailable or stalls). */
-export function speak(text: string, lang: string): Promise<void> {
+/** Bumped by every new readback and by stopSpeaking, so an older one stops between sentences. */
+let speaking = 0;
+
+/** The silence between two sentences, so a summary and its question never run together. */
+const PAUSE_MS = 400;
+
+/**
+ * Speaks each sentence in turn with a short pause between them; resolves when done (or at once if
+ * speech is unavailable or stalls).
+ */
+export function speak(parts: string | string[], lang: string): Promise<void> {
+  const sentences = readbackSentences(parts);
   return new Promise((resolve) => {
     try {
       if (typeof speechSynthesis === "undefined" || typeof SpeechSynthesisUtterance === "undefined")
         return resolve();
       speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = lang;
-      const timer = setTimeout(resolve, 20000);
-      const done = () => {
+      const id = ++speaking;
+      const timer = setTimeout(resolve, 20000 + sentences.length * PAUSE_MS);
+      const finish = () => {
         clearTimeout(timer);
         resolve();
       };
-      u.onend = done;
-      u.onerror = done;
-      speechSynthesis.speak(u);
+      const next = (i: number) => {
+        if (id !== speaking || i >= sentences.length) return finish();
+        const u = new SpeechSynthesisUtterance(sentences[i]);
+        u.lang = lang;
+        u.onend = () => setTimeout(() => next(i + 1), i + 1 < sentences.length ? PAUSE_MS : 0);
+        u.onerror = finish;
+        speechSynthesis.speak(u);
+      };
+      next(0);
     } catch {
       resolve();
     }
@@ -106,6 +123,7 @@ export function speak(text: string, lang: string): Promise<void> {
 }
 
 export function stopSpeaking() {
+  speaking++;
   try {
     if (typeof speechSynthesis !== "undefined") speechSynthesis.cancel();
   } catch {
