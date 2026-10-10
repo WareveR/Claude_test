@@ -109,6 +109,14 @@
     "back": "Voltar",
     "cancel": "Cancelar",
     "language": "Idioma deste dispositivo",
+    "app": {
+      "title": "Versão da aplicação",
+      "version": "Este dispositivo tem a versão {{version}}.",
+      "update": "Atualizar agora",
+      "checking": "A procurar uma versão nova…",
+      "updating": "A atualizar…",
+      "latest": "Este dispositivo já tem a versão mais recente."
+    },
     "theme": "Tema deste dispositivo",
     "areas": {
       "family": "Família",

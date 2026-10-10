@@ -109,6 +109,14 @@
     "back": "Back",
     "cancel": "Cancel",
     "language": "Language on this device",
+    "app": {
+      "title": "App version",
+      "version": "This device runs version {{version}}.",
+      "update": "Update now",
+      "checking": "Looking for a new version…",
+      "updating": "Updating…",
+      "latest": "This device already has the latest version."
+    },
     "theme": "Theme on this device",
     "areas": {
       "family": "Family",
