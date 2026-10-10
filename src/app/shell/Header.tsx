@@ -47,17 +47,29 @@ export function Header({
     day: "numeric",
     month: "long",
   }).format(now);
+  // On a phone: three letters and the day's number, so the header always stays one line.
+  const shortDate = [
+    new Intl.DateTimeFormat(locale, { timeZone: family.timeZone, weekday: "short" })
+      .format(now)
+      .replace(".", "")
+      .slice(0, 3),
+    new Intl.DateTimeFormat(locale, { timeZone: family.timeZone, day: "numeric" }).format(now),
+  ].join(" ");
 
   return (
     <header className="sticky top-0 z-10 flex items-center gap-2 bg-header sm:gap-3 px-4 py-2 text-header-ink shadow-sm">
-      <time data-testid="header-time" className="text-2xl font-semibold tabular-nums">
+      <time data-testid="header-time" className="shrink-0 text-2xl font-semibold tabular-nums">
         {time}
       </time>
       <span data-testid="header-date" className="min-w-0 first-letter:uppercase">
-        {date}
+        <span className="max-sm:hidden">{date}</span>
+        <span className="whitespace-nowrap sm:hidden">{shortDate}</span>
       </span>
       {today && (
-        <ForecastButton testId="header-weather" className="rounded-md px-1 py-1 text-sm">
+        <ForecastButton
+          testId="header-weather"
+          className="shrink-0 rounded-md px-1 py-1 text-sm whitespace-nowrap"
+        >
           <WeatherBadge day={today} />
         </ForecastButton>
       )}
