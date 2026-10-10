@@ -28,3 +28,16 @@ test("on a phone the header stays one line, Suggestions included", async ({ page
   const box = await header.boundingBox();
   expect(box?.height).toBeLessThan(64);
 });
+
+test("on a phone the wall shows all seven days without scrolling sideways", async ({ page }) => {
+  await signIn(page);
+  await page.getByRole("link", { name: "Wall", exact: true }).click();
+  const days = page.getByTestId("wall-days");
+  await expect(days).toBeVisible();
+  // The seventh day's column ends inside the screen.
+  const lastDay = days.locator("[data-drop-date]").nth(6);
+  const box = await lastDay.boundingBox();
+  expect((box?.x ?? 999) + (box?.width ?? 0)).toBeLessThanOrEqual(361);
+  expect(await page.evaluate("document.documentElement.scrollWidth")).toBeLessThanOrEqual(360);
+  await page.getByRole("button", { name: "Leave wall view" }).click();
+});
