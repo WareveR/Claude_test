@@ -290,7 +290,7 @@ export function VoiceEntry() {
       <button
         type="button"
         aria-label={t("voice.open")}
-        className="ml-auto rounded-md p-2 hover:bg-header-ink/15"
+        className="ml-auto shrink-0 rounded-md p-1.5 hover:bg-header-ink/15 sm:p-2"
         onClick={() => setOpen(true)}
       >
         <Mic aria-hidden size={20} strokeWidth={1.75} />
