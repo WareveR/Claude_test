@@ -99,6 +99,7 @@
     "year": "Year",
     "tasks": "Tasks",
     "display": "Wall",
+    "short": { "day": "D", "week": "W", "month": "M", "year": "Y" },
     "today": "Today",
     "previous": "Previous",
     "next": "Next",

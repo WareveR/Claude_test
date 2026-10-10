@@ -89,7 +89,14 @@ export function TimeGrid({
             data-drop-date={day}
             className={`py-1.5 text-center text-sm font-bold first-letter:uppercase lg:text-base ${holidays.has(day) ? "bg-holiday text-holiday-ink" : isWeekend(day) ? "bg-weekend text-weekend-ink" : ""} ${day === today ? "text-accent" : ""}`}
           >
-            {formatPlainDate(day, locale, { weekday: "short", day: "numeric" })}
+            <span className="max-lg:hidden">
+              {formatPlainDate(day, locale, { weekday: "short", day: "numeric" })}
+            </span>
+            {/* Narrow columns: three letters and the day's number, never a wrapped weekday. */}
+            <span className="whitespace-nowrap lg:hidden">
+              {formatPlainDate(day, locale, { weekday: "short" }).replace(".", "").slice(0, 3)}{" "}
+              {formatPlainDate(day, locale, { day: "numeric" })}
+            </span>
             {dayExtra?.(day)}
             {notes.get(day)?.map((note) => (
               <div

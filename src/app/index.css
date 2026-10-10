@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* A short screen, such as a phone on its side: bars shrink so the view keeps most of the height. */
+@custom-variant short (@media (max-height: 32rem));
+
 /* Colour themes. Each device picks one in Settings (browser only); "auto", the default, sets no
    data-theme and follows the device's light or dark setting. */
 :root,
