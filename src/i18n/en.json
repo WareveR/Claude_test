@@ -125,7 +125,8 @@
       "update": "Update now",
       "checking": "Looking for a new version…",
       "updating": "Updating…",
-      "latest": "This device already has the latest version."
+      "latest": "This device already has the latest version.",
+      "screen": "Screen (window · screen · density · how it's open): {{screen}}"
     },
     "theme": "Theme on this device",
     "areas": {
