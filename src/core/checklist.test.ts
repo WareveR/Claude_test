@@ -26,8 +26,17 @@ const task = (fields: { dueDate?: string; doneAt?: string }) => ({
 
 describe("Checklists", () => {
   it("counts progress", () => {
-    expect(checklistProgress([task({ doneAt: "x" }), task({}), task({})])).toEqual({
-      done: 1,
+    const items = [
+      { id: "a", ...task({ doneAt: "x" }) },
+      { id: "b", ...task({}) },
+      { id: "c", ...task({}) },
+    ];
+    expect(checklistProgress(items)).toEqual({ done: 1, total: 3 });
+    // An item holding items counts as them.
+    expect(
+      checklistProgress([...items, { id: "d", parentId: "c", ...task({ doneAt: "y" }) }]),
+    ).toEqual({
+      done: 2,
       total: 3,
     });
   });

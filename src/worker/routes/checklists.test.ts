@@ -86,28 +86,71 @@ describe("Checklists", () => {
     expect(await missing.json()).toMatchObject({ field: "checklistId" });
   });
 
-  it("keeps a note and a section on its items, but never a section on a loose Task", async () => {
+  it("nests items at any depth, within the same Checklist and never inside themselves", async () => {
     const { browser } = await family();
-    const checklist = (await (
-      await browser.post("/checklists", { name: "Birthday party" })
+    const make = async (name: string) =>
+      ((await (await browser.post("/checklists", { name })).json()) as Checklist).id;
+    const party = await make("Birthday party");
+    const other = await make("Packing");
+    const add = async (title: string, parentId: string | null, checklistId = party) =>
+      browser.post("/tasks", { title, notes: " Aldi ", checklistId, parentId });
+    const shopping = (await (await add("Shopping", null)).json()) as { id: string };
+    const fruit = (await (await add("Fruit", shopping.id)).json()) as { id: string };
+    expect(fruit).toMatchObject({ parentId: shopping.id, notes: "Aldi" });
+    const pineapple = (await (await add("Pineapple", fruit.id)).json()) as { id: string };
+    expect(await (await add("Socks", shopping.id, other)).json()).toMatchObject({
+      field: "parentId",
+    });
+    const inside = await browser.request("PUT", `/tasks/${shopping.id}`, {
+      title: "Shopping",
+      checklistId: party,
+      parentId: pineapple.id,
+    });
+    expect(await inside.json()).toMatchObject({ field: "parentId" });
+    const loose = await browser.post("/tasks", { title: "Call Ana", parentId: shopping.id });
+    expect(await loose.json()).toMatchObject({ parentId: null });
+    // Deleting an item deletes what's inside it.
+    await browser.request("DELETE", `/tasks/${shopping.id}`);
+    expect((await browser.get(`/tasks/${pineapple.id}`)).status).toBe(404);
+  });
+
+  it("ticks what's inside an item, and an item once all inside it are done", async () => {
+    const { browser } = await family();
+    const { id } = (await (
+      await browser.post("/checklists", { name: "Trip" })
     ).json()) as Checklist;
-    const res = await browser.post("/tasks", {
-      title: "Pineapple",
-      notes: " Aldi ",
-      section: " Shopping ",
-      checklistId: checklist.id,
-    });
-    const item = (await res.json()) as { id: string };
-    expect(item).toMatchObject({ notes: "Aldi", section: "Shopping" });
-    const moved = await browser.request("PUT", `/tasks/${item.id}`, {
-      title: "Pineapple",
-      notes: "Mercadona",
-      section: "Food",
-      checklistId: checklist.id,
-    });
-    expect(await moved.json()).toMatchObject({ notes: "Mercadona", section: "Food" });
-    const loose = await browser.post("/tasks", { title: "Call Ana", section: "Food" });
-    expect(await loose.json()).toMatchObject({ section: "" });
+    const add = async (title: string, parentId: string | null = null) =>
+      (
+        (await (await browser.post("/tasks", { title, checklistId: id, parentId })).json()) as {
+          id: string;
+        }
+      ).id;
+    const clothes = await add("Clothes");
+    const socks = await add("Socks", clothes);
+    const shirt = await add("Shirt", clothes);
+    const doneAt = async (taskId: string) =>
+      ((await (await browser.get(`/tasks/${taskId}`)).json()) as { doneAt: string | null }).doneAt;
+
+    await browser.post(`/tasks/${socks}/done`, {});
+    expect(await doneAt(clothes)).toBeNull();
+    await browser.post(`/tasks/${shirt}/done`, {});
+    expect(await doneAt(clothes)).not.toBeNull();
+    await browser.request("DELETE", `/tasks/${shirt}/done`);
+    expect(await doneAt(clothes)).toBeNull();
+    await browser.post(`/tasks/${clothes}/done`, {});
+    expect(await doneAt(shirt)).not.toBeNull();
+    // A new item inside unticks it; a predefined list adds several at once.
+    await browser.post(`/checklists/${id}/items`, { parentId: clothes, items: ["Hat", " Scarf "] });
+    expect(await doneAt(clothes)).toBeNull();
+    const all = (await (await browser.get("/tasks")).json()) as {
+      title: string;
+      parentId: string;
+    }[];
+    expect(all.filter((t) => t.parentId === clothes).map((t) => t.title)).toEqual(
+      expect.arrayContaining(["Hat", "Scarf"]),
+    );
+    const bad = await browser.post(`/checklists/${id}/items`, { parentId: "nope", items: ["X"] });
+    expect(await bad.json()).toMatchObject({ field: "parentId" });
   });
 
   it("links Checklists and loose Tasks to an Entry, until the Entry is deleted", async () => {

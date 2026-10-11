@@ -1,7 +1,13 @@
 import { asc, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { Hono } from "hono";
 import { cleanItems } from "../../core/checklist-template";
-import { dueRoundStart, firstRoundStart, roundLabel, shiftRound } from "../../core/checklist";
+import {
+  checklistProgress,
+  dueRoundStart,
+  firstRoundStart,
+  roundLabel,
+  shiftRound,
+} from "../../core/checklist";
 import { isPlainDate } from "../../core/plain-date";
 import { isRepetition, type Repetition } from "../../core/repetition";
 import { familyNow } from "../../core/task";
@@ -9,6 +15,7 @@ import { randomId } from "../auth/crypto";
 import type { Db } from "../db";
 import { schema } from "../db";
 import { requireDevice } from "../require-device";
+import { settleChecklist } from "../task-tree";
 import type { AppEnv } from "../types";
 import { personMentionChecks } from "./persons";
 
@@ -146,8 +153,7 @@ async function startRound(db: Db, checklist: ChecklistRow, newStart: string | nu
       id: randomId(),
       checklistId: checklist.id,
       label: roundLabel(checklist, at.slice(0, 10)),
-      done: tasks.filter((t) => t.doneAt).length,
-      total: tasks.length,
+      ...checklistProgress(tasks),
       closedAt: at,
     }),
     db
@@ -231,6 +237,56 @@ checklistRoutes.post("/checklists", async (c) => {
     }),
   ]);
   return c.json(await presentOne(db, id), 201);
+});
+
+/**
+ * Adds items by name (from a predefined list) at the end of a Checklist, or inside one of its
+ * items (`parentId`), each for the Checklist's Persons.
+ */
+checklistRoutes.post("/checklists/:id/items", async (c) => {
+  const db = c.get("db");
+  const id = c.req.param("id");
+  const [checklist] = await db.select().from(schema.checklist).where(eq(schema.checklist.id, id));
+  if (!checklist) return c.json({ error: "not_found" }, 404);
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
+  const items = cleanItems(body.items);
+  if (!items || items.length === 0) return c.json({ error: "invalid", field: "items" }, 400);
+  const parentId = body.parentId ?? null;
+  if (parentId !== null) {
+    const [parent] =
+      typeof parentId === "string"
+        ? await db
+            .select({ checklistId: schema.task.checklistId })
+            .from(schema.task)
+            .where(eq(schema.task.id, parentId))
+        : [];
+    if (parent?.checklistId !== id) return c.json({ error: "invalid", field: "parentId" }, 400);
+  }
+  const personIds = (
+    await db
+      .select({ personId: schema.checklistPerson.personId })
+      .from(schema.checklistPerson)
+      .where(eq(schema.checklistPerson.checklistId, id))
+  ).map((l) => l.personId);
+  const at = c.get("now");
+  const [first, ...rest] = items.flatMap((title, i) => {
+    const createdAt = new Date(at.getTime() + i).toISOString();
+    const taskId = randomId();
+    return [
+      db.insert(schema.task).values({
+        id: taskId,
+        title,
+        checklistId: id,
+        parentId: parentId as string | null,
+        createdAt,
+        changedAt: createdAt,
+      }),
+      ...personIds.map((personId) => db.insert(schema.taskPerson).values({ taskId, personId })),
+    ];
+  });
+  await db.batch([first, ...rest]);
+  await settleChecklist(db, id, at.toISOString());
+  return c.json({ added: items.length }, 201);
 });
 
 checklistRoutes.put("/checklists/:id", async (c) => {
