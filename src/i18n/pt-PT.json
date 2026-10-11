@@ -312,7 +312,11 @@
     "accordion_one": "Tarefas {{count}}",
     "accordion_other": "Tarefas {{count}}",
     "overdueCount_one": "{{count}} atrasada",
-    "overdueCount_other": "{{count}} atrasadas"
+    "overdueCount_other": "{{count}} atrasadas",
+    "lateBy_one": "{{count}} dia de atraso",
+    "lateBy_other": "{{count}} dias de atraso",
+    "lateToday": "Atrasada hoje",
+    "high": "Importância alta"
   },
   "checklists": {
     "new": "Nova checklist",

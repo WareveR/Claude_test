@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { checklistGroup } from "../../core/checklist";
+import { daysBetween } from "../../core/plain-date";
 import { checklistMatches, matchesFilter } from "../../core/person-filter";
 import { familyNow, groupTasks, isOverdue, type TaskGroups } from "../../core/task";
 import { AddToChecklistDialog } from "../checklists/AddToChecklist";
@@ -66,9 +67,18 @@ export function TasksView() {
     listsIn[checklistGroup(checklist, own, now)].push(checklist);
   }
 
-  const row = (task: Task) => (
-    <TaskRow key={task.id} task={task} overdue={isOverdue(task, now)} persons={persons} />
-  );
+  const row = (task: Task) => {
+    const overdue = isOverdue(task, now);
+    return (
+      <TaskRow
+        key={task.id}
+        task={task}
+        overdue={overdue}
+        lateDays={overdue && task.dueDate ? daysBetween(task.dueDate, now.today) : undefined}
+        persons={persons}
+      />
+    );
+  };
   const listRow = (checklist: Checklist) => (
     <ChecklistRow
       key={checklist.id}
@@ -80,9 +90,17 @@ export function TasksView() {
   );
   const count = (g: Group) => groups[g].length + listsIn[g].length;
   const section = (g: Group, title: ReactNode) => (
-    <section key={g} aria-label={t(`tasks.groups.${g}`)}>
+    <section
+      key={g}
+      aria-label={t(`tasks.groups.${g}`)}
+      className={
+        g === "overdue"
+          ? "rounded-xl border-2 border-overdue/60 bg-overdue/5 px-3 pt-2 pb-1"
+          : undefined
+      }
+    >
       {title}
-      <ul className="divide-y divide-line">
+      <ul className={`divide-y ${g === "overdue" ? "divide-overdue/20" : "divide-line"}`}>
         {listsIn[g].map(listRow)}
         {groups[g].map(row)}
       </ul>

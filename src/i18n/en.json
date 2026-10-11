@@ -312,7 +312,11 @@
     "accordion_one": "Tasks {{count}}",
     "accordion_other": "Tasks {{count}}",
     "overdueCount_one": "{{count}} overdue",
-    "overdueCount_other": "{{count}} overdue"
+    "overdueCount_other": "{{count}} overdue",
+    "lateBy_one": "{{count}} day late",
+    "lateBy_other": "{{count}} days late",
+    "lateToday": "Late today",
+    "high": "High importance"
   },
   "checklists": {
     "new": "New checklist",

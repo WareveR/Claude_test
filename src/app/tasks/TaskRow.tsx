@@ -1,5 +1,5 @@
 import { useOnline } from "../offline/online";
-import { Lock, Repeat } from "lucide-react";
+import { Flag, Lock, Repeat } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
@@ -18,9 +18,12 @@ export function TaskRow({
   overdue,
   persons,
   label,
+  lateDays,
 }: {
   task: Task;
   overdue: boolean;
+  /** Days past its due date, shown in the Tasks view's Overdue group. */
+  lateDays?: number;
   persons: Person[];
   /** The Checklist a Task shown on its own belongs to. */
   label?: string;
@@ -56,6 +59,13 @@ export function TaskRow({
       />
       <Wrapper wall={wall} id={task.id}>
         <span className={`break-words ${done ? "text-muted line-through" : ""}`}>
+          {task.importance === "high" && !done && (
+            <Flag
+              aria-label={t("tasks.high")}
+              className="mr-1 inline fill-overdue text-overdue"
+              size={14}
+            />
+          )}
           {wall && task.private ? t("entries.private") : task.title}
           {task.repetition && (
             <Repeat aria-label={t("tasks.repeats")} className="ml-1 inline" size={14} />
@@ -68,6 +78,8 @@ export function TaskRow({
         {due && (
           <span className={`text-xs ${overdue ? "font-medium text-overdue" : "text-muted"}`}>
             {due}
+            {lateDays !== undefined &&
+              ` · ${lateDays > 0 ? t("tasks.lateBy", { count: lateDays }) : t("tasks.lateToday")}`}
           </span>
         )}
       </Wrapper>

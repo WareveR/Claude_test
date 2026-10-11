@@ -9,6 +9,7 @@ type Task = {
   dueTime: string | null;
   personIds: string[];
   private: boolean;
+  importance: string;
   doneAt: string | null;
   repetition: unknown;
   seriesId: string | null;
@@ -32,6 +33,7 @@ describe("Tasks", () => {
       dueTime: "18:00",
       personIds: [ana.id],
       private: true,
+      importance: "high",
     });
     expect(created.status).toBe(201);
     const task = (await created.json()) as Task;
@@ -41,6 +43,7 @@ describe("Tasks", () => {
       dueTime: "18:00",
       personIds: [ana.id],
       private: true,
+      importance: "high",
       doneAt: null,
     });
 
@@ -57,6 +60,13 @@ describe("Tasks", () => {
 
     expect((await browser.delete(`/tasks/${task.id}`)).status).toBe(204);
     expect((await browser.get(`/tasks/${task.id}`)).status).toBe(404);
+  });
+
+  it("is of normal importance unless told otherwise, and refuses an unknown one", async () => {
+    const { browser } = await family();
+    const plain = (await (await browser.post("/tasks", { title: "Water plants" })).json()) as Task;
+    expect(plain.importance).toBe("normal");
+    expect((await browser.post("/tasks", { title: "x", importance: "urgent" })).status).toBe(400);
   });
 
   it("refuses a Task without a title or with a time but no date", async () => {
@@ -108,6 +118,7 @@ describe("repeating Tasks", () => {
         dueTime: "20:00",
         personIds: [ana.id],
         repetition: weekly,
+        importance: "high",
       })
     ).json()) as Task;
     return { browser, ana, task };
@@ -130,6 +141,7 @@ describe("repeating Tasks", () => {
       dueTime: "20:00",
       personIds: [ana.id],
       repetition: weekly,
+      importance: "high",
       seriesId: task.id,
       doneAt: null,
     });
