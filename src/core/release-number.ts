@@ -1,16 +1,35 @@
 /**
- * The app's version number, worked out from the history of main: each merged change after the
- * commit that set package.json's version is a release. A change whose title starts with "Fix"
- * adds one to the last number (1.4.2 → 1.4.3); any other change is a new feature and adds one
- * to the middle number (1.4.3 → 1.5.0). A new major version is set by hand in package.json.
+ * The app's version number, MAJOR.MINOR.FIX, worked out from the history of main: every merged
+ * change is a release. A new feature adds one to the middle number and resets the last
+ * (0.4.2 → 0.5.0); a fix or adjustment adds one to the last (0.5.0 → 0.5.1); planning,
+ * documentation and tooling don't count. Changes made before titles told them apart are listed
+ * in release-history.ts; since then a title starting with "Fix" marks a fix and any other title
+ * a feature. The major number is package.json's, set by hand (0 until the app reaches v1).
  */
-export function releaseNumber(base: string, titles: string[]): string {
-  const [major = 0, minor = 0, patch = 0] = base.split(".").map((n) => Number(n) || 0);
-  let next = { minor, patch };
-  for (const title of titles) {
-    next = /^fix\b/i.test(title.trim())
-      ? { minor: next.minor, patch: next.patch + 1 }
-      : { minor: next.minor + 1, patch: 0 };
+export type ReleaseKind = "feature" | "fix" | "none";
+
+export function releaseKind(
+  commit: { id: string; title: string },
+  history: Record<string, ReleaseKind>,
+): ReleaseKind {
+  const listed = Object.entries(history).find(([id]) => commit.id.startsWith(id));
+  if (listed) return listed[1];
+  return /^fix\b/i.test(commit.title.trim()) ? "fix" : "feature";
+}
+
+export function releaseNumber(
+  major: number,
+  commits: { id: string; title: string }[],
+  history: Record<string, ReleaseKind> = {},
+): string {
+  let minor = 0;
+  let fix = 0;
+  for (const commit of commits) {
+    const kind = releaseKind(commit, history);
+    if (kind === "feature") {
+      minor += 1;
+      fix = 0;
+    } else if (kind === "fix") fix += 1;
   }
-  return `${major}.${next.minor}.${next.patch}`;
+  return `${major}.${minor}.${fix}`;
 }
