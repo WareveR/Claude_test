@@ -3,7 +3,7 @@ import {
   cloneElement,
   isValidElement,
   useId,
-  type InputHTMLAttributes,
+  type ComponentProps,
   type ReactElement,
   type ReactNode,
 } from "react";
@@ -27,7 +27,7 @@ export function Field({
   );
 }
 
-export function TextInput(props: InputHTMLAttributes<HTMLInputElement>) {
+export function TextInput(props: ComponentProps<"input">) {
   return (
     <input {...props} className="rounded-md border border-line bg-surface px-3 py-2 text-base" />
   );

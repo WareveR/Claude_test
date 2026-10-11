@@ -192,6 +192,8 @@ export const task = sqliteTable("task", {
   repeatOf: text("repeat_of"),
   /** The Checklist this Task belongs to, if any; such a Task doesn't repeat on its own. */
   checklistId: text("checklist_id").references(() => checklist.id, { onDelete: "cascade" }),
+  /** The heading a Checklist item is listed under on its page ("Food", "Shopping"); "" for none. */
+  section: text("section").notNull().default(""),
   /** High comes first among the Tasks due the same day. */
   importance: text("importance").$type<Importance>().notNull().default("normal"),
   createdAt: text("created_at").notNull(),

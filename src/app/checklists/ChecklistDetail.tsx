@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, BookmarkPlus, Pencil, Plus, Trash2 } from "lucide-react";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
 import { checklistProgress, isChecklistTaskOverdue } from "../../core/checklist";
@@ -46,6 +46,10 @@ function ChecklistDetail({ checklist, items: all }: { checklist: Checklist; item
   const period = usePeriodText(checklist);
   const progress = checklistProgress(items);
   const overdue = items.some((task) => isChecklistTaskOverdue(task, checklist, now));
+  const sections = sectionsOf(items);
+  // The section new items go to: the last one used, or the one whose Add button was pressed.
+  const [addSection, setAddSection] = useState("");
+  const addName = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   // Back where the Checklist was opened from, or to the Tasks view when opened directly.
   const back = () =>
@@ -76,19 +80,54 @@ function ChecklistDetail({ checklist, items: all }: { checklist: Checklist; item
       {items.length === 0 ? (
         <p className="text-muted">{t("checklists.noItems")}</p>
       ) : (
-        <ul className="divide-y divide-line">
-          {items.map((task) => (
-            <ItemRow
-              key={task.id}
-              task={task}
-              overdue={isChecklistTaskOverdue(task, checklist, now)}
-              persons={persons}
-              onSwipedAway={() => removal.remove(task)}
-            />
-          ))}
-        </ul>
+        sections.map(({ section, items: own }) => {
+          const list = (
+            <ul className="divide-y divide-line">
+              {own.map((task) => (
+                <ItemRow
+                  key={task.id}
+                  task={task}
+                  sections={sections.map((s) => s.section)}
+                  overdue={isChecklistTaskOverdue(task, checklist, now)}
+                  persons={persons}
+                  onSwipedAway={() => removal.remove(task)}
+                />
+              ))}
+            </ul>
+          );
+          if (!section) return <div key="">{list}</div>;
+          const sectionProgress = checklistProgress(own);
+          return (
+            <section key={section} className="flex flex-col" data-testid="checklist-section">
+              <div className="flex items-center gap-2 border-b border-line pb-1">
+                <h2 className="min-w-0 flex-1 font-semibold break-words">{section}</h2>
+                <span className="text-sm text-muted">
+                  {t("checklists.progress", sectionProgress)}
+                </span>
+                <button
+                  type="button"
+                  className={BUTTON}
+                  aria-label={t("checklists.addToSection", { section })}
+                  onClick={() => {
+                    setAddSection(section);
+                    addName.current?.focus();
+                  }}
+                >
+                  <Plus aria-hidden size={16} />
+                </button>
+              </div>
+              {list}
+            </section>
+          );
+        })
       )}
-      <AddItem checklist={checklist} />
+      <AddItem
+        checklist={checklist}
+        sections={sections.map((s) => s.section).filter(Boolean)}
+        section={addSection}
+        onSection={setAddSection}
+        nameRef={addName}
+      />
       <div className="sticky bottom-0 z-[5] -mx-4 mt-auto flex justify-end gap-3 border-t border-line bg-bg/95 px-4 py-3 backdrop-blur">
         <button type="button" className={BUTTON} onClick={back}>
           <ArrowLeft aria-hidden size={16} />
@@ -112,6 +151,22 @@ function ChecklistDetail({ checklist, items: all }: { checklist: Checklist; item
       )}
     </main>
   );
+}
+
+/**
+ * The items grouped by section, each section where its first item was added; items without a
+ * section come first, under no heading.
+ */
+function sectionsOf(items: Task[]) {
+  const groups = new Map<string, Task[]>([["", []]]);
+  for (const task of items) {
+    const own = groups.get(task.section) ?? [];
+    own.push(task);
+    groups.set(task.section, own);
+  }
+  return [...groups]
+    .map(([section, own]) => ({ section, items: own }))
+    .filter((group) => group.items.length > 0);
 }
 
 const UNDO_MS = 6000;
@@ -171,11 +226,14 @@ function useRemoveWithUndo() {
   };
 }
 
-/** Saves an item's name and Persons; its other stored fields go back as they were. */
-function itemBody(task: Task, patch: { title: string; personIds: string[] }) {
+type ItemPatch = { title: string; notes: string; section: string; personIds: string[] };
+
+/** Saves an item's name, note, section and Persons; its other stored fields go back as they were. */
+function itemBody(task: Task, patch: ItemPatch) {
   return {
     title: patch.title,
-    notes: task.notes,
+    notes: patch.notes,
+    section: patch.section,
     dueDate: task.dueDate,
     dueTime: task.dueTime,
     personIds: patch.personIds,
@@ -186,16 +244,18 @@ function itemBody(task: Task, patch: { title: string; personIds: string[] }) {
 }
 
 /**
- * One item: a plain tick box, its name and Persons, and buttons to rename or remove it. Dragging
- * or swiping it sideways removes it too.
+ * One item: a plain tick box, its name, note and Persons, and buttons to edit or remove it.
+ * Dragging or swiping it sideways removes it too.
  */
 function ItemRow({
   task,
+  sections,
   overdue,
   persons,
   onSwipedAway,
 }: {
   task: Task;
+  sections: string[];
   overdue: boolean;
   persons: Person[];
   onSwipedAway: () => void;
@@ -221,7 +281,12 @@ function ItemRow({
   if (editing) {
     return (
       <li className="py-2">
-        <ItemEditor task={task} persons={persons} onDone={() => setEditing(false)} />
+        <ItemEditor
+          task={task}
+          sections={sections.filter(Boolean)}
+          persons={persons}
+          onDone={() => setEditing(false)}
+        />
       </li>
     );
   }
@@ -243,10 +308,17 @@ function ItemRow({
           tick.mutate({ task, done: e.target.checked }, { onSettled: () => setTicking(null) });
         }}
       />
-      <span
-        className={`min-w-0 flex-1 break-words ${done ? "text-muted line-through" : overdue ? "text-overdue" : ""}`}
-      >
-        {task.title}
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span
+          className={`break-words ${done ? "text-muted line-through" : overdue ? "text-overdue" : ""}`}
+        >
+          {task.title}
+        </span>
+        {task.notes && (
+          <span className="text-sm break-words text-muted" data-testid="checklist-item-note">
+            {task.notes}
+          </span>
+        )}
       </span>
       <span className="flex -space-x-1">
         {task.personIds.map((id) => {
@@ -278,20 +350,27 @@ function ItemRow({
 
 function ItemEditor({
   task,
+  sections,
   persons,
   onDone,
 }: {
   task: Task;
+  sections: string[];
   persons: Person[];
   onDone: () => void;
 }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [title, setTitle] = useState(task.title);
+  const [notes, setNotes] = useState(task.notes);
+  const [section, setSection] = useState(task.section);
   const [personIds, setPersonIds] = useState(task.personIds);
   const save = useMutation({
     mutationFn: () =>
-      api(`/tasks/${task.id}`, { method: "PUT", body: itemBody(task, { title, personIds }) }),
+      api(`/tasks/${task.id}`, {
+        method: "PUT",
+        body: itemBody(task, { title, notes, section, personIds }),
+      }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["tasks"] });
       onDone();
@@ -306,6 +385,14 @@ function ItemEditor({
       <Field label={t("checklists.itemName")}>
         <TextInput required autoFocus value={title} onChange={(e) => setTitle(e.target.value)} />
       </Field>
+      <Field label={t("checklists.itemNote")}>
+        <TextInput
+          value={notes}
+          placeholder={t("checklists.itemNoteHint")}
+          onChange={(e) => setNotes(e.target.value)}
+        />
+      </Field>
+      <SectionInput sections={sections} value={section} onChange={setSection} />
       <fieldset className="flex flex-col gap-1 text-sm">
         <legend className="mb-1 font-medium">{t("checklists.itemPersons")}</legend>
         <div className="flex flex-wrap gap-3">
@@ -340,17 +427,64 @@ function ItemEditor({
   );
 }
 
-/** Quick-add: a name and Add; the new item takes the Checklist's default Persons. */
-function AddItem({ checklist }: { checklist: Checklist }) {
+/** A section name, typed or picked from the Checklist's sections. */
+function SectionInput({
+  sections,
+  value,
+  onChange,
+}: {
+  sections: string[];
+  value: string;
+  onChange: (section: string) => void;
+}) {
+  const { t } = useTranslation();
+  const listId = useId();
+  return (
+    <>
+      <Field label={t("checklists.itemSection")}>
+        <TextInput
+          list={listId}
+          value={value}
+          placeholder={t("checklists.itemSectionHint")}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      </Field>
+      <datalist id={listId}>
+        {sections.map((section) => (
+          <option key={section} value={section} />
+        ))}
+      </datalist>
+    </>
+  );
+}
+
+/**
+ * Quick-add: a name, an optional note and section, and Add; the new item takes the Checklist's
+ * default Persons. The section stays for the next item, so a whole section can be typed in a row.
+ */
+function AddItem({
+  checklist,
+  sections,
+  section,
+  onSection,
+  nameRef,
+}: {
+  checklist: Checklist;
+  sections: string[];
+  section: string;
+  onSection: (section: string) => void;
+  nameRef: RefObject<HTMLInputElement | null>;
+}) {
   const { t } = useTranslation();
   const online = useOnline();
   const queryClient = useQueryClient();
   const [title, setTitle] = useState("");
+  const [notes, setNotes] = useState("");
   const add = useMutation({
-    mutationFn: (name: string) =>
+    mutationFn: (item: { title: string; notes: string; section: string }) =>
       api("/tasks", {
         method: "POST",
-        body: { title: name, personIds: checklist.personIds, checklistId: checklist.id },
+        body: { ...item, personIds: checklist.personIds, checklistId: checklist.id },
       }),
     onSettled: () => queryClient.invalidateQueries({ queryKey: ["tasks"] }),
   });
@@ -358,8 +492,10 @@ function AddItem({ checklist }: { checklist: Checklist }) {
     e.preventDefault();
     const name = title.trim();
     if (!name) return;
-    add.mutate(name);
+    add.mutate({ title: name, notes: notes.trim(), section: section.trim() });
     setTitle("");
+    setNotes("");
+    nameRef.current?.focus();
   }
   return (
     <form onSubmit={submit} className="flex flex-col gap-1">
@@ -367,6 +503,7 @@ function AddItem({ checklist }: { checklist: Checklist }) {
         <div className="min-w-0 flex-1">
           <Field label={t("checklists.newItem")}>
             <TextInput
+              ref={nameRef}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               onKeyDown={(e) => e.key === "Escape" && setTitle("")}
@@ -377,6 +514,16 @@ function AddItem({ checklist }: { checklist: Checklist }) {
           <Plus aria-hidden size={16} />
           {t("checklists.addItem")}
         </button>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2">
+        <Field label={t("checklists.itemNote")}>
+          <TextInput
+            value={notes}
+            placeholder={t("checklists.itemNoteHint")}
+            onChange={(e) => setNotes(e.target.value)}
+          />
+        </Field>
+        <SectionInput sections={sections} value={section} onChange={onSection} />
       </div>
       {add.error && <ErrorText>{t("errors.unexpected")}</ErrorText>}
     </form>

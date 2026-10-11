@@ -86,6 +86,30 @@ describe("Checklists", () => {
     expect(await missing.json()).toMatchObject({ field: "checklistId" });
   });
 
+  it("keeps a note and a section on its items, but never a section on a loose Task", async () => {
+    const { browser } = await family();
+    const checklist = (await (
+      await browser.post("/checklists", { name: "Birthday party" })
+    ).json()) as Checklist;
+    const res = await browser.post("/tasks", {
+      title: "Pineapple",
+      notes: " Aldi ",
+      section: " Shopping ",
+      checklistId: checklist.id,
+    });
+    const item = (await res.json()) as { id: string };
+    expect(item).toMatchObject({ notes: "Aldi", section: "Shopping" });
+    const moved = await browser.request("PUT", `/tasks/${item.id}`, {
+      title: "Pineapple",
+      notes: "Mercadona",
+      section: "Food",
+      checklistId: checklist.id,
+    });
+    expect(await moved.json()).toMatchObject({ notes: "Mercadona", section: "Food" });
+    const loose = await browser.post("/tasks", { title: "Call Ana", section: "Food" });
+    expect(await loose.json()).toMatchObject({ section: "" });
+  });
+
   it("deletes its Tasks with it", async () => {
     const { browser } = await family();
     const checklist = (await (
