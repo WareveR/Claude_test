@@ -1,0 +1,1 @@
+ALTER TABLE `task` ADD `section` text DEFAULT '' NOT NULL;

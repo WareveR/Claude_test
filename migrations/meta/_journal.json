@@ -176,6 +176,13 @@
       "when": 1791712411329,
       "tag": "0024_task_importance",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "6",
+      "when": 1791716600159,
+      "tag": "0025_checklist_item_section",
+      "breakpoints": true
     }
   ]
 }

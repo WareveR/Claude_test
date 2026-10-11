@@ -23,6 +23,7 @@ export type TaskInput = {
   private: boolean;
   repetition: Repetition | null;
   checklistId: string | null;
+  section: string;
   importance: Importance;
 };
 
@@ -74,6 +75,8 @@ async function parseTask(db: Db, body: Record<string, unknown>) {
       private: Boolean(body.private),
       repetition: repetition as Repetition | null,
       checklistId: checklistId as string | null,
+      // Only a Checklist's items are listed under a section.
+      section: checklistId !== null && typeof body.section === "string" ? body.section.trim() : "",
       importance: importance as Importance,
     } satisfies TaskInput,
   };
@@ -102,6 +105,7 @@ async function present(db: Db, rows: TaskRow[]) {
     repetition: row.repetition ?? null,
     seriesId: row.seriesId,
     checklistId: row.checklistId,
+    section: row.section,
     importance: row.importance,
     createdAt: row.createdAt,
     changedAt: row.changedAt,

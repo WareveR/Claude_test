@@ -110,3 +110,45 @@ test("a Checklist repeating every Sunday shows only on Sundays", async ({ page }
   await page.goto(`/day/${lisbonDate(sunday + 7)}`);
   await expect(chores.first()).toBeVisible();
 });
+
+test("a Checklist's items can carry a note and be grouped under sections", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/tasks");
+  await page.getByRole("link", { name: "New checklist" }).click();
+  await page.getByLabel("Name").fill("Birthday party");
+  await page.getByRole("button", { name: "Save" }).click();
+  const detail = page.getByTestId("checklist-detail");
+  await expect(detail.getByRole("heading", { name: "Birthday party" })).toBeVisible();
+
+  const add = async (title: string, note = "", section?: string) => {
+    if (section !== undefined) await detail.getByLabel("Section (optional)").fill(section);
+    await detail.getByLabel("New item").fill(title);
+    if (note) await detail.getByLabel("Note (optional)").fill(note);
+    await detail.getByRole("button", { name: "Add", exact: true }).click();
+    await expect(detail.getByTestId("checklist-item").filter({ hasText: title })).toBeVisible();
+  };
+  await add("Print the photos");
+  await add("Cake", "pick up on Saturday", "Food and drinks");
+  // The section stays for the next item.
+  await add("Cheese puffs", "still to make");
+  await add("Pineapple", "Aldi", "Shopping");
+
+  const sections = detail.getByTestId("checklist-section");
+  await expect(sections).toHaveCount(2);
+  const food = sections.filter({ hasText: "Food and drinks" });
+  await expect(food.getByTestId("checklist-item")).toHaveCount(2);
+  await expect(food.getByTestId("checklist-item-note")).toContainText([
+    "pick up on Saturday",
+    "still to make",
+  ]);
+  await food.getByRole("checkbox", { name: "Done: Cake" }).check();
+  await expect(food).toContainText("1 of 2");
+
+  // Editing an item moves it to another section.
+  await detail.getByRole("button", { name: "Edit Pineapple" }).click();
+  await detail.getByLabel("Section (optional)").first().fill("Food and drinks");
+  await detail.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(sections).toHaveCount(1);
+  await expect(food.getByTestId("checklist-item")).toHaveCount(3);
+  await page.screenshot({ path: "test-results/checklist-sections.png", fullPage: true });
+});
