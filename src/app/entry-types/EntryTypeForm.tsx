@@ -2,14 +2,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router";
-import { ICONS, IMPORTANCES, type EntryTypeDefaults } from "../../core/entry-type";
+import { IMPORTANCES, type EntryTypeDefaults } from "../../core/entry-type";
 import type { Repetition } from "../../core/repetition";
 import { api } from "../api";
 import type { Entry } from "../entries/model";
 import { PERSON_COLORS, uploadPhoto, usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
 import { ErrorText, Field, FormActions, TextInput } from "../screens/form";
-import { Icon } from "../ui/Icon";
+import { IconPicker } from "../ui/IconPicker";
 import { EntryTypeBadge } from "./EntryTypeBadge";
 import { REMINDER_CHOICES, reminderLabel, typeName, useEntryTypes, type EntryType } from "./model";
 import { readyToEdit } from "../offline/fresh";
@@ -127,26 +127,13 @@ function EntryTypeForm({ type }: { type?: EntryType }) {
 
         <fieldset className="flex flex-col gap-1 text-sm">
           <legend className="mb-1 font-medium">{t("entryTypes.icon")}</legend>
-          <div className="flex flex-wrap gap-1">
-            {ICONS.map((key) => (
-              <label key={key} className="cursor-pointer">
-                <input
-                  type="radio"
-                  name="icon"
-                  checked={icon === key && !thumbnailKey}
-                  onChange={() => {
-                    setIcon(key);
-                    setThumbnailKey(null);
-                  }}
-                  className="peer sr-only"
-                  aria-label={key}
-                />
-                <span className="flex size-9 items-center justify-center rounded-md peer-checked:bg-accent peer-checked:text-accent-ink">
-                  <Icon name={key} />
-                </span>
-              </label>
-            ))}
-          </div>
+          <IconPicker
+            value={thumbnailKey ? null : icon}
+            onChange={(key) => {
+              setIcon(key);
+              setThumbnailKey(null);
+            }}
+          />
           <div className="mt-2 flex items-center gap-3">
             <EntryTypeBadge type={{ color, icon, thumbnailKey }} size={40} />
             <label className={BUTTON}>

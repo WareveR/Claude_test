@@ -9,7 +9,7 @@ import {
   moveStart,
   type EntryTime,
 } from "../../core/entry-time";
-import { ICONS, IMPORTANCES, type EntryTypeDefaults } from "../../core/entry-type";
+import { IMPORTANCES, type EntryTypeDefaults } from "../../core/entry-type";
 import { addDays, isPlainDate, todayIn } from "../../core/plain-date";
 import { api, ApiError } from "../api";
 import { REMINDER_CHOICES, reminderLabel, typeName, useEntryTypes } from "../entry-types/model";
@@ -19,7 +19,7 @@ import { paths } from "../paths";
 import { usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
 import { ErrorText, Field, FormActions, TextInput } from "../screens/form";
-import { Icon } from "../ui/Icon";
+import { IconPicker } from "../ui/IconPicker";
 import { occurrenceValues, saveEntry, useEntry, type Entry, type EntryDraft } from "./model";
 import { ScopeDialog, type Scope } from "./ScopeDialog";
 import { RepetitionFields } from "./RepetitionFields";
@@ -410,35 +410,24 @@ function EntryForm({
 
         <fieldset className="flex flex-col gap-1 text-sm">
           <legend className="mb-1 font-medium">{t("entries.icon")}</legend>
-          <div className="flex flex-wrap gap-1">
-            <label className="cursor-pointer">
-              <input
-                type="radio"
-                name="icon"
-                checked={draft.icon === null}
-                onChange={() => set({ icon: null })}
-                className="peer sr-only"
-              />
-              <span className="flex h-9 items-center rounded-md px-2 text-xs peer-checked:bg-ink peer-checked:text-bg">
-                {t("entries.typeIcon")}
-              </span>
-            </label>
-            {ICONS.map((key) => (
-              <label key={key} className="cursor-pointer">
+          <IconPicker
+            value={draft.icon}
+            onChange={(icon) => set({ icon })}
+            before={
+              <label className="cursor-pointer">
                 <input
                   type="radio"
                   name="icon"
-                  checked={draft.icon === key}
-                  onChange={() => set({ icon: key })}
+                  checked={draft.icon === null}
+                  onChange={() => set({ icon: null })}
                   className="peer sr-only"
-                  aria-label={key}
                 />
-                <span className="flex size-9 items-center justify-center rounded-md peer-checked:bg-ink peer-checked:text-bg">
-                  <Icon name={key} />
+                <span className="flex h-10 items-center rounded-md px-2 text-xs peer-checked:bg-accent peer-checked:text-accent-ink">
+                  {t("entries.typeIcon")}
                 </span>
               </label>
-            ))}
-          </div>
+            }
+          />
         </fieldset>
 
         <fieldset className="flex flex-col gap-1 text-sm">
