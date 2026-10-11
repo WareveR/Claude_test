@@ -30,6 +30,8 @@ export type TimeGridProps = {
   dayExtra?: (day: PlainDate) => ReactNode;
   /** Display Mode: tapping an empty spot starts nothing. */
   readOnly?: boolean;
+  /** What sits in the corner above the hours, beside the day names. */
+  corner?: ReactNode;
 };
 
 function isWeekend(date: PlainDate) {
@@ -52,6 +54,7 @@ export function TimeGrid({
   notes = new Map(),
   dayExtra,
   readOnly = false,
+  corner,
 }: TimeGridProps) {
   const navigate = useNavigate();
   const scroller = useRef<HTMLDivElement>(null);
@@ -82,7 +85,7 @@ export function TimeGrid({
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-surface" {...drag.zone}>
       <div className="grid border-b border-line" style={{ gridTemplateColumns: columns }}>
-        <div />
+        <div className="flex items-start justify-center pt-1">{corner}</div>
         {days.map((day) => (
           <div
             key={day}
