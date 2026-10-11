@@ -54,8 +54,21 @@ test("the first saved place is selected and its weather shows in every view", as
   );
   await page.goto(`/day/${yesterday}`);
   await expect(page.locator("nav").getByText("15°/8°")).toBeVisible();
-  // The past day's own strip above its grid.
+  // Its hours only when asked for, remembered on this device.
+  await expect(page.getByTestId("hourly-strip")).toHaveCount(0);
+  await page.getByRole("button", { name: "Show the weather by the hour" }).click();
   await expect(page.getByTestId("hourly-strip")).toContainText("9°");
+
+  // Today has its weather too: wind, UV and humidity instead of sunrise and sunset.
+  await page.goto("/");
+  const today = page.getByTestId("day-weather");
+  await expect(today).toContainText("20°/10°");
+  await expect(today).toContainText("km/h");
+  await expect(today).toContainText("UV 4");
+  await expect(today).toContainText("70%");
+  await expect(page.getByTestId("hourly-strip")).toContainText("%");
+  await page.getByRole("button", { name: "Hide the weather by the hour" }).click();
+  await expect(page.getByTestId("hourly-strip")).toHaveCount(0);
 
   await page.goto("/");
   await page.getByRole("link", { name: "Month", exact: true }).click();

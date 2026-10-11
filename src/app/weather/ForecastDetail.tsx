@@ -36,7 +36,15 @@ const MOON_ICONS: Record<MoonPhase, string> = {
 };
 
 /** Wind: an arrow pointing where it blows and its speed; the compass point in its tooltip. */
-function WindReading({ speed, from, size = 14 }: { speed: number; from?: number; size?: number }) {
+export function WindReading({
+  speed,
+  from,
+  size = 14,
+}: {
+  speed: number;
+  from?: number;
+  size?: number;
+}) {
   const { t } = useTranslation();
   const point = from === undefined ? null : t(`weather.detail.compass.${compassPoint(from)}`);
   return (

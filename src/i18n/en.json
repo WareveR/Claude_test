@@ -117,7 +117,10 @@
     "showTasks_other": "Show the {{count}} hidden tasks",
     "showTasks_one": "Show the hidden task",
     "showTasks_zero": "Show tasks",
-    "hideTasks": "Hide tasks"
+    "hideTasks": "Hide tasks",
+    "showHours": "Show the weather by the hour",
+    "hideHours": "Hide the weather by the hour",
+    "noHours": "No hourly weather kept for this day."
   },
   "settings": {
     "title": "Settings",

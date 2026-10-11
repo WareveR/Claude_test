@@ -49,3 +49,6 @@ export const [useWeekCompact, setWeekCompact] = deviceSwitch("week-compact", fal
 
 /** Whether the week view and the Wall hide the week's Tasks; they are always in the Summary. */
 export const [useTasksHidden, setTasksHidden] = deviceSwitch("week-tasks-hidden", true);
+
+/** Whether the day view shows the day's weather hour by hour under its bar. */
+export const [useDayHours, setDayHours] = deviceSwitch("day-hours", false);
