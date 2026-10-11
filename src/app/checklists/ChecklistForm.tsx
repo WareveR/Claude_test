@@ -1,12 +1,14 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams, useSearchParams } from "react-router";
 import { formatLocale } from "../../core/languages";
 import { formatPlainDate } from "../../core/plain-date";
 import { familyNow } from "../../core/task";
 import { api } from "../api";
 import { useSignedIn } from "../family";
+import { LinkedEntry } from "../entries/EntryPreparation";
+import { useEntry } from "../entries/model";
 import { RepetitionFields } from "../entries/RepetitionFields";
 import { paths } from "../paths";
 import { usePersons } from "../persons/model";
@@ -24,15 +26,36 @@ export function ChecklistPage() {
   const { id } = useParams();
   const isNew = !id;
   const checklist = useChecklist(isNew ? undefined : id);
+  // A new Checklist made from an Entry is named after it and due on its first day.
+  const [search] = useSearchParams();
+  const entryId = isNew ? search.get("entry") : null;
+  const entry = useEntry(entryId ?? undefined);
   if (!isNew && !readyToEdit(checklist)) return null;
-  return <ChecklistForm key={id} checklist={isNew ? undefined : checklist.data} />;
+  if (entryId && !entry.data && !entry.isError) return null;
+  return (
+    <ChecklistForm
+      key={id}
+      checklist={isNew ? undefined : checklist.data}
+      entry={
+        entry.data
+          ? { id: entry.data.id, title: entry.data.title, date: entry.data.time.startDate }
+          : undefined
+      }
+    />
+  );
 }
 
 /**
  * A Checklist's name, optional start and end (each on its own), Repetition, Reminder and default
  * Persons for its new items; also Use again, its previous rounds and deleting it.
  */
-function ChecklistForm({ checklist }: { checklist?: Checklist }) {
+function ChecklistForm({
+  checklist,
+  entry,
+}: {
+  checklist?: Checklist;
+  entry?: { id: string; title: string; date: string };
+}) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -40,11 +63,12 @@ function ChecklistForm({ checklist }: { checklist?: Checklist }) {
   const [draft, setDraft] = useState<ChecklistDraft>(
     () =>
       checklist ?? {
-        name: "",
+        name: entry?.title ?? "",
         startDate: null,
-        endDate: null,
+        endDate: entry?.date ?? null,
         repetition: null,
         remindAtStart: true,
+        entryId: entry?.id ?? null,
         personIds: [],
       },
   );
@@ -152,6 +176,9 @@ function ChecklistForm({ checklist }: { checklist?: Checklist }) {
             onChange={(e) => set({ name: e.target.value })}
           />
         </Field>
+        {draft.entryId && (
+          <LinkedEntry entryId={draft.entryId} onUnlink={() => set({ entryId: null })} />
+        )}
         <div className="flex gap-3">
           <Field label={t("checklists.start")}>
             <TextInput

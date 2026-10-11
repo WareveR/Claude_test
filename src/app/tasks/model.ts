@@ -20,6 +20,8 @@ export type Task = {
   checklistId: string | null;
   /** The heading a Checklist item is listed under; "" for none. */
   section: string;
+  /** The Entry a loose Task prepares for, if any. */
+  entryId: string | null;
   createdAt: string;
   changedAt: string;
 };
@@ -35,6 +37,7 @@ export type TaskDraft = Pick<
   | "importance"
   | "repetition"
   | "checklistId"
+  | "entryId"
 >;
 
 export function useTasks() {

@@ -39,6 +39,15 @@ async function parseChecklist(db: Db, body: Record<string, unknown>, today: stri
   if (startDate && endDate && (endDate as string) < (startDate as string)) {
     return { field: "endDate" };
   }
+  const entryId = body.entryId ?? null;
+  if (entryId !== null) {
+    if (typeof entryId !== "string") return { field: "entryId" };
+    const [found] = await db
+      .select({ id: schema.entry.id })
+      .from(schema.entry)
+      .where(eq(schema.entry.id, entryId));
+    if (!found) return { field: "entryId" };
+  }
   const remindAtStart = body.remindAtStart ?? true;
   if (typeof remindAtStart !== "boolean") return { field: "remindAtStart" };
   const personIds = Array.isArray(body.personIds) ? [...new Set(body.personIds)] : [];
@@ -57,6 +66,7 @@ async function parseChecklist(db: Db, body: Record<string, unknown>, today: stri
       endDate: endDate as string | null,
       repetition: repetition as Repetition | null,
       remindAtStart,
+      entryId: entryId as string | null,
       personIds: personIds as string[],
     },
   };
@@ -90,6 +100,7 @@ async function present(db: Db, rows: ChecklistRow[]) {
     endDate: row.endDate,
     repetition: row.repetition ?? null,
     remindAtStart: row.remindAtStart,
+    entryId: row.entryId,
     personIds: links.filter((l) => l.checklistId === row.id).map((l) => l.personId),
     rounds: rounds
       .filter((r) => r.checklistId === row.id)

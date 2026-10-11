@@ -9,6 +9,8 @@ export type Checklist = {
   endDate: string | null;
   repetition: Repetition | null;
   remindAtStart: boolean;
+  /** The Entry this Checklist prepares for, if any. */
+  entryId: string | null;
   personIds: string[];
   rounds: { label: string; done: number; total: number }[];
   createdAt: string;
@@ -17,7 +19,7 @@ export type Checklist = {
 
 export type ChecklistDraft = Pick<
   Checklist,
-  "name" | "startDate" | "endDate" | "repetition" | "remindAtStart" | "personIds"
+  "name" | "startDate" | "endDate" | "repetition" | "remindAtStart" | "entryId" | "personIds"
 >;
 
 export function useChecklists() {

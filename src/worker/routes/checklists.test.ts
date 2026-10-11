@@ -110,6 +110,41 @@ describe("Checklists", () => {
     expect(await loose.json()).toMatchObject({ section: "" });
   });
 
+  it("links Checklists and loose Tasks to an Entry, until the Entry is deleted", async () => {
+    const { browser } = await family();
+    const types = (await (await browser.get("/entry-types")).json()) as { id: string }[];
+    const party = (await (
+      await browser.post("/entries", {
+        title: "Birthday party",
+        entryTypeId: types[0].id,
+        time: { allDay: true, startDate: "2026-11-07", endDate: "2026-11-07" },
+        personIds: [],
+      })
+    ).json()) as { id: string };
+    const checklist = (await (
+      await browser.post("/checklists", { name: "Party", endDate: "2026-11-07", entryId: party.id })
+    ).json()) as Checklist & { entryId: string | null };
+    expect(checklist.entryId).toBe(party.id);
+    const task = await browser.post("/tasks", { title: "Book the hall", entryId: party.id });
+    expect(await task.json()).toMatchObject({ entryId: party.id });
+    // An item goes with its Checklist, never with an Entry of its own.
+    const item = await browser.post("/tasks", {
+      title: "Cake",
+      checklistId: checklist.id,
+      entryId: party.id,
+    });
+    expect(await item.json()).toMatchObject({ entryId: null });
+    const unknown = await browser.post("/tasks", { title: "x", entryId: "nope" });
+    expect(await unknown.json()).toMatchObject({ field: "entryId" });
+
+    expect((await browser.request("DELETE", `/entries/${party.id}`)).status).toBe(204);
+    expect(await (await browser.get(`/checklists/${checklist.id}`)).json()).toMatchObject({
+      entryId: null,
+    });
+    const tasks = (await (await browser.get("/tasks")).json()) as { entryId: string | null }[];
+    expect(tasks.every((t) => t.entryId === null)).toBe(true);
+  });
+
   it("deletes its Tasks with it", async () => {
     const { browser } = await family();
     const checklist = (await (

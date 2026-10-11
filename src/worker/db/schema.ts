@@ -194,6 +194,8 @@ export const task = sqliteTable("task", {
   checklistId: text("checklist_id").references(() => checklist.id, { onDelete: "cascade" }),
   /** The heading a Checklist item is listed under on its page ("Food", "Shopping"); "" for none. */
   section: text("section").notNull().default(""),
+  /** The Entry a loose Task prepares for, shown with it; never set on a Checklist's items. */
+  entryId: text("entry_id").references(() => entry.id, { onDelete: "set null" }),
   /** High comes first among the Tasks due the same day. */
   importance: text("importance").$type<Importance>().notNull().default("normal"),
   createdAt: text("created_at").notNull(),
@@ -227,6 +229,8 @@ export const checklist = sqliteTable("checklist", {
   repetition: text("repetition", { mode: "json" }).$type<Repetition | null>(),
   /** A Reminder at 09:00 on the first day of its period. */
   remindAtStart: integer("remind_at_start", { mode: "boolean" }).notNull().default(true),
+  /** The Entry this Checklist prepares for, such as a party or a trip, shown with it. */
+  entryId: text("entry_id").references(() => entry.id, { onDelete: "set null" }),
   createdAt: text("created_at").notNull(),
   changedAt: text("changed_at").notNull(),
 });

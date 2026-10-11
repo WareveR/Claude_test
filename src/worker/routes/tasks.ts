@@ -24,6 +24,7 @@ export type TaskInput = {
   repetition: Repetition | null;
   checklistId: string | null;
   section: string;
+  entryId: string | null;
   importance: Importance;
 };
 
@@ -45,6 +46,16 @@ async function parseTask(db: Db, body: Record<string, unknown>) {
       .from(schema.checklist)
       .where(eq(schema.checklist.id, checklistId));
     if (!found) return { field: "checklistId" };
+  }
+  // Only a loose Task prepares for an Entry; an item goes with its Checklist.
+  const entryId = checklistId === null ? (body.entryId ?? null) : null;
+  if (entryId !== null) {
+    if (typeof entryId !== "string") return { field: "entryId" };
+    const [found] = await db
+      .select({ id: schema.entry.id })
+      .from(schema.entry)
+      .where(eq(schema.entry.id, entryId));
+    if (!found) return { field: "entryId" };
   }
   // A Checklist's Tasks come back with the Checklist's rounds, never on their own.
   const repetition = body.repetition ?? null;
@@ -77,6 +88,7 @@ async function parseTask(db: Db, body: Record<string, unknown>) {
       checklistId: checklistId as string | null,
       // Only a Checklist's items are listed under a section.
       section: checklistId !== null && typeof body.section === "string" ? body.section.trim() : "",
+      entryId: entryId as string | null,
       importance: importance as Importance,
     } satisfies TaskInput,
   };
@@ -106,6 +118,7 @@ async function present(db: Db, rows: TaskRow[]) {
     seriesId: row.seriesId,
     checklistId: row.checklistId,
     section: row.section,
+    entryId: row.entryId,
     importance: row.importance,
     createdAt: row.createdAt,
     changedAt: row.changedAt,
@@ -212,6 +225,7 @@ taskRoutes.post("/tasks/:id/done", async (c) => {
           dueTime: existing.dueTime,
           private: existing.private,
           importance: existing.importance,
+          entryId: existing.entryId,
           repetition: next.repetition,
           seriesId: existing.seriesId ?? existing.id,
           repeatOf: id,
@@ -316,6 +330,7 @@ taskRoutes.post("/tasks/:id/checklist", async (c) => {
         dueTime: null,
         repetition: null,
         private: false,
+        entryId: null,
         // Items are listed in the order they were added.
         createdAt: now,
         changedAt: now,
