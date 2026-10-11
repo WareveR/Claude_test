@@ -117,7 +117,10 @@
     "showTasks_other": "Mostrar as {{count}} tarefas escondidas",
     "showTasks_one": "Mostrar a tarefa escondida",
     "showTasks_zero": "Mostrar tarefas",
-    "hideTasks": "Esconder tarefas"
+    "hideTasks": "Esconder tarefas",
+    "showHours": "Mostrar o meteo por hora",
+    "hideHours": "Esconder o meteo por hora",
+    "noHours": "Não há meteo por hora guardado para este dia."
   },
   "settings": {
     "title": "Definições",

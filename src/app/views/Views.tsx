@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { useTasksHidden, useWeekCompact } from "../calendar/compact";
+import { Clock, Droplets, Sun } from "lucide-react";
+import { setDayHours, useDayHours, useTasksHidden, useWeekCompact } from "../calendar/compact";
 import { useTranslation } from "react-i18next";
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router";
 import { formatLocale } from "../../core/languages";
@@ -25,8 +26,7 @@ import { usePersonFilter } from "../filter/model";
 import { matchesFilter } from "../../core/person-filter";
 import { useEntryTypes } from "../entry-types/model";
 import { useHolidays } from "../holidays/model";
-import { useDayNotes, useSunTimes } from "../layers/model";
-import { SunriseIcon, SunsetIcon } from "../weather/WeatherIcon";
+import { useDayNotes } from "../layers/model";
 import { useSignedIn } from "../family";
 import { usePersons } from "../persons/model";
 import { useNow } from "../shell/useNow";
@@ -35,7 +35,9 @@ import { GRID_BOX, ViewBody } from "../shell/SidePanel";
 import { ViewActions, ViewNav } from "../shell/ViewNav";
 import { ForecastButton } from "../weather/ForecastButton";
 import { HourlyStrip } from "../weather/HourlyStrip";
-import { useDayWeather, usePastWeather } from "../weather/model";
+import { useDayWeather, usePastWeather, useWeather, type ShownDay } from "../weather/model";
+import { WindReading } from "../weather/ForecastDetail";
+import type { HourWeather } from "../../core/weather";
 import { WeatherBadge } from "../weather/WeatherBadge";
 import { TasksAccordion, usePeriodTasks } from "../tasks/TasksAccordion";
 import { GridCorner } from "../calendar/GridCorner";
@@ -68,14 +70,19 @@ export function TodayRedirect() {
 }
 
 export function DayView() {
+  const { t } = useTranslation();
   const { date = "" } = useParams();
   const locale = useLocale();
   const today = useToday();
   const day = isPlainDate(date) ? date : today;
   const weather = useDayWeather(day, day).get(day);
   const past = usePastWeather(day, day).get(day);
+  const forecast = useWeather().data;
+  const showHours = useDayHours();
   if (!isPlainDate(date)) return <Navigate to={paths.day(today)} replace />;
   const title = formatPlainDate(date, locale, { weekday: "long", day: "numeric", month: "long" });
+  // The hours kept for a day gone by; the forecast's for today and the days ahead.
+  const hours = past?.hours ?? (forecast?.hourly ?? []).filter((h) => h.time.startsWith(date));
   return (
     <>
       <ViewNav
@@ -84,21 +91,18 @@ export function DayView() {
         previous={paths.day(addDays(date, -1))}
         next={paths.day(addDays(date, 1))}
         compact
-        extra={
-          <>
-            {date !== today && weather && (
-              <ForecastButton>
-                <WeatherBadge day={weather} faded={weather.faded} rain />
-              </ForecastButton>
-            )}
-            {date !== today && <SunTimes day={date} />}
-          </>
-        }
+        extra={<DayWeatherLine weather={weather} hours={hours} />}
       />
       <ViewBody>
-        {/* Today's hours and Tasks are in the panel; another day's sit above its grid. */}
         <div className="flex flex-col gap-2 pb-2 empty:hidden">
-          {past && <HourlyStrip past={past.hours} />}
+          {showHours &&
+            (hours.length > 0 ? (
+              <HourlyStrip hours={hours} />
+            ) : (
+              <p data-testid="no-hours" className="px-4 text-sm text-muted">
+                {t("views.noHours")}
+              </p>
+            ))}
           {date !== today && <TasksAccordion from={date} to={date} />}
         </div>
         <div className={GRID_BOX.lg}>
@@ -109,22 +113,56 @@ export function DayView() {
   );
 }
 
-/** Sunrise and sunset beside the day's title, when this device shows the Sun Layer. */
-function SunTimes({ day }: { day: PlainDate }) {
+/**
+ * The day's weather beside its title: highest and lowest, chance of rain, wind, UV and humidity
+ * (the hours' average), and a switch for the hour by hour detail, there even when no hours are
+ * kept.
+ */
+function DayWeatherLine({ weather, hours }: { weather?: ShownDay; hours: HourWeather[] }) {
   const { t } = useTranslation();
-  const sun = useSunTimes(day);
-  if (!sun) return null;
+  const showHours = useDayHours();
+  const humid = hours.filter((h) => h.humidity !== undefined);
+  const humidity = humid.length
+    ? Math.round(humid.reduce((sum, h) => sum + (h.humidity ?? 0), 0) / humid.length)
+    : undefined;
   return (
-    <span
-      data-testid="sun-times"
-      className="inline-flex items-center gap-1 text-sm text-muted tabular-nums"
-    >
-      <span aria-hidden className="inline-flex items-center gap-1">
-        <SunriseIcon size={14} /> {sun.rise ?? "–"} · <SunsetIcon size={14} /> {sun.set ?? "–"}
-      </span>
-      <span className="sr-only">
-        {t("layers.sunrise")} {sun.rise}, {t("layers.sunset")} {sun.set}
-      </span>
+    <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+      {weather && (
+        <ForecastButton>
+          <span data-testid="day-weather" className="inline-flex items-center gap-3">
+            <WeatherBadge day={weather} faded={weather.faded} rain />
+            {weather.wind !== undefined && (
+              <span className="text-muted">
+                <WindReading speed={weather.wind} from={weather.windDir} />
+              </span>
+            )}
+            {weather.uv !== undefined && (
+              <span className="inline-flex items-center gap-1 text-muted tabular-nums">
+                <Sun aria-hidden size={14} color="#f59e0b" />
+                <span className="sr-only">{t("weather.detail.uv")}</span>
+                UV {weather.uv}
+              </span>
+            )}
+            {humidity !== undefined && (
+              <span className="inline-flex items-center gap-1 text-muted tabular-nums">
+                <Droplets aria-hidden size={14} color="#0ea5e9" />
+                <span className="sr-only">{t("weather.detail.humidity")}</span>
+                {humidity}%
+              </span>
+            )}
+          </span>
+        </ForecastButton>
+      )}
+      <button
+        type="button"
+        data-testid="day-hours"
+        aria-pressed={showHours}
+        aria-label={showHours ? t("views.hideHours") : t("views.showHours")}
+        onClick={() => setDayHours(!showHours)}
+        className={`rounded-md p-1.5 ${showHours ? "bg-accent text-accent-ink" : "text-muted hover:bg-line/60"}`}
+      >
+        <Clock aria-hidden size={18} strokeWidth={1.75} />
+      </button>
     </span>
   );
 }
