@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router";
@@ -25,6 +25,7 @@ import { useForecastDays } from "../weather/model";
 import { WeatherBadge } from "../weather/WeatherBadge";
 import { useSwipe } from "../ui/useSwipe";
 import { useRolloverToday } from "./hooks";
+import { setWeekCompact, useWeekCompact } from "../calendar/compact";
 
 /** Today's Entries as a large list; the ones already over are dimmed. */
 function TodayEntries({ today }: { today: string }) {
@@ -94,6 +95,8 @@ export function DisplayBoard() {
   const locale = formatLocale(language);
   const today = useRolloverToday(family.timeZone);
   const forecast = useForecastDays();
+  // Like the week view: the weather can be hidden so the hours get the room (a phone on its side).
+  const compact = useWeekCompact();
   // The week shown is in the address, so Back from an Entry returns to it.
   const [search, setSearch] = useSearchParams();
   const weeksAway = Number(search.get("week")) || 0;
@@ -177,7 +180,24 @@ export function DisplayBoard() {
                 <CalendarGrid
                   days={days}
                   readOnly
+                  corner={
+                    <button
+                      type="button"
+                      aria-label={compact ? t("views.showWeather") : t("views.hideWeather")}
+                      aria-pressed={compact}
+                      data-testid="wall-compact"
+                      onClick={() => setWeekCompact(!compact)}
+                      className="rounded-md p-1 text-muted hover:bg-line/60"
+                    >
+                      {compact ? (
+                        <ChevronsUpDown aria-hidden size={18} strokeWidth={1.75} />
+                      ) : (
+                        <ChevronsDownUp aria-hidden size={18} strokeWidth={1.75} />
+                      )}
+                    </button>
+                  }
                   dayExtra={(day) => {
+                    if (compact) return null;
                     const weather = forecast.get(day);
                     return (
                       weather && (

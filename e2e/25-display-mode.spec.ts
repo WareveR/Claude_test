@@ -94,6 +94,12 @@ test("the Wall view shows the board", async ({ page }) => {
     await expect(board.getByTestId(`day-column-${lisbonDate(i)}`)).toBeVisible();
   }
   await expect(board.getByTestId(`day-column-${lisbonDate(7)}`)).toHaveCount(0);
+  // The corner button hides the weather for more hours, as in the week view.
+  await expect(board.getByTestId(`week-weather-${lisbonDate(0)}`)).toBeVisible();
+  await board.getByRole("button", { name: "Hide weather" }).click();
+  await expect(board.locator('[data-testid^="week-weather-"]')).toHaveCount(0);
+  await board.getByRole("button", { name: "Show weather" }).click();
+  await expect(board.getByTestId(`week-weather-${lisbonDate(0)}`)).toBeVisible();
 
   // No microphone, no Settings.
   await expect(page.getByRole("button", { name: "Voice Entry" })).toHaveCount(0);
@@ -222,6 +228,10 @@ test("the Wall and Summary switches are exclusive and both off return to the pag
   await expect(page).toHaveURL(/\/summary$/);
   await expect(summary).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByTestId("summary").getByTestId("coming-up")).toBeVisible();
+  // What is left to do is on the right of the Briefing.
+  const briefingBox = await page.getByTestId("coming-up").boundingBox();
+  const tasksBox = await page.getByTestId("coming-up-tasks").boundingBox();
+  expect(tasksBox!.x).toBeGreaterThan(briefingBox!.x + briefingBox!.width - 1);
   // A Task can be ticked there.
   const box = page.getByRole("checkbox", { name: "Done: Water the plants" });
   await box.check();
