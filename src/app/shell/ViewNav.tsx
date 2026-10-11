@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, ListOrdered, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, ListChecks, ListOrdered, Plus, Tv } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, NavLink, useLocation } from "react-router";
@@ -41,7 +41,7 @@ export function ViewNav({
   // Sticky, so a long stacked page (a phone, a big zoom) can always move on or switch view;
   // above the grid's now line, so the Person Filter panel opens over it.
   return (
-    <nav className="sticky top-0 z-20 flex flex-wrap items-center gap-2 border-b border-line bg-bg px-4 py-2">
+    <nav className="sticky top-0 z-20 flex flex-wrap items-center gap-2 border-b border-line bg-bg px-4 py-2 short:flex-nowrap short:py-1">
       <div className="flex rounded-md border border-line">
         {VIEWS.map((view) => (
           <NavLink
@@ -55,13 +55,27 @@ export function ViewNav({
             }
             // The board is only reachable with Display Mode on; turn it on before navigating.
             onClick={view === "display" ? () => setDisplayMode(true) : undefined}
+            // Where space is short (a phone, or one on its side) the names shrink to a letter or an
+            // icon; the full name stays the link's name.
+            aria-label={t(`views.${view}`)}
             className={({ isActive }) =>
-              `flex items-center px-3 py-1 text-sm max-sm:px-2 ${isActive ? "bg-accent text-accent-ink" : ""}`
+              `flex items-center px-3 py-1 text-sm max-md:px-2.5 short:px-2.5 ${isActive ? "bg-accent text-accent-ink" : ""}`
             }
           >
-            {/* On a phone the Agenda is an icon, so the views still fit one line. */}
-            {view === "agenda" && <ListOrdered aria-hidden size={16} className="sm:hidden" />}
-            <span className={view === "agenda" ? "max-sm:sr-only" : ""}>{t(`views.${view}`)}</span>
+            <span aria-hidden className="max-md:hidden short:hidden">
+              {t(`views.${view}`)}
+            </span>
+            <span aria-hidden className="hidden max-md:inline short:inline">
+              {view === "tasks" ? (
+                <ListChecks size={18} strokeWidth={1.75} />
+              ) : view === "display" ? (
+                <Tv size={18} strokeWidth={1.75} />
+              ) : view === "agenda" ? (
+                <ListOrdered size={18} strokeWidth={1.75} />
+              ) : (
+                t(`views.short.${view}`)
+              )}
+            </span>
           </NavLink>
         ))}
       </div>
@@ -78,7 +92,11 @@ export function ViewNav({
           </Link>
         </div>
       )}
-      {title && <h1 className="text-lg font-semibold first-letter:uppercase">{title}</h1>}
+      {title && (
+        <h1 className="text-lg font-semibold first-letter:uppercase short:truncate short:text-base">
+          {title}
+        </h1>
+      )}
       {extra}
       <div className="ml-auto">
         <FilterButton />
@@ -87,7 +105,7 @@ export function ViewNav({
         <Link
           to={newPath ?? `/entries/new?date=${date}`}
           aria-label={t("entries.new")}
-          className="rounded-full bg-accent p-2 text-accent-ink"
+          className="rounded-full bg-accent p-2 text-accent-ink short:p-1.5"
         >
           <Plus aria-hidden size={20} strokeWidth={2} />
         </Link>
