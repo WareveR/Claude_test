@@ -59,13 +59,13 @@ test("the first saved place is selected and its weather shows in every view", as
   await page.getByRole("button", { name: "Show the weather by the hour" }).click();
   await expect(page.getByTestId("hourly-strip")).toContainText("9°");
 
-  // Today has its weather too: wind, UV and humidity instead of sunrise and sunset.
+  // Today has its weather too: highest and lowest, rain and wind, without UV or humidity.
   await page.goto("/");
   const today = page.getByTestId("day-weather");
   await expect(today).toContainText("20°/10°");
   await expect(today).toContainText("km/h");
-  await expect(today).toContainText("UV 4");
-  await expect(today).toContainText("70%");
+  await expect(today).not.toContainText("UV");
+  await expect(today).not.toContainText("70%");
   await expect(page.getByTestId("hourly-strip")).toContainText("%");
   await page.getByRole("button", { name: "Hide the weather by the hour" }).click();
   await expect(page.getByTestId("hourly-strip")).toHaveCount(0);
