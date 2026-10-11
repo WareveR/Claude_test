@@ -251,6 +251,16 @@ test("the Wall and Summary switches are exclusive and both off return to the pag
   await summary.click();
   await expect(page).toHaveURL(before);
 
+  // Settings opened from the Summary close back to it, and the Summary still returns to the week.
+  await summary.click();
+  await expect(page).toHaveURL(/\/summary$/);
+  await header.getByRole("link", { name: "Settings" }).click();
+  await expect(page).toHaveURL(/\/settings/);
+  await header.getByRole("link", { name: "Close Settings" }).click();
+  await expect(page).toHaveURL(/\/summary$/);
+  await summary.click();
+  await expect(page).toHaveURL(before);
+
   // The same from the wall, after a reload too.
   await wall.click();
   await expect(page.getByTestId("display-board")).toBeVisible();
