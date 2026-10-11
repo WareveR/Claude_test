@@ -6,6 +6,25 @@ import type { ReleaseKind } from "./release-number";
  * the app. Later changes go by their title (release-number.ts).
  */
 export const RELEASE_HISTORY: Record<string, ReleaseKind> = {
+  "62a5bf0": "none", // Add setup-matt-pocock-skills skill from mattpocock/skills
+  "324a67a": "none", // Configure repo for Matt Pocock's engineering skills
+  f7760e1: "none", // Install remaining skills from mattpocock/skills
+  adacdf8: "none", // Add default triage label vocabulary for the triage skill
+  "995cf9b": "none", // Merge pull request #17 from WareveR/claude/upbeat-galileo-oowtcm
+  "4d5ffff": "none", // Merge pull request #18 from WareveR/claude/project-thread-26qevk
+  "7899927": "none", // Merge pull request #19 from WareveR/claude/project-thread-26qevk
+  "56fd07e": "none", // Merge pull request #20 from WareveR/claude/project-thread-26qevk
+  "2a9e47c": "none", // Merge pull request #21 from WareveR/claude/project-thread-26qevk
+  d55c31a: "none", // Merge pull request #22 from WareveR/claude/project-thread-26qevk
+  e63bc79: "none", // Merge pull request #23 from WareveR/claude/project-thread-26qevk
+  "8e08c89": "none", // Merge pull request #24 from WareveR/claude/project-thread-26qevk
+  bcd023b: "none", // Merge pull request #25 from WareveR/claude/project-thread-26qevk
+  "276ec78": "none", // Merge pull request #29 from WareveR/claude/project-thread-26qevk
+  "64d2776": "none", // Merge pull request #30 from WareveR/claude/project-thread-26qevk
+  "58c236a": "none", // Merge pull request #31 from WareveR/claude/project-thread-26qevk
+  f82ab6c: "none", // Merge pull request #32 from WareveR/claude/project-thread-26qevk
+  b7ac6f7: "none", // Merge pull request #33 from WareveR/claude/project-thread-26qevk
+  f1a88ba: "none", // Merge pull request #34 from WareveR/claude/project-thread-26qevk
   db5bc12: "none", // Merge pull request #36 from WareveR/claude/project-thread-26qevk
   c042163: "none", // Merge pull request #45 from WareveR/claude/project-thread-til9nm
   "26f6070": "none", // Merge pull request #46 from WareveR/claude/project-thread-1jq8ne
