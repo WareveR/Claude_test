@@ -33,3 +33,50 @@ export function releaseNumber(
   }
   return `${major}.${minor}.${fix}`;
 }
+
+/** One version in the list Settings shows: newest first, only the changes that made a version. */
+export type Release = {
+  version: string;
+  /** YYYY-MM-DD, the day it reached main. */
+  date: string;
+  kind: "feature" | "fix";
+  /** The change's title without its "Fix:" and PR number. */
+  title: string;
+  pr: number | null;
+  /** The Portuguese line, from the merged commit's "Release-Note:" line or the notes kept. */
+  notePt: string | null;
+};
+
+export function releaseList(
+  major: number,
+  commits: { id: string; title: string; date: string; body: string }[],
+  history: Record<string, ReleaseKind> = {},
+  notesPt: Record<string, string> = {},
+): Release[] {
+  const list: Release[] = [];
+  let minor = 0;
+  let fix = 0;
+  for (const commit of commits) {
+    const kind = releaseKind(commit, history);
+    if (kind === "none") continue;
+    if (kind === "feature") {
+      minor += 1;
+      fix = 0;
+    } else fix += 1;
+    const version = `${major}.${minor}.${fix}`;
+    const pr = /\(#(\d+)\)\s*$/.exec(commit.title);
+    const note = /^Release-Note:\s*(.+)$/m.exec(commit.body);
+    list.push({
+      version,
+      date: commit.date,
+      kind,
+      title: commit.title
+        .replace(/\s*\(#\d+\)\s*$/, "")
+        .replace(/^fix:\s*/i, "")
+        .trim(),
+      pr: pr ? Number(pr[1]) : null,
+      notePt: note?.[1].trim() ?? notesPt[version] ?? null,
+    });
+  }
+  return list.reverse();
+}

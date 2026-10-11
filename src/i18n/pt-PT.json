@@ -131,7 +131,20 @@
       "checking": "A procurar uma versão nova…",
       "updating": "A atualizar…",
       "latest": "Este dispositivo já tem a versão mais recente.",
-      "screen": "Ecrã (janela · ecrã · densidade · como está aberta): {{screen}}"
+      "screen": "Ecrã (janela · ecrã · densidade · como está aberta): {{screen}}",
+      "history": "Histórico de versões",
+      "historyNone": "A lista de versões não está disponível nesta cópia da aplicação.",
+      "columns": {
+        "version": "Versão",
+        "date": "Data",
+        "kind": "Tipo",
+        "what": "O que saiu",
+        "pr": "PR"
+      },
+      "kinds": {
+        "feature": "Funcionalidade",
+        "fix": "Correção"
+      }
     },
     "theme": "Tema deste dispositivo",
     "areas": {

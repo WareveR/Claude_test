@@ -6,7 +6,8 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 import { MAJOR_STARTS, RELEASE_HISTORY } from "./src/core/release-history";
-import { releaseNumber } from "./src/core/release-number";
+import { releaseList, releaseNumber } from "./src/core/release-number";
+import { RELEASE_NOTES_PT } from "./src/core/release-notes-pt";
 
 const git = (...args: string[]) => execFileSync("git", args, { encoding: "utf8" }).trim();
 
@@ -39,12 +40,51 @@ function appVersion(): string {
   }
 }
 
+/**
+ * Every version with the day it reached main and what it brought, for the list in Settings; empty
+ * where the history isn't all there.
+ */
+function releases(): string {
+  try {
+    const { version } = JSON.parse(readFileSync("package.json", "utf8")) as { version: string };
+    const major = Number(version.split(".")[0]) || 0;
+    const start = MAJOR_STARTS[major];
+    // One record per commit: id, day, title and message body, split by unlikely separators.
+    const out = git(
+      "log",
+      "--reverse",
+      "--first-parent",
+      "--format=%H%x1f%cs%x1f%s%x1f%b%x1e",
+      ...(start ? [`${start}..HEAD`] : ["HEAD"]),
+    );
+    const commits = out
+      .split("\x1e")
+      .map((record) => record.trim())
+      .filter(Boolean)
+      .map((record) => {
+        const [id, date, title, body = ""] = record.split("\x1f");
+        return { id, date, title, body };
+      });
+    return JSON.stringify(releaseList(major, commits, RELEASE_HISTORY, RELEASE_NOTES_PT));
+  } catch {
+    return "[]";
+  }
+}
+
 export default defineConfig({
   define: {
     // Shown in Settings, error details and the Error Log.
     __APP_VERSION__: JSON.stringify(appVersion()),
   },
   plugins: [
+    {
+      // The version list Settings shows, fetched only when it is opened.
+      name: "releases",
+      generateBundle() {
+        if (this.environment.name !== "client") return;
+        this.emitFile({ type: "asset", fileName: "releases.json", source: releases() });
+      },
+    },
     react(),
     tailwindcss(),
     // Workers AI only runs on Cloudflare: locally it fails and the Briefing shows its
