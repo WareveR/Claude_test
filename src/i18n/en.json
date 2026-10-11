@@ -102,7 +102,9 @@
     "today": "Today",
     "previous": "Previous",
     "next": "Next",
-    "nothing": "Nothing on this day."
+    "nothing": "Nothing on this day.",
+    "agenda": "Agenda",
+    "agendaEmpty": "Nothing in these days."
   },
   "settings": {
     "title": "Settings",

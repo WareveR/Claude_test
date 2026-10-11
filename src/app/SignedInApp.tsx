@@ -23,6 +23,7 @@ import { TemplatePage } from "./checklists/TemplateForm";
 import { SuggestionsPage } from "./suggestions/SuggestionsPage";
 import { TaskPage } from "./tasks/TaskForm";
 import { TasksView } from "./tasks/TasksView";
+import { AgendaView } from "./views/AgendaView";
 import { DayView, MonthView, TodayRedirect, WeekView, YearView } from "./views/Views";
 
 /** On a wall tablet the entry address shows read-only details instead of the form. */
@@ -58,6 +59,7 @@ const router = createBrowserRouter([
       { path: "/week/:date", element: <WeekView /> },
       { path: "/month/:month", element: <MonthView /> },
       { path: "/year/:year", element: <YearView /> },
+      { path: "/agenda/:date", element: <AgendaView /> },
       { path: "/tasks", element: <TasksView /> },
       { path: "/tasks/:id", element: <TaskPage /> },
       { path: paths.suggestions(), element: <SuggestionsPage /> },

@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, ListOrdered, Plus } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, NavLink, useLocation } from "react-router";
@@ -9,7 +9,7 @@ import { FilterButton } from "../filter/FilterButton";
 import { setDisplayMode } from "../display/mode";
 import { paths } from "../paths";
 
-const VIEWS = ["day", "week", "month", "year", "tasks", "display"] as const;
+const VIEWS = ["day", "week", "month", "year", "agenda", "tasks", "display"] as const;
 
 /** Switches between views and moves through dates, keeping the date in the address. */
 export function ViewNav({
@@ -35,7 +35,9 @@ export function ViewNav({
   // "Today" stays in the view it is pressed in: this week, this month, this year.
   const view = pathname.split("/")[1];
   const todayPath =
-    view === "week" || view === "month" || view === "year" ? paths[view](today) : paths.day(today);
+    view === "week" || view === "month" || view === "year" || view === "agenda"
+      ? paths[view](today)
+      : paths.day(today);
   // Sticky, so a long stacked page (a phone, a big zoom) can always move on or switch view;
   // above the grid's now line, so the Person Filter panel opens over it.
   return (
@@ -54,10 +56,12 @@ export function ViewNav({
             // The board is only reachable with Display Mode on; turn it on before navigating.
             onClick={view === "display" ? () => setDisplayMode(true) : undefined}
             className={({ isActive }) =>
-              `px-3 py-1 text-sm ${isActive ? "bg-accent text-accent-ink" : ""}`
+              `flex items-center px-3 py-1 text-sm max-sm:px-2 ${isActive ? "bg-accent text-accent-ink" : ""}`
             }
           >
-            {t(`views.${view}`)}
+            {/* On a phone the Agenda is an icon, so the views still fit one line. */}
+            {view === "agenda" && <ListOrdered aria-hidden size={16} className="sm:hidden" />}
+            <span className={view === "agenda" ? "max-sm:sr-only" : ""}>{t(`views.${view}`)}</span>
           </NavLink>
         ))}
       </div>
