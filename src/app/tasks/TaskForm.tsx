@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useLocation, useNavigate, useParams, useSearchParams } from "react-router";
+import { IMPORTANCES } from "../../core/entry-type";
 import { isPlainDate } from "../../core/plain-date";
 import { api } from "../api";
 import { AddToChecklistSection } from "../checklists/AddToChecklist";
@@ -48,6 +49,7 @@ function TaskForm({ task }: { task?: Task }) {
         dueTime: null,
         personIds: [],
         private: false,
+        importance: "normal",
         repetition: null,
         checklistId: null,
         ...given,
@@ -163,6 +165,19 @@ function TaskForm({ task }: { task?: Task }) {
           <p className="text-xs text-muted">{t("tasks.familyWideHint")}</p>
         </fieldset>
 
+        <Field label={t("entries.importance")}>
+          <select
+            className={INPUT}
+            value={draft.importance}
+            onChange={(e) => set({ importance: e.target.value as TaskDraft["importance"] })}
+          >
+            {IMPORTANCES.map((i) => (
+              <option key={i} value={i}>
+                {t(`importance.${i}`)}
+              </option>
+            ))}
+          </select>
+        </Field>
         <Field label={t("entries.notes")}>
           <textarea
             className={INPUT}

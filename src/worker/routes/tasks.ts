@@ -1,6 +1,7 @@
 import { and, desc, eq, inArray, isNull, ne } from "drizzle-orm";
 import { Hono } from "hono";
 import { isClockTime } from "../../core/entry-time";
+import { IMPORTANCES, type Importance } from "../../core/entry-type";
 import { isPlainDate } from "../../core/plain-date";
 import { isRepetition, type Repetition } from "../../core/repetition";
 import { familyNow, nextRepeat } from "../../core/task";
@@ -22,6 +23,7 @@ export type TaskInput = {
   private: boolean;
   repetition: Repetition | null;
   checklistId: string | null;
+  importance: Importance;
 };
 
 /** Validates a whole Task; returns the bad field's name or the clean values. */
@@ -51,6 +53,8 @@ async function parseTask(db: Db, body: Record<string, unknown>) {
   ) {
     return { field: "repetition" };
   }
+  const importance = body.importance ?? "normal";
+  if (!IMPORTANCES.includes(importance as Importance)) return { field: "importance" };
   const personIds = Array.isArray(body.personIds) ? [...new Set(body.personIds)] : [];
   if (!personIds.every((p) => typeof p === "string")) return { field: "personIds" };
   if (personIds.length > 0) {
@@ -70,6 +74,7 @@ async function parseTask(db: Db, body: Record<string, unknown>) {
       private: Boolean(body.private),
       repetition: repetition as Repetition | null,
       checklistId: checklistId as string | null,
+      importance: importance as Importance,
     } satisfies TaskInput,
   };
 }
@@ -97,6 +102,7 @@ async function present(db: Db, rows: TaskRow[]) {
     repetition: row.repetition ?? null,
     seriesId: row.seriesId,
     checklistId: row.checklistId,
+    importance: row.importance,
     createdAt: row.createdAt,
     changedAt: row.changedAt,
   }));
@@ -201,6 +207,7 @@ taskRoutes.post("/tasks/:id/done", async (c) => {
           dueDate: next.dueDate,
           dueTime: existing.dueTime,
           private: existing.private,
+          importance: existing.importance,
           repetition: next.repetition,
           seriesId: existing.seriesId ?? existing.id,
           repeatOf: id,
