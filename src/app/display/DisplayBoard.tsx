@@ -23,6 +23,7 @@ import { CalendarGrid } from "../views/Views";
 import { ForecastButton } from "../weather/ForecastButton";
 import { useForecastDays } from "../weather/model";
 import { WeatherBadge } from "../weather/WeatherBadge";
+import { useSwipe } from "../ui/useSwipe";
 import { useRolloverToday } from "./hooks";
 
 /** Today's Entries as a large list; the ones already over are dimmed. */
@@ -105,6 +106,10 @@ export function DisplayBoard() {
     return () => clearTimeout(id);
   }, [weeksAway, touches, setSearch]);
 
+  useSwipe(
+    () => setWeeksAway(weeksAway - 1),
+    () => setWeeksAway(weeksAway + 1),
+  );
   const days = boardDays(today, weeksAway);
   const short = { day: "numeric", month: "short" } as const;
   const title = `${formatPlainDate(days[0], locale, short)} – ${formatPlainDate(days[6], locale, short)}`;
