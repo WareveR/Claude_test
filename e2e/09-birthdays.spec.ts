@@ -12,8 +12,11 @@ test("a date of birth keeps a Birthday with the age on the calendar", async ({ p
   await expect(page).toHaveURL(/\/settings\/family$/);
 
   await page.goto("/month/2026-10?day=2026-10-20");
-  const birthday = page.getByTestId("picked-day").getByRole("link", { name: /Bia, 10/ });
-  await birthday.click();
+  await page
+    .getByTestId("picked-day")
+    .getByRole("button", { name: /Bia, 10/ })
+    .click();
+  await page.getByTestId("picked-day").getByRole("link", { name: "Edit" }).click();
   await expect(page.getByText("This Birthday follows Bia's date of birth")).toBeVisible();
   await expect(page.getByLabel("Title")).toBeDisabled();
   await expect(page.getByRole("button", { name: "Delete entry" })).toHaveCount(0);
@@ -30,8 +33,9 @@ test("a date of birth keeps a Birthday with the age on the calendar", async ({ p
   await page.goto("/month/2026-10?day=2026-10-20");
   await page
     .getByTestId("picked-day")
-    .getByRole("link", { name: /Bia, 10/ })
+    .getByRole("button", { name: /Bia, 10/ })
     .click();
+  await page.getByTestId("picked-day").getByRole("link", { name: "Edit" }).click();
   await expect(page.getByLabel("Title")).toBeEnabled();
   await expect(page.getByLabel("Notes")).toHaveValue("Loves drawing");
 });
@@ -47,6 +51,6 @@ test("a hand-entered Birthday shows the age when the year is known", async ({ pa
 
   await page.goto("/month/2026-03?day=2026-03-12");
   await expect(
-    page.getByTestId("picked-day").getByRole("link", { name: /Grandma Rosa, 80/ }),
+    page.getByTestId("picked-day").getByRole("button", { name: /Grandma Rosa, 80/ }),
   ).toBeVisible();
 });

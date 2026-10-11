@@ -103,7 +103,9 @@
     "today": "Today",
     "previous": "Previous",
     "next": "Next",
-    "nothing": "Nothing on this day."
+    "nothing": "Nothing on this day.",
+    "open": "Open",
+    "openDay": "Open the day"
   },
   "settings": {
     "title": "Settings",

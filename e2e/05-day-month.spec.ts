@@ -19,7 +19,14 @@ test("day and month views show Entries", async ({ page }) => {
   await expect(page.getByTestId("month-day-2026-11-04")).toContainText("Parents' evening");
   await page.getByTestId("month-day-2026-11-04").click();
   await expect(page).toHaveURL(/\/month\/2026-11\?day=2026-11-04$/);
-  await expect(page.getByTestId("picked-day")).toContainText("18:00");
+  // The picked day opens over the month; its Entries open like an accordion.
+  const picked = page.getByRole("dialog");
+  await expect(picked).toContainText("18:00");
+  await picked.getByRole("button", { name: /Parents' evening/ }).click();
+  await expect(picked.getByTestId("entry-summary")).toBeVisible();
+  await expect(picked.getByRole("link", { name: "Edit" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page).toHaveURL(/\/month\/2026-11$/);
   await page.getByTestId("month-day-2026-11-05").click();
   await expect(page.getByTestId("picked-day")).toContainText("Nothing on this day.");
 });
