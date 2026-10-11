@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, ListChecks, ListOrdered, Plus, Tv } from "lucide-react";
+import { ChevronLeft, ChevronRight, ListChecks, ListOrdered, Plus, Search, Tv } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, NavLink, useLocation } from "react-router";
@@ -98,7 +98,14 @@ export function ViewNav({
         </h1>
       )}
       {extra}
-      <div className="ml-auto">
+      <div className="ml-auto flex items-center gap-1">
+        <Link
+          to={paths.search()}
+          aria-label={t("search.title")}
+          className="rounded-md p-1.5 hover:bg-line/60"
+        >
+          <Search aria-hidden size={20} strokeWidth={1.75} />
+        </Link>
         <FilterButton />
       </div>
       {newPath !== null && (

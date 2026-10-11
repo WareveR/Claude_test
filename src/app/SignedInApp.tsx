@@ -22,6 +22,7 @@ import { ChecklistPage } from "./checklists/ChecklistForm";
 import { TemplatePage } from "./checklists/TemplateForm";
 import { SuggestionsPage } from "./suggestions/SuggestionsPage";
 import { TaskPage } from "./tasks/TaskForm";
+import { SearchPage } from "./search/SearchPage";
 import { TasksView } from "./tasks/TasksView";
 import { AgendaView } from "./views/AgendaView";
 import { DayView, MonthView, TodayRedirect, WeekView, YearView } from "./views/Views";
@@ -63,6 +64,7 @@ const router = createBrowserRouter([
       { path: "/tasks", element: <TasksView /> },
       { path: "/tasks/:id", element: <TaskPage /> },
       { path: paths.suggestions(), element: <SuggestionsPage /> },
+      { path: paths.search(), element: <SearchPage /> },
       { path: "/checklists/new", element: <ChecklistPage /> },
       { path: "/checklists/:id", element: <ChecklistDetailPage /> },
       { path: "/checklists/:id/edit", element: <ChecklistPage /> },

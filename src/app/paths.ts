@@ -11,6 +11,7 @@ export const paths = {
   display: () => "/display",
   tasks: () => "/tasks",
   suggestions: () => "/suggestions",
+  search: () => "/search",
   settings: () => "/settings",
   settingsArea: (area: string) => `/settings/${area}`,
   errorLog: () => "/settings/errors",

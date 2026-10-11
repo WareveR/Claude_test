@@ -862,5 +862,38 @@
     "tasks": "Tarefas",
     "for": "Para: {{title}}",
     "unlink": "Desligar da entrada"
+  },
+  "search": {
+    "title": "Pesquisa",
+    "box": "Pesquisar",
+    "placeholder": "Palavras, \"texto exato\", -excluir",
+    "hint": "Qualquer uma das palavras encontra resultados; \"texto entre aspas\" tem de aparecer assim; -palavra exclui o que a tiver. Maiúsculas e acentos não contam.",
+    "person": "Pessoa",
+    "anyone": "Qualquer pessoa",
+    "kind": "O quê",
+    "kinds": {
+      "all": "Tudo",
+      "entries": "Entradas",
+      "tasks": "Tarefas",
+      "checklists": "Checklists"
+    },
+    "entryTypes": "Tipos de entrada",
+    "period": "Quando",
+    "periods": {
+      "any": "Qualquer altura",
+      "past": "Passado",
+      "next30": "Próximos 30 dias",
+      "year": "Este ano",
+      "custom": "Entre datas…"
+    },
+    "from": "De",
+    "to": "Até",
+    "done": "Incluir tarefas concluídas",
+    "start": "Escreve algo ou escolhe um filtro.",
+    "none": "Nada encontrado.",
+    "count_one": "{{count}} resultado",
+    "count_other": "{{count}} resultados",
+    "more_one": "…e mais {{count}}: afina a pesquisa para o ver.",
+    "more_other": "…e mais {{count}}: afina a pesquisa para os ver."
   }
 }
