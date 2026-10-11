@@ -15,7 +15,11 @@ import { useNow } from "./useNow";
 
 /** The last page outside Settings and Suggestions, where their buttons return to. */
 let outsideSettings: string = paths.today();
-/** The last page outside the Wall and the Summary, where switching both off returns to. */
+/**
+ * The last calendar page (outside the Wall, the Summary, Settings and Suggestions), where switching
+ * the Wall or Summary off returns to; were Settings one, closing them and the Summary would send
+ * each other back and forth.
+ */
 let outsideScreens: string = paths.today();
 
 /** An on/off switch at the end of the header for a screen of its own: the Wall or the Summary. */
@@ -67,7 +71,8 @@ export function Header({
   const inSummary = location.pathname === paths.summary();
   useEffect(() => {
     if (!inSettings && !inSuggestions) outsideSettings = location.pathname + location.search;
-    if (!wall && !inSummary) outsideScreens = location.pathname + location.search;
+    if (!wall && !inSummary && !inSettings && !inSuggestions)
+      outsideScreens = location.pathname + location.search;
   }, [inSettings, inSuggestions, inSummary, wall, location.pathname, location.search]);
   // The two switches are exclusive: turning one on turns the other off, and with both off the
   // page from before comes back.
