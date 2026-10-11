@@ -1,4 +1,4 @@
-import { Lightbulb, Settings, X } from "lucide-react";
+import { Lightbulb, PanelLeftClose, PanelLeftOpen, Settings, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
@@ -12,6 +12,7 @@ import { WeatherBadge } from "../weather/WeatherBadge";
 import { VoiceEntry } from "../voice/VoiceEntry";
 import { paths } from "../paths";
 import { useNow } from "./useNow";
+import { togglePanel, usePanelCollapsed, usePanelOnPage } from "./SidePanel";
 
 /** The last page outside Settings and Suggestions, where their buttons return to. */
 let outsideSettings: string = paths.today();
@@ -34,6 +35,8 @@ export function Header({
   useEffect(() => {
     if (!inSettings && !inSuggestions) outsideSettings = location.pathname + location.search;
   }, [inSettings, inSuggestions, location.pathname, location.search]);
+  const panelOnPage = usePanelOnPage();
+  const panelHidden = usePanelCollapsed();
   const today = useForecastDays().get(todayIn(family.timeZone, now));
   const locale = formatLocale(language);
   const time = new Intl.DateTimeFormat(locale, {
@@ -79,6 +82,24 @@ export function Header({
         </ForecastButton>
       )}
       {showVoice && !wall && <VoiceEntry />}
+      {/* Shows or hides today's side panel, on the pages that have one. */}
+      {panelOnPage && (
+        <button
+          type="button"
+          aria-label={panelHidden ? t("sidePanel.show") : t("sidePanel.hide")}
+          aria-expanded={!panelHidden}
+          aria-controls="side-panel"
+          data-help={panelHidden ? "sidePanel" : "sidePanelHide"}
+          onClick={togglePanel}
+          className={`${showVoice && !wall ? "" : "ml-auto "}shrink-0 rounded-md p-1.5 hover:bg-header-ink/15 sm:p-2`}
+        >
+          {panelHidden ? (
+            <PanelLeftOpen aria-hidden size={20} strokeWidth={1.75} />
+          ) : (
+            <PanelLeftClose aria-hidden size={20} strokeWidth={1.75} />
+          )}
+        </button>
+      )}
       {wall ? (
         <button
           type="button"
@@ -87,7 +108,7 @@ export function Header({
             setDisplayMode(false);
             navigate(paths.today());
           }}
-          className="ml-auto flex shrink-0 items-center gap-1.5 rounded-md border border-header-ink/40 px-3 py-1.5 hover:bg-header-ink/15"
+          className={`${panelOnPage ? "" : "ml-auto "}flex shrink-0 items-center gap-1.5 rounded-md border border-header-ink/40 px-3 py-1.5 hover:bg-header-ink/15`}
         >
           <X aria-hidden size={20} strokeWidth={1.75} />
           {/* On a phone only the cross shows; its name stays for screen readers. */}
