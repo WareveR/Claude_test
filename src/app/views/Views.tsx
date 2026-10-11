@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, Navigate, useParams, useSearchParams } from "react-router";
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router";
 import { formatLocale } from "../../core/languages";
 import {
   addDays,
@@ -12,7 +12,7 @@ import {
   todayIn,
   type PlainDate,
 } from "../../core/plain-date";
-import { EntryBlock } from "../calendar/EntryBlock";
+import { DayPopup } from "../calendar/DayPopup";
 import { monthWeeks } from "../../core/layout";
 import { entriesOn, MonthGrid } from "../calendar/MonthGrid";
 import { TimeGrid } from "../calendar/TimeGrid";
@@ -25,7 +25,6 @@ import { matchesFilter } from "../../core/person-filter";
 import { useEntryTypes } from "../entry-types/model";
 import { useHolidays } from "../holidays/model";
 import { useDayNotes, useSunTimes } from "../layers/model";
-import { NoteLine } from "../layers/NoteLine";
 import { SunriseIcon, SunsetIcon } from "../weather/WeatherIcon";
 import { useSignedIn } from "../family";
 import { usePersons } from "../persons/model";
@@ -228,8 +227,8 @@ export function MonthView() {
 function Month({ first }: { first: PlainDate }) {
   const locale = useLocale();
   const today = useToday();
-  const { t } = useTranslation();
   const [search] = useSearchParams();
+  const navigate = useNavigate();
   const picked = search.get("day");
   const selected =
     picked && isPlainDate(picked) && picked.startsWith(first.slice(0, 7))
@@ -242,7 +241,6 @@ function Month({ first }: { first: PlainDate }) {
   const holidays = useHolidays(weeks[0][0], weeks[weeks.length - 1][6]);
   const notes = useDayNotes(weeks[0][0], weeks[weeks.length - 1][6]);
   const forecast = useDayWeather(weeks[0][0], weeks[weeks.length - 1][6]);
-  const persons = usePersons();
   const title = formatPlainDate(first, locale, { month: "long", year: "numeric" });
   const dayEntries = entriesOn(entries, selected);
   return (
@@ -254,9 +252,8 @@ function Month({ first }: { first: PlainDate }) {
         next={paths.month(addMonths(first, 1))}
       />
       <SidePanelLayout panel={<TodayPanel />}>
-        {/* On wide screens the grid fills the height; the picked day sits below it, or beside it
-          on the widest screens. */}
-        <div className="flex flex-1 flex-col lg:min-h-0 2xl:flex-row">
+        {/* On wide screens the grid fills the height; a picked day opens over it. */}
+        <div className="flex flex-1 flex-col lg:min-h-0">
           <MonthGrid
             month={first}
             entries={entries}
@@ -269,53 +266,20 @@ function Month({ first }: { first: PlainDate }) {
             weather={forecast}
             dayLink={(day) => `${paths.month(day)}?day=${day}`}
           />
-          <section
-            className="flex flex-col gap-1 border-line p-4 lg:max-h-[40dvh] lg:shrink-0 lg:overflow-y-auto lg:border-t 2xl:max-h-none 2xl:w-[22rem] 2xl:border-t-0 2xl:border-l"
-            data-testid="picked-day"
-          >
-            <div className="flex items-center gap-2">
-              <h2 className="font-semibold first-letter:uppercase">
-                {formatPlainDate(selected, locale, {
-                  weekday: "long",
-                  day: "numeric",
-                  month: "long",
-                })}
-              </h2>
-              {forecast.get(selected) && (
-                <ForecastButton>
-                  <WeatherBadge
-                    day={forecast.get(selected)!}
-                    faded={forecast.get(selected)!.faded}
-                    rain
-                  />
-                </ForecastButton>
-              )}
-            </div>
-            {holidays.get(selected) && (
-              <p className="text-sm text-holiday-ink">{holidays.get(selected)?.join(" · ")}</p>
-            )}
-            {notes.get(selected)?.map((note) => (
-              <p key={note} className="text-sm text-muted">
-                <NoteLine note={note} size={14} />
-              </p>
-            ))}
-            <div className="-mx-4">
-              <TasksAccordion from={selected} to={selected} />
-            </div>
-            {dayEntries.length === 0 && <p className="text-sm text-muted">{t("views.nothing")}</p>}
-            {dayEntries.map((e) => (
-              <EntryBlock
-                key={e.key}
-                entry={e}
-                type={types.find((ty) => ty.id === e.entryTypeId)}
-                persons={persons.data ?? []}
-                label={e.time.allDay ? t("entries.allDay") : e.time.startTime}
-                className="py-1 text-sm"
-              />
-            ))}
-          </section>
         </div>
       </SidePanelLayout>
+      {picked === selected && (
+        <DayPopup
+          day={selected}
+          entries={dayEntries}
+          types={types}
+          locale={locale}
+          holidays={holidays.get(selected)}
+          notes={notes.get(selected)}
+          forecast={forecast.get(selected)}
+          onClose={() => navigate(paths.month(first))}
+        />
+      )}
     </>
   );
 }
@@ -339,6 +303,14 @@ function Year({ year }: { year: number }) {
   const { entries, types } = useCalendar(date, `${year}-12-31`);
   const holidays = useHolidays(date, `${year}-12-31`);
   const withDetail = (path: string) => (detail ? `${path}?detail=1` : path);
+  const navigate = useNavigate();
+  // A picked day opens over the year, keeping Detail as it was.
+  const picked = search.get("day");
+  const pickedDay =
+    picked && isPlainDate(picked) && picked.startsWith(String(year)) ? picked : null;
+  const dayLink = (day: PlainDate) => `${paths.year(date)}?${detail ? "detail=1&" : ""}day=${day}`;
+  const notes = useDayNotes(date, `${year}-12-31`);
+  const forecast = useDayWeather(date, `${year}-12-31`);
   return (
     <>
       <ViewNav
@@ -368,6 +340,7 @@ function Year({ year }: { year: number }) {
               locale={locale}
               familyLabel={t("views.family")}
               holidays={holidays}
+              dayLink={dayLink}
             />
           ) : (
             <YearGrid
@@ -377,10 +350,23 @@ function Year({ year }: { year: number }) {
               today={today}
               locale={locale}
               holidays={holidays}
+              dayLink={dayLink}
             />
           )}
         </div>
       </SidePanelLayout>
+      {pickedDay && (
+        <DayPopup
+          day={pickedDay}
+          entries={entriesOn(entries, pickedDay)}
+          types={types}
+          locale={locale}
+          holidays={holidays.get(pickedDay)}
+          notes={notes.get(pickedDay)}
+          forecast={forecast.get(pickedDay)}
+          onClose={() => navigate(withDetail(paths.year(date)))}
+        />
+      )}
     </>
   );
 }

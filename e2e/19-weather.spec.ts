@@ -50,7 +50,8 @@ test("the first saved place is selected and its weather shows in every view", as
 
   await page.goto("/");
   await page.getByRole("link", { name: "Month", exact: true }).click();
-  await expect(page.getByTestId("picked-day").getByRole("button")).toContainText("20°/10°");
+  await page.locator('[aria-current="date"]').click();
+  await expect(page.getByTestId("picked-day").getByRole("button").first()).toContainText("20°/10°");
 });
 
 test("tapping the weather asks before leaving for the forecast site", async ({ page }) => {

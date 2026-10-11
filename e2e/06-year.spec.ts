@@ -16,8 +16,12 @@ test("the year view marks High days and lists the Entries of each day", async ({
   await expect(
     page.getByTestId("year-day-2026-11-04").getByTestId("year-entry").first(),
   ).toBeVisible();
+  // A day opens over the year, without leaving it.
   await page.getByTestId("year-day-2026-12-24").click();
-  await expect(page).toHaveURL(/\/month\/2026-12\?day=2026-12-24$/);
+  await expect(page).toHaveURL(/\/year\/2026\?day=2026-12-24$/);
+  await expect(page.getByRole("dialog")).toContainText("Christmas Eve dinner");
+  await page.getByRole("dialog").getByRole("button", { name: "Close" }).click();
+  await expect(page).toHaveURL(/\/year\/2026$/);
 });
 
 test("Detail shows a line per Person and one for the Family in each month", async ({ page }) => {
@@ -33,7 +37,8 @@ test("Detail shows a line per Person and one for the Family in each month", asyn
   // The same 37 Saturday-to-Sunday columns as the year grid.
   await expect(detail.getByTestId("year-line-12-family").locator("td")).toHaveCount(37);
   await detail.getByTestId("year-cell-2026-12-24-family").click();
-  await expect(page).toHaveURL(/\/month\/2026-12\?day=2026-12-24$/);
+  await expect(page).toHaveURL(/\/year\/2026\?detail=1&day=2026-12-24$/);
+  await expect(page.getByRole("dialog")).toContainText("Christmas Eve dinner");
 
   await page.goto("/year/2026?detail=1");
   await page.getByRole("link", { name: "Detail" }).click();

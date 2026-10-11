@@ -102,7 +102,9 @@
     "today": "Hoje",
     "previous": "Anterior",
     "next": "Seguinte",
-    "nothing": "Nada neste dia."
+    "nothing": "Nada neste dia.",
+    "open": "Abrir",
+    "openDay": "Abrir o dia"
   },
   "settings": {
     "title": "Definições",

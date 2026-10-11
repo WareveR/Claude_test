@@ -21,6 +21,7 @@ export function YearDetail({
   locale,
   familyLabel,
   holidays = new Map(),
+  dayLink,
 }: {
   year: number;
   entries: Entry[];
@@ -32,6 +33,8 @@ export function YearDetail({
   familyLabel: string;
   /** Public Holiday names by date. */
   holidays?: Map<string, string[]>;
+  /** Where tapping a day goes. */
+  dayLink: (day: PlainDate) => string;
 }) {
   const colorOf = (e: Entry) => types.find((t) => t.id === e.entryTypeId)?.color ?? "#607d8b";
   const lines: { id: string; person: Person | null; owns: (e: Entry) => boolean }[] = [
@@ -97,7 +100,7 @@ export function YearDetail({
                       >
                         {day && mine.length > 0 && (
                           <Link
-                            to={`/month/${day.slice(0, 7)}?day=${day}`}
+                            to={dayLink(day)}
                             title={mine.map((e) => e.title).join(", ")}
                             data-testid={`year-cell-${day}-${line.id}`}
                             style={{ backgroundColor: colorOf(mine[0]) }}

@@ -42,6 +42,7 @@ export function YearGrid({
   today,
   locale,
   holidays = new Map(),
+  dayLink,
 }: {
   year: number;
   entries: Entry[];
@@ -50,6 +51,8 @@ export function YearGrid({
   locale: string;
   /** Public Holiday names by date. */
   holidays?: Map<string, string[]>;
+  /** Where tapping a day goes. */
+  dayLink: (day: PlainDate) => string;
 }) {
   const colorOf = (e: Entry) => types.find((t) => t.id === e.entryTypeId)?.color ?? "#607d8b";
   const letters = yearWeekdayLetters(locale);
@@ -96,7 +99,7 @@ export function YearGrid({
                     className={`border-t border-l border-line/60 p-0 align-top ${names ? "bg-holiday" : isWeekendColumn(c) ? "bg-weekend" : ""}`}
                   >
                     <Link
-                      to={`/month/${day.slice(0, 7)}?day=${day}`}
+                      to={dayLink(day)}
                       data-testid={`year-day-${day}`}
                       title={[...(names ?? []), ...dayEntries.map((e) => e.title)].join("\n")}
                       data-high={high ? "true" : undefined}
