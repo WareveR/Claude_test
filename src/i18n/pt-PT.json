@@ -329,7 +329,8 @@
     "high": "Importância alta",
     "withItems": "Com itens",
     "withItemsHint": "Uma tarefa pode ter uma lista de itens, e cada item os seus próprios itens.",
-    "withItemsOnHint": "Ao gravar abre a página dela para juntar os itens. O dia passa a prazo; a hora, a importância, as notas e o Privado não ficam."
+    "withItemsOnHint": "Ao gravar abre a página dela para juntar os itens. O dia passa a prazo; a hora, a importância, as notas e o Privado não ficam.",
+    "noDueDate": "Sem data"
   },
   "checklists": {
     "new": "Nova tarefa com itens",

@@ -149,6 +149,7 @@ test("a loose Task's form adds a copy of it to a Checklist", async ({ page }) =>
   await expect(page).not.toHaveURL(/\/tasks\/new$/);
   await page.goto("/tasks");
   await page.getByTestId("task").filter({ hasText: "Buy glue sticks" }).getByRole("link").click();
+  await page.getByRole("dialog").getByRole("link", { name: "Edit" }).click();
   await page.getByLabel("Which task").selectOption({ label: "Back to school" });
   await page.getByRole("button", { name: "Duplicate" }).click();
   await expect(page.getByRole("status")).toContainText('Added a copy to "Back to school"');

@@ -3,6 +3,7 @@ import { CalendarDays, ListChecks, Plus, X } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
+import { TaskLink } from "../shell/ItemPopup";
 import { checklistProgress } from "../../core/checklist";
 import { api } from "../api";
 import { useChecklists, type Checklist } from "../checklists/model";
@@ -152,12 +153,13 @@ function TaskRow({ task }: { task: Task }) {
           tick.mutate({ task, done: e.target.checked }, { onSettled: () => setTicking(null) });
         }}
       />
-      <Link
+      <TaskLink
+        task={task}
         to={`/tasks/${task.id}`}
         className={`min-w-0 flex-1 break-words ${done ? "text-muted line-through" : ""}`}
       >
         {task.title}
-      </Link>
+      </TaskLink>
     </li>
   );
 }

@@ -1,7 +1,8 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
+import { EntryLink } from "../shell/ItemPopup";
 import { AUTO_RETURN_MS, boardDays } from "../../core/display";
 import { daySpan } from "../../core/entry-time";
 import { formatLocale } from "../../core/languages";
@@ -50,8 +51,9 @@ function TodayEntries({ today }: { today: string }) {
           .map((id) => persons.find((p) => p.id === id))
           .filter((p) => p !== undefined);
         return (
-          <Link
+          <EntryLink
             key={entry.key}
+            entry={entry}
             to={entryPath(entry)}
             data-testid="today-entry"
             data-past={past || undefined}
@@ -73,7 +75,7 @@ function TodayEntries({ today }: { today: string }) {
                 <PersonAvatar key={p.id} person={{ ...p, photoKey: null }} size={24} />
               ))}
             </span>
-          </Link>
+          </EntryLink>
         );
       })}
     </section>

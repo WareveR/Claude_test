@@ -1,6 +1,6 @@
 import { Lock, Repeat } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { EntryLink } from "../shell/ItemPopup";
 import { useDisplayMode } from "../display/mode";
 import { EntryTypeBadge } from "../entry-types/EntryTypeBadge";
 import type { EntryType } from "../entry-types/model";
@@ -42,7 +42,8 @@ export function EntryBlock({
     .map((id) => persons.find((p) => p.id === id))
     .filter((p): p is Person => Boolean(p));
   return (
-    <Link
+    <EntryLink
+      entry={entry}
       to={entryPath(entry)}
       data-testid="entry"
       data-drag-entry={movable && "key" in entry ? entry.key : undefined}
@@ -71,6 +72,6 @@ export function EntryBlock({
           ))}
         </span>
       )}
-    </Link>
+    </EntryLink>
   );
 }

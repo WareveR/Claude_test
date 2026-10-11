@@ -56,6 +56,9 @@ test("Search finds Entries and Tasks by any word, exact text and exclusions", as
   await expect(results).toHaveCount(1);
   await expect(results.first()).toContainText("Orthodontist cleaning");
 
+  // A result opens in a popup first.
   await results.first().click();
+  await expect(page.getByRole("dialog", { name: "Orthodontist cleaning" })).toBeVisible();
+  await page.getByRole("dialog").getByRole("link", { name: "Edit" }).click();
   await expect(page).toHaveURL(/\/entries\//);
 });

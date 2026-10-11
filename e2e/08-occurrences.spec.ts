@@ -8,6 +8,7 @@ test("edit one Occurrence, then delete this and the following", async ({ page })
   await page.goto("/week/2026-10-12");
   const tuesday = page.getByTestId("day-column-2026-10-13").getByTestId("entry");
   await tuesday.click();
+  await page.getByRole("dialog").getByRole("link", { name: "Edit" }).click();
   await expect(page).toHaveURL(/occurrence=2026-10-13/);
   await page.getByLabel("Time", { exact: true }).selectOption("17");
   await page.getByLabel("Time: minutes", { exact: true }).selectOption("00");
@@ -20,6 +21,7 @@ test("edit one Occurrence, then delete this and the following", async ({ page })
   await expect(thursday).toContainText("18:00");
 
   await thursday.click();
+  await page.getByRole("dialog").getByRole("link", { name: "Edit" }).click();
   await page.getByRole("button", { name: "Delete entry" }).click();
   await page.getByRole("button", { name: "This and the following" }).click();
   await expect(page).toHaveURL(/\/week\/2026-10-12$/);

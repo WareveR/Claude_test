@@ -6,7 +6,7 @@ import { useDisplayMode } from "../display/mode";
 import { BUTTON, BUTTON_PRIMARY } from "../ui/button";
 import { EntrySummary } from "./EntrySummary";
 
-/** An Entry shown over the page, with Edit (not on the wall) and Close; Esc closes too. */
+/** An Entry shown over the page, with Edit (not on the wall) and Back; Esc closes too. */
 export function EntryPopup({
   id,
   occurrence,
@@ -43,7 +43,7 @@ export function EntryPopup({
             </Link>
           )}
           <button type="button" className={BUTTON} onClick={onClose}>
-            {t("entries.close")}
+            {t("settings.back")}
           </button>
         </div>
       </div>
