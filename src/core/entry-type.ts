@@ -203,22 +203,48 @@ export const BUILT_IN_TYPES = [
   "booking",
   "activity",
   "event",
+  "beauty",
+  "meal",
+  "home",
+  "pet",
+  "work",
+  "school",
+  "payment",
   "general",
 ] as const;
 export type BuiltInType = (typeof BUILT_IN_TYPES)[number];
+
+/**
+ * One colour per icon group, the colours Entry Types choose from; each built-in type takes its
+ * group's. None of them is a Person's colour (persons/model.ts), so the two never get mixed up.
+ */
+export const TYPE_COLORS: Record<IconGroup, string> = {
+  people: "#e53935",
+  beauty: "#d81b60",
+  leisure: "#8e24aa",
+  work: "#3949ab",
+  health: "#1e88e5",
+  travel: "#00acc1",
+  money: "#00897b",
+  sport: "#43a047",
+  pets: "#9e9d24",
+  food: "#f57c00",
+  home: "#8d6e63",
+  general: "#607d8b",
+};
 
 /** Birthday and General keep the app's own behaviour working, so they can't be deleted. */
 export const UNDELETABLE_TYPES: BuiltInType[] = ["birthday", "general"];
 
 const DAY = 24 * 60;
 
-/** The seven built-in Entry Types and their defaults, from the v1 spec. */
+/** The built-in Entry Types and their defaults: the v1 spec's seven and one more per icon group. */
 export const BUILT_IN_DEFAULTS: Record<
   BuiltInType,
   { color: string; icon: Icon; defaults: EntryTypeDefaults }
 > = {
   birthday: {
-    color: "#d1495b",
+    color: TYPE_COLORS.people,
     icon: "cake",
     defaults: {
       allDay: true,
@@ -226,15 +252,19 @@ export const BUILT_IN_DEFAULTS: Record<
       reminders: [3 * DAY, 0],
     },
   },
-  holiday: { color: "#f4a261", icon: "plane", defaults: { allDay: true } },
+  holiday: { color: TYPE_COLORS.travel, icon: "plane", defaults: { allDay: true } },
   appointment: {
-    color: "#1e88e5",
+    color: TYPE_COLORS.health,
     icon: "stethoscope",
     defaults: { allDay: false, durationMinutes: 60, reminders: [DAY, 60] },
   },
-  booking: { color: "#8e44ad", icon: "ticket", defaults: { allDay: false, durationMinutes: 60 } },
+  booking: {
+    color: TYPE_COLORS.leisure,
+    icon: "ticket",
+    defaults: { allDay: false, durationMinutes: 60 },
+  },
   activity: {
-    color: "#43a047",
+    color: TYPE_COLORS.sport,
     icon: "bike",
     defaults: {
       allDay: false,
@@ -242,6 +272,41 @@ export const BUILT_IN_DEFAULTS: Record<
       repetition: { frequency: "weekly", interval: 1, end: { type: "never" } },
     },
   },
-  event: { color: "#c2185b", icon: "party", defaults: { allDay: false, durationMinutes: 120 } },
-  general: { color: "#607d8b", icon: "calendar", defaults: {} },
+  event: {
+    color: TYPE_COLORS.people,
+    icon: "party",
+    defaults: { allDay: false, durationMinutes: 120 },
+  },
+  beauty: {
+    color: TYPE_COLORS.beauty,
+    icon: "massage",
+    defaults: { allDay: false, durationMinutes: 60, reminders: [DAY] },
+  },
+  meal: {
+    color: TYPE_COLORS.food,
+    icon: "utensils",
+    defaults: { allDay: false, durationMinutes: 90 },
+  },
+  home: { color: TYPE_COLORS.home, icon: "home", defaults: { allDay: false, durationMinutes: 60 } },
+  pet: {
+    color: TYPE_COLORS.pets,
+    icon: "paw",
+    defaults: { allDay: false, durationMinutes: 30, reminders: [DAY] },
+  },
+  work: {
+    color: TYPE_COLORS.work,
+    icon: "briefcase",
+    defaults: { allDay: false, durationMinutes: 60 },
+  },
+  school: {
+    color: TYPE_COLORS.work,
+    icon: "school",
+    defaults: { allDay: false, durationMinutes: 60 },
+  },
+  payment: {
+    color: TYPE_COLORS.money,
+    icon: "card",
+    defaults: { allDay: true, importance: "high", reminders: [3 * DAY, 0] },
+  },
+  general: { color: TYPE_COLORS.general, icon: "calendar", defaults: {} },
 };

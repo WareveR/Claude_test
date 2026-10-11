@@ -226,6 +226,13 @@
       "booking": "Booking",
       "activity": "Activity",
       "event": "Event",
+      "beauty": "Beauty and wellbeing",
+      "meal": "Meal",
+      "home": "Home",
+      "pet": "Pets",
+      "work": "Work",
+      "school": "School",
+      "payment": "Payment",
       "general": "General"
     },
     "moveEntries": "Choose where each {{name}} Entry goes. Those you leave move to General.",

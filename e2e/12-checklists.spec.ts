@@ -182,8 +182,8 @@ test("a Checklist's items carry a note and hold items of their own, at any depth
   // A predefined list adds its items wherever new items go.
   await detail.getByRole("button", { name: "Add an item inside Food and drinks" }).click();
   await detail.getByLabel("Use a predefined list").selectOption({ label: "Back to school" });
-  await expect(detail.getByRole("status")).toContainText('Added 9 items from "Back to school"');
-  await expect(food.getByTestId("checklist-item-progress")).toHaveText("3 of 12");
+  await expect(detail.getByRole("status")).toContainText('Added 13 items from "Back to school"');
+  await expect(food.getByTestId("checklist-item-progress")).toHaveText("3 of 16");
   await expect(detail.getByRole("checkbox", { name: "Done: Food and drinks" })).not.toBeChecked();
 });
 
@@ -207,10 +207,10 @@ test("a task gets items later, from a predefined list, and keeps its deadline", 
 
   const detail = page.getByTestId("checklist-detail");
   await expect(detail.getByRole("heading", { name: "Get ready for school" })).toBeVisible();
-  await expect(detail).toContainText("0 of 9");
+  await expect(detail).toContainText("0 of 13");
   await page.goto("/tasks");
   await expect(page.getByTestId("task").filter({ hasText: "Get ready for school" })).toHaveCount(0);
   await expect(
     page.getByTestId("checklist").filter({ hasText: "Get ready for school" }),
-  ).toContainText("0 of 9");
+  ).toContainText("0 of 13");
 });
