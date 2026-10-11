@@ -99,6 +99,7 @@
     "year": "Ano",
     "tasks": "Tarefas",
     "display": "Mural",
+    "short": { "day": "D", "week": "S", "month": "M", "year": "A" },
     "today": "Hoje",
     "previous": "Anterior",
     "next": "Seguinte",
