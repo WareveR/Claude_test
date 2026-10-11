@@ -8,6 +8,7 @@ import { typeName, useEntryTypes } from "../entry-types/model";
 import { useSignedIn } from "../family";
 import { usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
+import { EntryPreparation } from "./EntryPreparation";
 import { occurrenceValues, useEntry } from "./model";
 
 function timeText(time: EntryTime, t: (key: string) => string): string {
@@ -17,7 +18,8 @@ function timeText(time: EntryTime, t: (key: string) => string): string {
 
 /**
  * An Entry to read: its type, title, when, Persons, place and notes; for a repeating Entry,
- * the Occurrence on `occurrence`. With `discreet`, a Private Entry shows only "Private" and when.
+ * the Occurrence on `occurrence`, and what it needs done beforehand. With `discreet` (the wall),
+ * a Private Entry shows only "Private" and when, and the preparation stays out.
  */
 export function EntrySummary({
   id,
@@ -96,6 +98,7 @@ export function EntrySummary({
           {shown.notes && <p className="whitespace-pre-wrap">{shown.notes}</p>}
         </>
       )}
+      {!discreet && <EntryPreparation entryId={id} />}
     </div>
   );
 }

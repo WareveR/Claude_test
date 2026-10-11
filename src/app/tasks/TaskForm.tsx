@@ -6,6 +6,7 @@ import { IMPORTANCES } from "../../core/entry-type";
 import { isPlainDate } from "../../core/plain-date";
 import { api } from "../api";
 import { AddToChecklistSection } from "../checklists/AddToChecklist";
+import { LinkedEntry } from "../entries/EntryPreparation";
 import { RepetitionFields } from "../entries/RepetitionFields";
 import { usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
@@ -39,6 +40,7 @@ function TaskForm({ task }: { task?: Task }) {
   const [search] = useSearchParams();
   const persons = usePersons();
   const date = search.get("date");
+  const entry = search.get("entry");
   const given = (useLocation().state as { values?: Partial<TaskDraft> } | null)?.values;
   const [draft, setDraft] = useState<TaskDraft>(
     () =>
@@ -52,6 +54,7 @@ function TaskForm({ task }: { task?: Task }) {
         importance: "normal",
         repetition: null,
         checklistId: null,
+        entryId: entry,
         ...given,
       },
   );
@@ -104,6 +107,9 @@ function TaskForm({ task }: { task?: Task }) {
             onChange={(e) => set({ title: e.target.value })}
           />
         </Field>
+        {draft.entryId && (
+          <LinkedEntry entryId={draft.entryId} onUnlink={() => set({ entryId: null })} />
+        )}
         <div className="flex gap-3">
           <Field label={t("tasks.dueDate")}>
             <TextInput

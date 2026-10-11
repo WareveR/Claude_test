@@ -23,6 +23,7 @@ import { Icon } from "../ui/Icon";
 import { occurrenceValues, saveEntry, useEntry, type Entry, type EntryDraft } from "./model";
 import { ScopeDialog, type Scope } from "./ScopeDialog";
 import { RepetitionFields } from "./RepetitionFields";
+import { EntryPreparation } from "./EntryPreparation";
 import { readyToEdit } from "../offline/fresh";
 import { BUTTON, BUTTON_DANGER } from "../ui/button";
 import { Chip, Switch } from "../ui/Toggle";
@@ -216,6 +217,9 @@ function EntryForm({
       <div className="flex items-center gap-3">
         <h1 className="text-xl font-semibold">{entry ? entry.title : t("entries.new")}</h1>
       </div>
+      {entry && (
+        <EntryPreparation entryId={entry.id} className="rounded-lg border border-line p-3" />
+      )}
       <form onSubmit={submit} className="flex flex-col gap-4">
         {synced && (
           <p className="rounded-md bg-surface p-3 text-sm">

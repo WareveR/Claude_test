@@ -99,7 +99,12 @@
     "year": "Ano",
     "tasks": "Tarefas",
     "display": "Mural",
-    "short": { "day": "D", "week": "S", "month": "M", "year": "A" },
+    "short": {
+      "day": "D",
+      "week": "S",
+      "month": "M",
+      "year": "A"
+    },
     "today": "Hoje",
     "previous": "Anterior",
     "next": "Seguinte",
@@ -845,5 +850,17 @@
       "imi": "Paga-se no Portal das Finanças."
     },
     "time": "Hora (opcional)"
+  },
+  "preparation": {
+    "title": "Preparação",
+    "none": "Nada ligado ainda: crie uma checklist ou tarefa para preparar isto.",
+    "newChecklist": "Nova checklist",
+    "newTask": "Nova tarefa",
+    "linkExisting": "Ligar uma existente",
+    "choose": "Escolha uma checklist ou tarefa",
+    "checklists": "Checklists",
+    "tasks": "Tarefas",
+    "for": "Para: {{title}}",
+    "unlink": "Desligar da entrada"
   }
 }

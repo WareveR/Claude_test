@@ -99,7 +99,12 @@
     "year": "Year",
     "tasks": "Tasks",
     "display": "Wall",
-    "short": { "day": "D", "week": "W", "month": "M", "year": "Y" },
+    "short": {
+      "day": "D",
+      "week": "W",
+      "month": "M",
+      "year": "Y"
+    },
     "today": "Today",
     "previous": "Previous",
     "next": "Next",
@@ -845,5 +850,17 @@
       "imi": "It is paid on the Portal das Finanças."
     },
     "time": "Time (optional)"
+  },
+  "preparation": {
+    "title": "Preparation",
+    "none": "Nothing linked yet: add a checklist or task to prepare for this.",
+    "newChecklist": "New checklist",
+    "newTask": "New task",
+    "linkExisting": "Link an existing one",
+    "choose": "Choose a checklist or task",
+    "checklists": "Checklists",
+    "tasks": "Tasks",
+    "for": "For: {{title}}",
+    "unlink": "Unlink from the entry"
   }
 }
