@@ -5,22 +5,35 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
+import { MAJOR_STARTS, RELEASE_HISTORY } from "./src/core/release-history";
 import { releaseNumber } from "./src/core/release-number";
 
 const git = (...args: string[]) => execFileSync("git", args, { encoding: "utf8" }).trim();
 
 /**
- * "v1.4.2 (abc1234)" for a deployed build: the release number from main's history, then the
- * commit. Needs the full history (the deploy job checks it out whole); elsewhere it's "dev".
+ * "v0.4.2 (abc1234)" for a deployed build: the version number from main's history
+ * (src/core/release-number.ts), then the commit. Needs the whole history (the deploy job checks
+ * it out whole); elsewhere it's "dev".
  */
 function appVersion(): string {
   const commit = process.env.GITHUB_SHA?.slice(0, 7);
   if (!commit) return "dev";
   try {
     const { version } = JSON.parse(readFileSync("package.json", "utf8")) as { version: string };
-    const base = git("log", "-1", "--format=%H", '-G"version":', "--", "package.json");
-    const titles = git("log", "--reverse", "--first-parent", "--format=%s", `${base}..HEAD`);
-    return `v${releaseNumber(version, titles ? titles.split("\n") : [])} (${commit})`;
+    const major = Number(version.split(".")[0]) || 0;
+    const start = MAJOR_STARTS[major];
+    const lines = git(
+      "log",
+      "--reverse",
+      "--first-parent",
+      "--format=%H %s",
+      ...(start ? [`${start}..HEAD`] : ["HEAD"]),
+    );
+    const commits = lines.split("\n").map((line) => {
+      const space = line.indexOf(" ");
+      return { id: line.slice(0, space), title: line.slice(space + 1) };
+    });
+    return `v${releaseNumber(major, commits, RELEASE_HISTORY)} (${commit})`;
   } catch {
     return commit;
   }
