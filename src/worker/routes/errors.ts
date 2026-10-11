@@ -35,7 +35,7 @@ function describe(row: ErrorRow) {
     row.code,
     row.at,
     row.deviceName ?? row.source,
-    `v${row.appVersion}`,
+    row.appVersion,
     row.action,
     row.message,
   ].join(" · ");

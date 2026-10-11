@@ -1,13 +1,35 @@
+import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { cloudflare } from "@cloudflare/vite-plugin";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
+import { releaseNumber } from "./src/core/release-number";
+
+const git = (...args: string[]) => execFileSync("git", args, { encoding: "utf8" }).trim();
+
+/**
+ * "v1.4.2 (abc1234)" for a deployed build: the release number from main's history, then the
+ * commit. Needs the full history (the deploy job checks it out whole); elsewhere it's "dev".
+ */
+function appVersion(): string {
+  const commit = process.env.GITHUB_SHA?.slice(0, 7);
+  if (!commit) return "dev";
+  try {
+    const { version } = JSON.parse(readFileSync("package.json", "utf8")) as { version: string };
+    const base = git("log", "-1", "--format=%H", '-G"version":', "--", "package.json");
+    const titles = git("log", "--reverse", "--first-parent", "--format=%s", `${base}..HEAD`);
+    return `v${releaseNumber(version, titles ? titles.split("\n") : [])} (${commit})`;
+  } catch {
+    return commit;
+  }
+}
 
 export default defineConfig({
   define: {
-    // Shown in error details and the Error Log; the commit being deployed.
-    __APP_VERSION__: JSON.stringify(process.env.GITHUB_SHA?.slice(0, 7) ?? "dev"),
+    // Shown in Settings, error details and the Error Log.
+    __APP_VERSION__: JSON.stringify(appVersion()),
   },
   plugins: [
     react(),
