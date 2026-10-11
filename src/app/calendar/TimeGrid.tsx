@@ -87,16 +87,19 @@ export function TimeGrid({
           <div
             key={day}
             data-drop-date={day}
-            className={`py-1.5 text-center text-sm font-bold first-letter:uppercase lg:text-base ${holidays.has(day) ? "bg-holiday text-holiday-ink" : isWeekend(day) ? "bg-weekend text-weekend-ink" : ""} ${day === today ? "text-accent" : ""}`}
+            className={`@container min-w-0 py-1.5 text-center text-sm font-bold lg:text-base ${holidays.has(day) ? "bg-holiday text-holiday-ink" : isWeekend(day) ? "bg-weekend text-weekend-ink" : ""} ${day === today ? "text-accent" : ""}`}
           >
-            <span className="max-lg:hidden">
-              {formatPlainDate(day, locale, { weekday: "short", day: "numeric" })}
-            </span>
-            {/* Narrow columns: three letters and the day's number, never a wrapped weekday. */}
-            <span className="whitespace-nowrap lg:hidden">
-              {formatPlainDate(day, locale, { weekday: "short" }).replace(".", "").slice(0, 3)}{" "}
-              {formatPlainDate(day, locale, { day: "numeric" })}
-            </span>
+            {/* One line: the weekday and the day; three letters when the column is narrow. */}
+            <div className="truncate whitespace-nowrap first-letter:uppercase">
+              <span className="@max-[7.5rem]:hidden">
+                {formatPlainDate(day, locale, { weekday: "short" }).replace(/[.,]/g, "")}{" "}
+                {formatPlainDate(day, locale, { day: "numeric" })}
+              </span>
+              <span className="hidden @max-[7.5rem]:inline">
+                {formatPlainDate(day, locale, { weekday: "short" }).replace(".", "").slice(0, 3)}{" "}
+                {formatPlainDate(day, locale, { day: "numeric" })}
+              </span>
+            </div>
             {dayExtra?.(day)}
             {notes.get(day)?.map((note) => (
               <div
@@ -147,7 +150,8 @@ export function TimeGrid({
             type={typeOf(bar.entry)}
             persons={persons}
             movable={movable(bar.entry)}
-            className={drag.dragged?.key === bar.entry.key ? "opacity-50" : ""}
+            // Narrow day columns: the title stays on one line, cut short, never a letter a line.
+            className={`max-lg:[&>span]:truncate ${drag.dragged?.key === bar.entry.key ? "opacity-50" : ""}`}
             style={{
               gridColumn: `${bar.column + 2} / span ${bar.span}`,
               gridRow: bar.row + 1 + holidayRows,

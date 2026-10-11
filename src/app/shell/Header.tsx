@@ -1,4 +1,4 @@
-import { Settings, X } from "lucide-react";
+import { Lightbulb, Settings, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
@@ -13,7 +13,7 @@ import { VoiceEntry } from "../voice/VoiceEntry";
 import { paths } from "../paths";
 import { useNow } from "./useNow";
 
-/** The last page outside Settings, where the Settings button returns to. */
+/** The last page outside Settings and Suggestions, where their buttons return to. */
 let outsideSettings: string = paths.today();
 
 /** The fixed header on every view: the time, weekday, day and month in the Family Time Zone. */
@@ -30,9 +30,10 @@ export function Header({
   const navigate = useNavigate();
   const location = useLocation();
   const inSettings = location.pathname.startsWith("/settings");
+  const inSuggestions = location.pathname === paths.suggestions();
   useEffect(() => {
-    if (!inSettings) outsideSettings = location.pathname + location.search;
-  }, [inSettings, location.pathname, location.search]);
+    if (!inSettings && !inSuggestions) outsideSettings = location.pathname + location.search;
+  }, [inSettings, inSuggestions, location.pathname, location.search]);
   const today = useForecastDays().get(todayIn(family.timeZone, now));
   const locale = formatLocale(language);
   const time = new Intl.DateTimeFormat(locale, {
@@ -47,17 +48,32 @@ export function Header({
     day: "numeric",
     month: "long",
   }).format(now);
+  // On a phone: three letters and the day's number, so the header always stays one line.
+  const shortDate = [
+    new Intl.DateTimeFormat(locale, { timeZone: family.timeZone, weekday: "short" })
+      .format(now)
+      .replace(".", "")
+      .slice(0, 3),
+    new Intl.DateTimeFormat(locale, { timeZone: family.timeZone, day: "numeric" }).format(now),
+  ].join(" ");
 
   return (
-    <header className="sticky top-0 z-10 flex items-center gap-3 bg-header px-4 py-2 text-header-ink shadow-sm short:py-1">
-      <time data-testid="header-time" className="text-2xl font-semibold tabular-nums short:text-xl">
+    <header className="sticky top-0 z-10 flex items-center gap-2 bg-header px-4 py-2 text-header-ink shadow-sm sm:gap-3 short:py-1">
+      <time
+        data-testid="header-time"
+        className="shrink-0 text-2xl font-semibold tabular-nums short:text-xl"
+      >
         {time}
       </time>
-      <span data-testid="header-date" className="first-letter:uppercase">
-        {date}
+      <span data-testid="header-date" className="min-w-0 first-letter:uppercase">
+        <span className="max-sm:hidden">{date}</span>
+        <span className="whitespace-nowrap sm:hidden">{shortDate}</span>
       </span>
       {today && (
-        <ForecastButton testId="header-weather" className="rounded-md px-1 py-1 text-sm">
+        <ForecastButton
+          testId="header-weather"
+          className="shrink-0 rounded-md px-1 py-1 text-sm whitespace-nowrap"
+        >
           <WeatherBadge day={today} />
         </ForecastButton>
       )}
@@ -76,14 +92,24 @@ export function Header({
           <span className="max-sm:sr-only">{t("display.leave")}</span>
         </button>
       ) : (
-        // The same button opens Settings and, from inside them, closes them.
-        <Link
-          to={inSettings ? outsideSettings : paths.settings()}
-          aria-label={inSettings ? t("settings.close") : t("settings.title")}
-          className={`${showVoice ? "" : "ml-auto "}rounded-md p-2 hover:bg-header-ink/15 ${inSettings ? "bg-header-ink/20" : ""}`}
-        >
-          <Settings aria-hidden size={20} strokeWidth={1.75} />
-        </Link>
+        <>
+          {/* Like Settings: the same button opens Suggestions and, from inside, closes them. */}
+          <Link
+            to={inSuggestions ? outsideSettings : paths.suggestions()}
+            aria-label={inSuggestions ? t("suggestions.close") : t("suggestions.title")}
+            className={`shrink-0 rounded-md p-1.5 hover:bg-header-ink/15 sm:p-2 ${inSuggestions ? "bg-header-ink/20" : ""}`}
+          >
+            <Lightbulb aria-hidden size={20} strokeWidth={1.75} />
+          </Link>
+          {/* The same button opens Settings and, from inside them, closes them. */}
+          <Link
+            to={inSettings ? outsideSettings : paths.settings()}
+            aria-label={inSettings ? t("settings.close") : t("settings.title")}
+            className={`${showVoice ? "" : "ml-auto "}shrink-0 rounded-md p-1.5 hover:bg-header-ink/15 sm:p-2 ${inSettings ? "bg-header-ink/20" : ""}`}
+          >
+            <Settings aria-hidden size={20} strokeWidth={1.75} />
+          </Link>
+        </>
       )}
     </header>
   );

@@ -20,6 +20,7 @@ import { OfflineBanner } from "./offline/OfflineBanner";
 import { ChecklistDetailPage } from "./checklists/ChecklistDetail";
 import { ChecklistPage } from "./checklists/ChecklistForm";
 import { TemplatePage } from "./checklists/TemplateForm";
+import { SuggestionsPage } from "./suggestions/SuggestionsPage";
 import { TaskPage } from "./tasks/TaskForm";
 import { TasksView } from "./tasks/TasksView";
 import { DayView, MonthView, TodayRedirect, WeekView, YearView } from "./views/Views";
@@ -59,6 +60,7 @@ const router = createBrowserRouter([
       { path: "/year/:year", element: <YearView /> },
       { path: "/tasks", element: <TasksView /> },
       { path: "/tasks/:id", element: <TaskPage /> },
+      { path: paths.suggestions(), element: <SuggestionsPage /> },
       { path: "/checklists/new", element: <ChecklistPage /> },
       { path: "/checklists/:id", element: <ChecklistDetailPage /> },
       { path: "/checklists/:id/edit", element: <ChecklistPage /> },

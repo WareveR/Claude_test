@@ -167,7 +167,9 @@ function Week({ monday }: { monday: PlainDate }) {
                         faded={weather.faded}
                         size={16}
                         rain
-                        className="flex-wrap justify-center text-xs"
+                        iconOnPhone
+                        stacked
+                        className="text-xs"
                       />
                     </ForecastButton>
                   </div>

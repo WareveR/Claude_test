@@ -1,16 +1,20 @@
+import { readbackSentences } from "../../core/readback";
+
 /** Thin, failure-proof wrappers over the browser's speech APIs; every call may be absent or throw. */
 
 type Alternative = { transcript: string };
 type RecognitionEvent = { results: ArrayLike<ArrayLike<Alternative>> };
+type RecognitionError = { error?: string };
 type Recognition = {
   lang: string;
   interimResults: boolean;
   maxAlternatives: number;
   continuous: boolean;
   onresult: ((e: RecognitionEvent) => void) | null;
-  onerror: (() => void) | null;
+  onerror: ((e: RecognitionError) => void) | null;
   onend: (() => void) | null;
   start: () => void;
+  stop: () => void;
   abort: () => void;
 };
 type RecognitionClass = new () => Recognition;
@@ -56,49 +60,97 @@ export function stopListening() {
   current = null;
 }
 
-/** Listens once; resolves to the transcript, or null on silence, error or no support. */
-export function listenOnce(lang: string): Promise<string | null> {
+/** Ends the current listening and keeps what was heard so far. */
+export function finishListening() {
+  try {
+    current?.stop();
+  } catch {
+    // Nothing to stop.
+  }
+}
+
+/** Why listening heard nothing: "denied" when the microphone is blocked, else the browser's code. */
+export type Heard = { text: string | null; error: "denied" | string | null };
+
+/**
+ * Listens once; resolves when the browser stops listening, with what it heard (or null) and why
+ * not. Interim results are on because iOS Safari often ends without ever marking a result final;
+ * the last words heard are kept and passed to `onWords` as they come.
+ */
+export function listen(lang: string, onWords?: (words: string) => void): Promise<Heard> {
   return new Promise((resolve) => {
     const Ctor = recognitionClass();
-    if (!Ctor) return resolve(null);
+    if (!Ctor) return resolve({ text: null, error: "unsupported" });
     try {
       stopListening();
       const rec = new Ctor();
       current = rec;
       let heard: string | null = null;
+      let error: string | null = null;
       rec.lang = lang;
-      rec.interimResults = false;
+      rec.interimResults = true;
       rec.continuous = false;
       rec.maxAlternatives = 1;
       rec.onresult = (e) => {
-        heard = e.results[0]?.[0]?.transcript?.trim() || null;
+        const words = Array.from(e.results, (r) => r[0]?.transcript ?? "")
+          .join("")
+          .trim();
+        if (!words) return;
+        heard = words;
+        onWords?.(words);
       };
-      rec.onerror = () => resolve(heard);
-      rec.onend = () => resolve(heard);
+      rec.onerror = (e) => {
+        const code = e?.error ?? "error";
+        error = code === "not-allowed" ? "denied" : code;
+      };
+      rec.onend = () => {
+        if (current === rec) current = null;
+        resolve({ text: heard, error: heard ? null : error });
+      };
       rec.start();
     } catch {
-      resolve(null);
+      resolve({ text: null, error: "error" });
     }
   });
 }
 
-/** Speaks the text; resolves when done (or at once if speech is unavailable or stalls). */
-export function speak(text: string, lang: string): Promise<void> {
+/** Listens once; resolves to the transcript, or null on silence, error or no support. */
+export function listenOnce(lang: string): Promise<string | null> {
+  return listen(lang).then((r) => r.text);
+}
+
+/** Bumped by every new readback and by stopSpeaking, so an older one stops between sentences. */
+let speaking = 0;
+
+/** The silence between two sentences, so a summary and its question never run together. */
+const PAUSE_MS = 400;
+
+/**
+ * Speaks each sentence in turn with a short pause between them; resolves when done (or at once if
+ * speech is unavailable or stalls).
+ */
+export function speak(parts: string | string[], lang: string): Promise<void> {
+  const sentences = readbackSentences(parts);
   return new Promise((resolve) => {
     try {
       if (typeof speechSynthesis === "undefined" || typeof SpeechSynthesisUtterance === "undefined")
         return resolve();
       speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = lang;
-      const timer = setTimeout(resolve, 20000);
-      const done = () => {
+      const id = ++speaking;
+      const timer = setTimeout(resolve, 20000 + sentences.length * PAUSE_MS);
+      const finish = () => {
         clearTimeout(timer);
         resolve();
       };
-      u.onend = done;
-      u.onerror = done;
-      speechSynthesis.speak(u);
+      const next = (i: number) => {
+        if (id !== speaking || i >= sentences.length) return finish();
+        const u = new SpeechSynthesisUtterance(sentences[i]);
+        u.lang = lang;
+        u.onend = () => setTimeout(() => next(i + 1), i + 1 < sentences.length ? PAUSE_MS : 0);
+        u.onerror = finish;
+        speechSynthesis.speak(u);
+      };
+      next(0);
     } catch {
       resolve();
     }
@@ -106,6 +158,7 @@ export function speak(text: string, lang: string): Promise<void> {
 }
 
 export function stopSpeaking() {
+  speaking++;
   try {
     if (typeof speechSynthesis !== "undefined") speechSynthesis.cancel();
   } catch {
@@ -125,6 +178,13 @@ export function isYes(answer: string | null): boolean {
   const s = plain(answer);
   if (/\b(no|nao|not|nope)\b/.test(s)) return false;
   return /\b(yes|sim|guarda|guardar|save)\b/.test(s);
+}
+
+/** Reads a spoken answer to "Save?": true for a clear no or a wish to edit. */
+export function wantsEdit(answer: string | null): boolean {
+  if (!answer) return false;
+  const s = plain(answer);
+  return /\b(no|nao|nope|edit|editar|edita|change|mudar|muda|alterar|altera)\b/.test(s);
 }
 
 const NUMBERS: [number, RegExp][] = [

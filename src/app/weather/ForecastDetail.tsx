@@ -133,6 +133,9 @@ export function ForecastDetail({
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(data.fetchedAt));
+  // A day's card: three letters of the weekday and the day, "Seg 12".
+  const cardDate = (date: string) =>
+    `${formatPlainDate(date, locale, { weekday: "short" }).replace(".", "").slice(0, 3)} ${formatPlainDate(date, locale, { day: "numeric" })}`;
   const shortDate = (date: string) =>
     formatPlainDate(date, locale, { weekday: "short", day: "numeric", month: "short" });
 
@@ -306,30 +309,27 @@ export function ForecastDetail({
 
           {days.length > 0 && (
             <Section title={t("weather.detail.days")}>
-              {/* Two columns read top to bottom: today down the first, the later days down the second. */}
-              <ol
-                className="grid gap-x-6 sm:grid-flow-col sm:grid-cols-2"
-                style={{ gridTemplateRows: `repeat(${Math.ceil(days.length / 2)}, auto)` }}
-              >
+              {/* One sliding row, like the hours: today first, then the next days to the right. */}
+              <ol className="relative -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
                 {days.map((d) => (
                   <li
                     key={d.date}
                     data-testid="forecast-day"
-                    className={`grid grid-cols-[minmax(5.5rem,1fr)_auto_auto_4.5rem] items-center gap-3 border-b border-line py-1.5 text-sm tabular-nums ${d.faded ? "opacity-60" : ""}`}
+                    className={`flex min-w-20 shrink-0 flex-col items-center gap-1 rounded-xl border border-line bg-surface px-2 py-2 text-xs tabular-nums ${d.faded ? "opacity-60" : ""}`}
                   >
-                    <span className="truncate">
-                      {d.date === placeToday ? t("weather.detail.today") : shortDate(d.date)}
+                    <span className="font-semibold whitespace-nowrap first-letter:uppercase">
+                      {d.date === placeToday ? t("weather.detail.today") : cardDate(d.date)}
                     </span>
-                    <WeatherIcon code={d.code} size={20} />
-                    <span className="flex flex-col text-xs text-muted">
-                      {d.rain !== undefined && <RainChance percent={d.rain} size={11} />}
-                      {d.wind !== undefined && (
-                        <WindReading speed={d.wind} from={d.windDir} size={11} />
-                      )}
-                    </span>
-                    <span className="text-right">
+                    <WeatherIcon code={d.code} size={22} />
+                    <span className="text-sm whitespace-nowrap">
                       <strong>{d.max}°</strong> <span className="text-muted">{d.min}°</span>
                     </span>
+                    {d.rain !== undefined && <RainChance percent={d.rain} size={11} />}
+                    {d.wind !== undefined && (
+                      <span className="text-muted">
+                        <WindReading speed={d.wind} from={d.windDir} size={11} />
+                      </span>
+                    )}
                   </li>
                 ))}
               </ol>
