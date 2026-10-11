@@ -10,6 +10,7 @@ import { EntryTypesSection } from "../entry-types/EntryTypesSection";
 import { TemplatesSection } from "../checklists/TemplatesSection";
 import { HolidaysSection } from "./HolidaysSection";
 import { VoiceSection } from "./VoiceSection";
+import { HelpSection } from "./HelpSection";
 import { AppVersionSection } from "./AppVersionSection";
 import { WasteSection } from "./WasteSection";
 import { WeatherSection } from "./WeatherSection";
@@ -116,6 +117,7 @@ function AreaContent({ area }: { area: Area }) {
       return (
         <>
           <DeviceLooks />
+          <HelpSection />
           <VoiceSection />
           <AppVersionSection />
         </>

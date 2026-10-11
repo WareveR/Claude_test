@@ -209,7 +209,9 @@ function TaskForm({ task }: { task?: Task }) {
         {draft.repetition && <p className="-mt-2 text-xs text-muted">{t("tasks.repeatHint")}</p>}
 
         <fieldset className="flex flex-col gap-1 text-sm">
-          <legend className="mb-1 font-medium">{t("entries.persons")}</legend>
+          <legend className="mb-1 font-medium" data-help="persons" data-help-field="">
+            {t("entries.persons")}
+          </legend>
           <div className="flex flex-wrap gap-3">
             {persons.data
               ?.filter((p) => !p.archived || draft.personIds.includes(p.id))
@@ -235,7 +237,7 @@ function TaskForm({ task }: { task?: Task }) {
 
         {!withItems && (
           <>
-            <Field label={t("entries.importance")}>
+            <Field label={t("entries.importance")} help="taskImportance">
               <select
                 className={INPUT}
                 value={draft.importance}

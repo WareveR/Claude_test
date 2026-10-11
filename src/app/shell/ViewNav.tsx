@@ -58,6 +58,7 @@ export function ViewNav({
             // Where space is short (a phone, or one on its side) the names shrink to a letter or an
             // icon; the full name stays the link's name.
             aria-label={t(`views.${view}`)}
+            data-help={`view.${view}`}
             className={({ isActive }) =>
               `flex items-center px-3 py-1 text-sm max-md:px-2.5 short:px-2.5 ${isActive ? "bg-accent text-accent-ink" : ""}`
             }
@@ -81,13 +82,18 @@ export function ViewNav({
       </div>
       {previous && next && (
         <div className="flex items-center gap-1">
-          <Link to={previous} aria-label={t("views.previous")} className="rounded-md p-1">
+          <Link
+            to={previous}
+            aria-label={t("views.previous")}
+            data-help="previous"
+            className="rounded-md p-1"
+          >
             <ChevronLeft aria-hidden size={20} strokeWidth={1.75} />
           </Link>
-          <Link to={todayPath} className="rounded-md px-2 py-1 text-sm">
+          <Link to={todayPath} data-help="today" className="rounded-md px-2 py-1 text-sm">
             {t("views.today")}
           </Link>
-          <Link to={next} aria-label={t("views.next")} className="rounded-md p-1">
+          <Link to={next} aria-label={t("views.next")} data-help="next" className="rounded-md p-1">
             <ChevronRight aria-hidden size={20} strokeWidth={1.75} />
           </Link>
         </div>
@@ -102,6 +108,7 @@ export function ViewNav({
         <Link
           to={paths.search()}
           aria-label={t("search.title")}
+          data-help="search"
           className="rounded-md p-1.5 hover:bg-line/60"
         >
           <Search aria-hidden size={20} strokeWidth={1.75} />
@@ -112,6 +119,7 @@ export function ViewNav({
         <Link
           to={newPath ?? `/entries/new?date=${date}`}
           aria-label={t("entries.new")}
+          data-help="newEntry"
           className="rounded-full bg-accent p-2 text-accent-ink short:p-1.5"
         >
           <Plus aria-hidden size={20} strokeWidth={2} />

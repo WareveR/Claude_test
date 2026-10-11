@@ -78,7 +78,7 @@ export function SidePanelLayout({
             type="button"
             aria-expanded="false"
             aria-controls="side-panel"
-            title={t("sidePanel.show")}
+            data-help="sidePanel"
             className={BUTTON}
             onClick={toggle}
           >
@@ -99,6 +99,7 @@ export function SidePanelLayout({
             type="button"
             aria-expanded="true"
             aria-controls="side-panel"
+            data-help="sidePanelHide"
             className={BUTTON}
             onClick={toggle}
           >

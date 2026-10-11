@@ -26,6 +26,7 @@ export function FilterButton() {
       <summary
         className={`flex cursor-pointer list-none items-center gap-1 rounded-md px-2 py-1 text-sm ${isFiltering(filter) ? "bg-surface font-medium" : ""}`}
         aria-label={t("filter.title")}
+        data-help="filter"
       >
         <Filter aria-hidden size={18} strokeWidth={1.75} />
         <span className="flex -space-x-1">
