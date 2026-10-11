@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, BookmarkPlus, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, BookmarkPlus, ChevronDown, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useId, useRef, useState, type FormEvent, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
@@ -49,6 +49,8 @@ function ChecklistDetail({ checklist, items: all }: { checklist: Checklist; item
   const sections = sectionsOf(items);
   // The section new items go to: the last one used, or the one whose Add button was pressed.
   const [addSection, setAddSection] = useState("");
+  // Sections open and close like an accordion; a finished one starts closed.
+  const [opened, setOpened] = useState<Record<string, boolean>>({});
   const addName = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   // Back where the Checklist was opened from, or to the Tasks view when opened directly.
@@ -97,26 +99,42 @@ function ChecklistDetail({ checklist, items: all }: { checklist: Checklist; item
           );
           if (!section) return <div key="">{list}</div>;
           const sectionProgress = checklistProgress(own);
+          const open = opened[section] ?? sectionProgress.done < sectionProgress.total;
           return (
             <section key={section} className="flex flex-col" data-testid="checklist-section">
               <div className="flex items-center gap-2 border-b border-line pb-1">
-                <h2 className="min-w-0 flex-1 font-semibold break-words">{section}</h2>
-                <span className="text-sm text-muted">
-                  {t("checklists.progress", sectionProgress)}
-                </span>
+                <h2 className="min-w-0 flex-1 font-semibold">
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-2 text-left"
+                    aria-expanded={open}
+                    onClick={() => setOpened((o) => ({ ...o, [section]: !open }))}
+                  >
+                    <ChevronDown
+                      aria-hidden
+                      size={18}
+                      className={`shrink-0 transition-transform ${open ? "" : "-rotate-90"}`}
+                    />
+                    <span className="min-w-0 flex-1 break-words">{section}</span>
+                    <span className="text-sm font-normal text-muted">
+                      {t("checklists.progress", sectionProgress)}
+                    </span>
+                  </button>
+                </h2>
                 <button
                   type="button"
                   className={BUTTON}
                   aria-label={t("checklists.addToSection", { section })}
                   onClick={() => {
                     setAddSection(section);
+                    setOpened((o) => ({ ...o, [section]: true }));
                     addName.current?.focus();
                   }}
                 >
                   <Plus aria-hidden size={16} />
                 </button>
               </div>
-              {list}
+              {open && list}
             </section>
           );
         })

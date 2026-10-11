@@ -151,4 +151,18 @@ test("a Checklist's items can carry a note and be grouped under sections", async
   await expect(sections).toHaveCount(1);
   await expect(food.getByTestId("checklist-item")).toHaveCount(3);
   await page.screenshot({ path: "test-results/checklist-sections.png", fullPage: true });
+
+  // A section opens and closes like an accordion, its progress in the heading.
+  const heading = food.locator("h2").getByRole("button");
+  await expect(heading).toHaveAttribute("aria-expanded", "true");
+  await heading.click();
+  await expect(food.getByTestId("checklist-item")).toHaveCount(0);
+  await expect(heading).toContainText("1 of 3");
+  await heading.click();
+  await food.getByRole("checkbox", { name: "Done: Cheese puffs" }).check();
+  await food.getByRole("checkbox", { name: "Done: Pineapple" }).check();
+  await expect(heading).toContainText("3 of 3");
+  // A finished section starts closed.
+  await page.reload();
+  await expect(food.locator("h2").getByRole("button")).toHaveAttribute("aria-expanded", "false");
 });
