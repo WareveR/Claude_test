@@ -36,7 +36,8 @@ export function FilterButton() {
         </span>
       </summary>
       <div
-        className="absolute right-0 z-20 mt-1 flex w-64 flex-col gap-2 rounded-md border border-line bg-bg p-3 text-sm shadow-lg"
+        // Never taller than the screen below the bars: on a phone on its side it scrolls inside.
+        className="absolute right-0 z-20 mt-1 flex max-h-[calc(100dvh-7rem)] w-64 flex-col gap-2 overflow-y-auto overscroll-contain rounded-md border border-line bg-bg p-3 text-sm shadow-lg"
         role="group"
         aria-label={t("filter.title")}
       >
