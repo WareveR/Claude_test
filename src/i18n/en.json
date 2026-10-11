@@ -112,10 +112,12 @@
     "agendaEmpty": "Nothing in these days.",
     "open": "Open",
     "openDay": "Open the day",
-    "hideDetails": "Hide weather and tasks",
-    "showDetails": "Show weather and tasks",
     "hideWeather": "Hide weather",
-    "showWeather": "Show weather"
+    "showWeather": "Show weather",
+    "showTasks_other": "Show the {{count}} hidden tasks",
+    "showTasks_one": "Show the hidden task",
+    "showTasks_zero": "Show tasks",
+    "hideTasks": "Hide tasks"
   },
   "settings": {
     "title": "Settings",

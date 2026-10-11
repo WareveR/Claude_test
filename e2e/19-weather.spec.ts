@@ -39,13 +39,13 @@ test("the first saved place is selected and its weather shows in every view", as
   await page.getByRole("link", { name: "Week", exact: true }).click();
   // The week shows each day's chance of rain too.
   await expect(page.locator('[data-testid^="week-weather-"]').nth(1)).toContainText("%");
-  // The corner button hides the weather (and Tasks) for more hours, remembered on this device.
-  await page.getByRole("button", { name: "Hide weather and tasks" }).click();
+  // The corner button hides the weather for more hours, remembered on this device.
+  await page.getByRole("button", { name: "Hide weather" }).click();
   await expect(page.locator('[data-testid^="week-weather-"]')).toHaveCount(0);
   await page.reload();
-  await expect(page.getByRole("button", { name: "Show weather and tasks" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Show weather" })).toBeVisible();
   await expect(page.locator('[data-testid^="week-weather-"]')).toHaveCount(0);
-  await page.getByRole("button", { name: "Show weather and tasks" }).click();
+  await page.getByRole("button", { name: "Show weather" }).click();
   await expect(page.locator('[data-testid^="week-weather-"]').nth(1)).toContainText("%");
 
   // A past day keeps the last weather read for it, and its hours.
