@@ -56,10 +56,10 @@ test("Coming up is beside every view and hiding the panel is remembered", async 
 
   await page.getByRole("button", { name: "Hide panel" }).click();
   await expect(page.getByTestId("side-panel")).toBeHidden();
-  await expect(page.getByRole("button", { name: "Show panel" })).toHaveAttribute(
-    "aria-expanded",
-    "false",
-  );
+  // The button lives in the header, not on a row of its own.
+  await expect(
+    page.getByRole("banner").getByRole("button", { name: "Show panel" }),
+  ).toHaveAttribute("aria-expanded", "false");
   await page.reload();
   await expect(page.getByTestId("side-panel")).toBeHidden();
   await page.getByRole("link", { name: "Week", exact: true }).click();
