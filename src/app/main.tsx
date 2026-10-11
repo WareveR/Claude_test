@@ -10,6 +10,7 @@ import i18n from "./i18n";
 import { persistOptions, wipeOfflineCopy } from "./offline/persist";
 import { registerServiceWorker } from "./offline/service-worker";
 import { applyTheme } from "./theme";
+import { applyHelpLevel } from "./help/level";
 import "./index.css";
 import { BUTTON } from "./ui/button";
 
@@ -70,6 +71,7 @@ class CrashBoundary extends Component<{ children: ReactNode }, { crashed: boolea
 }
 
 applyTheme();
+applyHelpLevel();
 watchForErrors();
 registerServiceWorker();
 

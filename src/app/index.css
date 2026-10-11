@@ -148,3 +148,15 @@ html.display-mode {
   -webkit-user-select: none;
   user-select: none;
 }
+
+/* A long press on a button with help shows its tip, not the phone's link menu. */
+html:not([data-help-level="off"]) [data-help] {
+  -webkit-touch-callout: none;
+}
+
+/* At the high help level, field titles that explain themselves carry an ⓘ. */
+html[data-help-level="high"] [data-help-field]::after {
+  content: " ⓘ" / "";
+  color: var(--muted);
+  font-weight: normal;
+}

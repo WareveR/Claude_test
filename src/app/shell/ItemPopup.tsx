@@ -199,11 +199,11 @@ function TaskPopup({ id, onClose }: { id: string; onClose: () => void }) {
         )}
         <div className="flex justify-end gap-2">
           {!wall && (
-            <Link to={`/tasks/${id}`} className={BUTTON_PRIMARY}>
+            <Link to={`/tasks/${id}`} className={BUTTON_PRIMARY} data-help="edit">
               {t("entries.edit")}
             </Link>
           )}
-          <button type="button" className={BUTTON} onClick={onClose}>
+          <button type="button" className={BUTTON} data-help="back" onClick={onClose}>
             {t("settings.back")}
           </button>
         </div>

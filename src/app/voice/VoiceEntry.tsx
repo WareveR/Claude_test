@@ -309,6 +309,7 @@ export function VoiceEntry() {
       <button
         type="button"
         aria-label={t("voice.open")}
+        data-help="voice"
         className="ml-auto shrink-0 rounded-md p-1.5 hover:bg-header-ink/15 sm:p-2"
         onClick={() => setOpen(true)}
       >

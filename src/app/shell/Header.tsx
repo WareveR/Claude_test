@@ -72,6 +72,7 @@ export function Header({
       {today && (
         <ForecastButton
           testId="header-weather"
+          help="weather"
           className="shrink-0 rounded-md px-1 py-1 text-sm whitespace-nowrap"
         >
           <WeatherBadge day={today} />
@@ -81,6 +82,7 @@ export function Header({
       {wall ? (
         <button
           type="button"
+          data-help="leaveWall"
           onClick={() => {
             setDisplayMode(false);
             navigate(paths.today());
@@ -97,6 +99,7 @@ export function Header({
           <Link
             to={inSuggestions ? outsideSettings : paths.suggestions()}
             aria-label={inSuggestions ? t("suggestions.close") : t("suggestions.title")}
+            data-help={inSuggestions ? "close" : "suggestions"}
             className={`shrink-0 rounded-md p-1.5 hover:bg-header-ink/15 sm:p-2 ${inSuggestions ? "bg-header-ink/20" : ""}`}
           >
             <Lightbulb aria-hidden size={20} strokeWidth={1.75} />
@@ -105,6 +108,7 @@ export function Header({
           <Link
             to={inSettings ? outsideSettings : paths.settings()}
             aria-label={inSettings ? t("settings.close") : t("settings.title")}
+            data-help={inSettings ? "close" : "settings"}
             className={`${showVoice ? "" : "ml-auto "}shrink-0 rounded-md p-1.5 hover:bg-header-ink/15 sm:p-2 ${inSettings ? "bg-header-ink/20" : ""}`}
           >
             <Settings aria-hidden size={20} strokeWidth={1.75} />

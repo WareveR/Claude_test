@@ -38,11 +38,15 @@ export function EntryPopup({
         <EntrySummary id={id} occurrence={occurrence} discreet={wall} titleId="entry-popup-title" />
         <div className="flex justify-end gap-2">
           {!wall && (
-            <Link to={`/entries/${id}?occurrence=${occurrence}`} className={BUTTON_PRIMARY}>
+            <Link
+              to={`/entries/${id}?occurrence=${occurrence}`}
+              className={BUTTON_PRIMARY}
+              data-help="edit"
+            >
               {t("entries.edit")}
             </Link>
           )}
-          <button type="button" className={BUTTON} onClick={onClose}>
+          <button type="button" className={BUTTON} data-help="back" onClick={onClose}>
             {t("settings.back")}
           </button>
         </div>
