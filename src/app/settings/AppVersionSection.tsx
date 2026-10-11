@@ -1,7 +1,12 @@
-import { RefreshCw } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ChevronDown, RefreshCw } from "lucide-react";
 import { useState, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
+import type { Release } from "../../core/release-number";
 import { APP_VERSION } from "../../core/version";
+import { formatLocale } from "../../core/languages";
+import { formatPlainDate } from "../../core/plain-date";
+import { useSignedIn } from "../family";
 import { updateNow } from "../offline/service-worker";
 import { BUTTON } from "../ui/button";
 
@@ -21,7 +26,96 @@ function onResize(listener: () => void) {
   return () => window.removeEventListener("resize", listener);
 }
 
-/** Settings › App version: which version this device runs, and a button to update it now. */
+/**
+ * Every version and what it brought, newest first, in a box about ten rows tall that scrolls; read
+ * from the build only once opened.
+ */
+function VersionHistory() {
+  const { t, i18n } = useTranslation();
+  const { language } = useSignedIn();
+  const locale = formatLocale(language);
+  const [open, setOpen] = useState(false);
+  const releases = useQuery({
+    queryKey: ["releases"],
+    queryFn: async () => {
+      const res = await fetch("/releases.json", { cache: "no-cache" });
+      if (!res.ok) throw new Error(String(res.status));
+      return (await res.json()) as Release[];
+    },
+    enabled: open,
+    staleTime: Infinity,
+  });
+  const portuguese = i18n.language.startsWith("pt");
+  return (
+    <details
+      className="group rounded-md border border-line"
+      data-testid="version-history"
+      onToggle={(e) => setOpen(e.currentTarget.open)}
+    >
+      <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2 text-sm font-medium">
+        <ChevronDown
+          aria-hidden
+          size={16}
+          className="-rotate-90 transition-transform group-open:rotate-0"
+        />
+        {t("settings.app.history")}
+      </summary>
+      {releases.isError && (
+        <p className="px-3 pb-2 text-sm text-muted">{t("settings.app.historyNone")}</p>
+      )}
+      {releases.data?.length === 0 && (
+        <p className="px-3 pb-2 text-sm text-muted">{t("settings.app.historyNone")}</p>
+      )}
+      {releases.data && releases.data.length > 0 && (
+        <div className="max-h-[26rem] overflow-y-auto border-t border-line">
+          <table className="w-full text-left text-sm">
+            <thead className="sticky top-0 bg-surface text-xs text-muted">
+              <tr>
+                <th className="px-2 py-1.5 font-medium">{t("settings.app.columns.version")}</th>
+                <th className="px-2 py-1.5 font-medium">{t("settings.app.columns.date")}</th>
+                <th className="px-2 py-1.5 font-medium max-sm:hidden">
+                  {t("settings.app.columns.kind")}
+                </th>
+                <th className="px-2 py-1.5 font-medium">{t("settings.app.columns.what")}</th>
+                <th className="px-2 py-1.5 font-medium">{t("settings.app.columns.pr")}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-line">
+              {releases.data.map((release) => (
+                <tr key={release.version} data-testid="version-row" className="align-top">
+                  <td className="px-2 py-1.5 whitespace-nowrap tabular-nums">v{release.version}</td>
+                  <td className="px-2 py-1.5 whitespace-nowrap text-muted tabular-nums">
+                    {formatPlainDate(release.date, locale, { day: "2-digit", month: "2-digit" })}
+                  </td>
+                  <td className="px-2 py-1.5 max-sm:hidden">
+                    {t(`settings.app.kinds.${release.kind}`)}
+                  </td>
+                  <td className="px-2 py-1.5">{(portuguese && release.notePt) || release.title}</td>
+                  <td className="px-2 py-1.5 whitespace-nowrap">
+                    {release.pr ? (
+                      <a
+                        href={`https://github.com/WareveR/Claude_test/pull/${release.pr}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-accent underline"
+                      >
+                        #{release.pr}
+                      </a>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </details>
+  );
+}
+
+/** Settings › App version: which version this device runs, a button to update it now, and the list of versions. */
 export function AppVersionSection() {
   const { t } = useTranslation();
   const [state, setState] = useState<"idle" | "checking" | "updating" | "latest">("idle");
@@ -54,6 +148,7 @@ export function AppVersionSection() {
           {t("settings.app.latest")}
         </p>
       )}
+      <VersionHistory />
     </section>
   );
 }

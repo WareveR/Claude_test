@@ -51,6 +51,12 @@ test("This device shows its app version and updates it on demand", async ({ page
   await expect(page.getByTestId("screen-size")).toContainText(
     /\d+×\d+ · \d+×\d+ · [\d.]+ · browser/,
   );
+  // Under the button, every version and what it brought, in a box that scrolls.
+  const history = page.getByTestId("version-history");
+  await history.getByText("Version history").click();
+  await expect(history.getByTestId("version-row").first()).toContainText(/^v\d+\.\d+\.\d+/);
+  await expect(history.getByText("What changed")).toBeVisible();
+
   await page.getByRole("button", { name: "Update now" }).click();
   // Nothing newer was deployed in between, so it says so (or reloads into the same version).
   await expect(

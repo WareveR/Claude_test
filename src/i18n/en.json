@@ -131,7 +131,20 @@
       "checking": "Looking for a new version…",
       "updating": "Updating…",
       "latest": "This device already has the latest version.",
-      "screen": "Screen (window · screen · density · how it's open): {{screen}}"
+      "screen": "Screen (window · screen · density · how it's open): {{screen}}",
+      "history": "Version history",
+      "historyNone": "The version list isn't available on this copy of the app.",
+      "columns": {
+        "version": "Version",
+        "date": "Date",
+        "kind": "Type",
+        "what": "What changed",
+        "pr": "PR"
+      },
+      "kinds": {
+        "feature": "Feature",
+        "fix": "Fix"
+      }
     },
     "theme": "Theme on this device",
     "areas": {
