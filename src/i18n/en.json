@@ -642,6 +642,7 @@
   },
   "suggestions": {
     "title": "Suggestions",
+    "close": "Close Suggestions",
     "lead": "Write or say what repeats in the family's life, or open a theme, and create it all at once after a review.",
     "box": "What repeats?",
     "placeholder": "gym on Monday and Wednesday at 7pm, groceries on Tuesday and Thursday at 10am, water the plants on Saturday, car, dog",

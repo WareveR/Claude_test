@@ -13,7 +13,7 @@ import { VoiceEntry } from "../voice/VoiceEntry";
 import { paths } from "../paths";
 import { useNow } from "./useNow";
 
-/** The last page outside Settings, where the Settings button returns to. */
+/** The last page outside Settings and Suggestions, where their buttons return to. */
 let outsideSettings: string = paths.today();
 
 /** The fixed header on every view: the time, weekday, day and month in the Family Time Zone. */
@@ -30,9 +30,10 @@ export function Header({
   const navigate = useNavigate();
   const location = useLocation();
   const inSettings = location.pathname.startsWith("/settings");
+  const inSuggestions = location.pathname === paths.suggestions();
   useEffect(() => {
-    if (!inSettings) outsideSettings = location.pathname + location.search;
-  }, [inSettings, location.pathname, location.search]);
+    if (!inSettings && !inSuggestions) outsideSettings = location.pathname + location.search;
+  }, [inSettings, inSuggestions, location.pathname, location.search]);
   const today = useForecastDays().get(todayIn(family.timeZone, now));
   const locale = formatLocale(language);
   const time = new Intl.DateTimeFormat(locale, {
@@ -89,10 +90,11 @@ export function Header({
         </button>
       ) : (
         <>
+          {/* Like Settings: the same button opens Suggestions and, from inside, closes them. */}
           <Link
-            to={paths.suggestions()}
-            aria-label={t("suggestions.title")}
-            className={`shrink-0 rounded-md p-1.5 hover:bg-header-ink/15 sm:p-2 ${location.pathname === paths.suggestions() ? "bg-header-ink/20" : ""}`}
+            to={inSuggestions ? outsideSettings : paths.suggestions()}
+            aria-label={inSuggestions ? t("suggestions.close") : t("suggestions.title")}
+            className={`shrink-0 rounded-md p-1.5 hover:bg-header-ink/15 sm:p-2 ${inSuggestions ? "bg-header-ink/20" : ""}`}
           >
             <Lightbulb aria-hidden size={20} strokeWidth={1.75} />
           </Link>
