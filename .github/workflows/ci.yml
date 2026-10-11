@@ -35,6 +35,9 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The whole history, to number the version (vite.config.ts).
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
