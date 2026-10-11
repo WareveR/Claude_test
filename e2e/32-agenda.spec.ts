@@ -10,7 +10,8 @@ test("the Agenda lists Entries and Tasks day by day, in time order", async ({ pa
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page).not.toHaveURL(/\/entries\//);
 
-  await page.goto("/tasks/new");
+  await page.goto("/tasks");
+  await page.getByRole("link", { name: "New task" }).click();
   await page.getByLabel("Title").fill("Buy flowers");
   await page.getByLabel("Due date (optional)").fill("2027-05-10");
   await page.getByRole("button", { name: "Save" }).click();
