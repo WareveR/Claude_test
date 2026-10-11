@@ -6,7 +6,7 @@ import type { Device, Family } from "./api";
 import { DisplayBoard } from "./display/DisplayBoard";
 import { DisplayEffects } from "./display/DisplayEffects";
 import { EntryDetails } from "./display/EntryDetails";
-import { useDisplayMode } from "./display/mode";
+import { displayExit, useDisplayMode } from "./display/mode";
 import { paths } from "./paths";
 import { SignedInContext } from "./family";
 import { deviceLanguage } from "./i18n";
@@ -28,6 +28,7 @@ import { AgendaView } from "./views/AgendaView";
 import { DayView, MonthView, TodayRedirect, WeekView, YearView } from "./views/Views";
 import { ItemPopupProvider } from "./shell/ItemPopup";
 import { HelpTips } from "./help/HelpTips";
+import { SummaryPage } from "./summary/SummaryPage";
 
 /** On a wall tablet the entry address shows read-only details instead of the form. */
 function EntryRoute() {
@@ -40,7 +41,7 @@ function Layout() {
   // A Display Mode device only ever opens the board (and an Entry's details); the board is
   // nothing to a device that is not in Display Mode.
   if (display && !displayAllows(pathname)) return <Navigate to={paths.display()} replace />;
-  if (!display && pathname === paths.display()) return <Navigate to={paths.today()} replace />;
+  if (!display && pathname === paths.display()) return <Navigate to={displayExit()} replace />;
   return (
     <div className="flex h-dvh flex-col">
       {display && <DisplayEffects />}
@@ -75,6 +76,7 @@ const router = createBrowserRouter([
       { path: "/checklists/:id/edit", element: <ChecklistPage /> },
       { path: "/entries/:id", element: <EntryRoute /> },
       { path: paths.display(), element: <DisplayBoard /> },
+      { path: paths.summary(), element: <SummaryPage /> },
       { path: "/settings", element: <SettingsPage /> },
       { path: "/settings/:area", element: <SettingsPage /> },
       { path: "/settings/errors", element: <ErrorLogPage /> },

@@ -1,9 +1,9 @@
-import { Lightbulb, PanelLeftClose, PanelLeftOpen, Settings, X } from "lucide-react";
+import { CloudSun, Lightbulb, Settings, Tv, type LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { formatLocale } from "../../core/languages";
-import { setDisplayMode, useDisplayMode } from "../display/mode";
+import { leaveDisplayMode, setDisplayMode, useDisplayMode } from "../display/mode";
 import { useSignedIn } from "../family";
 import { todayIn } from "../../core/plain-date";
 import { ForecastButton } from "../weather/ForecastButton";
@@ -12,10 +12,42 @@ import { WeatherBadge } from "../weather/WeatherBadge";
 import { VoiceEntry } from "../voice/VoiceEntry";
 import { paths } from "../paths";
 import { useNow } from "./useNow";
-import { togglePanel, usePanelCollapsed, usePanelOnPage } from "./SidePanel";
 
 /** The last page outside Settings and Suggestions, where their buttons return to. */
 let outsideSettings: string = paths.today();
+/** The last page outside the Wall and the Summary, where switching both off returns to. */
+let outsideScreens: string = paths.today();
+
+/** An on/off switch at the end of the header for a screen of its own: the Wall or the Summary. */
+function ScreenSwitch({
+  on,
+  icon: Icon,
+  label,
+  help,
+  onToggle,
+  className = "",
+}: {
+  on: boolean;
+  icon: LucideIcon;
+  label: string;
+  help: string;
+  onToggle: () => void;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={on}
+      data-help={help}
+      onClick={onToggle}
+      className={`${className} flex shrink-0 items-center gap-1.5 rounded-md border p-1 sm:px-3 sm:py-1.5 ${on ? "border-header-ink bg-header-ink/25" : "border-header-ink/40 hover:bg-header-ink/15"}`}
+    >
+      <Icon aria-hidden size={20} strokeWidth={1.75} />
+      {/* On a phone only the icon shows; its name stays for screen readers. */}
+      <span className="max-md:sr-only">{label}</span>
+    </button>
+  );
+}
 
 /** The fixed header on every view: the time, weekday, day and month in the Family Time Zone. */
 export function Header({
@@ -26,17 +58,28 @@ export function Header({
   const { t } = useTranslation();
   const { family, language } = useSignedIn();
   const now = useNow();
-  // On the wall there is no Settings link and no microphone; a button leaves.
+  // On the wall there is no Settings link and no microphone; its switch turns it off.
   const wall = useDisplayMode();
   const navigate = useNavigate();
   const location = useLocation();
   const inSettings = location.pathname.startsWith("/settings");
   const inSuggestions = location.pathname === paths.suggestions();
+  const inSummary = location.pathname === paths.summary();
   useEffect(() => {
     if (!inSettings && !inSuggestions) outsideSettings = location.pathname + location.search;
-  }, [inSettings, inSuggestions, location.pathname, location.search]);
-  const panelOnPage = usePanelOnPage();
-  const panelHidden = usePanelCollapsed();
+    if (!wall && !inSummary) outsideScreens = location.pathname + location.search;
+  }, [inSettings, inSuggestions, inSummary, wall, location.pathname, location.search]);
+  // The two switches are exclusive: turning one on turns the other off, and with both off the
+  // page from before comes back.
+  const toggleWall = () => {
+    if (wall) return leaveDisplayMode(outsideScreens);
+    setDisplayMode(true);
+    navigate(paths.display());
+  };
+  const toggleSummary = () => {
+    if (wall) return leaveDisplayMode(paths.summary());
+    navigate(inSummary ? outsideScreens : paths.summary());
+  };
   const today = useForecastDays().get(todayIn(family.timeZone, now));
   const locale = formatLocale(language);
   const time = new Intl.DateTimeFormat(locale, {
@@ -61,7 +104,7 @@ export function Header({
   ].join(" ");
 
   return (
-    <header className="sticky top-0 z-10 flex items-center gap-2 bg-header px-4 py-2 text-header-ink shadow-sm sm:gap-3 short:py-1">
+    <header className="sticky top-0 z-10 flex items-center gap-1 bg-header px-2 py-2 text-header-ink shadow-sm sm:gap-3 sm:px-4 short:py-1">
       <time
         data-testid="header-time"
         className="shrink-0 text-2xl font-semibold tabular-nums short:text-xl"
@@ -82,39 +125,7 @@ export function Header({
         </ForecastButton>
       )}
       {showVoice && !wall && <VoiceEntry />}
-      {/* Shows or hides today's side panel, on the pages that have one. */}
-      {panelOnPage && (
-        <button
-          type="button"
-          aria-label={panelHidden ? t("sidePanel.show") : t("sidePanel.hide")}
-          aria-expanded={!panelHidden}
-          aria-controls="side-panel"
-          data-help={panelHidden ? "sidePanel" : "sidePanelHide"}
-          onClick={togglePanel}
-          className={`${showVoice && !wall ? "" : "ml-auto "}shrink-0 rounded-md p-1.5 hover:bg-header-ink/15 sm:p-2`}
-        >
-          {panelHidden ? (
-            <PanelLeftOpen aria-hidden size={20} strokeWidth={1.75} />
-          ) : (
-            <PanelLeftClose aria-hidden size={20} strokeWidth={1.75} />
-          )}
-        </button>
-      )}
-      {wall ? (
-        <button
-          type="button"
-          data-help="leaveWall"
-          onClick={() => {
-            setDisplayMode(false);
-            navigate(paths.today());
-          }}
-          className={`${panelOnPage ? "" : "ml-auto "}flex shrink-0 items-center gap-1.5 rounded-md border border-header-ink/40 px-3 py-1.5 hover:bg-header-ink/15`}
-        >
-          <X aria-hidden size={20} strokeWidth={1.75} />
-          {/* On a phone only the cross shows; its name stays for screen readers. */}
-          <span className="max-sm:sr-only">{t("display.leave")}</span>
-        </button>
-      ) : (
+      {!wall && (
         <>
           {/* Like Settings: the same button opens Suggestions and, from inside, closes them. */}
           <Link
@@ -136,6 +147,22 @@ export function Header({
           </Link>
         </>
       )}
+      {/* Always last and in the same place, on the wall too. */}
+      <ScreenSwitch
+        on={inSummary}
+        icon={CloudSun}
+        label={t("screens.summary")}
+        help="summary"
+        onToggle={toggleSummary}
+        className={wall ? "ml-auto" : ""}
+      />
+      <ScreenSwitch
+        on={wall}
+        icon={Tv}
+        label={t("screens.wall")}
+        help="wall"
+        onToggle={toggleWall}
+      />
     </header>
   );
 }

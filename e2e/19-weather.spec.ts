@@ -25,7 +25,7 @@ test("the first saved place is selected and its weather shows in every view", as
 
   await expect(page.getByTestId("header-weather")).toHaveText("20°/10°");
 
-  await page.goto("/");
+  await page.goto("/summary");
   await expect(page.getByTestId("hourly-strip")).toBeVisible();
   await expect(page.getByTestId("hour-cell").first()).toContainText("%");
   await expect(page.getByTestId("hour-cell").first()).toContainText(/\d+h/);
@@ -35,6 +35,7 @@ test("the first saved place is selected and its weather shows in every view", as
   // The sun sits on its arc between the two.
   await expect(page.getByTestId("sun-band").getByTestId("sun-dot")).toHaveCount(1);
 
+  await page.goto("/");
   await page.getByRole("link", { name: "Week", exact: true }).click();
   // The week shows each day's chance of rain too.
   await expect(page.locator('[data-testid^="week-weather-"]').nth(1)).toContainText("%");
@@ -53,8 +54,8 @@ test("the first saved place is selected and its weather shows in every view", as
   );
   await page.goto(`/day/${yesterday}`);
   await expect(page.locator("nav").getByText("15°/8°")).toBeVisible();
-  // Below today's strip in the side panel, the past day's own strip above its grid.
-  await expect(page.getByTestId("hourly-strip").last()).toContainText("9°");
+  // The past day's own strip above its grid.
+  await expect(page.getByTestId("hourly-strip")).toContainText("9°");
 
   await page.goto("/");
   await page.getByRole("link", { name: "Month", exact: true }).click();
