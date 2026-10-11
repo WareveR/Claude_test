@@ -5,6 +5,7 @@ import {
   roundLabel,
   shiftRound,
   checklistGroup,
+  checklistFromTask,
   checklistProgress,
   checklistSpans,
   checklistTaskTiming,
@@ -177,5 +178,36 @@ describe("Checklist calendar bars", () => {
     expect(checklistSpans({ startDate: null, endDate: null }, "2026-07-01", "2026-07-31")).toEqual(
       [],
     );
+  });
+});
+
+describe("checklistFromTask", () => {
+  const task = {
+    title: "Pack for the trip",
+    dueDate: "2026-08-01",
+    repetition: null,
+    personIds: ["ana"],
+    entryId: "trip",
+  };
+
+  it("keeps the name, Persons and Entry, and makes the due day the deadline", () => {
+    expect(checklistFromTask(task)).toEqual({
+      name: "Pack for the trip",
+      startDate: null,
+      endDate: "2026-08-01",
+      repetition: null,
+      remindAtStart: true,
+      personIds: ["ana"],
+      entryId: "trip",
+    });
+  });
+
+  it("makes a repeating Task's due day the start of rounds that repeat the same way", () => {
+    const weekly: Repetition = { frequency: "weekly", interval: 1, end: { type: "never" } };
+    expect(checklistFromTask({ ...task, repetition: weekly })).toMatchObject({
+      startDate: "2026-08-01",
+      endDate: null,
+      repetition: weekly,
+    });
   });
 });

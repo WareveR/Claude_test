@@ -18,7 +18,7 @@ import { useNow } from "../shell/useNow";
 import { ViewNav } from "../shell/ViewNav";
 import { useTasks, type Task } from "./model";
 import { TaskRow } from "./TaskRow";
-import { BUTTON, BUTTON_PRIMARY } from "../ui/button";
+import { BUTTON_PRIMARY } from "../ui/button";
 import { Switch } from "../ui/Toggle";
 
 const GROUPS = ["overdue", "today", "upcoming", "noDate"] as const;
@@ -118,10 +118,6 @@ export function TasksView() {
           <Link to="/tasks/new" className={BUTTON_PRIMARY}>
             <Plus aria-hidden size={16} />
             {t("tasks.new")}
-          </Link>
-          <Link to="/checklists/new" className={BUTTON}>
-            <Plus aria-hidden size={16} />
-            {t("checklists.new")}
           </Link>
         </div>
         {tasks.data && GROUPS.every((g) => count(g) === 0) && (

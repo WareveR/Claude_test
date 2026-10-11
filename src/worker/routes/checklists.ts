@@ -2,6 +2,7 @@ import { asc, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { Hono } from "hono";
 import { cleanItems } from "../../core/checklist-template";
 import {
+  checklistFromTask,
   checklistProgress,
   dueRoundStart,
   firstRoundStart,
@@ -287,6 +288,43 @@ checklistRoutes.post("/checklists/:id/items", async (c) => {
   await db.batch([first, ...rest]);
   await settleChecklist(db, id, at.toISOString());
   return c.json({ added: items.length }, 201);
+});
+
+/**
+ * Gives a loose Task items: it becomes a Checklist named after it (core's checklistFromTask),
+ * with no items yet, and the Task itself goes.
+ */
+checklistRoutes.post("/tasks/:id/with-items", async (c) => {
+  const db = c.get("db");
+  const taskId = c.req.param("id");
+  const [task] = await db.select().from(schema.task).where(eq(schema.task.id, taskId));
+  if (!task) return c.json({ error: "not_found" }, 404);
+  if (task.checklistId) return c.json({ error: "already_in_checklist" }, 409);
+  const personIds = (
+    await db
+      .select({ personId: schema.taskPerson.personId })
+      .from(schema.taskPerson)
+      .where(eq(schema.taskPerson.taskId, taskId))
+  ).map((l) => l.personId);
+  const fields = checklistFromTask({ ...task, personIds });
+  const id = randomId();
+  const now = c.get("now").toISOString();
+  await db.batch([
+    db.insert(schema.checklist).values({
+      id,
+      name: fields.name,
+      startDate: fields.startDate,
+      endDate: fields.endDate,
+      repetition: fields.repetition,
+      remindAtStart: fields.remindAtStart,
+      entryId: fields.entryId,
+      createdAt: now,
+      changedAt: now,
+    }),
+    ...personLinks(db, id, personIds),
+    db.delete(schema.task).where(eq(schema.task.id, taskId)),
+  ]);
+  return c.json(await presentOne(db, id), 201);
 });
 
 checklistRoutes.put("/checklists/:id", async (c) => {

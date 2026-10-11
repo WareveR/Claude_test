@@ -16,7 +16,7 @@ test("an Entry holds the Checklists and Tasks that prepare for it", async ({ pag
   const preparation = page.getByTestId("preparation");
   await expect(preparation).toContainText("Nothing linked yet");
   // A new Checklist from the Entry is named after it and due on its day.
-  await preparation.getByRole("link", { name: "New checklist" }).click();
+  await preparation.getByRole("link", { name: "New task with items" }).click();
   await expect(page.getByLabel("Name")).toHaveValue("Birthday party");
   await expect(page.getByLabel("Ends (optional)")).toHaveValue("2026-11-07");
   await expect(page.getByTestId("linked-entry")).toContainText("For: Birthday party");
@@ -28,7 +28,7 @@ test("an Entry holds the Checklists and Tasks that prepare for it", async ({ pag
 
   await page.goto("/week/2026-11-02");
   await page.getByTestId("day-column-2026-11-07").getByTestId("entry").click();
-  await preparation.getByRole("link", { name: "New task" }).click();
+  await preparation.getByRole("link", { name: "New task", exact: true }).click();
   await expect(page.getByTestId("linked-entry")).toContainText("For: Birthday party");
   await page.getByLabel("Title").fill("Book the hall");
   await page.getByRole("button", { name: "Save" }).click();

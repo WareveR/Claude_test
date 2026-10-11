@@ -10,8 +10,7 @@ function lisbonDate(days: number) {
 
 test("a Checklist's page holds its items to tick, add, rename and remove", async ({ page }) => {
   await signIn(page);
-  await page.goto("/tasks");
-  await page.getByRole("link", { name: "New checklist" }).click();
+  await page.goto("/checklists/new");
   await page.getByLabel("Name").fill("Summer cleaning");
   await page.getByLabel("Starts (optional)").fill(lisbonDate(-1));
   await page.getByLabel("Ends (optional)").fill(lisbonDate(10));
@@ -74,12 +73,12 @@ test("a Checklist's bar opens its page, and Use again starts a new round", async
   await expect(page).toHaveURL(/\/checklists\/[^/]+$/);
   await expect(page.getByTestId("checklist-detail")).toContainText("1 of 2");
 
-  await page.getByRole("link", { name: "Edit checklist" }).click();
+  await page.getByRole("link", { name: "Edit task" }).click();
   await expect(page).toHaveURL(/\/edit$/);
   await page.getByRole("button", { name: "Use again" }).click();
   await expect(page).toHaveURL(/\/checklists\/[^/]+$/);
   await expect(page.getByTestId("checklist-detail")).toContainText("0 of 2");
-  await page.getByRole("link", { name: "Edit checklist" }).click();
+  await page.getByRole("link", { name: "Edit task" }).click();
   await expect(page.getByText(/\d{4}: 1 of 2/)).toBeVisible();
 });
 
@@ -119,10 +118,14 @@ test("a Checklist's items carry a note and hold items of their own, at any depth
   page,
 }) => {
   await signIn(page);
+  // A new task with items opens its page to add them.
   await page.goto("/tasks");
-  await page.getByRole("link", { name: "New checklist" }).click();
-  await page.getByLabel("Name").fill("Birthday party");
+  await page.getByRole("link", { name: "New task" }).click();
+  await page.getByLabel("Title").fill("Birthday party");
+  await page.getByRole("switch", { name: "With items" }).check();
+  await expect(page.getByText("Due time (optional)")).toHaveCount(0);
   await page.getByRole("button", { name: "Save" }).click();
+  await expect(page).toHaveURL(/\/checklists\/[^/]+$/);
   const detail = page.getByTestId("checklist-detail");
   await expect(detail.getByRole("heading", { name: "Birthday party" })).toBeVisible();
 
@@ -182,4 +185,31 @@ test("a Checklist's items carry a note and hold items of their own, at any depth
   await expect(detail.getByRole("status")).toContainText('Added 9 items from "Back to school"');
   await expect(food.getByTestId("checklist-item-progress")).toHaveText("3 of 12");
   await expect(detail.getByRole("checkbox", { name: "Done: Food and drinks" })).not.toBeChecked();
+});
+
+test("a task gets items later, from a predefined list, and keeps its deadline", async ({
+  page,
+}) => {
+  await signIn(page);
+  await page.goto("/tasks");
+  await page.getByRole("link", { name: "New task" }).click();
+  await page.getByLabel("Title").fill("Get ready for school");
+  await page.getByLabel("Due date (optional)").fill(lisbonDate(20));
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page).toHaveURL(/\/tasks$/);
+
+  await page.getByRole("link", { name: /Get ready for school/ }).click();
+  await expect(page).toHaveURL(/\/tasks\/[^/]+$/);
+  await page.getByRole("switch", { name: "With items" }).check();
+  await page.getByLabel("Use a predefined list").selectOption({ label: "Back to school" });
+  await page.getByRole("button", { name: "Save" }).click();
+
+  const detail = page.getByTestId("checklist-detail");
+  await expect(detail.getByRole("heading", { name: "Get ready for school" })).toBeVisible();
+  await expect(detail).toContainText("0 of 9");
+  await page.goto("/tasks");
+  await expect(page.getByTestId("task").filter({ hasText: "Get ready for school" })).toHaveCount(0);
+  await expect(
+    page.getByTestId("checklist").filter({ hasText: "Get ready for school" }),
+  ).toContainText("0 of 9");
 });

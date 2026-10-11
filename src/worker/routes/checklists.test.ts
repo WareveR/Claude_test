@@ -153,6 +153,27 @@ describe("Checklists", () => {
     expect(await bad.json()).toMatchObject({ field: "parentId" });
   });
 
+  it("turns a loose Task into a Checklist named after it when it gets items", async () => {
+    const { browser, ana } = await family();
+    const task = (await (
+      await browser.post("/tasks", {
+        title: "Plan the garden",
+        dueDate: "2026-09-01",
+        dueTime: "10:00",
+        personIds: [ana.id],
+      })
+    ).json()) as { id: string };
+    const res = await browser.post(`/tasks/${task.id}/with-items`, {});
+    expect(res.status).toBe(201);
+    expect(await res.json()).toMatchObject({
+      name: "Plan the garden",
+      startDate: null,
+      endDate: "2026-09-01",
+      personIds: [ana.id],
+    });
+    expect((await browser.get(`/tasks/${task.id}`)).status).toBe(404);
+  });
+
   it("links Checklists and loose Tasks to an Entry, until the Entry is deleted", async () => {
     const { browser } = await family();
     const types = (await (await browser.get("/entry-types")).json()) as { id: string }[];
