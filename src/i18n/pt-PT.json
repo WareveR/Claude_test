@@ -125,7 +125,8 @@
       "update": "Atualizar agora",
       "checking": "A procurar uma versão nova…",
       "updating": "A atualizar…",
-      "latest": "Este dispositivo já tem a versão mais recente."
+      "latest": "Este dispositivo já tem a versão mais recente.",
+      "screen": "Ecrã (janela · ecrã · densidade · como está aberta): {{screen}}"
     },
     "theme": "Tema deste dispositivo",
     "areas": {
@@ -902,5 +903,133 @@
     "count_other": "{{count}} resultados",
     "more_one": "…e mais {{count}}: afina a pesquisa para o ver.",
     "more_other": "…e mais {{count}}: afina a pesquisa para os ver."
+  },
+  "help": {
+    "title": "Ajuda nos botões",
+    "hint": "Pouse o ponteiro num botão, ou mantenha-o premido, para ver o que faz.",
+    "level": "Quanto explica",
+    "levels": {
+      "off": "Desligada",
+      "low": "Baixa: só o nome dos botões com ícone",
+      "medium": "Média: nome e o que faz",
+      "high": "Alta: também o que acontece a seguir, e ⓘ nos títulos dos campos"
+    },
+    "items": {
+      "view": {
+        "day": {
+          "what": "Mostra um dia, hora a hora.",
+          "more": "Deslize ou use as setas para andar um dia de cada vez."
+        },
+        "week": {
+          "what": "Mostra os sete dias da semana lado a lado.",
+          "more": "Deslize ou use as setas para andar uma semana de cada vez."
+        },
+        "month": {
+          "what": "Mostra o mês inteiro, um quadrado por dia.",
+          "more": "Toque num dia para ver tudo o que tem."
+        },
+        "year": {
+          "what": "Mostra os doze meses do ano de relance.",
+          "more": "Os dias com algo estão marcados; toque num para o ver."
+        },
+        "agenda": {
+          "what": "Lista o que aí vem, dia a dia, em lista.",
+          "more": "Útil no telemóvel: sem grelha, só o que vem a seguir."
+        },
+        "tasks": {
+          "what": "Abre as tarefas da Família.",
+          "more": "Agrupadas por prazo; as em atraso aparecem primeiro."
+        },
+        "display": {
+          "what": "Transforma este dispositivo no calendário de parede.",
+          "more": "Fica no mural até sair com a cruz no topo."
+        }
+      },
+      "previous": {
+        "what": "Recua um período: dia, semana, mês ou ano, conforme a vista.",
+        "more": "Deslizar para a direita faz o mesmo."
+      },
+      "next": {
+        "what": "Avança um período: dia, semana, mês ou ano, conforme a vista.",
+        "more": "Deslizar para a esquerda faz o mesmo."
+      },
+      "today": {
+        "what": "Volta a hoje na vista em que está."
+      },
+      "search": {
+        "what": "Procura entradas e tarefas pelas palavras.",
+        "more": "Várias palavras encontram qualquer uma; \"entre aspas\" encontra a frase exata; -palavra exclui-a."
+      },
+      "filter": {
+        "what": "Mostra só algumas Pessoas e escolhe as camadas extra.",
+        "more": "Só este dispositivo fica filtrado; os outros veem tudo."
+      },
+      "newEntry": {
+        "what": "Cria uma entrada nova na data que está a ver."
+      },
+      "newTask": {
+        "what": "Cria uma tarefa nova.",
+        "more": "Ligue \"Com itens\" para lhe dar uma lista de itens a marcar."
+      },
+      "voice": {
+        "what": "Cria uma entrada dizendo ou escrevendo uma frase.",
+        "more": "Vê o que foi entendido e escolhe guardar ou editar."
+      },
+      "suggestions": {
+        "what": "Ideias para o calendário, a partir do que escreve ou dita.",
+        "more": "Escolhe quais criar e pode anular."
+      },
+      "settings": {
+        "what": "Abre as Definições: Família, calendário, este dispositivo e conta."
+      },
+      "close": {
+        "what": "Fecha e volta para onde estava."
+      },
+      "weather": {
+        "name": "Meteorologia",
+        "what": "Abre a meteorologia em detalhe: as horas e os próximos dias."
+      },
+      "leaveWall": {
+        "what": "Tira este dispositivo do mural e volta à app normal."
+      },
+      "edit": {
+        "what": "Abre o formulário para alterar.",
+        "more": "Nada muda até guardar."
+      },
+      "back": {
+        "what": "Fecha isto e volta para onde estava."
+      },
+      "save": {
+        "what": "Guarda as alterações.",
+        "more": "Todos os dispositivos da Família as veem logo."
+      },
+      "cancel": {
+        "what": "Sai sem guardar.",
+        "more": "O que alterou aqui perde-se."
+      },
+      "sidePanel": {
+        "what": "Mostra o painel lateral com a meteorologia de hoje e o que aí vem."
+      },
+      "sidePanelHide": {
+        "what": "Esconde o painel lateral para dar mais espaço ao calendário.",
+        "more": "Este dispositivo lembra-se."
+      },
+      "entryType": {
+        "what": "O tipo de entrada, como consulta ou aniversário.",
+        "more": "Define a cor e o ícone; os tipos gerem-se em Definições › Família."
+      },
+      "importance": {
+        "what": "Quanto importa.",
+        "more": "As entradas importantes destacam-se nas vistas e vêm primeiro no resumo."
+      },
+      "taskImportance": {
+        "what": "Quanto importa.",
+        "more": "As tarefas importantes aparecem primeiro e com uma marca."
+      },
+      "persons": {
+        "what": "Para quem é.",
+        "more": "Sem ninguém escolhido é para toda a Família. O filtro de Pessoas usa isto."
+      }
+    }
   }
 }

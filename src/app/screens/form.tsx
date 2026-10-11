@@ -11,15 +11,23 @@ import {
 /** A labelled control; the label points at the control so its name is just the label. */
 export function Field({
   label,
+  help,
   children,
 }: {
   label: string;
+  /** Its help key, for a field whose title is worth explaining. */
+  help?: string;
   children: ReactElement<{ id?: string }>;
 }) {
   const id = useId();
   return (
     <div className="flex flex-col gap-1 text-sm">
-      <label htmlFor={id} className="font-medium">
+      <label
+        htmlFor={id}
+        className="font-medium"
+        data-help={help}
+        data-help-field={help ? "" : undefined}
+      >
         {label}
       </label>
       {isValidElement(children) ? cloneElement(children, { id }) : children}
@@ -39,6 +47,7 @@ export function SubmitButton({ children, busy }: { children: ReactNode; busy: bo
   return (
     <button
       type="submit"
+      data-help="save"
       disabled={busy || !online}
       className="rounded-md bg-accent px-4 py-2 font-medium text-accent-ink disabled:opacity-60"
     >
@@ -61,7 +70,12 @@ export function FormActions({
 }) {
   return (
     <div className="sticky bottom-0 z-[5] -mx-4 flex justify-end gap-3 border-t border-line bg-bg/95 px-4 py-3 backdrop-blur">
-      <button type="button" className="rounded-md border border-line px-4 py-2" onClick={onCancel}>
+      <button
+        type="button"
+        className="rounded-md border border-line px-4 py-2"
+        data-help="cancel"
+        onClick={onCancel}
+      >
         {cancelLabel}
       </button>
       <SubmitButton busy={busy}>{saveLabel}</SubmitButton>

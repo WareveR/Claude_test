@@ -11,10 +11,13 @@ export function ForecastButton({
   children,
   className = "",
   testId,
+  help,
 }: {
   children: ReactNode;
   className?: string;
   testId?: string;
+  /** Its help key, where it is one of the main buttons. */
+  help?: string;
 }) {
   const { data } = useWeather();
   const [open, setOpen] = useState(false);
@@ -24,6 +27,7 @@ export function ForecastButton({
       <button
         type="button"
         data-testid={testId}
+        data-help={help}
         className={className}
         onClick={() => setOpen(true)}
       >

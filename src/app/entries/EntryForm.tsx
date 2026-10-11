@@ -239,7 +239,7 @@ function EntryForm({
               onChange={(e) => set({ title: e.target.value })}
             />
           </Field>
-          <Field label={t("entries.type")}>
+          <Field label={t("entries.type")} help="entryType">
             <select
               className={INPUT}
               value={draft.entryTypeId}
@@ -346,7 +346,9 @@ function EntryForm({
           />
 
           <fieldset className="flex flex-col gap-1 text-sm">
-            <legend className="mb-1 font-medium">{t("entries.persons")}</legend>
+            <legend className="mb-1 font-medium" data-help="persons" data-help-field="">
+              {t("entries.persons")}
+            </legend>
             <div className="flex flex-wrap gap-3">
               {persons.data
                 ?.filter((p) => !p.archived || draft.personIds.includes(p.id))
@@ -381,7 +383,7 @@ function EntryForm({
             )}
         </fieldset>
 
-        <Field label={t("entries.importance")}>
+        <Field label={t("entries.importance")} help="importance">
           <select
             className={INPUT}
             value={draft.importance}

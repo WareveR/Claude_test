@@ -115,7 +115,7 @@ export function TasksView() {
         {...drag.zone}
       >
         <div className="flex flex-wrap justify-end gap-2">
-          <Link to="/tasks/new" className={BUTTON_PRIMARY}>
+          <Link to="/tasks/new" className={BUTTON_PRIMARY} data-help="newTask">
             <Plus aria-hidden size={16} />
             {t("tasks.new")}
           </Link>

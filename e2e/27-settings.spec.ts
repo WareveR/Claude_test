@@ -47,6 +47,10 @@ test("This device shows its app version and updates it on demand", async ({ page
   await page.goto("/settings/device");
   await expect(page.getByRole("heading", { name: "App version" })).toBeVisible();
   await expect(page.getByText(/This device runs version /)).toBeVisible();
+  // The size the app draws on, to explain a page that looks too big or too small.
+  await expect(page.getByTestId("screen-size")).toContainText(
+    /\d+×\d+ · \d+×\d+ · [\d.]+ · browser/,
+  );
   await page.getByRole("button", { name: "Update now" }).click();
   // Nothing newer was deployed in between, so it says so (or reloads into the same version).
   await expect(

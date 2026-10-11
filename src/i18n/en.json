@@ -125,7 +125,8 @@
       "update": "Update now",
       "checking": "Looking for a new version…",
       "updating": "Updating…",
-      "latest": "This device already has the latest version."
+      "latest": "This device already has the latest version.",
+      "screen": "Screen (window · screen · density · how it's open): {{screen}}"
     },
     "theme": "Theme on this device",
     "areas": {
@@ -902,5 +903,133 @@
     "count_other": "{{count}} results",
     "more_one": "…and {{count}} more: narrow the search to see it.",
     "more_other": "…and {{count}} more: narrow the search to see them."
+  },
+  "help": {
+    "title": "Help on buttons",
+    "hint": "Rest the pointer on a button, or press and hold it, to see what it does.",
+    "level": "How much it explains",
+    "levels": {
+      "off": "Off",
+      "low": "Low: just the name of icon buttons",
+      "medium": "Medium: name and what it does",
+      "high": "High: also what follows, and ⓘ on field titles"
+    },
+    "items": {
+      "view": {
+        "day": {
+          "what": "Shows one day hour by hour.",
+          "more": "Swipe or use the arrows to move a day at a time."
+        },
+        "week": {
+          "what": "Shows the seven days of a week side by side.",
+          "more": "Swipe or use the arrows to move a week at a time."
+        },
+        "month": {
+          "what": "Shows the whole month, one square per day.",
+          "more": "Tap a day to see everything on it."
+        },
+        "year": {
+          "what": "Shows the twelve months of the year at a glance.",
+          "more": "Days with something on are marked; tap one to see it."
+        },
+        "agenda": {
+          "what": "Lists what's coming, day by day, as a list.",
+          "more": "Handy on a phone: no grid, just what's next."
+        },
+        "tasks": {
+          "what": "Opens the Family's tasks.",
+          "more": "Grouped by when they're due; overdue ones come first."
+        },
+        "display": {
+          "what": "Turns this device into the wall calendar.",
+          "more": "It stays on the wall view until you leave it with the cross at the top."
+        }
+      },
+      "previous": {
+        "what": "Goes back one period: a day, week, month or year, by the view.",
+        "more": "Swiping to the right does the same."
+      },
+      "next": {
+        "what": "Goes forward one period: a day, week, month or year, by the view.",
+        "more": "Swiping to the left does the same."
+      },
+      "today": {
+        "what": "Comes back to today in the view you're in."
+      },
+      "search": {
+        "what": "Finds Entries and tasks by their words.",
+        "more": "Several words find any of them; \"in quotes\" finds the exact phrase; -word leaves it out."
+      },
+      "filter": {
+        "what": "Shows only some Persons, and picks the extra layers.",
+        "more": "Only this device is filtered; the others see everything."
+      },
+      "newEntry": {
+        "what": "Creates a new Entry on the date you're looking at."
+      },
+      "newTask": {
+        "what": "Creates a new task.",
+        "more": "Switch on \"With items\" to give it a list of items to tick."
+      },
+      "voice": {
+        "what": "Creates an Entry by speaking or typing a sentence.",
+        "more": "You see what was understood and choose to save or edit it."
+      },
+      "suggestions": {
+        "what": "Ideas for the calendar, from what you write or dictate.",
+        "more": "You choose which to create, and can undo."
+      },
+      "settings": {
+        "what": "Opens Settings: Family, calendar, this device and account."
+      },
+      "close": {
+        "what": "Closes and returns to where you were."
+      },
+      "weather": {
+        "name": "Weather",
+        "what": "Opens the weather in detail: the hours and the next days."
+      },
+      "leaveWall": {
+        "what": "Takes this device off the wall view, back to the normal app."
+      },
+      "edit": {
+        "what": "Opens the form to change it.",
+        "more": "Nothing changes until you save."
+      },
+      "back": {
+        "what": "Closes this and returns to where you were."
+      },
+      "save": {
+        "what": "Saves the changes.",
+        "more": "Every device in the Family sees them straight away."
+      },
+      "cancel": {
+        "what": "Leaves without saving.",
+        "more": "What you changed here is lost."
+      },
+      "sidePanel": {
+        "what": "Shows the side panel with today's weather and what's coming up."
+      },
+      "sidePanelHide": {
+        "what": "Hides the side panel to give the calendar more room.",
+        "more": "This device remembers it."
+      },
+      "entryType": {
+        "what": "The kind of Entry, such as an appointment or a birthday.",
+        "more": "It sets the Entry's colour and icon; types are managed in Settings › Family."
+      },
+      "importance": {
+        "what": "How much it matters.",
+        "more": "Important Entries stand out in the views and come first in the briefing."
+      },
+      "taskImportance": {
+        "what": "How much it matters.",
+        "more": "Important tasks are listed first and show a mark."
+      },
+      "persons": {
+        "what": "Who this is for.",
+        "more": "With none picked it's for the whole Family. The Person Filter uses this."
+      }
+    }
   }
 }
