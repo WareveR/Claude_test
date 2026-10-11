@@ -124,7 +124,7 @@ export function DisplayBoard() {
           </TodayPanel>
         }
       >
-        <nav className="flex flex-wrap items-center gap-2 px-4 py-2">
+        <nav className="flex items-center gap-2 px-4 py-2 max-sm:gap-1 max-sm:px-2">
           <button
             type="button"
             aria-label={t("views.previous")}
@@ -133,7 +133,10 @@ export function DisplayBoard() {
           >
             <ChevronLeft aria-hidden size={24} strokeWidth={1.75} />
           </button>
-          <h1 className="text-xl font-semibold" data-testid="board-range">
+          <h1
+            className="min-w-0 truncate text-xl font-semibold max-sm:text-base"
+            data-testid="board-range"
+          >
             {title}
           </h1>
           <button
@@ -145,13 +148,20 @@ export function DisplayBoard() {
             <ChevronRight aria-hidden size={24} strokeWidth={1.75} />
           </button>
           {weeksAway !== 0 && (
+            // On the arrows' row; where space is short it says only "Today".
             <button
               type="button"
               data-testid="back-to-today"
-              className="rounded-full bg-accent px-4 py-1 font-medium text-accent-ink"
+              aria-label={t("display.backToToday")}
+              className="shrink-0 rounded-full bg-accent px-4 py-1 font-medium whitespace-nowrap text-accent-ink max-sm:px-3 max-sm:text-sm"
               onClick={() => setWeeksAway(0)}
             >
-              {t("display.otherWeek")}
+              <span aria-hidden className="max-md:hidden">
+                {t("display.backToToday")}
+              </span>
+              <span aria-hidden className="hidden max-md:inline">
+                {t("display.today")}
+              </span>
             </button>
           )}
           <div className="ml-auto">

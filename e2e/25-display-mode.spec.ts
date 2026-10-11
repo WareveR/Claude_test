@@ -166,6 +166,13 @@ test("‹ › move the grid a week, a pill returns, and three idle minutes retur
   await expect(board.getByTestId(`day-column-${lisbonDate(7)}`)).toBeVisible();
   await expect(board.getByTestId(`day-column-${lisbonDate(0)}`)).toHaveCount(0);
   await expect(pill).toBeVisible();
+  await expect(pill).toHaveAccessibleName("Back to today");
+  // It sits on the arrows' row.
+  const row = await board.getByRole("button", { name: "Next" }).boundingBox();
+  const box = await pill.boundingBox();
+  expect(
+    Math.abs((box?.y ?? 0) + (box?.height ?? 0) / 2 - ((row?.y ?? 0) + (row?.height ?? 0) / 2)),
+  ).toBeLessThan(8);
   // The left column stays on today.
   await expect(board.getByRole("heading", { name: "Today" })).toBeVisible();
 
