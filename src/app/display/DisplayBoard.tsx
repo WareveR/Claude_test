@@ -2,23 +2,12 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router";
-import { EntryLink } from "../shell/ItemPopup";
 import { AUTO_RETURN_MS, boardDays } from "../../core/display";
-import { daySpan } from "../../core/entry-time";
 import { formatLocale } from "../../core/languages";
-import { matchesFilter } from "../../core/person-filter";
-import { formatMonthRange, minutesNowIn } from "../../core/plain-date";
-import { entriesOn } from "../calendar/MonthGrid";
-import { importanceClass } from "../calendar/EntryBlock";
-import { useEntryTypes } from "../entry-types/model";
-import { entryPath, useOccurrences, type Shown } from "../entries/model";
+import { formatMonthRange } from "../../core/plain-date";
 import { useSignedIn } from "../family";
 import { FilterButton } from "../filter/FilterButton";
-import { usePersonFilter } from "../filter/model";
-import { usePersons } from "../persons/model";
-import { PersonAvatar } from "../persons/PersonAvatar";
 import { GRID_BOX } from "../shell/SidePanel";
-import { useNow } from "../shell/useNow";
 import { CalendarGrid } from "../views/Views";
 import { ForecastButton } from "../weather/ForecastButton";
 import { useForecastDays } from "../weather/model";
@@ -29,67 +18,10 @@ import { useTasksHidden, useWeekCompact } from "../calendar/compact";
 import { GridCorner } from "../calendar/GridCorner";
 import { TasksAccordion, usePeriodTasks } from "../tasks/TasksAccordion";
 
-/** Today's Entries as a large list; the ones already over are dimmed. */
-function TodayEntries({ today }: { today: string }) {
-  const { t } = useTranslation();
-  const { family } = useSignedIn();
-  const now = useNow(60_000);
-  const nowMinutes = minutesNowIn(family.timeZone, now);
-  const filter = usePersonFilter();
-  const types = useEntryTypes().data ?? [];
-  const persons = usePersons().data ?? [];
-  const occurrences = useOccurrences(today, today).data ?? [];
-  const entries = entriesOn(
-    occurrences.filter((e) => matchesFilter(e.personIds, filter)),
-    today,
-  ) as Shown[];
-  return (
-    <section className="mx-4 flex flex-col gap-2" aria-label={t("display.today")}>
-      <h2 className="text-lg font-semibold">{t("display.today")}</h2>
-      {entries.length === 0 && <p className="text-muted">{t("views.nothing")}</p>}
-      {entries.map((entry) => {
-        const span = entry.time.allDay ? null : daySpan(entry.time, today);
-        const past = span !== null && span.end <= nowMinutes;
-        const type = types.find((ty) => ty.id === entry.entryTypeId);
-        const people = entry.personIds
-          .map((id) => persons.find((p) => p.id === id))
-          .filter((p) => p !== undefined);
-        return (
-          <EntryLink
-            key={entry.key}
-            entry={entry}
-            to={entryPath(entry)}
-            data-testid="today-entry"
-            data-past={past || undefined}
-            className={`flex items-center gap-3 rounded-lg border border-line bg-surface px-3 py-2 ${past ? "opacity-50" : ""} ${importanceClass(entry)}`}
-          >
-            <span
-              aria-hidden
-              className="w-1 self-stretch rounded"
-              style={{ backgroundColor: type?.color ?? "#607d8b" }}
-            />
-            <span className="w-14 shrink-0 text-sm text-muted tabular-nums">
-              {entry.time.allDay ? t("entries.allDay") : entry.time.startTime}
-            </span>
-            <span className="min-w-0 flex-1 break-words font-medium">
-              {entry.private ? t("entries.private") : entry.title}
-            </span>
-            <span className="flex -space-x-1">
-              {people.map((p) => (
-                <PersonAvatar key={p.id} person={{ ...p, photoKey: null }} size={24} />
-              ))}
-            </span>
-          </EntryLink>
-        );
-      })}
-    </section>
-  );
-}
-
 /**
- * Display Mode: today on the left, always, on a wide screen (above the grid on a narrower one); a
- * seven-day time grid starting today, movable a week at a time and back to today by itself after
- * three untouched minutes.
+ * Display Mode: a seven-day time grid starting today across the whole screen (the coming days'
+ * Entries as a list are in the Summary), movable a week at a time and back to today by itself
+ * after three untouched minutes.
  */
 export function DisplayBoard() {
   const { t } = useTranslation();
@@ -129,10 +61,7 @@ export function DisplayBoard() {
       onPointerDownCapture={() => setTouches((n) => n + 1)}
       onScrollCapture={() => setTouches((n) => n + 1)}
     >
-      <div className="flex flex-col lg:min-h-0 lg:flex-1 lg:flex-row">
-        <aside className="flex flex-col gap-3 border-b border-line pt-2 pb-3 lg:w-[22rem] lg:shrink-0 lg:overflow-y-auto lg:border-r lg:border-b-0 2xl:w-[26rem]">
-          <TodayEntries today={today} />
-        </aside>
+      <div className="flex flex-col lg:min-h-0 lg:flex-1">
         <div className="flex min-w-0 flex-col lg:min-h-0 lg:flex-1">
           <nav className="flex items-center gap-1 px-3 py-0.5 max-sm:px-2">
             <button

@@ -1196,5 +1196,9 @@
       "museum": "Museu",
       "popcorn": "Pipocas"
     }
+  },
+  "summary": {
+    "nextDays": "Próximos 7 dias",
+    "tomorrow": "Amanhã"
   }
 }

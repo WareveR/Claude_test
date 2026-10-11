@@ -1,10 +1,12 @@
 import { useTranslation } from "react-i18next";
 import { TodayTasks } from "../briefing/ComingUp";
 import { TodayPanel } from "../shell/SidePanel";
+import { WeekEntries } from "./WeekEntries";
 
 /**
- * The Summary: today's weather by the hour, sunrise and sunset and "Coming up" on the left, and
- * what is left to do on the right; one under the other on a narrow screen.
+ * The Summary: today's weather by the hour, sunrise and sunset and "Coming up" on the left, and the
+ * next seven days' Entries and what is left to do on the right; one under the other on a narrow
+ * screen.
  */
 export function SummaryPage() {
   const { t } = useTranslation();
@@ -17,7 +19,8 @@ export function SummaryPage() {
       <div className="flex min-w-0 flex-col gap-3">
         <TodayPanel />
       </div>
-      <div className="min-w-0">
+      <div className="flex min-w-0 flex-col gap-3">
+        <WeekEntries />
         <TodayTasks />
       </div>
     </main>

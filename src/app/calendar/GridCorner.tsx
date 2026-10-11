@@ -10,7 +10,7 @@ export function GridCorner({ tasks }: { tasks: number }) {
   const { t } = useTranslation();
   const compact = useWeekCompact();
   const tasksHidden = useTasksHidden();
-  const button = "rounded-md p-1 text-muted hover:bg-line/60";
+  const button = "rounded-md p-1";
   return (
     <div className="flex flex-col items-center gap-1">
       <button
@@ -19,7 +19,7 @@ export function GridCorner({ tasks }: { tasks: number }) {
         aria-pressed={compact}
         data-testid="week-compact"
         onClick={() => setWeekCompact(!compact)}
-        className={button}
+        className={`${button} text-muted hover:bg-line/60`}
       >
         {compact ? (
           <ChevronsUpDown aria-hidden size={18} strokeWidth={1.75} />
@@ -33,7 +33,7 @@ export function GridCorner({ tasks }: { tasks: number }) {
         aria-pressed={!tasksHidden}
         data-testid="week-tasks"
         onClick={() => setTasksHidden(!tasksHidden)}
-        className={`relative ${button} ${tasksHidden ? "" : "bg-accent text-accent-ink hover:bg-accent"}`}
+        className={`relative ${button} ${tasksHidden ? "text-muted hover:bg-line/60" : "bg-accent text-accent-ink"}`}
       >
         <ListChecks aria-hidden size={18} strokeWidth={1.75} />
         {tasksHidden && tasks > 0 && (
