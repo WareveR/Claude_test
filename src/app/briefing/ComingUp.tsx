@@ -19,7 +19,7 @@ type Open = { id: string; date: string } | null;
 
 /**
  * A phrase of the Briefing. One about an Entry opens that Entry in a popup; the rest is plain
- * text, as the Tasks are right below.
+ * text, as the Tasks are right beside it.
  */
 function SegmentText({ segment, onOpen }: { segment: Segment; onOpen: (open: Open) => void }) {
   const link = segment.link;
@@ -36,14 +36,12 @@ function SegmentText({ segment, onOpen }: { segment: Segment; onOpen: (open: Ope
 }
 
 /**
- * "Coming up": the AI-written Briefing of the next seven days and, below it, what is left to do
- * (today's and overdue Tasks, tickable). The Briefing is never written on load, only by Refresh;
+ * "Coming up": the AI-written Briefing of the next seven days. It is never written on load, only by Refresh;
  * with exactly one Person filtered it is that Person's, otherwise the Family's.
  */
 export function ComingUp({ readOnly = false }: { readOnly?: boolean }) {
   const { t, i18n } = useTranslation();
   const client = useQueryClient();
-  const { family } = useSignedIn();
   const { personIds } = usePersonFilter();
   const person = personIds.length === 1 ? personIds[0] : null;
   const query = person ? `?person=${encodeURIComponent(person)}` : "";
@@ -56,9 +54,6 @@ export function ComingUp({ readOnly = false }: { readOnly?: boolean }) {
     mutationFn: () => api<Briefing>(`/briefing/refresh${query}`, { method: "POST" }),
     onSuccess: (data) => client.setQueryData(key, data),
   });
-  const today = todayIn(family.timeZone);
-  const { tasks, now, persons } = usePeriodTasks(today, today);
-  const overdue = tasks.filter((task) => isOverdue(task, now)).length;
   const data = briefing.data;
   const [open, setOpen] = useState<Open>(null);
   return (
@@ -107,26 +102,36 @@ export function ComingUp({ readOnly = false }: { readOnly?: boolean }) {
           </p>
         )}
       </div>
-      {tasks.length > 0 && (
-        <section
-          aria-labelledby="coming-up-tasks-title"
-          data-testid="coming-up-tasks"
-          className="border-t border-line pt-2"
-        >
-          <h3 id="coming-up-tasks-title" className="text-sm font-semibold">
-            {t("comingUp.toDo", { count: tasks.length })}
-            {overdue > 0 && (
-              <span className="text-overdue"> · {t("tasks.overdueCount", { count: overdue })}</span>
-            )}
-          </h3>
-          <ul className="divide-y divide-line">
-            {tasks.map((task) => (
-              <TaskRow key={task.id} task={task} overdue={isOverdue(task, now)} persons={persons} />
-            ))}
-          </ul>
-        </section>
-      )}
       {open && <EntryPopup id={open.id} occurrence={open.date} onClose={() => setOpen(null)} />}
+    </section>
+  );
+}
+
+/** What is left to do today: today's and overdue Tasks, tickable. Beside the Briefing on the Summary. */
+export function TodayTasks() {
+  const { t } = useTranslation();
+  const { family } = useSignedIn();
+  const today = todayIn(family.timeZone);
+  const { tasks, now, persons } = usePeriodTasks(today, today);
+  const overdue = tasks.filter((task) => isOverdue(task, now)).length;
+  return (
+    <section
+      aria-labelledby="coming-up-tasks-title"
+      data-testid="coming-up-tasks"
+      className="mx-4 flex flex-col gap-2 rounded-xl border border-line bg-surface p-4 shadow-sm"
+    >
+      <h2 id="coming-up-tasks-title" className="text-xl font-bold">
+        {t("comingUp.toDo", { count: tasks.length })}
+        {overdue > 0 && (
+          <span className="text-overdue"> · {t("tasks.overdueCount", { count: overdue })}</span>
+        )}
+      </h2>
+      {tasks.length === 0 && <p className="text-muted">{t("tasks.nothingLeft")}</p>}
+      <ul className="divide-y divide-line">
+        {tasks.map((task) => (
+          <TaskRow key={task.id} task={task} overdue={isOverdue(task, now)} persons={persons} />
+        ))}
+      </ul>
     </section>
   );
 }

@@ -113,7 +113,9 @@
     "open": "Abrir",
     "openDay": "Abrir o dia",
     "hideDetails": "Esconder meteorologia e tarefas",
-    "showDetails": "Mostrar meteorologia e tarefas"
+    "showDetails": "Mostrar meteorologia e tarefas",
+    "hideWeather": "Esconder meteorologia",
+    "showWeather": "Mostrar meteorologia"
   },
   "settings": {
     "title": "Definições",

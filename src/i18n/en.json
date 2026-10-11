@@ -113,7 +113,9 @@
     "open": "Open",
     "openDay": "Open the day",
     "hideDetails": "Hide weather and tasks",
-    "showDetails": "Show weather and tasks"
+    "showDetails": "Show weather and tasks",
+    "hideWeather": "Hide weather",
+    "showWeather": "Show weather"
   },
   "settings": {
     "title": "Settings",
