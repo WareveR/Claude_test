@@ -862,5 +862,38 @@
     "tasks": "Tasks",
     "for": "For: {{title}}",
     "unlink": "Unlink from the entry"
+  },
+  "search": {
+    "title": "Search",
+    "box": "Search for",
+    "placeholder": "Words, \"exact text\", -leave out",
+    "hint": "Any of the words finds a result; \"quoted text\" must appear as written; -word leaves out what has it. Case and accents don't matter.",
+    "person": "Person",
+    "anyone": "Anyone",
+    "kind": "What",
+    "kinds": {
+      "all": "Everything",
+      "entries": "Entries",
+      "tasks": "Tasks",
+      "checklists": "Checklists"
+    },
+    "entryTypes": "Entry types",
+    "period": "When",
+    "periods": {
+      "any": "Any time",
+      "past": "Past",
+      "next30": "Next 30 days",
+      "year": "This year",
+      "custom": "Between dates…"
+    },
+    "from": "From",
+    "to": "To",
+    "done": "Include done tasks",
+    "start": "Type something or pick a filter.",
+    "none": "Nothing found.",
+    "count_one": "{{count}} result",
+    "count_other": "{{count}} results",
+    "more_one": "…and {{count}} more: narrow the search to see it.",
+    "more_other": "…and {{count}} more: narrow the search to see them."
   }
 }
