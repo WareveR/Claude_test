@@ -1030,5 +1030,9 @@
   "screens": {
     "wall": "Wall",
     "summary": "Summary"
+  },
+  "summary": {
+    "nextDays": "Next 7 days",
+    "tomorrow": "Tomorrow"
   }
 }

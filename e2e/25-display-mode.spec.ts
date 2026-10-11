@@ -89,7 +89,8 @@ test("the Wall view shows the board", async ({ page }) => {
     "aria-pressed",
     "true",
   );
-  await expect(board.getByTestId("today-entry").filter({ hasText: "Family lunch" })).toBeVisible();
+  // The grid fills the screen: the coming days' list is in the Summary.
+  await expect(board.getByTestId("today-entry")).toHaveCount(0);
   for (let i = 0; i < 7; i++) {
     await expect(board.getByTestId(`day-column-${lisbonDate(i)}`)).toBeVisible();
   }
@@ -129,30 +130,23 @@ test("the Wall view shows the board", async ({ page }) => {
   await expect(page).toHaveURL(/\/display$/);
 });
 
-test("Private items show only Private and their time; Entries open read-only", async ({ page }) => {
+test("the Summary lists the coming days; Private items show only Private and their time", async ({
+  page,
+}) => {
   await signIn(page);
   await turnOnDisplayMode(page);
   const board = page.getByTestId("display-board");
-
-  const list = board.getByTestId("today-entry");
-  await expect(list.filter({ hasText: "Private" })).toContainText("10:00");
   await expect(board.getByText("Therapy with Dr Silva")).toHaveCount(0);
   await expect(board.getByText("Secret errand")).toHaveCount(0);
 
-  await list.filter({ hasText: "Family lunch" }).click();
-  await expect(page).toHaveURL(/\/entries\/[^/]+$/);
-  const details = page.getByTestId("entry-details");
-  await expect(details).toContainText("Family lunch");
-  await expect(details).toContainText("12:00");
-  await expect(details).toContainText("Bring the wine");
-  await expect(page.getByRole("button", { name: /Save|Delete/ })).toHaveCount(0);
-  await expect(page.getByRole("link", { name: /Edit/ })).toHaveCount(0);
-  await page.getByRole("button", { name: "Back to the board" }).click();
-
-  await list.filter({ hasText: "Private" }).click();
-  await expect(page.getByTestId("entry-details")).toContainText("Private");
-  await expect(page.getByTestId("entry-details")).toContainText("10:00");
-  await expect(page.getByText("Therapy with Dr Silva")).toHaveCount(0);
+  // The Summary lists the next seven days' Entries, today's first.
+  await page.getByRole("banner").getByRole("button", { name: "Summary" }).click();
+  const week = page.getByTestId("week-entries");
+  await expect(week.getByRole("heading", { name: "Today" })).toBeVisible();
+  const list = week.getByTestId("today-entry");
+  await expect(list.filter({ hasText: "Private" })).toContainText("10:00");
+  await expect(week.getByText("Therapy with Dr Silva")).toHaveCount(0);
+  await expect(list.filter({ hasText: "Family lunch" })).toContainText("12:00");
 });
 
 test("‹ › move the grid a week, a pill returns, and three idle minutes return too", async ({
@@ -182,8 +176,6 @@ test("‹ › move the grid a week, a pill returns, and three idle minutes retur
   expect(
     Math.abs((box?.y ?? 0) + (box?.height ?? 0) / 2 - ((row?.y ?? 0) + (row?.height ?? 0) / 2)),
   ).toBeLessThan(8);
-  // The left column stays on today.
-  await expect(board.getByRole("heading", { name: "Today" })).toBeVisible();
 
   await pill.click();
   await expect(board.getByTestId(`day-column-${lisbonDate(0)}`)).toBeVisible();
