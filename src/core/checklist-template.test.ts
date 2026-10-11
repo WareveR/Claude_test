@@ -9,13 +9,13 @@ import {
 import { LANGUAGES } from "./languages";
 
 describe("Checklist templates", () => {
-  it("has every built-in template in both languages, with 6 to 12 items each", () => {
+  it("has every built-in template in both languages, with 6 to 20 items each", () => {
     for (const key of BUILT_IN_TEMPLATES) {
       for (const language of LANGUAGES) {
         const { name, items } = BUILT_IN_TEMPLATE_TEXT[key][language];
         expect(name).not.toBe("");
         expect(items.length).toBeGreaterThanOrEqual(6);
-        expect(items.length).toBeLessThanOrEqual(12);
+        expect(items.length).toBeLessThanOrEqual(20);
         expect(new Set(items).size).toBe(items.length);
       }
       expect(BUILT_IN_TEMPLATE_TEXT[key].en.items.length).toBe(

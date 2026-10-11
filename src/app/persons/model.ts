@@ -13,18 +13,18 @@ export type Person = {
 
 /** Colours offered for Persons, chosen to stay legible in light and dark themes. */
 export const PERSON_COLORS = [
-  "#e07a5f",
-  "#d1495b",
-  "#c2185b",
-  "#8e44ad",
-  "#5c6bc0",
-  "#1e88e5",
-  "#00897b",
-  "#43a047",
-  "#7cb342",
-  "#f4a261",
-  "#8d6e63",
-  "#607d8b",
+  "#ffcdd2",
+  "#f8bbd0",
+  "#e1bee7",
+  "#c5cae9",
+  "#bbdefb",
+  "#b2ebf2",
+  "#c8e6c9",
+  "#f0f4c3",
+  "#ffecb3",
+  "#ffccbc",
+  "#d7ccc8",
+  "#cfd8dc",
 ];
 
 export function usePersons() {

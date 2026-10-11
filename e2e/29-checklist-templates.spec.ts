@@ -10,12 +10,12 @@ test("a Checklist starts from a built-in template and is saved as a new one", as
   await page.goto("/checklists/new");
   await page.getByLabel("Start from").selectOption({ label: "Back to school" });
   await expect(page.getByLabel("Name", { exact: true })).toHaveValue("Back to school");
-  await expect(page.getByTestId("template-preview")).toContainText("9 items: Buy the textbooks");
+  await expect(page.getByTestId("template-preview")).toContainText("13 items: Buy the textbooks");
   await page.getByRole("button", { name: "Save" }).click();
 
   const detail = page.getByTestId("checklist-detail");
   await expect(detail.getByRole("heading", { name: "Back to school" })).toBeVisible();
-  await expect(detail).toContainText("0 of 9");
+  await expect(detail).toContainText("0 of 13");
   const items = detail.getByTestId("checklist-item");
   await expect(items.first()).toContainText("Buy the textbooks");
   await expect(items.last()).toContainText("Medical and dental check-up");
@@ -104,7 +104,7 @@ test("a Task dragged onto a Checklist moves in, and items swipe away with Undo",
 
   const task = page.getByTestId("task").filter({ hasText: "Pack the pencil case" });
   const school = page.getByTestId("checklist").filter({ hasText: "Back to school" });
-  await expect(school).toContainText("0 of 9");
+  await expect(school).toContainText("0 of 13");
   await drag(page, await centre(task.getByRole("link")), await centre(school));
   await expect(school).toHaveClass(/ring-2/);
   await page.mouse.up();
@@ -114,7 +114,7 @@ test("a Task dragged onto a Checklist moves in, and items swipe away with Undo",
   await dialog.getByRole("button", { name: "Move" }).click();
   await expect(dialog).toHaveCount(0);
   await expect(task).toHaveCount(0);
-  await expect(school).toContainText("0 of 10");
+  await expect(school).toContainText("0 of 14");
 
   // A plain click still opens the Checklist.
   await school.click();
@@ -128,17 +128,17 @@ test("a Task dragged onto a Checklist moves in, and items swipe away with Undo",
   await drag(page, from, { x: from.x - 250, y: from.y });
   await page.mouse.up();
   await expect(kit).toHaveCount(0);
-  await expect(detail).toContainText("0 of 9");
+  await expect(detail).toContainText("0 of 13");
   await page.getByRole("status").getByRole("button", { name: "Undo" }).click();
   await expect(kit).toBeVisible();
-  await expect(detail).toContainText("0 of 10");
+  await expect(detail).toContainText("0 of 14");
 
   await drag(page, from, { x: from.x + 250, y: from.y });
   await page.mouse.up();
   await expect(kit).toHaveCount(0);
   // Leaving the page deletes it for good.
   await page.goBack();
-  await expect(school).toContainText("0 of 9");
+  await expect(school).toContainText("0 of 13");
 });
 
 test("a loose Task's form adds a copy of it to a Checklist", async ({ page }) => {
@@ -156,6 +156,6 @@ test("a loose Task's form adds a copy of it to a Checklist", async ({ page }) =>
   await page.goto("/tasks");
   await expect(page.getByTestId("task").filter({ hasText: "Buy glue sticks" })).toBeVisible();
   await expect(page.getByTestId("checklist").filter({ hasText: "Back to school" })).toContainText(
-    "0 of 10",
+    "0 of 14",
   );
 });

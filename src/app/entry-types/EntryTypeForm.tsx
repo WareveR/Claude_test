@@ -2,11 +2,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router";
-import { IMPORTANCES, type EntryTypeDefaults } from "../../core/entry-type";
+import { IMPORTANCES, TYPE_COLORS, type EntryTypeDefaults } from "../../core/entry-type";
 import type { Repetition } from "../../core/repetition";
 import { api } from "../api";
 import type { Entry } from "../entries/model";
-import { PERSON_COLORS, uploadPhoto, usePersons } from "../persons/model";
+import { uploadPhoto, usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
 import { ErrorText, Field, FormActions, TextInput } from "../screens/form";
 import { IconPicker } from "../ui/IconPicker";
@@ -34,7 +34,7 @@ function EntryTypeForm({ type }: { type?: EntryType }) {
   const queryClient = useQueryClient();
   const persons = usePersons();
   const [name, setName] = useState(type ? typeName(type, t) : "");
-  const [color, setColor] = useState(type?.color ?? PERSON_COLORS[5]);
+  const [color, setColor] = useState(type?.color ?? TYPE_COLORS.health);
   const [icon, setIcon] = useState(type?.icon ?? "calendar");
   const [thumbnailKey, setThumbnailKey] = useState(type?.thumbnailKey ?? null);
   const [defaults, setDefaults] = useState<EntryTypeDefaults>(type?.defaults ?? {});
@@ -106,7 +106,7 @@ function EntryTypeForm({ type }: { type?: EntryType }) {
         <fieldset className="flex flex-col gap-1 text-sm">
           <legend className="mb-1 font-medium">{t("entryTypes.color")}</legend>
           <div className="flex flex-wrap gap-2">
-            {PERSON_COLORS.map((c) => (
+            {Object.values(TYPE_COLORS).map((c) => (
               <label key={c} className="cursor-pointer">
                 <input
                   type="radio"

@@ -17,7 +17,7 @@ async function types(browser: Awaited<ReturnType<typeof setUpFamily>>) {
 }
 
 describe("Entry Types", () => {
-  it("starts with the seven built-in types, unnamed so each device translates them", async () => {
+  it("starts with the fourteen built-in types, unnamed so each device translates them", async () => {
     const browser = await setUpFamily();
     const list = await types(browser);
     expect(list.map((t) => t.builtinKey)).toEqual([
@@ -27,6 +27,13 @@ describe("Entry Types", () => {
       "booking",
       "activity",
       "event",
+      "beauty",
+      "meal",
+      "home",
+      "pet",
+      "work",
+      "school",
+      "payment",
       "general",
     ]);
     expect(list.every((t) => t.name === null)).toBe(true);

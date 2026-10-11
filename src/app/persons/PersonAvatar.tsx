@@ -23,10 +23,18 @@ export function PersonAvatar({
     <span
       role="img"
       aria-label={person.name}
-      style={{ ...style, backgroundColor: person.color }}
-      className="inline-flex shrink-0 items-center justify-center rounded-full font-semibold text-white"
+      style={{ ...style, backgroundColor: person.color, color: inkOn(person.color) }}
+      className="inline-flex shrink-0 items-center justify-center rounded-full font-semibold"
     >
       {initials(person.name)}
     </span>
   );
+}
+
+/** Dark initials on the light pastel palette, white on anything darker. */
+function inkOn(color: string) {
+  const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(color);
+  if (!m) return "#fff";
+  const [r, g, b] = m.slice(1).map((h) => parseInt(h, 16));
+  return 0.299 * r + 0.587 * g + 0.114 * b > 160 ? "#1f2937" : "#fff";
 }

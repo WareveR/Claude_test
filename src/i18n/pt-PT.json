@@ -229,6 +229,13 @@
       "booking": "Reserva",
       "activity": "Atividade",
       "event": "Evento",
+      "beauty": "Beleza e bem-estar",
+      "meal": "Refeição",
+      "home": "Casa",
+      "pet": "Animais",
+      "work": "Trabalho",
+      "school": "Escola",
+      "payment": "Pagamento",
       "general": "Geral"
     },
     "moveEntries": "Escolhe para onde vai cada entrada de {{name}}. As que não mudares vão para Geral.",
