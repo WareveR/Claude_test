@@ -37,10 +37,14 @@ test("a Checklist's page holds its items to tick, add, rename and remove", async
   await detail.getByRole("button", { name: "Edit Clear the garage" }).click();
   await detail.getByLabel("Name").fill("Clear out the garage");
   await detail.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(detail.getByText("Clear out the garage")).toBeVisible();
+  await expect(
+    detail.getByTestId("checklist-item").filter({ hasText: "Clear out the garage" }),
+  ).toBeVisible();
 
   await detail.getByRole("button", { name: "Remove Sort the toys" }).click();
-  await expect(detail.getByText("Sort the toys")).toHaveCount(0);
+  await expect(
+    detail.getByTestId("checklist-item").filter({ hasText: "Sort the toys" }),
+  ).toHaveCount(0);
   await expect(detail).toContainText("1 of 2");
 
   // In the Tasks view the Checklist is one row; its items never show on their own.
@@ -111,7 +115,9 @@ test("a Checklist repeating every Sunday shows only on Sundays", async ({ page }
   await expect(chores.first()).toBeVisible();
 });
 
-test("a Checklist's items can carry a note and be grouped under sections", async ({ page }) => {
+test("a Checklist's items carry a note and hold items of their own, at any depth", async ({
+  page,
+}) => {
   await signIn(page);
   await page.goto("/tasks");
   await page.getByRole("link", { name: "New checklist" }).click();
@@ -120,49 +126,60 @@ test("a Checklist's items can carry a note and be grouped under sections", async
   const detail = page.getByTestId("checklist-detail");
   await expect(detail.getByRole("heading", { name: "Birthday party" })).toBeVisible();
 
-  const add = async (title: string, note = "", section?: string) => {
-    if (section !== undefined) await detail.getByLabel("Section (optional)").fill(section);
+  const item = (title: string) => detail.getByTestId("checklist-item").filter({ hasText: title });
+  const add = async (title: string, note = "") => {
     await detail.getByLabel("New item").fill(title);
     if (note) await detail.getByLabel("Note (optional)").fill(note);
     await detail.getByRole("button", { name: "Add", exact: true }).click();
-    await expect(detail.getByTestId("checklist-item").filter({ hasText: title })).toBeVisible();
+    await expect(item(title)).toBeVisible();
   };
   await add("Print the photos");
-  await add("Cake", "pick up on Saturday", "Food and drinks");
-  // The section stays for the next item.
+  await add("Food and drinks");
+  // The + on an item adds inside it, and the place stays for the next item.
+  await detail.getByRole("button", { name: "Add an item inside Food and drinks" }).click();
+  await add("Cake", "pick up on Saturday");
   await add("Cheese puffs", "still to make");
-  await add("Pineapple", "Aldi", "Shopping");
+  await detail.getByRole("button", { name: "Add an item inside Cake" }).click();
+  await add("Candles");
 
-  const sections = detail.getByTestId("checklist-section");
-  await expect(sections).toHaveCount(2);
-  const food = sections.filter({ hasText: "Food and drinks" });
-  await expect(food.getByTestId("checklist-item")).toHaveCount(2);
-  await expect(food.getByTestId("checklist-item-note")).toContainText([
+  const food = item("Food and drinks");
+  await expect(food.getByTestId("checklist-item-progress")).toHaveText("0 of 2");
+  await expect(item("Cake").getByTestId("checklist-item-progress")).toHaveText("0 of 1");
+  await expect(detail.getByTestId("checklist-item-note")).toContainText([
     "pick up on Saturday",
     "still to make",
   ]);
-  await food.getByRole("checkbox", { name: "Done: Cake" }).check();
-  await expect(food).toContainText("1 of 2");
 
-  // Editing an item moves it to another section.
-  await detail.getByRole("button", { name: "Edit Pineapple" }).click();
-  await detail.getByLabel("Section (optional)").first().fill("Food and drinks");
+  // The last item inside done ticks the item holding it.
+  await detail.getByRole("checkbox", { name: "Done: Candles" }).check();
+  await expect(detail.getByRole("checkbox", { name: "Done: Cake" })).toBeChecked();
+  await expect(food.getByTestId("checklist-item-progress")).toHaveText("1 of 2");
+
+  // Editing an item moves it inside another.
+  await detail.getByRole("button", { name: "Edit Print the photos" }).click();
+  await detail.getByLabel("Inside").first().selectOption({ label: "Food and drinks" });
   await detail.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(sections).toHaveCount(1);
-  await expect(food.getByTestId("checklist-item")).toHaveCount(3);
-  await page.screenshot({ path: "test-results/checklist-sections.png", fullPage: true });
+  await expect(food.getByTestId("checklist-item-progress")).toHaveText("1 of 3");
+  await page.screenshot({ path: "test-results/checklist-items.png", fullPage: true });
 
-  // A section opens and closes like an accordion, its progress in the heading.
-  const heading = food.locator("h2").getByRole("button");
-  await expect(heading).toHaveAttribute("aria-expanded", "true");
-  await heading.click();
-  await expect(food.getByTestId("checklist-item")).toHaveCount(0);
-  await expect(heading).toContainText("1 of 3");
-  await heading.click();
-  await food.getByRole("checkbox", { name: "Done: Cheese puffs" }).check();
-  await food.getByRole("checkbox", { name: "Done: Pineapple" }).check();
-  await expect(heading).toContainText("3 of 3");
-  // A finished section starts closed.
+  // An item with items opens and closes like an accordion.
+  const toggle = food.getByRole("button", { name: "Items of Food and drinks" });
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  await toggle.click();
+  await expect(item("Cheese puffs")).toHaveCount(0);
+  await toggle.click();
+
+  // Ticking an item ticks everything inside it; a finished one starts closed.
+  await detail.getByRole("checkbox", { name: "Done: Food and drinks" }).check();
+  await expect(detail.getByRole("checkbox", { name: "Done: Cheese puffs" })).toBeChecked();
+  await expect(detail).toContainText("3 of 3");
   await page.reload();
-  await expect(food.locator("h2").getByRole("button")).toHaveAttribute("aria-expanded", "false");
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+
+  // A predefined list adds its items wherever new items go.
+  await detail.getByRole("button", { name: "Add an item inside Food and drinks" }).click();
+  await detail.getByLabel("Use a predefined list").selectOption({ label: "Back to school" });
+  await expect(detail.getByRole("status")).toContainText('Added 9 items from "Back to school"');
+  await expect(food.getByTestId("checklist-item-progress")).toHaveText("3 of 12");
+  await expect(detail.getByRole("checkbox", { name: "Done: Food and drinks" })).not.toBeChecked();
 });

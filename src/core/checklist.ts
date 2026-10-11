@@ -1,5 +1,6 @@
 import { addDays, daysBetween, type PlainDate } from "./plain-date";
 import { occurrenceDates, type Repetition } from "./repetition";
+import { leafProgress, type TreeItem } from "./task-tree";
 import { isOverdue, type FamilyNow, type TaskTiming } from "./task";
 
 /**
@@ -12,9 +13,9 @@ export type ChecklistPeriod = {
   repetition?: Repetition | null;
 };
 
-/** "3 of 8 done". */
-export function checklistProgress(tasks: { doneAt: string | null }[]) {
-  return { done: tasks.filter((t) => t.doneAt).length, total: tasks.length };
+/** "3 of 8 done", counting only the items that hold no items of their own. */
+export function checklistProgress(tasks: TreeItem[]) {
+  return leafProgress(tasks);
 }
 
 /** A Checklist isn't pending before its start: its items aren't due or overdue yet. */

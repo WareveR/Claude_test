@@ -165,7 +165,12 @@ export function SearchPage() {
             href: checklist ? `/checklists/${checklist.id}` : `/tasks/${task.id}`,
             done: Boolean(task.doneAt),
           },
-          [task.notes, task.section ?? "", checklist?.name ?? "", ...names(task.personIds)],
+          [
+            task.notes,
+            tasks?.find((parent) => parent.id === task.parentId)?.title ?? "",
+            checklist?.name ?? "",
+            ...names(task.personIds),
+          ],
         );
       }
     }

@@ -5,10 +5,12 @@ import { IMPORTANCES, type Importance } from "../../core/entry-type";
 import { isPlainDate } from "../../core/plain-date";
 import { isRepetition, type Repetition } from "../../core/repetition";
 import { familyNow, nextRepeat } from "../../core/task";
+import { wouldNestInItself } from "../../core/task-tree";
 import { randomId } from "../auth/crypto";
 import type { Db } from "../db";
 import { schema } from "../db";
 import { requireDevice } from "../require-device";
+import { settleChecklist } from "../task-tree";
 import type { AppEnv } from "../types";
 import { personMentionChecks } from "./persons";
 
@@ -24,6 +26,7 @@ export type TaskInput = {
   repetition: Repetition | null;
   checklistId: string | null;
   section: string;
+  parentId: string | null;
   entryId: string | null;
   importance: Importance;
 };
@@ -46,6 +49,16 @@ async function parseTask(db: Db, body: Record<string, unknown>) {
       .from(schema.checklist)
       .where(eq(schema.checklist.id, checklistId));
     if (!found) return { field: "checklistId" };
+  }
+  // An item can sit inside another item of the same Checklist.
+  const parentId = checklistId === null ? null : (body.parentId ?? null);
+  if (parentId !== null) {
+    if (typeof parentId !== "string") return { field: "parentId" };
+    const [found] = await db
+      .select({ checklistId: schema.task.checklistId })
+      .from(schema.task)
+      .where(eq(schema.task.id, parentId));
+    if (found?.checklistId !== checklistId) return { field: "parentId" };
   }
   // Only a loose Task prepares for an Entry; an item goes with its Checklist.
   const entryId = checklistId === null ? (body.entryId ?? null) : null;
@@ -86,8 +99,9 @@ async function parseTask(db: Db, body: Record<string, unknown>) {
       private: Boolean(body.private),
       repetition: repetition as Repetition | null,
       checklistId: checklistId as string | null,
-      // Only a Checklist's items are listed under a section.
-      section: checklistId !== null && typeof body.section === "string" ? body.section.trim() : "",
+      // Items nest instead of having sections (migration 0027).
+      section: "",
+      parentId: parentId as string | null,
       entryId: entryId as string | null,
       importance: importance as Importance,
     } satisfies TaskInput,
@@ -117,7 +131,7 @@ async function present(db: Db, rows: TaskRow[]) {
     repetition: row.repetition ?? null,
     seriesId: row.seriesId,
     checklistId: row.checklistId,
-    section: row.section,
+    parentId: row.parentId,
     entryId: row.entryId,
     importance: row.importance,
     createdAt: row.createdAt,
@@ -169,6 +183,8 @@ taskRoutes.post("/tasks", async (c) => {
     db.insert(schema.task).values({ id, ...fields, createdAt: now, changedAt: now }),
     ...personLinks(db, id, personIds),
   ]);
+  // A new undone item unticks the items holding it.
+  if (fields.checklistId) await settleChecklist(db, fields.checklistId, now);
   return c.json(await presentOne(db, id), 201);
 });
 
@@ -180,14 +196,36 @@ taskRoutes.put("/tasks/:id", async (c) => {
   const parsed = await parseTask(db, await c.req.json().catch(() => ({})));
   if (!parsed.values) return c.json({ error: "invalid", field: parsed.field }, 400);
   const { personIds, ...fields } = parsed.values;
+  if (fields.checklistId) {
+    const items = await db
+      .select({ id: schema.task.id, parentId: schema.task.parentId, doneAt: schema.task.doneAt })
+      .from(schema.task)
+      .where(eq(schema.task.checklistId, fields.checklistId));
+    if (wouldNestInItself(items, id, fields.parentId)) {
+      return c.json({ error: "invalid", field: "parentId" }, 400);
+    }
+  }
+  // Items inside an item that leaves its Checklist go with it.
+  const inside =
+    existing.checklistId && existing.checklistId !== fields.checklistId
+      ? await db
+          .select({ id: schema.task.id })
+          .from(schema.task)
+          .where(eq(schema.task.parentId, id))
+      : [];
+  if (inside.length > 0) return c.json({ error: "invalid", field: "checklistId" }, 400);
+  const now = c.get("now").toISOString();
   await db.batch([
     db
       .update(schema.task)
-      .set({ ...fields, changedAt: c.get("now").toISOString() })
+      .set({ ...fields, changedAt: now })
       .where(eq(schema.task.id, id)),
     db.delete(schema.taskPerson).where(eq(schema.taskPerson.taskId, id)),
     ...personLinks(db, id, personIds),
   ]);
+  for (const checklistId of new Set([existing.checklistId, fields.checklistId])) {
+    if (checklistId) await settleChecklist(db, checklistId, now);
+  }
   return c.json(await presentOne(db, id));
 });
 
@@ -200,6 +238,14 @@ taskRoutes.post("/tasks/:id/done", async (c) => {
   const id = c.req.param("id");
   const [existing] = await db.select().from(schema.task).where(eq(schema.task.id, id));
   if (!existing) return c.json({ error: "not_found" }, 404);
+  // An item ticks everything inside it, and the items holding it once all their items are done.
+  if (existing.checklistId) {
+    await settleChecklist(db, existing.checklistId, c.get("now").toISOString(), {
+      id,
+      done: true,
+    });
+    return c.json(await presentOne(db, id));
+  }
   if (!existing.doneAt) {
     const now = c.get("now");
     const at = now.toISOString();
@@ -273,6 +319,13 @@ taskRoutes.delete("/tasks/:id/done", async (c) => {
   const id = c.req.param("id");
   const [existing] = await db.select().from(schema.task).where(eq(schema.task.id, id));
   if (!existing) return c.json({ error: "not_found" }, 404);
+  if (existing.checklistId) {
+    await settleChecklist(db, existing.checklistId, c.get("now").toISOString(), {
+      id,
+      done: false,
+    });
+    return c.json(await presentOne(db, id));
+  }
   const [next] = await db
     .select()
     .from(schema.task)
@@ -288,14 +341,19 @@ taskRoutes.delete("/tasks/:id/done", async (c) => {
   return c.json(await presentOne(db, id));
 });
 
-/** Deleting is for good; nightly Backups are the safety net. */
+/**
+ * Deleting is for good, with the items inside; nightly Backups are the safety net. The items
+ * that held it are done if everything left in them is.
+ */
 taskRoutes.delete("/tasks/:id", async (c) => {
-  const deleted = await c
-    .get("db")
+  const db = c.get("db");
+  const deleted = await db
     .delete(schema.task)
     .where(eq(schema.task.id, c.req.param("id")))
-    .returning({ id: schema.task.id });
+    .returning({ id: schema.task.id, checklistId: schema.task.checklistId });
   if (deleted.length === 0) return c.json({ error: "not_found" }, 404);
+  const { checklistId } = deleted[0];
+  if (checklistId) await settleChecklist(db, checklistId, c.get("now").toISOString());
   return c.body(null, 204);
 });
 
@@ -326,6 +384,7 @@ taskRoutes.post("/tasks/:id/checklist", async (c) => {
       .update(schema.task)
       .set({
         checklistId,
+        parentId: null,
         dueDate: null,
         dueTime: null,
         repetition: null,

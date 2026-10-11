@@ -1,4 +1,11 @@
-import { integer, primaryKey, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  type AnySQLiteColumn,
+  integer,
+  primaryKey,
+  real,
+  sqliteTable,
+  text,
+} from "drizzle-orm/sqlite-core";
 import type { EntryTypeDefaults, Importance, ReminderOffset } from "../../core/entry-type";
 import type { HolidayPlace } from "../../core/holidays";
 import type { Repetition } from "../../core/repetition";
@@ -192,8 +199,13 @@ export const task = sqliteTable("task", {
   repeatOf: text("repeat_of"),
   /** The Checklist this Task belongs to, if any; such a Task doesn't repeat on its own. */
   checklistId: text("checklist_id").references(() => checklist.id, { onDelete: "cascade" }),
-  /** The heading a Checklist item is listed under on its page ("Food", "Shopping"); "" for none. */
+  /** Unused since items nest (migration 0027 turned sections into parent items); always "". */
   section: text("section").notNull().default(""),
+  /**
+   * The item this one sits inside, in the same Checklist; null at the top. An item with items
+   * of its own is done when all of them are, and goes with its parent.
+   */
+  parentId: text("parent_id").references((): AnySQLiteColumn => task.id, { onDelete: "cascade" }),
   /** The Entry a loose Task prepares for, shown with it; never set on a Checklist's items. */
   entryId: text("entry_id").references(() => entry.id, { onDelete: "set null" }),
   /** High comes first among the Tasks due the same day. */

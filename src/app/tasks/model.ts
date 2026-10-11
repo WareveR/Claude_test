@@ -18,8 +18,8 @@ export type Task = {
   seriesId: string | null;
   /** The Checklist this Task belongs to, if any. */
   checklistId: string | null;
-  /** The heading a Checklist item is listed under; "" for none. */
-  section: string;
+  /** The item this one sits inside, in the same Checklist; null at the top. */
+  parentId: string | null;
   /** The Entry a loose Task prepares for, if any. */
   entryId: string | null;
   createdAt: string;
