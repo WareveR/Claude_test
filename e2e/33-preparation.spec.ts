@@ -11,6 +11,7 @@ test("an Entry holds the Checklists and Tasks that prepare for it", async ({ pag
   await page.getByLabel("Type", { exact: true }).selectOption({ label: "Appointment" });
   await page.getByLabel("Date", { exact: true }).fill("2026-11-07");
   await page.getByRole("button", { name: "Save" }).click();
+  await expect(page).not.toHaveURL(/\/entries\/new/);
   await page.getByTestId("day-column-2026-11-07").getByTestId("entry").click();
 
   const preparation = page.getByTestId("preparation");
@@ -32,6 +33,8 @@ test("an Entry holds the Checklists and Tasks that prepare for it", async ({ pag
   await expect(page.getByTestId("linked-entry")).toContainText("For: Birthday party");
   await page.getByLabel("Title").fill("Book the hall");
   await page.getByRole("button", { name: "Save" }).click();
+  // Saved before leaving; going straight to another page can cut the save short.
+  await expect(page).not.toHaveURL(/\/tasks\/new/);
 
   await page.goto("/week/2026-11-02");
   await page.getByTestId("day-column-2026-11-07").getByTestId("entry").click();

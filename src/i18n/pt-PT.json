@@ -572,9 +572,9 @@
   },
   "display": {
     "today": "Hoje",
-    "otherWeek": "Está a ver outra semana · Voltar a hoje",
     "leave": "Sair do mural",
-    "backToBoard": "Voltar ao painel"
+    "backToBoard": "Voltar ao painel",
+    "backToToday": "Voltar a hoje"
   },
   "layers": {
     "title": "Mostrar no calendário",

@@ -572,9 +572,9 @@
   },
   "display": {
     "today": "Today",
-    "otherWeek": "Another week is shown · Back to today",
     "leave": "Leave wall view",
-    "backToBoard": "Back to the board"
+    "backToBoard": "Back to the board",
+    "backToToday": "Back to today"
   },
   "layers": {
     "title": "Show on the calendar",
