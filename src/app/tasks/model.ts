@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { Importance } from "../../core/entry-type";
 import type { Repetition } from "../../core/repetition";
 import { api } from "../api";
 
@@ -10,6 +11,8 @@ export type Task = {
   dueTime: string | null;
   personIds: string[];
   private: boolean;
+  /** High ones come first among Tasks due at the same time. */
+  importance: Importance;
   doneAt: string | null;
   repetition: Repetition | null;
   seriesId: string | null;
@@ -21,7 +24,15 @@ export type Task = {
 
 export type TaskDraft = Pick<
   Task,
-  "title" | "notes" | "dueDate" | "dueTime" | "personIds" | "private" | "repetition" | "checklistId"
+  | "title"
+  | "notes"
+  | "dueDate"
+  | "dueTime"
+  | "personIds"
+  | "private"
+  | "importance"
+  | "repetition"
+  | "checklistId"
 >;
 
 export function useTasks() {

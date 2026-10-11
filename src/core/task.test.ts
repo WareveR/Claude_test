@@ -62,6 +62,22 @@ describe("groupTasks", () => {
     expect(ids(groups.noDate)).toEqual(["new-undated", "old-undated"]);
     expect(ids(groups.done)).toEqual(["done-last", "done-first"]);
   });
+
+  it("puts high importance first among Tasks due at the same time", () => {
+    const tasks = [
+      task({ id: "low", dueDate: "2026-10-09", importance: "low" }),
+      task({ id: "plain", dueDate: "2026-10-09" }),
+      task({ id: "high", dueDate: "2026-10-09", importance: "high" }),
+      task({ id: "earlier", dueDate: "2026-10-08", dueTime: "23:00", importance: "low" }),
+      task({ id: "undated", createdAt: "2026-10-05T00:00:00Z" }),
+      task({ id: "undated-high", createdAt: "2026-09-01T00:00:00Z", importance: "high" }),
+    ];
+    const ids = (list: { id?: string }[]) => list.map((t) => t.id);
+    const groups = groupTasks(tasks, now);
+    expect(ids(groups.upcoming)).toEqual(["high", "plain", "low"]);
+    expect(ids(groups.today)).toEqual(["earlier"]);
+    expect(ids(groups.noDate)).toEqual(["undated-high", "undated"]);
+  });
 });
 
 describe("nextRepeat", () => {

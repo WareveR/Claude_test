@@ -9,6 +9,8 @@ export type TaskTiming = {
   /** When it was ticked done (an ISO instant), or null while it's still to do. */
   doneAt: string | null;
   createdAt: string;
+  /** Breaks ties between Tasks due at the same time; missing counts as normal. */
+  importance?: "low" | "normal" | "high";
 };
 
 /** The wall clock in the Family Time Zone: "overdue" means the same on every device. */
@@ -35,15 +37,29 @@ export type TaskGroups<T> = {
   done: T[];
 };
 
-/** Orders by due date, then due time, a Task without a time coming first in its day. */
+const RANK = { high: 0, normal: 1, low: 2 };
+
+/** High importance first; a Task without one counts as normal. */
+function byImportance(a: TaskTiming, b: TaskTiming) {
+  return RANK[a.importance ?? "normal"] - RANK[b.importance ?? "normal"];
+}
+
+/**
+ * Orders by due date, then due time (a Task without a time coming first in its day), then
+ * importance, high first.
+ */
 function byDue(a: TaskTiming, b: TaskTiming) {
   return (
     (a.dueDate ?? "").localeCompare(b.dueDate ?? "") ||
-    (a.dueTime ?? "").localeCompare(b.dueTime ?? "")
+    (a.dueTime ?? "").localeCompare(b.dueTime ?? "") ||
+    byImportance(a, b)
   );
 }
 
-/** The Tasks view's groups: Overdue, Today, Upcoming (by due date), No date (newest first). */
+/**
+ * The Tasks view's groups: Overdue, Today, Upcoming (by due date, then importance), No date
+ * (by importance, then newest first).
+ */
 export function groupTasks<T extends TaskTiming>(tasks: T[], now: FamilyNow): TaskGroups<T> {
   const groups: TaskGroups<T> = { overdue: [], today: [], upcoming: [], noDate: [], done: [] };
   for (const task of tasks) {
@@ -56,7 +72,7 @@ export function groupTasks<T extends TaskTiming>(tasks: T[], now: FamilyNow): Ta
   groups.overdue.sort(byDue);
   groups.today.sort(byDue);
   groups.upcoming.sort(byDue);
-  groups.noDate.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  groups.noDate.sort((a, b) => byImportance(a, b) || b.createdAt.localeCompare(a.createdAt));
   groups.done.sort((a, b) => b.doneAt!.localeCompare(a.doneAt!));
   return groups;
 }

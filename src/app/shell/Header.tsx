@@ -58,8 +58,11 @@ export function Header({
   ].join(" ");
 
   return (
-    <header className="sticky top-0 z-10 flex items-center gap-2 bg-header sm:gap-3 px-4 py-2 text-header-ink shadow-sm">
-      <time data-testid="header-time" className="shrink-0 text-2xl font-semibold tabular-nums">
+    <header className="sticky top-0 z-10 flex items-center gap-2 bg-header px-4 py-2 text-header-ink shadow-sm sm:gap-3 short:py-1">
+      <time
+        data-testid="header-time"
+        className="shrink-0 text-2xl font-semibold tabular-nums short:text-xl"
+      >
         {time}
       </time>
       <span data-testid="header-date" className="min-w-0 first-letter:uppercase">

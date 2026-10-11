@@ -46,6 +46,24 @@ test("the Tasks view groups Tasks and ticks them done", async ({ page }) => {
   await expect(page.getByText("Buy school books")).toHaveCount(0);
 });
 
+test("overdue Tasks say how late they are; high importance comes first on its day", async ({
+  page,
+}) => {
+  await signIn(page);
+  await addTask(page, "Book the vet", lisbonDate(5));
+  await page.getByRole("link", { name: "New task" }).click();
+  await page.getByLabel("Title").fill("Pay the rent");
+  await page.getByLabel("Due date (optional)").fill(lisbonDate(5));
+  await page.getByLabel("Importance").selectOption("high");
+  await page.getByRole("button", { name: "Save" }).click();
+
+  await expect(page.getByRole("region", { name: "Overdue" })).toContainText("2 days late");
+  const upcoming = page.getByRole("region", { name: "Upcoming" }).getByTestId("task");
+  await expect(upcoming.first()).toContainText("Pay the rent");
+  await expect(upcoming.first().getByLabel("High importance")).toBeVisible();
+  await expect(upcoming.nth(1)).toContainText("Book the vet");
+});
+
 test("ticking a repeating Task brings up the next one", async ({ page }) => {
   await signIn(page);
   await page.goto("/tasks");

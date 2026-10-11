@@ -1,0 +1,1 @@
+ALTER TABLE `task` ADD `importance` text DEFAULT 'normal' NOT NULL;
