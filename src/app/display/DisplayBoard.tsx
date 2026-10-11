@@ -17,7 +17,7 @@ import { FilterButton } from "../filter/FilterButton";
 import { usePersonFilter } from "../filter/model";
 import { usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
-import { GRID_BOX, SidePanelLayout, TodayPanel } from "../shell/SidePanel";
+import { GRID_BOX } from "../shell/SidePanel";
 import { useNow } from "../shell/useNow";
 import { CalendarGrid } from "../views/Views";
 import { ForecastButton } from "../weather/ForecastButton";
@@ -121,90 +121,88 @@ export function DisplayBoard() {
       onPointerDownCapture={() => setTouches((n) => n + 1)}
       onScrollCapture={() => setTouches((n) => n + 1)}
     >
-      <SidePanelLayout
-        wideAt="lg"
-        panel={
-          <TodayPanel readOnly>
-            <TodayEntries today={today} />
-          </TodayPanel>
-        }
-      >
-        <nav className="flex items-center gap-2 px-4 py-2 max-sm:gap-1 max-sm:px-2">
-          <button
-            type="button"
-            aria-label={t("views.previous")}
-            className={arrow}
-            onClick={() => setWeeksAway(weeksAway - 1)}
-          >
-            <ChevronLeft aria-hidden size={24} strokeWidth={1.75} />
-          </button>
-          <h1
-            className="min-w-0 truncate text-xl font-semibold max-sm:text-base"
-            data-testid="board-range"
-          >
-            {title}
-          </h1>
-          <button
-            type="button"
-            aria-label={t("views.next")}
-            className={arrow}
-            onClick={() => setWeeksAway(weeksAway + 1)}
-          >
-            <ChevronRight aria-hidden size={24} strokeWidth={1.75} />
-          </button>
-          {weeksAway !== 0 && (
-            // On the arrows' row; where space is short it says only "Today".
+      <div className="flex flex-col lg:min-h-0 lg:flex-1 lg:flex-row">
+        <aside className="flex flex-col gap-3 border-b border-line pt-2 pb-3 lg:w-[22rem] lg:shrink-0 lg:overflow-y-auto lg:border-r lg:border-b-0 2xl:w-[26rem]">
+          <TodayEntries today={today} />
+        </aside>
+        <div className="flex min-w-0 flex-col lg:min-h-0 lg:flex-1">
+          <nav className="flex items-center gap-2 px-4 py-2 max-sm:gap-1 max-sm:px-2">
             <button
               type="button"
-              data-testid="back-to-today"
-              aria-label={t("display.backToToday")}
-              className="shrink-0 rounded-full bg-accent px-4 py-1 font-medium whitespace-nowrap text-accent-ink max-sm:px-3 max-sm:text-sm"
-              onClick={() => setWeeksAway(0)}
+              aria-label={t("views.previous")}
+              className={arrow}
+              onClick={() => setWeeksAway(weeksAway - 1)}
             >
-              <span aria-hidden className="max-md:hidden">
-                {t("display.backToToday")}
-              </span>
-              <span aria-hidden className="hidden max-md:inline">
-                {t("display.today")}
-              </span>
+              <ChevronLeft aria-hidden size={24} strokeWidth={1.75} />
             </button>
-          )}
-          <div className="ml-auto">
-            <FilterButton />
-          </div>
-        </nav>
-        <div className={GRID_BOX.lg}>
-          {/* All seven days fit the screen, a phone's too: never a sideways scroll. */}
-          <div className="relative flex min-h-0 flex-1">
-            <div data-testid="wall-days" className="flex min-h-0 min-w-0 flex-1 flex-col">
-              <CalendarGrid
-                days={days}
-                readOnly
-                dayExtra={(day) => {
-                  const weather = forecast.get(day);
-                  return (
-                    weather && (
-                      <div data-testid={`week-weather-${day}`}>
-                        <ForecastButton>
-                          <WeatherBadge
-                            day={weather}
-                            faded={weather.faded}
-                            size={16}
-                            rain
-                            iconOnPhone
-                            stacked
-                            className="text-xs"
-                          />
-                        </ForecastButton>
-                      </div>
-                    )
-                  );
-                }}
-              />
+            <h1
+              className="min-w-0 truncate text-xl font-semibold max-sm:text-base"
+              data-testid="board-range"
+            >
+              {title}
+            </h1>
+            <button
+              type="button"
+              aria-label={t("views.next")}
+              className={arrow}
+              onClick={() => setWeeksAway(weeksAway + 1)}
+            >
+              <ChevronRight aria-hidden size={24} strokeWidth={1.75} />
+            </button>
+            {weeksAway !== 0 && (
+              // On the arrows' row; where space is short it says only "Today".
+              <button
+                type="button"
+                data-testid="back-to-today"
+                aria-label={t("display.backToToday")}
+                className="shrink-0 rounded-full bg-accent px-4 py-1 font-medium whitespace-nowrap text-accent-ink max-sm:px-3 max-sm:text-sm"
+                onClick={() => setWeeksAway(0)}
+              >
+                <span aria-hidden className="max-md:hidden">
+                  {t("display.backToToday")}
+                </span>
+                <span aria-hidden className="hidden max-md:inline">
+                  {t("display.today")}
+                </span>
+              </button>
+            )}
+            <div className="ml-auto">
+              <FilterButton />
+            </div>
+          </nav>
+          <div className={GRID_BOX.lg}>
+            {/* All seven days fit the screen, a phone's too: never a sideways scroll. */}
+            <div className="relative flex min-h-0 flex-1">
+              <div data-testid="wall-days" className="flex min-h-0 min-w-0 flex-1 flex-col">
+                <CalendarGrid
+                  days={days}
+                  readOnly
+                  dayExtra={(day) => {
+                    const weather = forecast.get(day);
+                    return (
+                      weather && (
+                        <div data-testid={`week-weather-${day}`}>
+                          <ForecastButton>
+                            <WeatherBadge
+                              day={weather}
+                              faded={weather.faded}
+                              size={16}
+                              rain
+                              iconOnPhone
+                              stacked
+                              className="text-xs"
+                            />
+                          </ForecastButton>
+                        </div>
+                      )
+                    );
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>
-      </SidePanelLayout>
+      </div>
     </div>
   );
 }

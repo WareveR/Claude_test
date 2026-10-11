@@ -98,7 +98,6 @@
     "month": "Mês",
     "year": "Ano",
     "tasks": "Tarefas",
-    "display": "Mural",
     "short": {
       "day": "D",
       "week": "S",
@@ -471,11 +470,6 @@
     "toDo_one": "Por fazer · {{count}}",
     "toDo_other": "Por fazer · {{count}}"
   },
-  "sidePanel": {
-    "label": "Painel de hoje",
-    "hide": "Esconder painel",
-    "show": "Mostrar painel"
-  },
   "weather": {
     "title": "Meteorologia",
     "hint": "O local selecionado é usado em todos os dispositivos.",
@@ -574,7 +568,6 @@
   },
   "display": {
     "today": "Hoje",
-    "leave": "Sair do mural",
     "backToBoard": "Voltar ao painel",
     "backToToday": "Voltar a hoje"
   },
@@ -941,10 +934,6 @@
         "tasks": {
           "what": "Abre as tarefas da Família.",
           "more": "Agrupadas por prazo; as em atraso aparecem primeiro."
-        },
-        "display": {
-          "what": "Transforma este dispositivo no calendário de parede.",
-          "more": "Fica no mural até sair com a cruz no topo."
         }
       },
       "previous": {
@@ -991,9 +980,6 @@
         "name": "Meteorologia",
         "what": "Abre a meteorologia em detalhe: as horas e os próximos dias."
       },
-      "leaveWall": {
-        "what": "Tira este dispositivo do mural e volta à app normal."
-      },
       "edit": {
         "what": "Abre o formulário para alterar.",
         "more": "Nada muda até guardar."
@@ -1008,13 +994,6 @@
       "cancel": {
         "what": "Sai sem guardar.",
         "more": "O que alterou aqui perde-se."
-      },
-      "sidePanel": {
-        "what": "Mostra o painel lateral com a meteorologia de hoje e o que aí vem."
-      },
-      "sidePanelHide": {
-        "what": "Esconde o painel lateral para dar mais espaço ao calendário.",
-        "more": "Este dispositivo lembra-se."
       },
       "entryType": {
         "what": "O tipo de entrada, como consulta ou aniversário.",
@@ -1031,7 +1010,21 @@
       "persons": {
         "what": "Para quem é.",
         "more": "Sem ninguém escolhido é para toda a Família. O filtro de Pessoas usa isto."
+      },
+      "wall": {
+        "name": "Mural",
+        "what": "Transforma este aparelho no calendário de parede: a semana e as Entradas de hoje, só para ver.",
+        "more": "Carregue outra vez para desligar e voltar onde estava."
+      },
+      "summary": {
+        "name": "Resumo",
+        "what": "Mostra o dia de hoje num relance: a meteorologia hora a hora, o nascer e o pôr do sol e o que aí vem.",
+        "more": "Carregue outra vez para voltar onde estava."
       }
     }
+  },
+  "screens": {
+    "wall": "Mural",
+    "summary": "Resumo"
   }
 }

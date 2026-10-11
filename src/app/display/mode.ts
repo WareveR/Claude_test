@@ -27,6 +27,17 @@ export function setDisplayMode(on: boolean) {
   for (const listener of listeners) listener();
 }
 
+/** Where the app goes when the wall is turned off. */
+let exit = "/";
+
+/** Turns the wall off and goes to the given page. */
+export function leaveDisplayMode(to: string) {
+  exit = to;
+  setDisplayMode(false);
+}
+
+export const displayExit = () => exit;
+
 export function useDisplayMode(): boolean {
   return useSyncExternalStore(
     (listener) => {

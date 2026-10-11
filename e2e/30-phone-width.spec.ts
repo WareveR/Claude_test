@@ -10,8 +10,12 @@ test("on a phone no view is wider than the screen", async ({ page }) => {
   await expect(page.getByTestId("header-weather")).toBeVisible();
 
   await page.goto("/");
-  for (const view of ["Day", "Week", "Month", "Year", "Agenda", "Tasks"]) {
-    await page.getByRole("link", { name: view, exact: true }).click();
+  for (const view of ["Day", "Week", "Month", "Year", "Agenda", "Tasks", "Summary"]) {
+    await (
+      view === "Summary"
+        ? page.getByRole("banner").getByRole("button", { name: view })
+        : page.getByRole("link", { name: view, exact: true })
+    ).click();
     await page.waitForLoadState("networkidle");
     const sideways = await page.evaluate(
       "(() => { window.scrollTo(1000, 0); const x = window.scrollX; window.scrollTo(0, 0); return x; })()",
@@ -31,7 +35,7 @@ test("on a phone the header stays one line, Suggestions included", async ({ page
 
 test("on a phone the wall shows all seven days without scrolling sideways", async ({ page }) => {
   await signIn(page);
-  await page.getByRole("link", { name: "Wall", exact: true }).click();
+  await page.getByRole("banner").getByRole("button", { name: "Wall" }).click();
   const days = page.getByTestId("wall-days");
   await expect(days).toBeVisible();
   // The seventh day's column ends inside the screen.
@@ -39,5 +43,5 @@ test("on a phone the wall shows all seven days without scrolling sideways", asyn
   const box = await lastDay.boundingBox();
   expect((box?.x ?? 999) + (box?.width ?? 0)).toBeLessThanOrEqual(361);
   expect(await page.evaluate("document.documentElement.scrollWidth")).toBeLessThanOrEqual(360);
-  await page.getByRole("button", { name: "Leave wall view" }).click();
+  await page.getByRole("banner").getByRole("button", { name: "Wall" }).click();
 });

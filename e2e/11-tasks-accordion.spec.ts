@@ -16,7 +16,7 @@ test("Coming up holds today's and overdue Tasks, other days' accordions only the
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page).toHaveURL(/\/tasks$/);
 
-  await page.goto("/");
+  await page.goto("/summary");
   // 10-tasks left "Renew the passport" two days overdue. What is left to do is in Coming up.
   const left = page.getByTestId("coming-up-tasks");
   await expect(left).toContainText("1 overdue");
@@ -26,7 +26,7 @@ test("Coming up holds today's and overdue Tasks, other days' accordions only the
   await expect(left.getByText("Pay the electricity bill")).toHaveClass(/line-through/);
 
   // Another day's own Tasks accordion doesn't hold overdue Tasks.
+  await page.goto("/");
   await page.getByRole("link", { name: "Next" }).click();
   await expect(page.getByTestId("tasks-accordion")).toHaveCount(0);
-  await expect(left).toContainText("Renew the passport");
 });

@@ -21,7 +21,7 @@ test("Refresh writes the countdown list, whose Entries open in a popup", async (
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page).toHaveURL(/\/tasks$/);
 
-  await page.goto("/");
+  await page.goto("/summary");
   const band = page.getByTestId("coming-up");
   await expect(band).toContainText("No briefing yet");
   await band.getByRole("button", { name: "Refresh" }).click();
@@ -42,28 +42,12 @@ test("Refresh writes the countdown list, whose Entries open in a popup", async (
   await expect(page).toHaveURL(/\/entries\/[^/]+\?occurrence=/);
 });
 
-test("Coming up is beside every view and hiding the panel is remembered", async ({ page }) => {
+test("Coming up is on the Summary, not beside the views", async ({ page }) => {
   await signIn(page);
+  await expect(page.getByTestId("day-column-" + lisbonDate(0))).toBeVisible();
+  await expect(page.getByTestId("coming-up")).toHaveCount(0);
+  await page.getByRole("banner").getByRole("button", { name: "Summary" }).click();
   const panel = page.getByTestId("coming-up");
   await expect(panel.getByRole("heading", { name: "Coming up" })).toBeVisible();
-  await expect(panel.getByTestId("briefing-line").first()).toBeVisible();
-
-  // Not only today: what is coming up is beside any day, week, month or year.
-  await page.goto(`/day/${lisbonDate(1)}`);
-  await expect(panel.getByTestId("briefing-line").first()).toBeVisible();
-  await page.getByRole("link", { name: "Month", exact: true }).click();
-  await expect(panel.getByTestId("briefing-line").first()).toBeVisible();
-
-  await page.getByRole("button", { name: "Hide panel" }).click();
-  await expect(page.getByTestId("side-panel")).toBeHidden();
-  // The button lives in the header, not on a row of its own.
-  await expect(
-    page.getByRole("banner").getByRole("button", { name: "Show panel" }),
-  ).toHaveAttribute("aria-expanded", "false");
-  await page.reload();
-  await expect(page.getByTestId("side-panel")).toBeHidden();
-  await page.getByRole("link", { name: "Week", exact: true }).click();
-  await expect(page.getByTestId("side-panel")).toBeHidden();
-  await page.getByRole("button", { name: "Show panel" }).click();
   await expect(panel.getByTestId("briefing-line").first()).toBeVisible();
 });

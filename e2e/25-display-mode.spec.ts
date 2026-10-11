@@ -59,7 +59,7 @@ async function addTask(page: Page, title: string, extra = {}) {
 
 async function turnOnDisplayMode(page: Page) {
   await page.goto("/");
-  await page.getByRole("link", { name: "Wall" }).click();
+  await page.getByRole("banner").getByRole("button", { name: "Wall" }).click();
   await expect(page).toHaveURL(/\/display$/);
   await expect(page.getByTestId("display-board")).toBeVisible();
 }
@@ -80,12 +80,15 @@ test("the Wall view shows the board", async ({ page }) => {
 
   await turnOnDisplayMode(page);
 
-  // Today on the left, a seven-day grid starting today on the right.
+  // Today's Entries on the left, a seven-day grid starting today on the right; the weather and
+  // what's coming up are the Summary's.
   const board = page.getByTestId("display-board");
-  await expect(board.getByTestId("hourly-strip")).toBeVisible();
-  await expect(board.getByTestId("sun-band")).toContainText("Sunset");
-  await expect(board.getByTestId("briefing")).toBeVisible();
-  await expect(board.getByTestId("coming-up-tasks")).toContainText("Water the plants");
+  await expect(board.getByTestId("hourly-strip")).toHaveCount(0);
+  await expect(board.getByTestId("coming-up")).toHaveCount(0);
+  await expect(page.getByRole("banner").getByRole("button", { name: "Wall" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
   await expect(board.getByTestId("today-entry").filter({ hasText: "Family lunch" })).toBeVisible();
   for (let i = 0; i < 7; i++) {
     await expect(board.getByTestId(`day-column-${lisbonDate(i)}`)).toBeVisible();
@@ -114,7 +117,6 @@ test("Private items show only Private and their time; Entries open read-only", a
   await expect(list.filter({ hasText: "Private" })).toContainText("10:00");
   await expect(board.getByText("Therapy with Dr Silva")).toHaveCount(0);
   await expect(board.getByText("Secret errand")).toHaveCount(0);
-  await expect(board.getByTestId("task").filter({ hasText: "Private" })).toBeVisible();
 
   await list.filter({ hasText: "Family lunch" }).click();
   await expect(page).toHaveURL(/\/entries\/[^/]+$/);
@@ -130,20 +132,6 @@ test("Private items show only Private and their time; Entries open read-only", a
   await expect(page.getByTestId("entry-details")).toContainText("Private");
   await expect(page.getByTestId("entry-details")).toContainText("10:00");
   await expect(page.getByText("Therapy with Dr Silva")).toHaveCount(0);
-});
-
-test("a Task can be ticked on the wall", async ({ page }) => {
-  await signIn(page);
-  await turnOnDisplayMode(page);
-  const box = page.getByRole("checkbox", { name: "Done: Water the plants" });
-  await box.check();
-  await expect(box).toBeChecked();
-  // The tick shows before the server answers; the box is disabled until it has.
-  await expect(box).toBeEnabled();
-  await page.reload();
-  await expect(page.getByRole("checkbox", { name: "Done: Water the plants" })).toBeChecked();
-  // The title is not a link to the Task form.
-  await expect(page.getByTestId("coming-up-tasks").getByRole("link")).toHaveCount(0);
 });
 
 test("‹ › move the grid a week, a pill returns, and three idle minutes return too", async ({
@@ -218,10 +206,46 @@ test("Back from an Entry returns to the week the board showed", async ({ page })
   await expect(board.getByTestId("back-to-today")).toBeVisible();
 });
 
-test("the Leave wall view button leaves Display Mode", async ({ page }) => {
+test("the Wall and Summary switches are exclusive and both off return to the page before", async ({
+  page,
+}) => {
   await signIn(page);
-  await turnOnDisplayMode(page);
-  await page.locator("header").getByRole("button", { name: "Leave wall view" }).click();
+  await page.goto(`/week/${lisbonDate(14)}`);
+  await expect(page.getByTestId(`day-column-${lisbonDate(14)}`)).toBeVisible();
+  const before = page.url();
+  const header = page.getByRole("banner");
+  const wall = header.getByRole("button", { name: "Wall" });
+  const summary = header.getByRole("button", { name: "Summary" });
+
+  // Summary on: its own screen, with today's weather and what's coming up.
+  await summary.click();
+  await expect(page).toHaveURL(/\/summary$/);
+  await expect(summary).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByTestId("summary").getByTestId("coming-up")).toBeVisible();
+  // A Task can be ticked there.
+  const box = page.getByRole("checkbox", { name: "Done: Water the plants" });
+  await box.check();
+  await expect(box).toBeChecked();
+
+  // Wall on turns the Summary off.
+  await wall.click();
+  await expect(page).toHaveURL(/\/display$/);
+  await expect(wall).toHaveAttribute("aria-pressed", "true");
+  await expect(summary).toHaveAttribute("aria-pressed", "false");
+  // Summary on from the wall leaves the wall.
+  await summary.click();
+  await expect(page).toHaveURL(/\/summary$/);
+  await expect(wall).toHaveAttribute("aria-pressed", "false");
+
+  // Both off: back to the week from before.
+  await summary.click();
+  await expect(page).toHaveURL(before);
+
+  // The same from the wall, after a reload too.
+  await wall.click();
+  await expect(page.getByTestId("display-board")).toBeVisible();
+  await page.reload();
+  await page.getByRole("banner").getByRole("button", { name: "Wall" }).click();
   await expect(page.getByTestId("display-board")).toHaveCount(0);
   await expect(page).not.toHaveURL(/\/display$/);
   await expect(page.getByRole("link", { name: "Settings" })).toBeVisible();

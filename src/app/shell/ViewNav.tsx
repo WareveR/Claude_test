@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, ListChecks, ListOrdered, Plus, Search, Tv } from "lucide-react";
+import { ChevronLeft, ChevronRight, ListChecks, ListOrdered, Plus, Search } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, NavLink, useLocation, useNavigate } from "react-router";
@@ -6,11 +6,10 @@ import { todayIn } from "../../core/plain-date";
 import { useSignedIn } from "../family";
 import type { PlainDate } from "../../core/plain-date";
 import { FilterButton } from "../filter/FilterButton";
-import { setDisplayMode } from "../display/mode";
 import { paths } from "../paths";
 import { useSwipe } from "../ui/useSwipe";
 
-const VIEWS = ["day", "week", "month", "year", "agenda", "tasks", "display"] as const;
+const VIEWS = ["day", "week", "month", "year", "agenda", "tasks"] as const;
 
 /** Switches between views and moves through dates, keeping the date in the address. */
 export function ViewNav({
@@ -50,15 +49,7 @@ export function ViewNav({
         {VIEWS.map((view) => (
           <NavLink
             key={view}
-            to={
-              view === "tasks"
-                ? paths.tasks()
-                : view === "display"
-                  ? paths.display()
-                  : paths[view](date)
-            }
-            // The board is only reachable with Display Mode on; turn it on before navigating.
-            onClick={view === "display" ? () => setDisplayMode(true) : undefined}
+            to={view === "tasks" ? paths.tasks() : paths[view](date)}
             // Where space is short (a phone, or one on its side) the names shrink to a letter or an
             // icon; the full name stays the link's name.
             aria-label={t(`views.${view}`)}
@@ -73,8 +64,6 @@ export function ViewNav({
             <span aria-hidden className="hidden max-md:inline short:inline">
               {view === "tasks" ? (
                 <ListChecks size={18} strokeWidth={1.75} />
-              ) : view === "display" ? (
-                <Tv size={18} strokeWidth={1.75} />
               ) : view === "agenda" ? (
                 <ListOrdered size={18} strokeWidth={1.75} />
               ) : (

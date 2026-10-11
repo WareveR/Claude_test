@@ -32,7 +32,7 @@ import { useSignedIn } from "../family";
 import { usePersons } from "../persons/model";
 import { useNow } from "../shell/useNow";
 import { paths } from "../paths";
-import { GRID_BOX, SidePanelLayout, TodayPanel } from "../shell/SidePanel";
+import { GRID_BOX, ViewBody } from "../shell/SidePanel";
 import { ViewNav } from "../shell/ViewNav";
 import { ForecastButton } from "../weather/ForecastButton";
 import { HourlyStrip } from "../weather/HourlyStrip";
@@ -94,7 +94,7 @@ export function DayView() {
           </>
         }
       />
-      <SidePanelLayout panel={<TodayPanel />}>
+      <ViewBody>
         {/* Today's hours and Tasks are in the panel; another day's sit above its grid. */}
         <div className="flex flex-col gap-2 pb-2 empty:hidden">
           {past && <HourlyStrip past={past.hours} />}
@@ -103,7 +103,7 @@ export function DayView() {
         <div className={GRID_BOX.lg}>
           <CalendarGrid days={[date]} />
         </div>
-      </SidePanelLayout>
+      </ViewBody>
     </>
   );
 }
@@ -153,7 +153,7 @@ function Week({ monday }: { monday: PlainDate }) {
         previous={paths.week(addDays(monday, -7))}
         next={paths.week(addDays(monday, 7))}
       />
-      <SidePanelLayout panel={<TodayPanel />}>
+      <ViewBody>
         {!compact && (
           <div className="pb-2 empty:hidden">
             <TasksAccordion from={monday} to={days[6]} />
@@ -201,7 +201,7 @@ function Week({ monday }: { monday: PlainDate }) {
             }}
           />
         </div>
-      </SidePanelLayout>
+      </ViewBody>
     </>
   );
 }
@@ -279,7 +279,7 @@ function Month({ first }: { first: PlainDate }) {
         previous={paths.month(addMonths(first, -1))}
         next={paths.month(addMonths(first, 1))}
       />
-      <SidePanelLayout panel={<TodayPanel />}>
+      <ViewBody>
         {/* On wide screens the grid fills the height; a picked day opens over it. */}
         <div className="flex flex-1 flex-col lg:min-h-0">
           <MonthGrid
@@ -295,7 +295,7 @@ function Month({ first }: { first: PlainDate }) {
             dayLink={(day) => `${paths.month(day)}?day=${day}`}
           />
         </div>
-      </SidePanelLayout>
+      </ViewBody>
       {picked === selected && (
         <DayPopup
           day={selected}
@@ -356,7 +356,7 @@ function Year({ year }: { year: number }) {
           </Link>
         }
       />
-      <SidePanelLayout panel={<TodayPanel />}>
+      <ViewBody>
         <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
           {detail ? (
             <YearDetail
@@ -382,7 +382,7 @@ function Year({ year }: { year: number }) {
             />
           )}
         </div>
-      </SidePanelLayout>
+      </ViewBody>
       {pickedDay && (
         <DayPopup
           day={pickedDay}

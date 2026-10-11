@@ -98,7 +98,6 @@
     "month": "Month",
     "year": "Year",
     "tasks": "Tasks",
-    "display": "Wall",
     "short": {
       "day": "D",
       "week": "W",
@@ -471,11 +470,6 @@
     "toDo_one": "Still to do · {{count}}",
     "toDo_other": "Still to do · {{count}}"
   },
-  "sidePanel": {
-    "label": "Today's side panel",
-    "hide": "Hide panel",
-    "show": "Show panel"
-  },
   "weather": {
     "title": "Weather",
     "hint": "The selected place is used on every device.",
@@ -574,7 +568,6 @@
   },
   "display": {
     "today": "Today",
-    "leave": "Leave wall view",
     "backToBoard": "Back to the board",
     "backToToday": "Back to today"
   },
@@ -941,10 +934,6 @@
         "tasks": {
           "what": "Opens the Family's tasks.",
           "more": "Grouped by when they're due; overdue ones come first."
-        },
-        "display": {
-          "what": "Turns this device into the wall calendar.",
-          "more": "It stays on the wall view until you leave it with the cross at the top."
         }
       },
       "previous": {
@@ -991,9 +980,6 @@
         "name": "Weather",
         "what": "Opens the weather in detail: the hours and the next days."
       },
-      "leaveWall": {
-        "what": "Takes this device off the wall view, back to the normal app."
-      },
       "edit": {
         "what": "Opens the form to change it.",
         "more": "Nothing changes until you save."
@@ -1008,13 +994,6 @@
       "cancel": {
         "what": "Leaves without saving.",
         "more": "What you changed here is lost."
-      },
-      "sidePanel": {
-        "what": "Shows the side panel with today's weather and what's coming up."
-      },
-      "sidePanelHide": {
-        "what": "Hides the side panel to give the calendar more room.",
-        "more": "This device remembers it."
       },
       "entryType": {
         "what": "The kind of Entry, such as an appointment or a birthday.",
@@ -1031,7 +1010,21 @@
       "persons": {
         "what": "Who this is for.",
         "more": "With none picked it's for the whole Family. The Person Filter uses this."
+      },
+      "wall": {
+        "name": "Wall",
+        "what": "Turns this device into the wall calendar: the week and today's Entries, read-only.",
+        "more": "Press it again to turn it off and return to where you were."
+      },
+      "summary": {
+        "name": "Summary",
+        "what": "Shows today at a glance: the weather by the hour, sunrise and sunset, and what's coming up.",
+        "more": "Press it again to return to where you were."
       }
     }
+  },
+  "screens": {
+    "wall": "Wall",
+    "summary": "Summary"
   }
 }
