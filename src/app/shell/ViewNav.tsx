@@ -1,13 +1,14 @@
 import { ChevronLeft, ChevronRight, ListChecks, ListOrdered, Plus, Search, Tv } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, NavLink, useLocation } from "react-router";
+import { Link, NavLink, useLocation, useNavigate } from "react-router";
 import { todayIn } from "../../core/plain-date";
 import { useSignedIn } from "../family";
 import type { PlainDate } from "../../core/plain-date";
 import { FilterButton } from "../filter/FilterButton";
 import { setDisplayMode } from "../display/mode";
 import { paths } from "../paths";
+import { useSwipe } from "../ui/useSwipe";
 
 const VIEWS = ["day", "week", "month", "year", "agenda", "tasks", "display"] as const;
 
@@ -31,6 +32,9 @@ export function ViewNav({
 }) {
   const { t } = useTranslation();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+  // A sideways swipe does what the arrows do.
+  useSwipe(previous ? () => navigate(previous) : null, next ? () => navigate(next) : null);
   const today = todayIn(useSignedIn().family.timeZone);
   // "Today" stays in the view it is pressed in: this week, this month, this year.
   const view = pathname.split("/")[1];
