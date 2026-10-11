@@ -10,7 +10,7 @@ test("on a phone no view is wider than the screen", async ({ page }) => {
   await expect(page.getByTestId("header-weather")).toBeVisible();
 
   await page.goto("/");
-  for (const view of ["Day", "Week", "Month", "Year", "Tasks"]) {
+  for (const view of ["Day", "Week", "Month", "Year", "Agenda", "Tasks"]) {
     await page.getByRole("link", { name: view, exact: true }).click();
     await page.waitForLoadState("networkidle");
     const sideways = await page.evaluate(

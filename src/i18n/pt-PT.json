@@ -104,6 +104,8 @@
     "previous": "Anterior",
     "next": "Seguinte",
     "nothing": "Nada neste dia.",
+    "agenda": "Agenda",
+    "agendaEmpty": "Nada nestes dias.",
     "open": "Abrir",
     "openDay": "Abrir o dia"
   },

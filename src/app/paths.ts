@@ -7,6 +7,7 @@ export const paths = {
   week: (date: PlainDate) => `/week/${startOfWeek(date)}`,
   month: (date: PlainDate) => `/month/${date.slice(0, 7)}`,
   year: (date: PlainDate) => `/year/${date.slice(0, 4)}`,
+  agenda: (date: PlainDate) => `/agenda/${date}`,
   display: () => "/display",
   tasks: () => "/tasks",
   suggestions: () => "/suggestions",
