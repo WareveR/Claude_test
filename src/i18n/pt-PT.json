@@ -112,7 +112,9 @@
     "agenda": "Agenda",
     "agendaEmpty": "Nada nestes dias.",
     "open": "Abrir",
-    "openDay": "Abrir o dia"
+    "openDay": "Abrir o dia",
+    "hideDetails": "Esconder meteorologia e tarefas",
+    "showDetails": "Mostrar meteorologia e tarefas"
   },
   "settings": {
     "title": "Definições",

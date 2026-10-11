@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { ChevronsDownUp, ChevronsUpDown } from "lucide-react";
+import { setWeekCompact, useWeekCompact } from "../calendar/compact";
 import { useTranslation } from "react-i18next";
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router";
 import { formatLocale } from "../../core/languages";
@@ -135,7 +137,10 @@ export function WeekView() {
 }
 
 function Week({ monday }: { monday: PlainDate }) {
+  const { t } = useTranslation();
   const locale = useLocale();
+  // On a phone on its side the weather and Tasks can be hidden so the hours get the room.
+  const compact = useWeekCompact();
   const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i));
   const forecast = useDayWeather(monday, days[6]);
   const short = { day: "numeric", month: "short" } as const;
@@ -149,13 +154,32 @@ function Week({ monday }: { monday: PlainDate }) {
         next={paths.week(addDays(monday, 7))}
       />
       <SidePanelLayout panel={<TodayPanel />}>
-        <div className="pb-2 empty:hidden">
-          <TasksAccordion from={monday} to={days[6]} />
-        </div>
+        {!compact && (
+          <div className="pb-2 empty:hidden">
+            <TasksAccordion from={monday} to={days[6]} />
+          </div>
+        )}
         <div className={GRID_BOX.lg}>
           <CalendarGrid
             days={days}
+            corner={
+              <button
+                type="button"
+                aria-label={compact ? t("views.showDetails") : t("views.hideDetails")}
+                aria-pressed={compact}
+                data-testid="week-compact"
+                onClick={() => setWeekCompact(!compact)}
+                className="rounded-md p-1 text-muted hover:bg-line/60"
+              >
+                {compact ? (
+                  <ChevronsUpDown aria-hidden size={18} strokeWidth={1.75} />
+                ) : (
+                  <ChevronsDownUp aria-hidden size={18} strokeWidth={1.75} />
+                )}
+              </button>
+            }
             dayExtra={(day) => {
+              if (compact) return null;
               const weather = forecast.get(day);
               return (
                 weather && (
@@ -187,10 +211,12 @@ export function CalendarGrid({
   days,
   dayExtra,
   readOnly,
+  corner,
 }: {
   days: PlainDate[];
   dayExtra?: (day: PlainDate) => ReactNode;
   readOnly?: boolean;
+  corner?: ReactNode;
 }) {
   const { family } = useSignedIn();
   const locale = useLocale();
@@ -212,6 +238,7 @@ export function CalendarGrid({
       notes={notes}
       dayExtra={dayExtra}
       readOnly={readOnly}
+      corner={corner}
     />
   );
 }
