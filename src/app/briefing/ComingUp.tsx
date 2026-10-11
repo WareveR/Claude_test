@@ -24,14 +24,23 @@ type Open = { id: string; date: string } | null;
 function SegmentText({ segment, onOpen }: { segment: Segment; onOpen: (open: Open) => void }) {
   const link = segment.link;
   if (link?.kind !== "entry") return <>{segment.text}</>;
+  const open = () => onOpen({ id: link.id, date: link.date });
+  // Inline, not a <button> (which is always a box): a long linked phrase wraps with the sentence.
   return (
-    <button
-      type="button"
-      className="rounded px-0.5 text-left font-medium text-accent hover:bg-accent/10"
-      onClick={() => onOpen({ id: link.id, date: link.date })}
+    <span
+      role="button"
+      tabIndex={0}
+      className="cursor-pointer rounded font-medium text-accent hover:bg-accent/10"
+      onClick={open}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          open();
+        }
+      }}
     >
       {segment.text}
-    </button>
+    </span>
   );
 }
 
@@ -83,7 +92,7 @@ export function ComingUp({ readOnly = false }: { readOnly?: boolean }) {
           </button>
         )}
       </div>
-      <div data-testid="briefing" className="leading-relaxed">
+      <div data-testid="briefing" className="leading-relaxed hyphens-auto">
         {data === null && <p className="text-sm text-muted">{t("briefing.none")}</p>}
         {data && !data.fallback && (
           <p>
