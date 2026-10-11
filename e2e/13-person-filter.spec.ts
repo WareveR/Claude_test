@@ -33,3 +33,16 @@ test("the Person Filter narrows the Tasks view and is remembered", async ({ page
   await panel.getByRole("switch", { name: "Include Family-wide" }).check();
   await expect(page.getByText("Fix the bike")).toBeVisible();
 });
+
+test("on a phone on its side the Person Filter panel scrolls to its last switch", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 740, height: 360 });
+  await signIn(page);
+  await page.goto("/week/2026-10-05");
+  await page.getByLabel("Person filter").first().click();
+  const panel = page.getByRole("group", { name: "Person filter" });
+  const last = panel.getByRole("switch", { name: "Rubbish collection" });
+  await last.scrollIntoViewIfNeeded();
+  await expect(last).toBeInViewport();
+});
