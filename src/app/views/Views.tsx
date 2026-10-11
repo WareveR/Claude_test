@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Clock, Droplets, Sun } from "lucide-react";
+import { Clock } from "lucide-react";
 import { setDayHours, useDayHours, useTasksHidden, useWeekCompact } from "../calendar/compact";
 import { useTranslation } from "react-i18next";
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router";
@@ -37,7 +37,6 @@ import { ForecastButton } from "../weather/ForecastButton";
 import { HourlyStrip } from "../weather/HourlyStrip";
 import { useDayWeather, usePastWeather, useWeather, type ShownDay } from "../weather/model";
 import { WindReading } from "../weather/ForecastDetail";
-import type { HourWeather } from "../../core/weather";
 import { WeatherBadge } from "../weather/WeatherBadge";
 import { TasksAccordion, usePeriodTasks } from "../tasks/TasksAccordion";
 import { GridCorner } from "../calendar/GridCorner";
@@ -91,7 +90,7 @@ export function DayView() {
         previous={paths.day(addDays(date, -1))}
         next={paths.day(addDays(date, 1))}
         compact
-        extra={<DayWeatherLine weather={weather} hours={hours} />}
+        extra={<DayWeatherLine weather={weather} />}
       />
       <ViewBody>
         <div className="flex flex-col gap-2 pb-2 empty:hidden">
@@ -114,17 +113,12 @@ export function DayView() {
 }
 
 /**
- * The day's weather beside its title: highest and lowest, chance of rain, wind, UV and humidity
- * (the hours' average), and a switch for the hour by hour detail, there even when no hours are
- * kept.
+ * The day's weather beside its title: highest and lowest, chance of rain and wind, and a switch
+ * for the hour by hour detail, there even when no hours are kept.
  */
-function DayWeatherLine({ weather, hours }: { weather?: ShownDay; hours: HourWeather[] }) {
+function DayWeatherLine({ weather }: { weather?: ShownDay }) {
   const { t } = useTranslation();
   const showHours = useDayHours();
-  const humid = hours.filter((h) => h.humidity !== undefined);
-  const humidity = humid.length
-    ? Math.round(humid.reduce((sum, h) => sum + (h.humidity ?? 0), 0) / humid.length)
-    : undefined;
   return (
     <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
       {weather && (
@@ -134,20 +128,6 @@ function DayWeatherLine({ weather, hours }: { weather?: ShownDay; hours: HourWea
             {weather.wind !== undefined && (
               <span className="text-muted">
                 <WindReading speed={weather.wind} from={weather.windDir} />
-              </span>
-            )}
-            {weather.uv !== undefined && (
-              <span className="inline-flex items-center gap-1 text-muted tabular-nums">
-                <Sun aria-hidden size={14} color="#f59e0b" />
-                <span className="sr-only">{t("weather.detail.uv")}</span>
-                UV {weather.uv}
-              </span>
-            )}
-            {humidity !== undefined && (
-              <span className="inline-flex items-center gap-1 text-muted tabular-nums">
-                <Droplets aria-hidden size={14} color="#0ea5e9" />
-                <span className="sr-only">{t("weather.detail.humidity")}</span>
-                {humidity}%
               </span>
             )}
           </span>
