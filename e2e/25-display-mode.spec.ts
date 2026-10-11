@@ -94,12 +94,27 @@ test("the Wall view shows the board", async ({ page }) => {
     await expect(board.getByTestId(`day-column-${lisbonDate(i)}`)).toBeVisible();
   }
   await expect(board.getByTestId(`day-column-${lisbonDate(7)}`)).toHaveCount(0);
+  // The arrows' row names only the month and year; the days carry their numbers.
+  const month = (days: number) =>
+    new Date(`${lisbonDate(days)}T12:00:00Z`).toLocaleString("en-GB", { month: "long" });
+  await expect(board.getByTestId("board-range")).toContainText(month(0));
+  await expect(board.getByTestId("board-range")).toContainText(month(6));
+  await expect(board.getByTestId("board-range")).toContainText(lisbonDate(6).slice(0, 4));
   // The corner button hides the weather for more hours, as in the week view.
   await expect(board.getByTestId(`week-weather-${lisbonDate(0)}`)).toBeVisible();
   await board.getByRole("button", { name: "Hide weather" }).click();
   await expect(board.locator('[data-testid^="week-weather-"]')).toHaveCount(0);
   await board.getByRole("button", { name: "Show weather" }).click();
   await expect(board.getByTestId(`week-weather-${lisbonDate(0)}`)).toBeVisible();
+  // The week's Tasks are hidden, the button under it says how many, and shows them when pressed.
+  await expect(board.getByTestId("tasks-accordion")).toHaveCount(0);
+  await expect(board.getByTestId("week-tasks-count")).not.toHaveText("0");
+  await board
+    .getByRole("button", { name: /^Show the \d+ hidden tasks$|^Show the hidden task$/ })
+    .click();
+  await expect(board.getByTestId("tasks-accordion")).toContainText("Water the plants");
+  await board.getByRole("button", { name: "Hide tasks" }).click();
+  await expect(board.getByTestId("tasks-accordion")).toHaveCount(0);
 
   // No microphone, no Settings.
   await expect(page.getByRole("button", { name: "Voice Entry" })).toHaveCount(0);

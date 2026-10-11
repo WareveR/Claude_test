@@ -26,6 +26,15 @@ test("Calendar Layers turned on in the filter panel mark the days", async ({ pag
   await page.reload();
   await expect(page.getByTestId("note-2026-10-26")).toContainText("Full moon");
 
+  // The week's corner button that hides the weather hides the notes too.
+  await page.goto("/week/2026-10-26");
+  await expect(page.getByTestId("note-2026-10-26")).toContainText("Full moon");
+  await page.getByRole("button", { name: "Hide weather" }).click();
+  await expect(page.getByTestId("note-2026-10-26")).toHaveCount(0);
+  await page.getByRole("button", { name: "Show weather" }).click();
+  await expect(page.getByTestId("note-2026-10-26")).toContainText("Full moon");
+  await page.goto("/month/2026-10");
+
   await page.getByLabel("Person filter").first().click();
   for (const name of ["Moon phases", "Clock change", "Special days"]) {
     await page.getByRole("group", { name: "Person filter" }).getByLabel(name).uncheck();

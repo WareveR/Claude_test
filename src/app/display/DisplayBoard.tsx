@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router";
@@ -7,7 +7,7 @@ import { AUTO_RETURN_MS, boardDays } from "../../core/display";
 import { daySpan } from "../../core/entry-time";
 import { formatLocale } from "../../core/languages";
 import { matchesFilter } from "../../core/person-filter";
-import { formatPlainDate, minutesNowIn } from "../../core/plain-date";
+import { formatMonthRange, minutesNowIn } from "../../core/plain-date";
 import { entriesOn } from "../calendar/MonthGrid";
 import { importanceClass } from "../calendar/EntryBlock";
 import { useEntryTypes } from "../entry-types/model";
@@ -25,7 +25,9 @@ import { useForecastDays } from "../weather/model";
 import { WeatherBadge } from "../weather/WeatherBadge";
 import { useSwipe } from "../ui/useSwipe";
 import { useRolloverToday } from "./hooks";
-import { setWeekCompact, useWeekCompact } from "../calendar/compact";
+import { useTasksHidden, useWeekCompact } from "../calendar/compact";
+import { GridCorner } from "../calendar/GridCorner";
+import { TasksAccordion, usePeriodTasks } from "../tasks/TasksAccordion";
 
 /** Today's Entries as a large list; the ones already over are dimmed. */
 function TodayEntries({ today }: { today: string }) {
@@ -95,7 +97,7 @@ export function DisplayBoard() {
   const locale = formatLocale(language);
   const today = useRolloverToday(family.timeZone);
   const forecast = useForecastDays();
-  // Like the week view: the weather can be hidden so the hours get the room (a phone on its side).
+  // Like the week view: the weather and day notes can be hidden so the hours get the room.
   const compact = useWeekCompact();
   // The week shown is in the address, so Back from an Entry returns to it.
   const [search, setSearch] = useSearchParams();
@@ -114,9 +116,12 @@ export function DisplayBoard() {
     () => setWeeksAway(weeksAway + 1),
   );
   const days = boardDays(today, weeksAway);
-  const short = { day: "numeric", month: "short" } as const;
-  const title = `${formatPlainDate(days[0], locale, short)} – ${formatPlainDate(days[6], locale, short)}`;
-  const arrow = "rounded-md p-2 hover:bg-surface";
+  // The week's Tasks stay out of the way unless asked for; the Summary always has them.
+  const tasksHidden = useTasksHidden();
+  const tasks = usePeriodTasks(days[0], days[6]).tasks.length;
+  // The days carry their numbers; the row says only the month, so it stays one short line.
+  const title = formatMonthRange(days[0], days[6], locale);
+  const arrow = "rounded-md p-1 hover:bg-surface";
   return (
     <div
       data-testid="display-board"
@@ -129,17 +134,17 @@ export function DisplayBoard() {
           <TodayEntries today={today} />
         </aside>
         <div className="flex min-w-0 flex-col lg:min-h-0 lg:flex-1">
-          <nav className="flex items-center gap-2 px-4 py-2 max-sm:gap-1 max-sm:px-2">
+          <nav className="flex items-center gap-1 px-3 py-0.5 max-sm:px-2">
             <button
               type="button"
               aria-label={t("views.previous")}
               className={arrow}
               onClick={() => setWeeksAway(weeksAway - 1)}
             >
-              <ChevronLeft aria-hidden size={24} strokeWidth={1.75} />
+              <ChevronLeft aria-hidden size={20} strokeWidth={1.75} />
             </button>
             <h1
-              className="min-w-0 truncate text-xl font-semibold max-sm:text-base"
+              className="min-w-0 truncate text-lg font-semibold first-letter:uppercase max-sm:text-base"
               data-testid="board-range"
             >
               {title}
@@ -150,7 +155,7 @@ export function DisplayBoard() {
               className={arrow}
               onClick={() => setWeeksAway(weeksAway + 1)}
             >
-              <ChevronRight aria-hidden size={24} strokeWidth={1.75} />
+              <ChevronRight aria-hidden size={20} strokeWidth={1.75} />
             </button>
             {weeksAway !== 0 && (
               // On the arrows' row; where space is short it says only "Today".
@@ -158,7 +163,7 @@ export function DisplayBoard() {
                 type="button"
                 data-testid="back-to-today"
                 aria-label={t("display.backToToday")}
-                className="shrink-0 rounded-full bg-accent px-4 py-1 font-medium whitespace-nowrap text-accent-ink max-sm:px-3 max-sm:text-sm"
+                className="ml-1 shrink-0 rounded-full bg-accent px-3 py-0.5 text-sm font-medium whitespace-nowrap text-accent-ink"
                 onClick={() => setWeeksAway(0)}
               >
                 <span aria-hidden className="max-md:hidden">
@@ -173,6 +178,11 @@ export function DisplayBoard() {
               <FilterButton />
             </div>
           </nav>
+          {!tasksHidden && (
+            <div className="pb-2 empty:hidden">
+              <TasksAccordion from={days[0]} to={days[6]} />
+            </div>
+          )}
           <div className={GRID_BOX.lg}>
             {/* All seven days fit the screen, a phone's too: never a sideways scroll. */}
             <div className="relative flex min-h-0 flex-1">
@@ -180,22 +190,8 @@ export function DisplayBoard() {
                 <CalendarGrid
                   days={days}
                   readOnly
-                  corner={
-                    <button
-                      type="button"
-                      aria-label={compact ? t("views.showWeather") : t("views.hideWeather")}
-                      aria-pressed={compact}
-                      data-testid="wall-compact"
-                      onClick={() => setWeekCompact(!compact)}
-                      className="rounded-md p-1 text-muted hover:bg-line/60"
-                    >
-                      {compact ? (
-                        <ChevronsUpDown aria-hidden size={18} strokeWidth={1.75} />
-                      ) : (
-                        <ChevronsDownUp aria-hidden size={18} strokeWidth={1.75} />
-                      )}
-                    </button>
-                  }
+                  plain={compact}
+                  corner={<GridCorner tasks={tasks} />}
                   dayExtra={(day) => {
                     if (compact) return null;
                     const weather = forecast.get(day);

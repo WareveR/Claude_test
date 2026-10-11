@@ -32,6 +32,8 @@ export type TimeGridProps = {
   readOnly?: boolean;
   /** What sits in the corner above the hours, beside the day names. */
   corner?: ReactNode;
+  /** Without the day notes and holiday names, for more hours; holidays keep their colour. */
+  plain?: boolean;
   /** One day only: buttons at the right of its header row, which then shows the whole date. */
   headerActions?: ReactNode;
 };
@@ -57,6 +59,7 @@ export function TimeGrid({
   dayExtra,
   readOnly = false,
   corner,
+  plain = false,
   headerActions,
 }: TimeGridProps) {
   const navigate = useNavigate();
@@ -83,7 +86,7 @@ export function TimeGrid({
   );
   const barRows = Math.max(1, ...bars.map((b) => b.row + 1));
   // Holiday names take their own first line of the all-day row, so bars start below it.
-  const holidayRows = days.some((day) => holidays.has(day)) ? 1 : 0;
+  const holidayRows = !plain && days.some((day) => holidays.has(day)) ? 1 : 0;
   // The day view: the whole date ("Friday 23 October") with the actions at the row's right.
   const single = days.length === 1 && headerActions !== undefined;
 
@@ -124,15 +127,16 @@ export function TimeGrid({
               )}
             </div>
             {dayExtra?.(day)}
-            {notes.get(day)?.map((note) => (
-              <div
-                key={note}
-                data-testid={`note-${day}`}
-                className="truncate px-1 text-[11px] font-normal text-muted lg:text-xs"
-              >
-                <NoteLine note={note} />
-              </div>
-            ))}
+            {!plain &&
+              notes.get(day)?.map((note) => (
+                <div
+                  key={note}
+                  data-testid={`note-${day}`}
+                  className="truncate px-1 text-[11px] font-normal text-muted lg:text-xs"
+                >
+                  <NoteLine note={note} />
+                </div>
+              ))}
           </div>
         ))}
       </div>
@@ -154,7 +158,7 @@ export function TimeGrid({
           />
         ))}
         {days.map((day, i) => {
-          const names = holidays.get(day);
+          const names = plain ? undefined : holidays.get(day);
           return names ? (
             <div
               key={day}

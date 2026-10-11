@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
-import { ChevronsDownUp, ChevronsUpDown } from "lucide-react";
-import { setWeekCompact, useWeekCompact } from "../calendar/compact";
+import { useTasksHidden, useWeekCompact } from "../calendar/compact";
 import { useTranslation } from "react-i18next";
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router";
 import { formatLocale } from "../../core/languages";
@@ -38,7 +37,8 @@ import { ForecastButton } from "../weather/ForecastButton";
 import { HourlyStrip } from "../weather/HourlyStrip";
 import { useDayWeather, usePastWeather } from "../weather/model";
 import { WeatherBadge } from "../weather/WeatherBadge";
-import { TasksAccordion } from "../tasks/TasksAccordion";
+import { TasksAccordion, usePeriodTasks } from "../tasks/TasksAccordion";
+import { GridCorner } from "../calendar/GridCorner";
 
 function useToday(): PlainDate {
   return todayIn(useSignedIn().family.timeZone);
@@ -138,11 +138,13 @@ export function WeekView() {
 }
 
 function Week({ monday }: { monday: PlainDate }) {
-  const { t } = useTranslation();
   const locale = useLocale();
-  // On a phone on its side the weather and Tasks can be hidden so the hours get the room.
+  // On a phone on its side the weather, the day notes and the Tasks can be hidden so the hours get
+  // the room; the Tasks are always in the Summary.
   const compact = useWeekCompact();
+  const tasksHidden = useTasksHidden();
   const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i));
+  const tasks = usePeriodTasks(monday, days[6]).tasks.length;
   const forecast = useDayWeather(monday, days[6]);
   const short = { day: "numeric", month: "short" } as const;
   const title = `${formatPlainDate(monday, locale, short)} – ${formatPlainDate(days[6], locale, short)}`;
@@ -155,7 +157,7 @@ function Week({ monday }: { monday: PlainDate }) {
         next={paths.week(addDays(monday, 7))}
       />
       <ViewBody>
-        {!compact && (
+        {!tasksHidden && (
           <div className="pb-2 empty:hidden">
             <TasksAccordion from={monday} to={days[6]} />
           </div>
@@ -163,22 +165,8 @@ function Week({ monday }: { monday: PlainDate }) {
         <div className={GRID_BOX.lg}>
           <CalendarGrid
             days={days}
-            corner={
-              <button
-                type="button"
-                aria-label={compact ? t("views.showDetails") : t("views.hideDetails")}
-                aria-pressed={compact}
-                data-testid="week-compact"
-                onClick={() => setWeekCompact(!compact)}
-                className="rounded-md p-1 text-muted hover:bg-line/60"
-              >
-                {compact ? (
-                  <ChevronsUpDown aria-hidden size={18} strokeWidth={1.75} />
-                ) : (
-                  <ChevronsDownUp aria-hidden size={18} strokeWidth={1.75} />
-                )}
-              </button>
-            }
+            plain={compact}
+            corner={<GridCorner tasks={tasks} />}
             dayExtra={(day) => {
               if (compact) return null;
               const weather = forecast.get(day);
@@ -214,12 +202,14 @@ export function CalendarGrid({
   readOnly,
   corner,
   headerActions,
+  plain,
 }: {
   days: PlainDate[];
   dayExtra?: (day: PlainDate) => ReactNode;
   readOnly?: boolean;
   corner?: ReactNode;
   headerActions?: ReactNode;
+  plain?: boolean;
 }) {
   const { family } = useSignedIn();
   const locale = useLocale();
@@ -243,6 +233,7 @@ export function CalendarGrid({
       readOnly={readOnly}
       corner={corner}
       headerActions={headerActions}
+      plain={plain}
     />
   );
 }

@@ -112,10 +112,12 @@
     "agendaEmpty": "Nada nestes dias.",
     "open": "Abrir",
     "openDay": "Abrir o dia",
-    "hideDetails": "Esconder meteorologia e tarefas",
-    "showDetails": "Mostrar meteorologia e tarefas",
     "hideWeather": "Esconder meteorologia",
-    "showWeather": "Mostrar meteorologia"
+    "showWeather": "Mostrar meteorologia",
+    "showTasks_other": "Mostrar as {{count}} tarefas escondidas",
+    "showTasks_one": "Mostrar a tarefa escondida",
+    "showTasks_zero": "Mostrar tarefas",
+    "hideTasks": "Esconder tarefas"
   },
   "settings": {
     "title": "Definições",

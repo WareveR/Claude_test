@@ -81,6 +81,15 @@ export function formatPlainDate(
   return new Intl.DateTimeFormat(language, { ...options, timeZone: "UTC" }).format(toUtc(date));
 }
 
+/** The months two dates fall in, by name with the year: "outubro de 2026", "outubro – novembro de 2026". */
+export function formatMonthRange(from: PlainDate, to: PlainDate, language: string): string {
+  return new Intl.DateTimeFormat(language, {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).formatRange(toUtc(from), toUtc(to));
+}
+
 /** Minutes since midnight on the wall clocks of the given time zone. */
 export function minutesNowIn(timeZone: string, now: Date = new Date()): number {
   const parts = new Intl.DateTimeFormat("en-GB", {
