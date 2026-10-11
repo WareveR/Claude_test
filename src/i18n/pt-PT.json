@@ -640,6 +640,7 @@
   },
   "suggestions": {
     "title": "Sugestões",
+    "close": "Fechar sugestões",
     "lead": "Escreva ou diga o que se repete na vida da família, ou abra um tema, e crie tudo de uma vez depois de rever.",
     "box": "O que se repete?",
     "placeholder": "ginásio 2a e 4a às 19h, supermercado 3a e 5a às 10h, regar as plantas ao sábado, carro, cão",

@@ -124,3 +124,12 @@ test.describe("on a phone", () => {
     }
   });
 });
+
+test("the light bulb also closes Suggestions, back to the view it left", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/month/2026-11");
+  await page.getByRole("link", { name: "Suggestions" }).click();
+  await expect(page).toHaveURL(/\/suggestions$/);
+  await page.getByRole("link", { name: "Close Suggestions" }).click();
+  await expect(page).toHaveURL(/\/month\/2026-11$/);
+});
