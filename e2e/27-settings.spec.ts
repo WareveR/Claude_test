@@ -38,8 +38,8 @@ test("the task list has buttons for a new task and a new checklist", async ({ pa
   await page.locator("main").getByRole("link", { name: "New task" }).click();
   await expect(page).toHaveURL(/\/tasks\/new$/);
   await page.getByRole("button", { name: "Cancel" }).click();
-  await page.locator("main").getByRole("link", { name: "New checklist" }).click();
-  await expect(page).toHaveURL(/\/checklists\/new$/);
+  // A task with items starts as a task too.
+  await expect(page.locator("main").getByRole("link", { name: /checklist/i })).toHaveCount(0);
 });
 
 test("This device shows its app version and updates it on demand", async ({ page }) => {

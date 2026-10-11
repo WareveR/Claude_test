@@ -145,3 +145,27 @@ export function checklistSpans(
 export function roundLabel(checklist: ChecklistPeriod, closedOn: PlainDate) {
   return (checklist.startDate ?? closedOn).slice(0, 4);
 }
+
+/**
+ * A Task that gets items becomes a Checklist (ADR 0008) named after it, for the same Persons and
+ * Entry. Its due day becomes the deadline; a repeating Task's due day becomes the start of
+ * one-day rounds that repeat the same way. Its time, note, Importance and Private don't carry.
+ */
+export function checklistFromTask(task: {
+  title: string;
+  dueDate: PlainDate | null;
+  repetition: Repetition | null;
+  personIds: string[];
+  entryId: string | null;
+}) {
+  const repeats = task.repetition !== null && task.dueDate !== null;
+  return {
+    name: task.title,
+    startDate: repeats ? task.dueDate : null,
+    endDate: repeats ? null : task.dueDate,
+    repetition: repeats ? task.repetition : null,
+    remindAtStart: true,
+    personIds: task.personIds,
+    entryId: task.entryId,
+  };
+}

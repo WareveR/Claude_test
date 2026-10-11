@@ -2,10 +2,14 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useLocation, useNavigate, useParams, useSearchParams } from "react-router";
+import { checklistFromTask } from "../../core/checklist";
+import { templateText } from "../../core/checklist-template";
 import { IMPORTANCES } from "../../core/entry-type";
 import { isPlainDate } from "../../core/plain-date";
 import { api } from "../api";
 import { AddToChecklistSection } from "../checklists/AddToChecklist";
+import { useTemplates } from "../checklists/templates";
+import { useSignedIn } from "../family";
 import { LinkedEntry } from "../entries/EntryPreparation";
 import { RepetitionFields } from "../entries/RepetitionFields";
 import { usePersons } from "../persons/model";
@@ -59,6 +63,12 @@ function TaskForm({ task }: { task?: Task }) {
       },
   );
   const set = (patch: Partial<TaskDraft>) => setDraft((d) => ({ ...d, ...patch }));
+  // A Task with items is kept as a Checklist (ADR 0008): saving opens its page to add them.
+  const [withItems, setWithItems] = useState(false);
+  const { language } = useSignedIn();
+  const templates = useTemplates();
+  const [templateId, setTemplateId] = useState("");
+  const template = templates.data?.find((tpl) => tpl.id === templateId);
 
   const leave = async () => {
     if (task) queryClient.removeQueries({ queryKey: ["task", task.id] });
@@ -73,6 +83,33 @@ function TaskForm({ task }: { task?: Task }) {
         : api("/tasks", { method: "POST", body: draft }),
     onSuccess: leave,
   });
+  const saveWithItems = useMutation({
+    mutationFn: async () => {
+      const items = template ? templateText(template, language).items : [];
+      if (!task) {
+        return api<{ id: string }>("/checklists", {
+          method: "POST",
+          body: { ...checklistFromTask(draft), items },
+        });
+      }
+      const checklist = await api<{ id: string }>(`/tasks/${task.id}/with-items`, {
+        method: "POST",
+      });
+      if (items.length > 0) {
+        await api(`/checklists/${checklist.id}/items`, { method: "POST", body: { items } });
+      }
+      return checklist;
+    },
+    onSuccess: async (checklist) => {
+      if (task) queryClient.removeQueries({ queryKey: ["task", task.id] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["tasks"] }),
+        queryClient.invalidateQueries({ queryKey: ["checklists"] }),
+      ]);
+      navigate(`/checklists/${checklist.id}`, { replace: true });
+    },
+  });
+  const saving = withItems ? saveWithItems : save;
   const remove = useMutation({
     mutationFn: () => api(`/tasks/${task!.id}`, { method: "DELETE" }),
     onSuccess: leave,
@@ -80,7 +117,7 @@ function TaskForm({ task }: { task?: Task }) {
 
   function submit(e: FormEvent) {
     e.preventDefault();
-    save.mutate();
+    saving.mutate();
   }
 
   return (
@@ -110,6 +147,29 @@ function TaskForm({ task }: { task?: Task }) {
         {draft.entryId && (
           <LinkedEntry entryId={draft.entryId} onUnlink={() => set({ entryId: null })} />
         )}
+        <label className="flex items-center gap-2 text-sm">
+          <Switch checked={withItems} onChange={(e) => setWithItems(e.target.checked)} />
+          {t("tasks.withItems")}
+        </label>
+        <p className="-mt-3 text-xs text-muted">
+          {t(withItems ? "tasks.withItemsOnHint" : "tasks.withItemsHint")}
+        </p>
+        {withItems && (templates.data?.length ?? 0) > 0 && (
+          <Field label={t("checklists.usePredefined")}>
+            <select
+              className={INPUT}
+              value={templateId}
+              onChange={(e) => setTemplateId(e.target.value)}
+            >
+              <option value="">{t("checklistTemplates.blank")}</option>
+              {templates.data?.map((tpl) => (
+                <option key={tpl.id} value={tpl.id}>
+                  {templateText(tpl, language).name}
+                </option>
+              ))}
+            </select>
+          </Field>
+        )}
         <div className="flex gap-3">
           <Field label={t("tasks.dueDate")}>
             <TextInput
@@ -124,15 +184,17 @@ function TaskForm({ task }: { task?: Task }) {
               }
             />
           </Field>
-          <Field label={t("tasks.dueTime")}>
-            <TimeSelect
-              optional
-              label={t("tasks.dueTime")}
-              disabled={!draft.dueDate}
-              value={draft.dueTime ?? ""}
-              onChange={(value) => set({ dueTime: value || null })}
-            />
-          </Field>
+          {!withItems && (
+            <Field label={t("tasks.dueTime")}>
+              <TimeSelect
+                optional
+                label={t("tasks.dueTime")}
+                disabled={!draft.dueDate}
+                value={draft.dueTime ?? ""}
+                onChange={(value) => set({ dueTime: value || null })}
+              />
+            </Field>
+          )}
         </div>
 
         {draft.dueDate ? (
@@ -171,37 +233,44 @@ function TaskForm({ task }: { task?: Task }) {
           <p className="text-xs text-muted">{t("tasks.familyWideHint")}</p>
         </fieldset>
 
-        <Field label={t("entries.importance")}>
-          <select
-            className={INPUT}
-            value={draft.importance}
-            onChange={(e) => set({ importance: e.target.value as TaskDraft["importance"] })}
-          >
-            {IMPORTANCES.map((i) => (
-              <option key={i} value={i}>
-                {t(`importance.${i}`)}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label={t("entries.notes")}>
-          <textarea
-            className={INPUT}
-            rows={3}
-            value={draft.notes}
-            onChange={(e) => set({ notes: e.target.value })}
-          />
-        </Field>
+        {!withItems && (
+          <>
+            <Field label={t("entries.importance")}>
+              <select
+                className={INPUT}
+                value={draft.importance}
+                onChange={(e) => set({ importance: e.target.value as TaskDraft["importance"] })}
+              >
+                {IMPORTANCES.map((i) => (
+                  <option key={i} value={i}>
+                    {t(`importance.${i}`)}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label={t("entries.notes")}>
+              <textarea
+                className={INPUT}
+                rows={3}
+                value={draft.notes}
+                onChange={(e) => set({ notes: e.target.value })}
+              />
+            </Field>
 
-        <label className="flex items-center gap-2 text-sm">
-          <Switch checked={draft.private} onChange={(e) => set({ private: e.target.checked })} />
-          {t("entries.private")}
-        </label>
-        <p className="-mt-3 text-xs text-muted">{t("entries.privateHint")}</p>
+            <label className="flex items-center gap-2 text-sm">
+              <Switch
+                checked={draft.private}
+                onChange={(e) => set({ private: e.target.checked })}
+              />
+              {t("entries.private")}
+            </label>
+            <p className="-mt-3 text-xs text-muted">{t("entries.privateHint")}</p>
+          </>
+        )}
 
-        {save.error && <ErrorText>{t("errors.unexpected")}</ErrorText>}
+        {saving.error && <ErrorText>{t("errors.unexpected")}</ErrorText>}
         <FormActions
-          busy={save.isPending}
+          busy={saving.isPending}
           saveLabel={t("persons.save")}
           cancelLabel={t("settings.cancel")}
           onCancel={() => navigate(-1)}

@@ -3,7 +3,7 @@ import { signIn } from "./helpers";
 
 test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 
-const templatesIn = (page: Page) => page.getByRole("region", { name: "Checklist templates" });
+const templatesIn = (page: Page) => page.getByRole("region", { name: "Predefined lists" });
 
 test("a Checklist starts from a built-in template and is saved as a new one", async ({ page }) => {
   await signIn(page);
@@ -149,7 +149,7 @@ test("a loose Task's form adds a copy of it to a Checklist", async ({ page }) =>
   await expect(page).not.toHaveURL(/\/tasks\/new$/);
   await page.goto("/tasks");
   await page.getByTestId("task").filter({ hasText: "Buy glue sticks" }).getByRole("link").click();
-  await page.getByLabel("Which checklist").selectOption({ label: "Back to school" });
+  await page.getByLabel("Which task").selectOption({ label: "Back to school" });
   await page.getByRole("button", { name: "Duplicate" }).click();
   await expect(page.getByRole("status")).toContainText('Added a copy to "Back to school"');
   await page.goto("/tasks");
