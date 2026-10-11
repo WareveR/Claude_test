@@ -33,7 +33,7 @@ import { usePersons } from "../persons/model";
 import { useNow } from "../shell/useNow";
 import { paths } from "../paths";
 import { GRID_BOX, ViewBody } from "../shell/SidePanel";
-import { ViewNav } from "../shell/ViewNav";
+import { ViewActions, ViewNav } from "../shell/ViewNav";
 import { ForecastButton } from "../weather/ForecastButton";
 import { HourlyStrip } from "../weather/HourlyStrip";
 import { useDayWeather, usePastWeather } from "../weather/model";
@@ -83,6 +83,7 @@ export function DayView() {
         title={title}
         previous={paths.day(addDays(date, -1))}
         next={paths.day(addDays(date, 1))}
+        compact
         extra={
           <>
             {date !== today && weather && (
@@ -101,7 +102,7 @@ export function DayView() {
           {date !== today && <TasksAccordion from={date} to={date} />}
         </div>
         <div className={GRID_BOX.lg}>
-          <CalendarGrid days={[date]} />
+          <CalendarGrid days={[date]} headerActions={<ViewActions date={date} />} />
         </div>
       </ViewBody>
     </>
@@ -212,11 +213,13 @@ export function CalendarGrid({
   dayExtra,
   readOnly,
   corner,
+  headerActions,
 }: {
   days: PlainDate[];
   dayExtra?: (day: PlainDate) => ReactNode;
   readOnly?: boolean;
   corner?: ReactNode;
+  headerActions?: ReactNode;
 }) {
   const { family } = useSignedIn();
   const locale = useLocale();
@@ -239,6 +242,7 @@ export function CalendarGrid({
       dayExtra={dayExtra}
       readOnly={readOnly}
       corner={corner}
+      headerActions={headerActions}
     />
   );
 }

@@ -19,6 +19,7 @@ export function ViewNav({
   next,
   newPath,
   extra,
+  compact = false,
 }: {
   date: PlainDate;
   title?: string;
@@ -28,6 +29,11 @@ export function ViewNav({
   newPath?: string | null;
   /** Shown beside the title. */
   extra?: ReactNode;
+  /**
+   * Search, Filter and "+" sit elsewhere (the day view's own header row), and the title is only
+   * for screen readers, as that row shows the date.
+   */
+  compact?: boolean;
 }) {
   const { t } = useTranslation();
   const { pathname } = useLocation();
@@ -92,32 +98,54 @@ export function ViewNav({
         </div>
       )}
       {title && (
-        <h1 className="text-lg font-semibold first-letter:uppercase short:truncate short:text-base">
+        <h1
+          className={
+            compact
+              ? "sr-only"
+              : "text-lg font-semibold first-letter:uppercase short:truncate short:text-base"
+          }
+        >
           {title}
         </h1>
       )}
       {extra}
-      <div className="ml-auto flex items-center gap-1">
-        <Link
-          to={paths.search()}
-          aria-label={t("search.title")}
-          data-help="search"
-          className="rounded-md p-1.5 hover:bg-line/60"
-        >
-          <Search aria-hidden size={20} strokeWidth={1.75} />
-        </Link>
-        <FilterButton />
-      </div>
+      {!compact && <ViewActions date={date} newPath={newPath} className="ml-auto" />}
+    </nav>
+  );
+}
+
+/** Search, the Person Filter and "+" (a new Entry on the date, unless given; none when null). */
+export function ViewActions({
+  date,
+  newPath,
+  className = "",
+}: {
+  date: PlainDate;
+  newPath?: string | null;
+  className?: string;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className={`flex items-center gap-1 ${className}`}>
+      <Link
+        to={paths.search()}
+        aria-label={t("search.title")}
+        data-help="search"
+        className="rounded-md p-1.5 hover:bg-line/60"
+      >
+        <Search aria-hidden size={20} strokeWidth={1.75} />
+      </Link>
+      <FilterButton />
       {newPath !== null && (
         <Link
           to={newPath ?? `/entries/new?date=${date}`}
           aria-label={t("entries.new")}
           data-help="newEntry"
-          className="rounded-full bg-accent p-2 text-accent-ink short:p-1.5"
+          className="ml-1 rounded-full bg-accent p-2 text-accent-ink short:p-1.5"
         >
           <Plus aria-hidden size={20} strokeWidth={2} />
         </Link>
       )}
-    </nav>
+    </div>
   );
 }

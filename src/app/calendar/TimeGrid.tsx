@@ -32,6 +32,8 @@ export type TimeGridProps = {
   readOnly?: boolean;
   /** What sits in the corner above the hours, beside the day names. */
   corner?: ReactNode;
+  /** One day only: buttons at the right of its header row, which then shows the whole date. */
+  headerActions?: ReactNode;
 };
 
 function isWeekend(date: PlainDate) {
@@ -55,6 +57,7 @@ export function TimeGrid({
   dayExtra,
   readOnly = false,
   corner,
+  headerActions,
 }: TimeGridProps) {
   const navigate = useNavigate();
   const scroller = useRef<HTMLDivElement>(null);
@@ -81,27 +84,44 @@ export function TimeGrid({
   const barRows = Math.max(1, ...bars.map((b) => b.row + 1));
   // Holiday names take their own first line of the all-day row, so bars start below it.
   const holidayRows = days.some((day) => holidays.has(day)) ? 1 : 0;
+  // The day view: the whole date ("Friday 23 October") with the actions at the row's right.
+  const single = days.length === 1 && headerActions !== undefined;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-surface" {...drag.zone}>
-      <div className="grid border-b border-line" style={{ gridTemplateColumns: columns }}>
+      <div className="relative grid border-b border-line" style={{ gridTemplateColumns: columns }}>
+        {single && (
+          <div className="absolute top-1 right-2 z-30" data-testid="day-actions">
+            {headerActions}
+          </div>
+        )}
         <div className="flex items-start justify-center pt-1">{corner}</div>
         {days.map((day) => (
           <div
             key={day}
             data-drop-date={day}
-            className={`@container min-w-0 py-1.5 text-center text-sm font-bold lg:text-base ${holidays.has(day) ? "bg-holiday text-holiday-ink" : isWeekend(day) ? "bg-weekend text-weekend-ink" : ""} ${day === today ? "text-accent" : ""}`}
+            className={`@container min-w-0 py-1.5 text-sm font-bold lg:text-base ${single ? "min-h-11 pr-36 pl-2 text-left" : "text-center"} ${holidays.has(day) ? "bg-holiday text-holiday-ink" : isWeekend(day) ? "bg-weekend text-weekend-ink" : ""} ${day === today ? "text-accent" : ""}`}
           >
             {/* One line: the weekday and the day; three letters when the column is narrow. */}
             <div className="truncate whitespace-nowrap first-letter:uppercase">
-              <span className="@max-[7.5rem]:hidden">
-                {formatPlainDate(day, locale, { weekday: "short" }).replace(/[.,]/g, "")}{" "}
-                {formatPlainDate(day, locale, { day: "numeric" })}
-              </span>
-              <span className="hidden @max-[7.5rem]:inline">
-                {formatPlainDate(day, locale, { weekday: "short" }).replace(".", "").slice(0, 3)}{" "}
-                {formatPlainDate(day, locale, { day: "numeric" })}
-              </span>
+              {single ? (
+                <span data-testid="day-title">
+                  {formatPlainDate(day, locale, { weekday: "long", day: "numeric", month: "long" })}
+                </span>
+              ) : (
+                <>
+                  <span className="@max-[7.5rem]:hidden">
+                    {formatPlainDate(day, locale, { weekday: "short" }).replace(/[.,]/g, "")}{" "}
+                    {formatPlainDate(day, locale, { day: "numeric" })}
+                  </span>
+                  <span className="hidden @max-[7.5rem]:inline">
+                    {formatPlainDate(day, locale, { weekday: "short" })
+                      .replace(".", "")
+                      .slice(0, 3)}{" "}
+                    {formatPlainDate(day, locale, { day: "numeric" })}
+                  </span>
+                </>
+              )}
             </div>
             {dayExtra?.(day)}
             {notes.get(day)?.map((note) => (
