@@ -154,7 +154,7 @@ export function TimeGrid({
             persons={persons}
             movable={movable(bar.entry)}
             // Narrow day columns: the title stays on one line, cut short, never a letter a line.
-            className={`max-lg:[&>span]:truncate ${drag.dragged?.key === bar.entry.key ? "opacity-50" : ""}`}
+            className={`max-lg:[&>[data-entry-text]]:truncate ${drag.dragged?.key === bar.entry.key ? "opacity-50" : ""}`}
             style={{
               gridColumn: `${bar.column + 2} / span ${bar.span}`,
               gridRow: bar.row + 1 + holidayRows,
