@@ -125,7 +125,8 @@
       "update": "Atualizar agora",
       "checking": "A procurar uma versão nova…",
       "updating": "A atualizar…",
-      "latest": "Este dispositivo já tem a versão mais recente."
+      "latest": "Este dispositivo já tem a versão mais recente.",
+      "screen": "Ecrã (janela · ecrã · densidade · como está aberta): {{screen}}"
     },
     "theme": "Tema deste dispositivo",
     "areas": {
