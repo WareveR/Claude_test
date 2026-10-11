@@ -1,7 +1,8 @@
 import { CalendarDays, CheckSquare, ListChecks, Search } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
+import { ItemLink, type PopupItem } from "../shell/ItemPopup";
 import { overlaps } from "../../core/entry-time";
 import { formatLocale } from "../../core/languages";
 import { addDays, daysBetween, formatPlainDate, isPlainDate, todayIn } from "../../core/plain-date";
@@ -41,6 +42,8 @@ type Result = {
   color?: string;
   personIds: string[];
   href: string;
+  /** What selecting it opens over the page, if anything (a Checklist opens its page). */
+  popup: PopupItem | null;
   done: boolean;
   score: number;
 };
@@ -142,6 +145,7 @@ export function SearchPage() {
             color: type?.color,
             personIds: entry.personIds,
             href: entryPath(next ? { ...entry, occurrenceDate: next } : entry),
+            popup: { kind: "entry", id: entry.id, occurrence: date },
             done: false,
           },
           [entry.location, entry.notes, label, ...names(entry.personIds)],
@@ -163,6 +167,7 @@ export function SearchPage() {
             label: checklist ? checklist.name : t("search.kinds.tasks"),
             personIds: task.personIds,
             href: checklist ? `/checklists/${checklist.id}` : `/tasks/${task.id}`,
+            popup: checklist ? null : { kind: "task", id: task.id },
             done: Boolean(task.doneAt),
           },
           [
@@ -192,6 +197,7 @@ export function SearchPage() {
             label: t("search.kinds.checklists"),
             personIds: checklist.personIds,
             href: `/checklists/${checklist.id}`,
+            popup: null,
             done: false,
           },
           names(checklist.personIds),
@@ -350,7 +356,12 @@ function ResultRow({
   const detail = r.detail ? excerpt(r.detail, terms) : "";
   return (
     <li>
-      <Link to={r.href} className="flex items-start gap-3 py-2.5" data-testid="search-result">
+      <ItemLink
+        item={r.popup}
+        to={r.href}
+        className="flex items-start gap-3 py-2.5"
+        data-testid="search-result"
+      >
         <Icon
           aria-hidden
           size={18}
@@ -387,7 +398,7 @@ function ResultRow({
             return p ? <PersonAvatar key={id} person={p} size={22} /> : null;
           })}
         </span>
-      </Link>
+      </ItemLink>
     </li>
   );
 }

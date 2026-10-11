@@ -26,6 +26,7 @@ import { SearchPage } from "./search/SearchPage";
 import { TasksView } from "./tasks/TasksView";
 import { AgendaView } from "./views/AgendaView";
 import { DayView, MonthView, TodayRedirect, WeekView, YearView } from "./views/Views";
+import { ItemPopupProvider } from "./shell/ItemPopup";
 
 /** On a wall tablet the entry address shows read-only details instead of the form. */
 function EntryRoute() {
@@ -45,7 +46,9 @@ function Layout() {
       <Header showVoice={!display} />
       <OfflineBanner />
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-        <Outlet />
+        <ItemPopupProvider>
+          <Outlet />
+        </ItemPopupProvider>
       </div>
     </div>
   );

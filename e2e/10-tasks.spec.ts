@@ -39,7 +39,10 @@ test("the Tasks view groups Tasks and ticks them done", async ({ page }) => {
   await done.getByRole("checkbox", { name: "Done: Fix the bike" }).click();
   await expect(page.getByRole("region", { name: "No date" })).toContainText("Fix the bike");
 
+  // A Task opens in a popup first.
   await page.getByRole("link", { name: /Buy school books/ }).click();
+  await expect(page.getByRole("dialog", { name: "Buy school books" })).toBeVisible();
+  await page.getByRole("dialog").getByRole("link", { name: "Edit" }).click();
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Delete task" }).click();
   await expect(page).toHaveURL(/\/tasks$/);

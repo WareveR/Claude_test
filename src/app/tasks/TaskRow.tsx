@@ -2,7 +2,7 @@ import { useOnline } from "../offline/online";
 import { Flag, Lock, Repeat } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { TaskLink } from "../shell/ItemPopup";
 import { formatLocale } from "../../core/languages";
 import { formatPlainDate } from "../../core/plain-date";
 import { useDisplayMode } from "../display/mode";
@@ -57,7 +57,7 @@ export function TaskRow({
           tick.mutate({ task, done: e.target.checked }, { onSettled: () => setTicking(null) });
         }}
       />
-      <Wrapper wall={wall} id={task.id}>
+      <Wrapper wall={wall} task={task}>
         <span className={`break-words ${done ? "text-muted line-through" : ""}`}>
           {task.importance === "high" && !done && (
             <Flag
@@ -93,13 +93,13 @@ export function TaskRow({
   );
 }
 
-function Wrapper({ wall, id, children }: { wall: boolean; id: string; children: ReactNode }) {
+function Wrapper({ wall, task, children }: { wall: boolean; task: Task; children: ReactNode }) {
   const className = "flex min-w-0 flex-1 flex-col";
   return wall ? (
     <div className={className}>{children}</div>
   ) : (
-    <Link to={`/tasks/${id}`} className={className}>
+    <TaskLink task={task} to={`/tasks/${task.id}`} className={className}>
       {children}
-    </Link>
+    </TaskLink>
   );
 }

@@ -35,7 +35,7 @@ test("Refresh writes the countdown list, whose Entries open in a popup", async (
   const popup = page.getByRole("dialog", { name: "Dentist checkup" });
   await expect(popup).toBeVisible();
   await expect(popup).toContainText("09:30");
-  await popup.getByRole("button", { name: "Close" }).click();
+  await popup.getByRole("button", { name: "Back" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await entry.click();
   await page.getByRole("dialog").getByRole("link", { name: "Edit" }).click();

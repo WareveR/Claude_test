@@ -199,6 +199,7 @@ test("a task gets items later, from a predefined list, and keeps its deadline", 
   await expect(page).toHaveURL(/\/tasks$/);
 
   await page.getByRole("link", { name: /Get ready for school/ }).click();
+  await page.getByRole("dialog").getByRole("link", { name: "Edit" }).click();
   await expect(page).toHaveURL(/\/tasks\/[^/]+$/);
   await page.getByRole("switch", { name: "With items" }).check();
   await page.getByLabel("Use a predefined list").selectOption({ label: "Back to school" });
