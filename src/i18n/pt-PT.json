@@ -326,7 +326,20 @@
     "birthYearKnown": "Ano de nascimento conhecido (a data acima é a de nascimento, para mostrar a idade)",
     "birthdayLocked": "A data e a Pessoa deste Aniversário só mudam na própria Pessoa.",
     "edit": "Editar",
-    "close": "Fechar"
+    "close": "Fechar",
+    "happeningNow": "A decorrer agora",
+    "relativeAt": "{{when}}, às {{time}}",
+    "importantHigh": "Importância alta",
+    "every": {
+      "daily_one": "Todos os dias",
+      "daily_other": "De {{count}} em {{count}} dias",
+      "weekly_one": "Todas as semanas",
+      "weekly_other": "De {{count}} em {{count}} semanas",
+      "monthly_one": "Todos os meses",
+      "monthly_other": "De {{count}} em {{count}} meses",
+      "yearly_one": "Todos os anos",
+      "yearly_other": "De {{count}} em {{count}} anos"
+    }
   },
   "newItem": {
     "title": "Novo",
@@ -917,7 +930,9 @@
     "checklists": "Checklists",
     "tasks": "Tarefas",
     "for": "Para: {{title}}",
-    "unlink": "Desligar da entrada"
+    "unlink": "Desligar da entrada",
+    "done": "Feito",
+    "toDo": "Por fazer"
   },
   "search": {
     "title": "Pesquisa",

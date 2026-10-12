@@ -14,6 +14,10 @@ test("an Entry holds the Checklists and Tasks that prepare for it", async ({ pag
   await expect(page).not.toHaveURL(/\/entries\/new/);
   await page.getByTestId("day-column-2026-11-07").getByTestId("entry").click();
 
+  // The summary only reads: with nothing linked it shows no preparation; the form links things.
+  await expect(page.getByTestId("entry-summary")).toBeVisible();
+  await expect(page.getByTestId("preparation")).toHaveCount(0);
+  await page.getByRole("link", { name: "Edit" }).click();
   const preparation = page.getByTestId("preparation");
   await expect(preparation).toContainText("Nothing linked yet");
   // A new Checklist from the Entry is named after it and due on its day.
@@ -29,6 +33,7 @@ test("an Entry holds the Checklists and Tasks that prepare for it", async ({ pag
 
   await page.goto("/week/2026-11-02");
   await page.getByTestId("day-column-2026-11-07").getByTestId("entry").click();
+  await page.getByRole("link", { name: "Edit" }).click();
   await preparation.getByRole("link", { name: "New task", exact: true }).click();
   await expect(page.getByTestId("linked-entry")).toContainText("For: Birthday party");
   await page.getByLabel("Title").fill("Book the hall");
@@ -38,7 +43,11 @@ test("an Entry holds the Checklists and Tasks that prepare for it", async ({ pag
 
   await page.goto("/week/2026-11-02");
   await page.getByTestId("day-column-2026-11-07").getByTestId("entry").click();
+  // The summary lists what is linked, with nothing to tick.
   await expect(preparation.getByRole("link", { name: /Birthday party/ })).toContainText("0 of 1");
+  await expect(preparation.getByText("Book the hall")).toBeVisible();
+  await expect(preparation.getByRole("checkbox")).toHaveCount(0);
+  await page.getByRole("link", { name: "Edit" }).click();
   await preparation.getByRole("checkbox", { name: "Done: Book the hall" }).check();
   await expect(preparation.getByRole("checkbox", { name: "Done: Book the hall" })).toBeChecked();
   await page.screenshot({ path: "test-results/entry-preparation.png", fullPage: true });

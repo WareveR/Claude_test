@@ -1,13 +1,16 @@
-import { MapPin } from "lucide-react";
+import { AlertTriangle, Bell, Clock, MapPin, Repeat } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { EntryTime } from "../../core/entry-time";
 import { formatLocale } from "../../core/languages";
 import { formatPlainDate, isPlainDate } from "../../core/plain-date";
+import { relativeWhen } from "../../core/relative-when";
+import { familyNow } from "../../core/task";
 import { EntryTypeBadge } from "../entry-types/EntryTypeBadge";
-import { typeName, useEntryTypes } from "../entry-types/model";
+import { reminderLabel, typeName, useEntryTypes } from "../entry-types/model";
 import { useSignedIn } from "../family";
 import { usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
+import { useNow } from "../shell/useNow";
 import { EntryPreparation } from "./EntryPreparation";
 import { occurrenceValues, useEntry } from "./model";
 
@@ -18,7 +21,8 @@ function timeText(time: EntryTime, t: (key: string) => string): string {
 
 /**
  * An Entry to read: its type, title, when, Persons, place and notes; for a repeating Entry,
- * the Occurrence on `occurrence`, and what it needs done beforehand. With `discreet` (the wall),
+ * the Occurrence on `occurrence`, how soon it is, how it repeats, its Reminders, and what it
+ * needs done beforehand, only to read: changes are made in the Entry's form. With `discreet` (the wall),
  * a Private Entry shows only "Private" and when, and the preparation stays out.
  */
 export function EntrySummary({
@@ -34,7 +38,9 @@ export function EntrySummary({
   titleId?: string;
 }) {
   const { t } = useTranslation();
-  const locale = formatLocale(useSignedIn().language);
+  const { language, family } = useSignedIn();
+  const locale = formatLocale(language);
+  const now = familyNow(family.timeZone, useNow(60_000));
   const entry = useEntry(id);
   const types = useEntryTypes();
   const persons = usePersons();
@@ -54,6 +60,17 @@ export function EntrySummary({
     .filter(Boolean)
     .join(" ");
   const type = types.data?.find((ty) => ty.id === shown.entryTypeId);
+  const time = shown.time;
+  const soon = relativeWhen(
+    { date: time.startDate, time: time.allDay ? null : time.startTime },
+    {
+      date: time.endDate ?? time.startDate,
+      time: time.allDay ? null : (time.endTime ?? time.startTime),
+    },
+    now,
+    locale,
+  );
+  const repetition = entry.data.repetition;
   const people = shown.personIds
     .map((pid) => persons.data?.find((p) => p.id === pid))
     .filter((p) => p !== undefined);
@@ -71,8 +88,39 @@ export function EntrySummary({
       <p>
         <span className="first-letter:uppercase">{when}</span> · {timeText(shown.time, t)}
       </p>
+      <p className="flex items-center gap-1.5 font-medium" data-testid="entry-when">
+        <Clock aria-hidden size={18} className="shrink-0 text-muted" />
+        <span className="first-letter:uppercase">
+          {soon.kind === "now"
+            ? t("entries.happeningNow")
+            : soon.time
+              ? t("entries.relativeAt", { when: soon.text, time: soon.time })
+              : soon.text}
+        </span>
+      </p>
       {!hidden && (
         <>
+          {repetition && (
+            <p className="flex items-center gap-1.5">
+              <Repeat aria-hidden size={18} className="shrink-0 text-muted" />
+              {t(`entries.every.${repetition.frequency}`, { count: repetition.interval })}
+            </p>
+          )}
+          {entry.data.reminders.length > 0 && (
+            <p className="flex items-center gap-1.5">
+              <Bell aria-hidden size={18} className="shrink-0 text-muted" />
+              {[...entry.data.reminders]
+                .sort((a, b) => b - a)
+                .map((m) => reminderLabel(m, t))
+                .join(", ")}
+            </p>
+          )}
+          {shown.importance === "high" && (
+            <p className="flex items-center gap-1.5 text-overdue">
+              <AlertTriangle aria-hidden size={18} className="shrink-0" />
+              {t("entries.importantHigh")}
+            </p>
+          )}
           {people.length > 0 && (
             <ul className="flex flex-wrap gap-3">
               {people.map((p) => (
@@ -98,7 +146,7 @@ export function EntrySummary({
           {shown.notes && <p className="whitespace-pre-wrap">{shown.notes}</p>}
         </>
       )}
-      {!discreet && <EntryPreparation entryId={id} />}
+      {!discreet && <EntryPreparation entryId={id} readOnly />}
     </div>
   );
 }
