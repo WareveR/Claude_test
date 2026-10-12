@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { placeClock, type HourWeather } from "../../core/weather";
 import { useNow } from "../shell/useNow";
 import { ForecastButton } from "./ForecastButton";
@@ -9,9 +10,9 @@ const HOURS_SHOWN = 24;
 /**
  * The next 24 hours in the place's own clock, as in the forecast detail, or the given `hours` of one day,
  * as a row of fixed-width hour cards: they share out a wide row and scroll sideways in a narrow
- * one, never squeezing into each other.
+ * one, never squeezing into each other. A `lead` (the day's sunrise and sunset) stays put on the left.
  */
-export function HourlyStrip({ hours: given }: { hours?: HourWeather[] }) {
+export function HourlyStrip({ hours: given, lead }: { hours?: HourWeather[]; lead?: ReactNode }) {
   const { data } = useWeather();
   const now = useNow(60_000);
   if (!data && !given) return null;
@@ -20,8 +21,15 @@ export function HourlyStrip({ hours: given }: { hours?: HourWeather[] }) {
     given ?? (data?.hourly ?? []).filter((h) => h.time >= clock.slice(0, 13)).slice(0, HOURS_SHOWN);
   if (hours.length === 0) return null;
   return (
-    <div data-testid="hourly-strip" className="px-4">
-      <div className="relative overflow-x-auto overscroll-x-contain rounded-md border border-line bg-surface [scrollbar-width:thin]">
+    <div data-testid="hourly-strip" className="flex px-4">
+      {lead && (
+        <div className="flex shrink-0 items-center rounded-l-md border border-r-0 border-line bg-surface px-1.5">
+          {lead}
+        </div>
+      )}
+      <div
+        className={`relative min-w-0 flex-1 overflow-x-auto overscroll-x-contain border border-line bg-surface [scrollbar-width:thin] ${lead ? "rounded-r-md" : "rounded-md"}`}
+      >
         <ForecastButton className="flex w-max min-w-full gap-1 p-1 text-left">
           {hours.map((h) => (
             <span
