@@ -31,6 +31,10 @@ test("the Person Filter narrows the Tasks view and is remembered", async ({ page
 
   await page.getByLabel("Person filter").first().click();
   await panel.getByRole("switch", { name: "Include Family-wide" }).check();
+  // Tapping inside keeps the panel open; tapping outside closes it.
+  await expect(panel).toBeVisible();
+  await page.mouse.click(5, 300);
+  await expect(panel).toBeHidden();
   await expect(page.getByText("Fix the bike")).toBeVisible();
 });
 
