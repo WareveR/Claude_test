@@ -84,7 +84,7 @@ function PersonForm({ person }: { person?: Person }) {
       <form onSubmit={submit} className="flex flex-col gap-4">
         <div className="flex items-center gap-4">
           <PersonAvatar person={{ ...form, name: form.name || "?" }} size={64} />
-          <label className={BUTTON}>
+          <label className={`relative ${BUTTON}`}>
             {t("persons.photo")}
             <input
               type="file"
@@ -114,7 +114,7 @@ function PersonForm({ person }: { person?: Person }) {
           <legend className="mb-1 font-medium">{t("persons.color")}</legend>
           <div className="flex flex-wrap gap-2">
             {PERSON_COLORS.map((color) => (
-              <label key={color} className="cursor-pointer">
+              <label key={color} className="relative cursor-pointer">
                 <input
                   type="radio"
                   name="color"

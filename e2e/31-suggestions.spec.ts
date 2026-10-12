@@ -53,6 +53,17 @@ test("a theme opens its ideas, the box reads phrases, and everything is created 
     .filter({ hasText: "Pay the water" })
     .getByText("Direct debit")
     .click();
+  // The hidden radio stays inside its pill, so the window never scrolls.
+  expect(
+    await page.evaluate(() => {
+      const w = globalThis as unknown as {
+        document: { documentElement: { scrollHeight: number } };
+        innerHeight: number;
+        scrollY: number;
+      };
+      return [w.scrollY, w.document.documentElement.scrollHeight <= w.innerHeight];
+    }),
+  ).toEqual([0, true]);
 
   await page.getByRole("button", { name: "Review and create" }).click();
   const dialog = page.getByRole("dialog", { name: /About to create/ });
