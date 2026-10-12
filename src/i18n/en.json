@@ -326,7 +326,20 @@
     "birthYearKnown": "Birth year known (the date above is the date of birth, so the age shows)",
     "birthdayLocked": "This Birthday's date and Person change only on its Person.",
     "edit": "Edit",
-    "close": "Close"
+    "close": "Close",
+    "happeningNow": "Happening now",
+    "relativeAt": "{{when}} at {{time}}",
+    "importantHigh": "High importance",
+    "every": {
+      "daily_one": "Every day",
+      "daily_other": "Every {{count}} days",
+      "weekly_one": "Every week",
+      "weekly_other": "Every {{count}} weeks",
+      "monthly_one": "Every month",
+      "monthly_other": "Every {{count}} months",
+      "yearly_one": "Every year",
+      "yearly_other": "Every {{count}} years"
+    }
   },
   "newItem": {
     "title": "New",
@@ -917,7 +930,9 @@
     "checklists": "Checklists",
     "tasks": "Tasks",
     "for": "For: {{title}}",
-    "unlink": "Unlink from the entry"
+    "unlink": "Unlink from the entry",
+    "done": "Done",
+    "toDo": "To do"
   },
   "search": {
     "title": "Search",

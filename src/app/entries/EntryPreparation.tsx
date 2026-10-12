@@ -1,10 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, ListChecks, Plus, X } from "lucide-react";
+import { CalendarDays, Check, Circle, ListChecks, Plus, X } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { TaskLink } from "../shell/ItemPopup";
 import { checklistProgress } from "../../core/checklist";
+import { leafProgress } from "../../core/task-tree";
 import { api } from "../api";
 import { useChecklists, type Checklist } from "../checklists/model";
 import { useOnline } from "../offline/online";
@@ -24,13 +25,16 @@ function checklistBody(checklist: Checklist, entryId: string | null) {
 /**
  * What an Entry needs done beforehand: the Checklists and loose Tasks linked to it, each
  * Checklist with its progress and each Task to tick, plus new ones or existing ones to link.
+ * `readOnly` (an Entry's summary) only shows what is linked, each Task with its items.
  */
 export function EntryPreparation({
   entryId,
   className = "border-t border-line pt-3",
+  readOnly = false,
 }: {
   entryId: string;
   className?: string;
+  readOnly?: boolean;
 }) {
   const { t } = useTranslation();
   const online = useOnline();
@@ -58,6 +62,7 @@ export function EntryPreparation({
       await queryClient.invalidateQueries({ queryKey: ["tasks"] });
     },
   });
+  if (readOnly && linkedLists.length + linkedTasks.length === 0) return null;
   return (
     <section className={`flex flex-col gap-2 ${className}`} data-testid="preparation">
       <h3 className="font-semibold">{t("preparation.title")}</h3>
@@ -82,21 +87,27 @@ export function EntryPreparation({
             </li>
           );
         })}
-        {linkedTasks.map((task) => (
-          <TaskRow key={task.id} task={task} />
-        ))}
+        {linkedTasks.map((task) =>
+          readOnly ? (
+            <ReadTask key={task.id} task={task} tasks={tasks} />
+          ) : (
+            <TaskRow key={task.id} task={task} />
+          ),
+        )}
       </ul>
-      <div className="flex flex-wrap gap-2">
-        <Link className={BUTTON} to={`/checklists/new?entry=${entryId}`}>
-          <Plus aria-hidden size={16} />
-          {t("preparation.newChecklist")}
-        </Link>
-        <Link className={BUTTON} to={`/tasks/new?entry=${entryId}`}>
-          <Plus aria-hidden size={16} />
-          {t("preparation.newTask")}
-        </Link>
-      </div>
-      {freeLists.length + freeTasks.length > 0 && (
+      {!readOnly && (
+        <div className="flex flex-wrap gap-2">
+          <Link className={BUTTON} to={`/checklists/new?entry=${entryId}`}>
+            <Plus aria-hidden size={16} />
+            {t("preparation.newChecklist")}
+          </Link>
+          <Link className={BUTTON} to={`/tasks/new?entry=${entryId}`}>
+            <Plus aria-hidden size={16} />
+            {t("preparation.newTask")}
+          </Link>
+        </div>
+      )}
+      {!readOnly && freeLists.length + freeTasks.length > 0 && (
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium">{t("preparation.linkExisting")}</span>
           <select
@@ -131,6 +142,40 @@ export function EntryPreparation({
         </label>
       )}
     </section>
+  );
+}
+
+/** A linked Task and its items, nested, each done or not; nothing here changes them. */
+function ReadTask({ task, tasks, depth = 0 }: { task: Task; tasks: Task[]; depth?: number }) {
+  const { t } = useTranslation();
+  const items = tasks.filter((x) => x.parentId === task.id);
+  const done = Boolean(task.doneAt);
+  const Mark = done ? Check : Circle;
+  return (
+    <li className="flex flex-col gap-1" style={{ paddingLeft: depth ? 24 : 0 }}>
+      <span className="flex items-center gap-2">
+        <Mark
+          aria-label={t(done ? "preparation.done" : "preparation.toDo")}
+          size={16}
+          className={`shrink-0 ${done ? "text-accent" : "text-muted"}`}
+        />
+        <span className={`min-w-0 flex-1 break-words ${done ? "text-muted line-through" : ""}`}>
+          {task.title}
+        </span>
+        {items.length > 0 && (
+          <span className="text-sm text-muted">
+            {t("checklists.progress", leafProgress(tasks, task.id))}
+          </span>
+        )}
+      </span>
+      {items.length > 0 && (
+        <ul className="flex flex-col gap-1">
+          {items.map((item) => (
+            <ReadTask key={item.id} task={item} tasks={tasks} depth={depth + 1} />
+          ))}
+        </ul>
+      )}
+    </li>
   );
 }
 
