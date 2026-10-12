@@ -20,6 +20,10 @@ _Avoid_: Alias, label
 Anything the Family puts on the calendar at a date or time: a birthday, a holiday, an appointment, a class, an outing. Every Entry has exactly one Entry Type.
 _Avoid_: Event (a kind of Entry, not the general term), item, appointment
 
+**New**:
+The one way to add an Entry or a Task: its form opens as one or the other (from the calendar as an Entry, from the Tasks view as a Task) and the other can be picked at its top, keeping what was already filled in. Until then, moving on from the title picks the kind the title suggests: a clock time means an Entry, a title starting with something to do ("Comprar pão", "Pay the rent") a Task. Both stay separate underneath. An existing Entry can also be turned into a Task and a Task into an Entry, keeping what both have (title, notes, Persons, Private, Importance, Repetition): an Entry's location joins the notes and a repeating one is due on its next Occurrence, while its Entry Type, icon, end, Reminders and edited Occurrences go, and its Preparation stays unlinked; a Task lands on its due date (at its due time, or all day; today without one) as a General Entry; a Task with items becomes an Entry over its period and the list stays as that Entry's Preparation. A Checklist's item and a synced Birthday can't be turned.
+_Avoid_: Create menu, add item
+
 **Entry Type**:
 A Family-configurable template that pre-fills new Entries: a name, a colour, an icon or thumbnail image, and defaults for the optional features (repetition, Importance, location, Persons, notes, time of day). It only sets defaults; any Entry may use any feature. Some come built in; Birthday and General are built in and cannot be removed. General is the catch-all that receives the Entries of a deleted Entry Type.
 _Avoid_: Category, kind, typology, tag

@@ -18,7 +18,7 @@ test("day and month views show Entries", async ({ page }) => {
   await expect(page.getByTestId("day-title")).toHaveText("Wednesday 4 November");
   const actions = page.getByTestId("day-actions");
   await expect(actions.getByRole("link", { name: "Search" })).toBeVisible();
-  await expect(actions.getByRole("link", { name: "New Entry" })).toHaveAttribute(
+  await expect(actions.getByRole("link", { name: "New", exact: true })).toHaveAttribute(
     "href",
     "/entries/new?date=2026-11-04",
   );

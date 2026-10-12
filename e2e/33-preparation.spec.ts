@@ -6,7 +6,7 @@ test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 test("an Entry holds the Checklists and Tasks that prepare for it", async ({ page }) => {
   await signIn(page);
   await page.goto("/week/2026-11-02");
-  await page.getByRole("link", { name: "New entry" }).click();
+  await page.getByRole("link", { name: "New", exact: true }).click();
   await page.getByLabel("Title").fill("Birthday party");
   await page.getByLabel("Type", { exact: true }).selectOption({ label: "Appointment" });
   await page.getByLabel("Date", { exact: true }).fill("2026-11-07");

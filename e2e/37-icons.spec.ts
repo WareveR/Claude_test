@@ -6,7 +6,7 @@ test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 test("icons come in groups and are found by name", async ({ page }) => {
   await signIn(page);
   await page.goto("/week/2026-12-07");
-  await page.getByRole("link", { name: "New entry" }).click();
+  await page.getByRole("link", { name: "New", exact: true }).click();
   const picker = page.getByTestId("icon-picker");
 
   // A group at a time.
