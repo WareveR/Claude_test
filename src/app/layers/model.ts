@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { dayNotes, sunTimes, type DayNote, type Layer } from "../../core/day-notes";
+import { dayNotes, sunTimes, type DayNote, type Layer, type Place } from "../../core/day-notes";
 import { addDays, weekday, type PlainDate } from "../../core/plain-date";
 import { binsOn } from "../../core/waste";
 import { useSignedIn } from "../family";
 import { usePersonFilter } from "../filter/model";
-import { useWeather } from "../weather/model";
+import { useWeather, useWeatherLocations } from "../weather/model";
 
 /** `astronomy-engine` is large, so it loads on first use rather than with the app. */
 export function useAstronomy(needed: boolean) {
@@ -82,6 +82,18 @@ export function useDayNotes(from: PlainDate, to: PlainDate): Map<PlainDate, stri
 }
 
 /**
+ * Where the sun is worked out for: the forecast's place, or the selected Weather Location's
+ * while the forecast is missing (not yet fetched, or the forecast service down), as it is
+ * calculated here and needs no forecast.
+ */
+function useSunPlace(): Place | null {
+  const forecast = useWeather().data?.location;
+  const saved = useWeatherLocations().data;
+  const selected = saved?.locations.find((l) => l.id === saved.selectedId);
+  return forecast ?? selected ?? null;
+}
+
+/**
  * Sunrise and sunset at the Weather Location on a day, when the Sun Layer is on,
  * or always when `always` is set.
  */
@@ -91,7 +103,7 @@ export function useSunTimes(
 ): { rise: string | null; set: string | null } | null {
   const { family } = useSignedIn();
   const { layers } = usePersonFilter();
-  const place = useWeather().data?.location ?? null;
+  const place = useSunPlace();
   const on = (always || layers.includes("sun")) && place !== null;
   const A = useAstronomy(on);
   return useMemo(

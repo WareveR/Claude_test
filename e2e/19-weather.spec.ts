@@ -76,6 +76,30 @@ test("the first saved place is selected and its weather shows in every view", as
   await expect(page.getByTestId("picked-day").getByRole("button").first()).toContainText("20°/10°");
 });
 
+test("on a phone the Day view shows sunrise and sunset when its switch is on", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await signIn(page);
+  // A day past the forecast's reach: the times are worked out, not read from the forecast.
+  const later = new Date(Date.now() + 60 * 86_400_000).toISOString().slice(0, 10);
+  await page.goto(`/day/${later}`);
+  await expect(page.getByTestId("sun-times")).toHaveCount(0);
+  await page.getByLabel("Person filter").first().click();
+  await page
+    .getByRole("group", { name: "Person filter" })
+    .getByRole("switch", { name: "Sunrise and sunset (Day view)" })
+    .check();
+  await page.keyboard.press("Escape");
+  const sun = page.getByTestId("sun-times");
+  await expect(sun).toBeVisible();
+  await expect(sun).toContainText(/Sunrise \d\d:\d\d, Sunset \d\d:\d\d/);
+  // Today and a day gone by show them too.
+  await page.goto("/");
+  await expect(page.getByTestId("sun-times")).toBeVisible();
+  const before = new Date(Date.now() - 30 * 86_400_000).toISOString().slice(0, 10);
+  await page.goto(`/day/${before}`);
+  await expect(page.getByTestId("sun-times")).toBeVisible();
+});
+
 test("tapping the weather asks before leaving for the forecast site", async ({ page }) => {
   await signIn(page);
   await page.getByTestId("header-weather").click();
