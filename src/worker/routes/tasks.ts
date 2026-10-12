@@ -8,7 +8,7 @@ import { familyNow, nextRepeat } from "../../core/task";
 import { wouldNestInItself } from "../../core/task-tree";
 import { randomId } from "../auth/crypto";
 import type { Db } from "../db";
-import { schema } from "../db";
+import { inParts, schema } from "../db";
 import { requireDevice } from "../require-device";
 import { settleChecklist } from "../task-tree";
 import type { AppEnv } from "../types";
@@ -110,15 +110,10 @@ async function parseTask(db: Db, body: Record<string, unknown>) {
 
 async function present(db: Db, rows: TaskRow[]) {
   if (rows.length === 0) return [];
-  const links = await db
-    .select()
-    .from(schema.taskPerson)
-    .where(
-      inArray(
-        schema.taskPerson.taskId,
-        rows.map((r) => r.id),
-      ),
-    );
+  const links = await inParts(
+    rows.map((r) => r.id),
+    (ids) => db.select().from(schema.taskPerson).where(inArray(schema.taskPerson.taskId, ids)),
+  );
   return rows.map((row) => ({
     id: row.id,
     title: row.title,

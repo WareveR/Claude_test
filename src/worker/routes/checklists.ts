@@ -1,4 +1,4 @@
-import { asc, desc, eq, inArray, isNotNull } from "drizzle-orm";
+import { asc, eq, inArray, isNotNull } from "drizzle-orm";
 import { Hono } from "hono";
 import { cleanItems } from "../../core/checklist-template";
 import {
@@ -14,7 +14,7 @@ import { isRepetition, type Repetition } from "../../core/repetition";
 import { familyNow } from "../../core/task";
 import { randomId } from "../auth/crypto";
 import type { Db } from "../db";
-import { schema } from "../db";
+import { inParts, schema } from "../db";
 import { requireDevice } from "../require-device";
 import { settleChecklist } from "../task-tree";
 import type { AppEnv } from "../types";
@@ -82,25 +82,21 @@ async function parseChecklist(db: Db, body: Record<string, unknown>, today: stri
 
 async function present(db: Db, rows: ChecklistRow[]) {
   if (rows.length === 0) return [];
-  const links = await db
-    .select()
-    .from(schema.checklistPerson)
-    .where(
-      inArray(
-        schema.checklistPerson.checklistId,
-        rows.map((r) => r.id),
-      ),
-    );
-  const rounds = await db
-    .select()
-    .from(schema.checklistRound)
-    .where(
-      inArray(
-        schema.checklistRound.checklistId,
-        rows.map((r) => r.id),
-      ),
+  const ids = rows.map((r) => r.id);
+  const links = await inParts(ids, (part) =>
+    db
+      .select()
+      .from(schema.checklistPerson)
+      .where(inArray(schema.checklistPerson.checklistId, part)),
+  );
+  const rounds = (
+    await inParts(ids, (part) =>
+      db
+        .select()
+        .from(schema.checklistRound)
+        .where(inArray(schema.checklistRound.checklistId, part)),
     )
-    .orderBy(desc(schema.checklistRound.closedAt));
+  ).sort((a, b) => b.closedAt.localeCompare(a.closedAt));
   return rows.map((row) => ({
     id: row.id,
     name: row.name,

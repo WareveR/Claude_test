@@ -6,7 +6,7 @@ import { addDays, isPlainDate } from "../../core/plain-date";
 import { isRepetition, occurrenceDates, type Repetition } from "../../core/repetition";
 import { randomId } from "../auth/crypto";
 import type { Db } from "../db";
-import { schema } from "../db";
+import { inParts, schema } from "../db";
 import { requireDevice } from "../require-device";
 import type { AppEnv } from "../types";
 import { entryTypeDeleteSteps } from "./entry-types";
@@ -157,22 +157,17 @@ export function present(row: EntryRow, personIds: string[], exceptions: Exceptio
 
 async function withPersons(db: Db, rows: EntryRow[]) {
   if (rows.length === 0) return [];
-  const links = await db
-    .select()
-    .from(schema.entryPerson)
-    .where(
-      inArray(
-        schema.entryPerson.entryId,
-        rows.map((r) => r.id),
-      ),
-    );
+  const links = await inParts(
+    rows.map((r) => r.id),
+    (ids) => db.select().from(schema.entryPerson).where(inArray(schema.entryPerson.entryId, ids)),
+  );
   const repeating = rows.filter((r) => r.repetition).map((r) => r.id);
-  const exceptions = repeating.length
-    ? await db
-        .select()
-        .from(schema.occurrenceException)
-        .where(inArray(schema.occurrenceException.entryId, repeating))
-    : [];
+  const exceptions = await inParts(repeating, (ids) =>
+    db
+      .select()
+      .from(schema.occurrenceException)
+      .where(inArray(schema.occurrenceException.entryId, ids)),
+  );
   return rows.map((row) =>
     present(
       row,
