@@ -92,17 +92,20 @@ export function DayView() {
         previous={paths.day(addDays(date, -1))}
         next={paths.day(addDays(date, 1))}
         compact
-        extra={<DayWeatherLine day={date} weather={weather} />}
+        extra={<DayWeatherLine weather={weather} />}
       />
       <ViewBody>
         <div className="flex flex-col gap-2 pb-2 empty:hidden">
           {showHours &&
             (hours.length > 0 ? (
-              <HourlyStrip hours={hours} />
+              <HourlyStrip hours={hours} lead={<SunTimes day={date} />} />
             ) : (
-              <p data-testid="no-hours" className="px-4 text-sm text-muted">
-                {t("views.noHours")}
-              </p>
+              <div className="flex items-center gap-3 px-4">
+                <SunTimes day={date} />
+                <p data-testid="no-hours" className="text-sm text-muted">
+                  {t("views.noHours")}
+                </p>
+              </div>
             ))}
           {date !== today && <TasksAccordion from={date} to={date} />}
         </div>
@@ -115,11 +118,10 @@ export function DayView() {
 }
 
 /**
- * The day's weather beside its title: highest and lowest, chance of rain and wind, sunrise and
- * sunset when the Sun Layer is on, and a switch for the hour by hour detail, there even when no
- * hours are kept.
+ * The day's weather beside its title: highest and lowest, chance of rain and wind, and a switch
+ * for the hour by hour detail, there even when no hours are kept.
  */
-function DayWeatherLine({ day, weather }: { day: PlainDate; weather?: ShownDay }) {
+function DayWeatherLine({ weather }: { weather?: ShownDay }) {
   const { t } = useTranslation();
   const showHours = useDayHours();
   return (
@@ -136,7 +138,6 @@ function DayWeatherLine({ day, weather }: { day: PlainDate; weather?: ShownDay }
           </span>
         </ForecastButton>
       )}
-      <SunTimes day={day} />
       <button
         type="button"
         data-testid="day-hours"
@@ -151,7 +152,10 @@ function DayWeatherLine({ day, weather }: { day: PlainDate; weather?: ShownDay }
   );
 }
 
-/** Sunrise and sunset beside the day's title, on any day, when this device shows the Sun Layer. */
+/**
+ * Sunrise over sunset, as a small column left of the hour by hour detail, on any day, when this
+ * device shows the Sun Layer.
+ */
 function SunTimes({ day }: { day: PlainDate }) {
   const { t } = useTranslation();
   const sun = useSunTimes(day);
@@ -159,10 +163,13 @@ function SunTimes({ day }: { day: PlainDate }) {
   return (
     <span
       data-testid="sun-times"
-      className="inline-flex items-center gap-1 text-muted tabular-nums"
+      className="flex shrink-0 flex-col gap-2 text-xs text-muted tabular-nums"
     >
-      <span aria-hidden className="inline-flex items-center gap-1">
-        <SunriseIcon size={14} /> {sun.rise ?? "–"} · <SunsetIcon size={14} /> {sun.set ?? "–"}
+      <span aria-hidden className="flex flex-col items-center">
+        <SunriseIcon size={16} /> {sun.rise ?? "–"}
+      </span>
+      <span aria-hidden className="flex flex-col items-center">
+        <SunsetIcon size={16} /> {sun.set ?? "–"}
       </span>
       <span className="sr-only">
         {t("layers.sunrise")} {sun.rise ?? "–"}, {t("layers.sunset")} {sun.set ?? "–"}
