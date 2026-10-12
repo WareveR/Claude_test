@@ -9,7 +9,7 @@ test("create, see, edit and delete Entries in the week view", async ({ page }) =
   // The week is titled by its months, abbreviated, and year.
   await expect(page.getByRole("heading", { name: "Oct 2026" })).toBeVisible();
 
-  await page.getByRole("link", { name: "New entry" }).click();
+  await page.getByRole("link", { name: "New", exact: true }).click();
   // Cancel and Save stay on screen without scrolling the long form.
   await expect(page.getByRole("button", { name: "Save" })).toBeInViewport();
   await expect(page.getByRole("button", { name: "Cancel" })).toBeInViewport();
@@ -28,7 +28,7 @@ test("create, see, edit and delete Entries in the week view", async ({ page }) =
   await expect(dentist).toContainText("15:10");
   await expect(dentist).toContainText("Dentist");
 
-  await page.getByRole("link", { name: "New entry" }).click();
+  await page.getByRole("link", { name: "New", exact: true }).click();
   await page.getByLabel("Title").fill("Autumn break");
   await page.getByLabel("Type", { exact: true }).selectOption({ label: "Summer break" });
   await expect(page.getByLabel("All day")).toBeChecked();

@@ -139,7 +139,7 @@ export function ViewActions({
       {newPath !== null && (
         <Link
           to={newPath ?? `/entries/new?date=${date}`}
-          aria-label={t("entries.new")}
+          aria-label={t("newItem.title")}
           data-help="newEntry"
           className="ml-1 rounded-full bg-accent p-2 text-accent-ink short:p-1.5"
         >

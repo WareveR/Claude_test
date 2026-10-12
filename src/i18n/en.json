@@ -298,7 +298,6 @@
     "familyWide": "Items for no Person in particular (Family-wide) always remind."
   },
   "entries": {
-    "new": "New entry",
     "title": "Title",
     "type": "Type",
     "allDay": "All day",
@@ -328,6 +327,21 @@
     "birthdayLocked": "This Birthday's date and Person change only on its Person.",
     "edit": "Edit",
     "close": "Close"
+  },
+  "newItem": {
+    "title": "New",
+    "kind": "Entry or task",
+    "entry": "Entry",
+    "task": "Task",
+    "entryHint": "An Entry sits on the calendar at a date or time.",
+    "taskHint": "A Task is something to get done and tick off, with an optional deadline."
+  },
+  "convert": {
+    "toTask": "Turn into a task",
+    "toEntry": "Turn into an entry",
+    "confirmToTask": "Turn \"{{title}}\" into a task? It keeps its title, notes, location, Persons, importance and repetition, due on its date. Its type, icon, end, reminders and changed occurrences go, and what was in its Preparation stays, unlinked.",
+    "confirmToEntry": "Turn \"{{title}}\" into an entry? It keeps its title, notes, Persons, importance and repetition, on its due date (today if it has none). Whether it was done, and the entry it prepared for, go.",
+    "confirmListToEntry": "Turn \"{{title}}\" into an entry? It goes on the calendar over its period (today if it has none), and its items stay as that entry's Preparation."
   },
   "scope": {
     "saveTitle": "Save the change for…",
@@ -995,7 +1009,8 @@
         "more": "Only this device is filtered; the others see everything."
       },
       "newEntry": {
-        "what": "Creates a new Entry on the date you're looking at."
+        "what": "Adds something new on the date you are viewing: an Entry or a Task.",
+        "more": "The app picks from the title; you can change it at the top of the form."
       },
       "newTask": {
         "what": "Creates a new task.",

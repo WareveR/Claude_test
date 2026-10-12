@@ -24,6 +24,8 @@ import { occurrenceValues, saveEntry, useEntry, type Entry, type EntryDraft } fr
 import { ScopeDialog, type Scope } from "./ScopeDialog";
 import { RepetitionFields } from "./RepetitionFields";
 import { EntryPreparation } from "./EntryPreparation";
+import { KindSwitch, useNewKind, type Carried } from "./NewKind";
+import { ConvertButton } from "./ConvertButton";
 import { readyToEdit } from "../offline/fresh";
 import { BUTTON, BUTTON_DANGER } from "../ui/button";
 import { Chip, Switch } from "../ui/Toggle";
@@ -147,7 +149,25 @@ function EntryForm({
     // Values from a Voice Entry already include the Entry Type's defaults.
     return given ? { ...fresh, ...given } : fresh;
   });
+  const [firstTime] = useState(() => draft.time);
   const set = (patch: Partial<EntryDraft>) => setDraft((d) => ({ ...d, ...patch }));
+  const kind = useNewKind("entry");
+  const isNew = !entry && !occurrence;
+  /** What a Task made from this new Entry keeps; its time only if one was picked or changed. */
+  const carried = (): Carried => ({
+    title: draft.title,
+    notes: draft.notes,
+    personIds: draft.personIds,
+    private: draft.private,
+    importance: draft.importance,
+    repetition: draft.repetition,
+    date: draft.time.startDate,
+    time:
+      !draft.time.allDay &&
+      (startTime !== null || firstTime.allDay || draft.time.startTime !== firstTime.startTime)
+        ? draft.time.startTime
+        : null,
+  });
   const setTime = (patch: Partial<EntryTime>) =>
     setDraft((d) => ({ ...d, time: { ...d.time, ...patch } as EntryTime }));
 
@@ -215,8 +235,9 @@ function EntryForm({
   return (
     <main className="mx-auto flex w-full max-w-xl flex-col gap-4 p-4">
       <div className="flex items-center gap-3">
-        <h1 className="text-xl font-semibold">{entry ? entry.title : t("entries.new")}</h1>
+        <h1 className="text-xl font-semibold">{entry ? entry.title : t("newItem.title")}</h1>
       </div>
+      {isNew && <KindSwitch kind="entry" onPick={(k) => kind.switchTo(k, carried())} />}
       {entry && (
         <EntryPreparation entryId={entry.id} className="rounded-lg border border-line p-3" />
       )}
@@ -234,9 +255,11 @@ function EntryForm({
           <Field label={t("entries.title")}>
             <TextInput
               required
-              autoFocus={!entry}
+              autoFocus={!entry && !kind.switched}
               value={draft.title}
               onChange={(e) => set({ title: e.target.value })}
+              // A time picked on the calendar already says it is an Entry.
+              onBlur={(e) => isNew && startTime === null && kind.onTitleBlur(e, carried())}
             />
           </Field>
           <Field label={t("entries.type")} help="entryType">
@@ -475,7 +498,12 @@ function EntryForm({
         />
       </form>
       {entry && !synced && (
-        <div className="border-t border-line pt-4">
+        <div className="flex flex-wrap gap-3 border-t border-line pt-4">
+          <ConvertButton
+            path={`/entries/${entry.id}/to-task`}
+            to="task"
+            confirm={t("convert.confirmToTask", { title: entry.title })}
+          />
           <button
             type="button"
             className={BUTTON_DANGER}

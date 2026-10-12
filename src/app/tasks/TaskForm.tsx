@@ -11,6 +11,8 @@ import { AddToChecklistSection } from "../checklists/AddToChecklist";
 import { useTemplates } from "../checklists/templates";
 import { useSignedIn } from "../family";
 import { LinkedEntry } from "../entries/EntryPreparation";
+import { KindSwitch, useNewKind, type Carried } from "../entries/NewKind";
+import { ConvertButton } from "../entries/ConvertButton";
 import { RepetitionFields } from "../entries/RepetitionFields";
 import { usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
@@ -63,6 +65,19 @@ function TaskForm({ task }: { task?: Task }) {
       },
   );
   const set = (patch: Partial<TaskDraft>) => setDraft((d) => ({ ...d, ...patch }));
+  const kind = useNewKind("task");
+  // A Task made for an Entry's Preparation stays a Task.
+  const canSwitch = !task && !entry;
+  const carried = (): Carried => ({
+    title: draft.title,
+    notes: draft.notes,
+    personIds: draft.personIds,
+    private: draft.private,
+    importance: draft.importance,
+    repetition: draft.repetition,
+    date: draft.dueDate,
+    time: draft.dueTime,
+  });
   // A Task with items is kept as a Checklist (ADR 0008): saving opens its page to add them.
   const [withItems, setWithItems] = useState(false);
   const { language } = useSignedIn();
@@ -123,8 +138,9 @@ function TaskForm({ task }: { task?: Task }) {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-col gap-4 p-4">
       <div className="flex items-center gap-3">
-        <h1 className="text-xl font-semibold">{task ? task.title : t("tasks.new")}</h1>
+        <h1 className="text-xl font-semibold">{task ? task.title : t("newItem.title")}</h1>
       </div>
+      {canSwitch && <KindSwitch kind="task" onPick={(k) => kind.switchTo(k, carried())} />}
       {task?.doneAt && (
         <p className="text-sm text-muted">
           {t("tasks.doneAt", {
@@ -139,9 +155,10 @@ function TaskForm({ task }: { task?: Task }) {
         <Field label={t("tasks.title")}>
           <TextInput
             required
-            autoFocus={!task}
+            autoFocus={!task && !kind.switched}
             value={draft.title}
             onChange={(e) => set({ title: e.target.value })}
+            onBlur={(e) => canSwitch && kind.onTitleBlur(e, carried())}
           />
         </Field>
         {draft.entryId && (
@@ -280,7 +297,12 @@ function TaskForm({ task }: { task?: Task }) {
       </form>
       {task && <AddToChecklistSection task={task} />}
       {task && (
-        <div className="border-t border-line pt-4">
+        <div className="flex flex-wrap gap-3 border-t border-line pt-4">
+          <ConvertButton
+            path={`/tasks/${task.id}/to-entry`}
+            to="entry"
+            confirm={t("convert.confirmToEntry", { title: task.title })}
+          />
           <button
             type="button"
             className={BUTTON_DANGER}

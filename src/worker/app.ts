@@ -19,6 +19,7 @@ import { exportRoutes } from "./routes/export";
 import { briefingRoutes, markBriefingsStale } from "./routes/briefing";
 import { voiceRoutes } from "./routes/voice";
 import { suggestionRoutes } from "./routes/suggestions";
+import { convertRoutes } from "./routes/convert";
 import { apiSecureHeaders, sameOriginOnly } from "./security";
 import type { AppEnv } from "./types";
 
@@ -64,3 +65,4 @@ app.route("/", exportRoutes);
 app.route("/", briefingRoutes);
 app.route("/", voiceRoutes);
 app.route("/", suggestionRoutes);
+app.route("/", convertRoutes);

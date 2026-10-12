@@ -298,7 +298,6 @@
     "familyWide": "Os itens sem Pessoa em particular (para toda a Família) lembram sempre."
   },
   "entries": {
-    "new": "Nova entrada",
     "title": "Título",
     "type": "Tipo",
     "allDay": "Dia inteiro",
@@ -328,6 +327,21 @@
     "birthdayLocked": "A data e a Pessoa deste Aniversário só mudam na própria Pessoa.",
     "edit": "Editar",
     "close": "Fechar"
+  },
+  "newItem": {
+    "title": "Novo",
+    "kind": "Entrada ou tarefa",
+    "entry": "Entrada",
+    "task": "Tarefa",
+    "entryHint": "Uma entrada fica no calendário numa data ou hora.",
+    "taskHint": "Uma tarefa é algo para fazer e marcar como feito, com prazo opcional."
+  },
+  "convert": {
+    "toTask": "Converter em tarefa",
+    "toEntry": "Converter em entrada",
+    "confirmToTask": "Converter \"{{title}}\" numa tarefa? Mantém o título, notas, local, pessoas, importância e repetição, com prazo na sua data. Perde o tipo, ícone, fim, lembretes e alterações a repetições, e o que estava na Preparação fica, mas desligado.",
+    "confirmToEntry": "Converter \"{{title}}\" numa entrada? Mantém o título, notas, pessoas, importância e repetição, no dia do prazo (hoje, se não tiver). Perde o estado de feita e a ligação à entrada que preparava.",
+    "confirmListToEntry": "Converter \"{{title}}\" numa entrada? Fica no calendário no seu período (hoje, se não tiver) e os itens passam a ser a Preparação dessa entrada."
   },
   "scope": {
     "saveTitle": "Guardar a alteração em…",
@@ -995,7 +1009,8 @@
         "more": "Só este dispositivo fica filtrado; os outros veem tudo."
       },
       "newEntry": {
-        "what": "Cria uma entrada nova na data que está a ver."
+        "what": "Cria algo novo na data que está a ver: uma entrada ou uma tarefa.",
+        "more": "A app escolhe pelo título; pode mudar no topo do formulário."
       },
       "newTask": {
         "what": "Cria uma tarefa nova.",

@@ -8,6 +8,7 @@ import { familyNow } from "../../core/task";
 import { api } from "../api";
 import { useSignedIn } from "../family";
 import { LinkedEntry } from "../entries/EntryPreparation";
+import { ConvertButton } from "../entries/ConvertButton";
 import { useEntry } from "../entries/model";
 import { RepetitionFields } from "../entries/RepetitionFields";
 import { paths } from "../paths";
@@ -294,7 +295,15 @@ function ChecklistForm({
         </div>
       )}
       {checklist && (
-        <div className="border-t border-line pt-4">
+        <div className="flex flex-wrap gap-3 border-t border-line pt-4">
+          {/* One already preparing for an Entry has its place on the calendar. */}
+          {!checklist.entryId && (
+            <ConvertButton
+              path={`/checklists/${checklist.id}/to-entry`}
+              to="entry"
+              confirm={t("convert.confirmListToEntry", { title: checklist.name })}
+            />
+          )}
           <button
             type="button"
             className={BUTTON_DANGER}
