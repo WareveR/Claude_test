@@ -267,3 +267,17 @@ describe("putting a Task into a Checklist", () => {
     ).toBe(404);
   });
 });
+
+describe("Many Tasks", () => {
+  it("lists more Tasks than one database query can name at once", async () => {
+    const browser = await setUpFamily();
+    const res = await browser.post("/checklists", {
+      name: "Big list",
+      items: Array.from({ length: 120 }, (_, i) => `Item ${i + 1}`),
+    });
+    expect(res.status).toBe(201);
+    const list = await browser.get("/tasks");
+    expect(list.status).toBe(200);
+    expect(((await list.json()) as Task[]).length).toBe(120);
+  });
+});
