@@ -1,3 +1,4 @@
+import type { DeviceKind } from "../core/device-kind";
 import type { HolidayPlace } from "../core/holidays";
 import type { WasteCollection } from "../core/waste";
 export class ApiError extends Error {
@@ -49,7 +50,13 @@ export type Family = {
   wasteCollection: WasteCollection;
   lastExportAt: string | null;
 };
-export type Device = { id: string; name: string; language: string | null };
+export type Device = {
+  id: string;
+  name: string;
+  language: string | null;
+  kind: DeviceKind | null;
+  model: string | null;
+};
 
 export type Status = {
   familyExists: boolean;

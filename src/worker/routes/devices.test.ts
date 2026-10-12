@@ -7,7 +7,14 @@ async function signIn(ip: string, userAgent?: string) {
   return browser;
 }
 
-type DeviceRow = { id: string; name: string; lastUsedAt: string; current: boolean };
+type DeviceRow = {
+  id: string;
+  name: string;
+  kind: string | null;
+  createdAt: string;
+  lastUsedAt: string;
+  current: boolean;
+};
 
 describe("Signed-in devices", () => {
   it("lists each device with its name, last use and which one is this", async () => {
@@ -31,6 +38,21 @@ describe("Signed-in devices", () => {
     ).toBe(200);
     const [renamed] = (await (await laptop.get("/devices")).json()) as DeviceRow[];
     expect(renamed.name).toBe("Kitchen tablet");
+  });
+
+  it("says when each device signed in, and lets the Family say what kind it is", async () => {
+    const laptop = await setUpFamily();
+    const [me] = (await (await laptop.get("/devices")).json()) as DeviceRow[];
+    expect(me.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(me.kind).toBeNull();
+    expect((await laptop.request("PATCH", `/devices/${me.id}`, { kind: "laptop" })).status).toBe(
+      200,
+    );
+    const [changed] = (await (await laptop.get("/devices")).json()) as DeviceRow[];
+    expect(changed).toMatchObject({ kind: "laptop", name: me.name });
+    expect((await laptop.request("PATCH", `/devices/${me.id}`, { kind: "fridge" })).status).toBe(
+      400,
+    );
   });
 
   it("signs out one device without disturbing the others", async () => {

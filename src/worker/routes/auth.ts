@@ -34,7 +34,15 @@ authRoutes.get("/status", async (c) => {
             lastExportAt: family.lastExportAt,
           }
         : null,
-    device: device ? { id: device.id, name: device.name, language: device.language } : null,
+    device: device
+      ? {
+          id: device.id,
+          name: device.name,
+          language: device.language,
+          kind: device.kind,
+          model: device.model,
+        }
+      : null,
   });
 });
 

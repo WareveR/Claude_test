@@ -29,6 +29,7 @@ import { DayView, MonthView, TodayRedirect, WeekView, YearView } from "./views/V
 import { ItemPopupProvider } from "./shell/ItemPopup";
 import { HelpTips } from "./help/HelpTips";
 import { SummaryPage } from "./summary/SummaryPage";
+import { reportDeviceDetails } from "./settings/device-details";
 
 /** On a wall tablet the entry address shows read-only details instead of the form. */
 function EntryRoute() {
@@ -100,6 +101,10 @@ export function SignedInApp({ family, device }: { family: Family; device: Device
   useEffect(() => {
     document.documentElement.classList.toggle("display-mode", display);
   }, [display]);
+  // Each device says once what kind it is, so Settings can tell the devices apart.
+  useEffect(() => {
+    reportDeviceDetails(device).catch(() => undefined);
+  }, [device]);
   const value = useMemo(() => ({ family, device, language }), [family, device, language]);
 
   return (

@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { deleteCookie } from "hono/cookie";
+import { isDeviceKind, type DeviceKind } from "../../core/device-kind";
 import { hashPassword, isAcceptablePassword, verifyPassword } from "../auth/password";
 import { SESSION_COOKIE } from "../auth/session";
 import { clearFailures, clientIp, recordFailure, retryAfter } from "../auth/throttle";
@@ -23,6 +24,9 @@ devicesRoutes.get("/devices", async (c) => {
     devices.reverse().map((d) => ({
       id: d.id,
       name: d.name,
+      kind: d.kind,
+      model: d.model,
+      createdAt: d.createdAt,
       lastUsedAt: d.lastUsedAt,
       current: d.id === current.id,
     })),
@@ -31,16 +35,25 @@ devicesRoutes.get("/devices", async (c) => {
 
 devicesRoutes.patch("/devices/:id", async (c) => {
   const body = await c.req.json().catch(() => ({}));
-  const name = typeof body.name === "string" ? body.name.trim().slice(0, 60) : "";
-  if (!name) return c.json({ error: "invalid", field: "name" }, 400);
+  const changes: { name?: string; kind?: DeviceKind } = {};
+  if (body.name !== undefined) {
+    const name = typeof body.name === "string" ? body.name.trim().slice(0, 60) : "";
+    if (!name) return c.json({ error: "invalid", field: "name" }, 400);
+    changes.name = name;
+  }
+  if (body.kind !== undefined) {
+    if (!isDeviceKind(body.kind)) return c.json({ error: "invalid", field: "kind" }, 400);
+    changes.kind = body.kind;
+  }
+  if (Object.keys(changes).length === 0) return c.json({ error: "invalid", field: "name" }, 400);
   const updated = await c
     .get("db")
     .update(schema.signedInDevice)
-    .set({ name })
+    .set(changes)
     .where(eq(schema.signedInDevice.id, c.req.param("id")))
     .returning({ id: schema.signedInDevice.id });
   if (updated.length === 0) return c.json({ error: "not_found" }, 404);
-  return c.json({ id: updated[0].id, name });
+  return c.json({ id: updated[0].id, ...changes });
 });
 
 devicesRoutes.delete("/devices/:id", async (c) => {

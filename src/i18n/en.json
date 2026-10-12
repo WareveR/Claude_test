@@ -172,7 +172,19 @@
     "rename": "Rename {{name}}",
     "newName": "New device name",
     "signOut": "Sign out {{name}}",
-    "confirmSignOut": "Sign out {{name}}?"
+    "confirmSignOut": "Sign out {{name}}?",
+    "kind": "Kind of {{name}}",
+    "id": "ID {{id}}",
+    "signedInAt": "Signed in {{when}}",
+    "kinds": {
+      "unknown": "Unknown",
+      "phone": "Phone",
+      "tablet": "Tablet",
+      "laptop": "Laptop",
+      "computer": "Computer",
+      "watch": "Watch",
+      "tv": "TV"
+    }
   },
   "password": {
     "title": "Change the Family Password",
