@@ -43,6 +43,9 @@ export const family = sqliteTable("family", {
   selectedWeatherLocationId: text("selected_weather_location_id"),
   /** When a full Export was last downloaded, shown in Settings. */
   lastExportAt: text("last_export_at"),
+  /** The Family's sleeping hours, from this whole hour to that one (wrapping midnight). */
+  sleepStartHour: integer("sleep_start_hour").notNull().default(23),
+  sleepEndHour: integer("sleep_end_hour").notNull().default(7),
 });
 
 /** A browser that signed in with the Family Password. Only the session token's hash is kept. */

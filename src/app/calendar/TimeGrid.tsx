@@ -3,6 +3,17 @@ import { useNavigate } from "react-router";
 import { daySpan, lastDate } from "../../core/entry-time";
 import { layoutBars, layoutLanes } from "../../core/layout";
 import { formatPlainDate, weekday, type PlainDate } from "../../core/plain-date";
+import {
+  busyHours,
+  DEFAULT_SLEEP_HOURS,
+  hourHeights,
+  hourTops,
+  isSleepHour,
+  minutesAtY,
+  openingHour,
+  yOfMinutes,
+  type SleepHours,
+} from "../../core/sleep-hours";
 import type { EntryType } from "../entry-types/model";
 import type { Shown as Entry } from "../entries/model";
 import type { Person } from "../persons/model";
@@ -10,8 +21,8 @@ import { EntryBlock } from "./EntryBlock";
 import { NoteLine } from "../layers/NoteLine";
 import { isMovable, useEntryDrag } from "./useEntryDrag";
 
+/** The height of a waking hour; a Sleeping Hour with nothing on is half as high. */
 const HOUR_PX = 44;
-const DAY_MINUTES = 24 * 60;
 
 export type TimeGridProps = {
   days: PlainDate[];
@@ -36,6 +47,8 @@ export type TimeGridProps = {
   plain?: boolean;
   /** One day only: buttons at the right of its header row, which then shows the whole date. */
   headerActions?: ReactNode;
+  /** The Family's Sleeping Hours, shown shorter and shaded unless something is on. */
+  sleepHours?: SleepHours;
 };
 
 function isWeekend(date: PlainDate) {
@@ -61,14 +74,40 @@ export function TimeGrid({
   corner,
   plain = false,
   headerActions,
+  sleepHours = DEFAULT_SLEEP_HOURS,
 }: TimeGridProps) {
   const navigate = useNavigate();
   const scroller = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    scroller.current?.scrollTo({ top: 7 * HOUR_PX });
-  }, []);
   const drag = useEntryDrag({ entries: given, locale, enabled: !readOnly, scroller });
   const entries = drag.shown(given);
+  // Each day's Timed Entries in minutes of that day.
+  const spans = days.map((day) =>
+    entries.flatMap((entry) => {
+      if (entry.time.allDay) return [];
+      const span = daySpan(entry.time, day);
+      return span ? [{ entry, ...span }] : [];
+    }),
+  );
+  // One height per hour row for all the days, so the rows stay lined up across the week.
+  const busy = busyHours(spans.flat());
+  const heights = hourHeights(sleepHours, busy, HOUR_PX);
+  const tops = hourTops(heights);
+  const yOf = (minutes: number) => yOfMinutes(heights, minutes);
+
+  // Opens at the wake-up hour, or just above the earliest Sleeping Hour with something on.
+  // It opens again for other days, and follows the Entries as they arrive until scrolled.
+  const openTop = tops[openingHour(sleepHours, busy)];
+  const opened = useRef<{ days: string; top: number } | null>(null);
+  const daysKey = `${days[0]}/${days.length}`;
+  useEffect(() => {
+    const el = scroller.current;
+    if (!el) return;
+    const last = opened.current;
+    if (last?.days === daysKey && (last.top === openTop || Math.abs(el.scrollTop - last.top) > 1))
+      return;
+    el.scrollTo({ top: openTop });
+    opened.current = { days: daysKey, top: el.scrollTop };
+  }, [daysKey, openTop]);
   const movable = (entry: Entry) => !readOnly && isMovable(entry);
   const preview = drag.preview;
   // Where an All-day Entry being dragged would land.
@@ -186,50 +225,52 @@ export function TimeGrid({
           />
         ))}
       </div>
-      <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto">
-        <div
-          className="relative grid"
-          style={{ gridTemplateColumns: columns, height: 24 * HOUR_PX }}
-        >
+      <div ref={scroller} data-testid="time-scroller" className="min-h-0 flex-1 overflow-y-auto">
+        <div className="relative grid" style={{ gridTemplateColumns: columns, height: tops[24] }}>
           <div className="relative">
+            {Array.from({ length: 24 }, (_, h) =>
+              isSleepHour(sleepHours, h) ? (
+                <div
+                  key={`sleep-${h}`}
+                  className="pointer-events-none absolute inset-x-0 bg-ink/5"
+                  style={{ top: tops[h], height: heights[h] }}
+                />
+              ) : null,
+            )}
             {Array.from({ length: 24 }, (_, h) => (
               <span
                 key={h}
                 className="absolute right-1.5 -translate-y-1/2 text-xs font-semibold text-ink/70 tabular-nums lg:text-sm"
-                style={{ top: h * HOUR_PX }}
+                style={{ top: tops[h] }}
               >
                 {h > 0 ? `${h}h` : ""}
               </span>
             ))}
           </div>
-          {days.map((day) => {
-            const blocks = layoutLanes(
-              entries.flatMap((entry) => {
-                if (entry.time.allDay) return [];
-                const span = daySpan(entry.time, day);
-                return span ? [{ entry, ...span }] : [];
-              }),
-            );
+          {days.map((day, i) => {
+            const blocks = layoutLanes(spans[i]);
             const landing = preview && !preview.allDay ? daySpan(preview, day) : null;
             return (
               <div
                 key={day}
                 data-testid={`day-column-${day}`}
                 data-drop-date={day}
-                data-drop-hour-px={HOUR_PX}
+                data-drop-hours={heights.join(",")}
                 className={`relative border-l border-line ${holidays.has(day) ? "bg-holiday/40" : isWeekend(day) ? "bg-weekend/40" : ""}`}
                 onClick={(e) => {
                   if (readOnly || e.target !== e.currentTarget) return;
-                  const y = e.nativeEvent.offsetY;
-                  const hour = Math.min(23, Math.floor(y / HOUR_PX));
+                  const minutes = minutesAtY(heights, e.nativeEvent.offsetY);
+                  const hour = Math.min(23, Math.floor(minutes / 60));
                   navigate(`/entries/new?date=${day}&time=${String(hour).padStart(2, "0")}:00`);
                 }}
               >
                 {Array.from({ length: 24 }, (_, h) => (
                   <div
                     key={h}
-                    className="pointer-events-none absolute inset-x-0 border-t border-line/60"
-                    style={{ top: h * HOUR_PX }}
+                    data-testid={i === 0 ? `hour-row-${h}` : undefined}
+                    data-sleep={isSleepHour(sleepHours, h) || undefined}
+                    className={`pointer-events-none absolute inset-x-0 border-t border-line/60 ${isSleepHour(sleepHours, h) ? "bg-ink/5" : ""}`}
+                    style={{ top: tops[h], height: heights[h] }}
                   />
                 ))}
                 {blocks.map((b) => (
@@ -243,8 +284,8 @@ export function TimeGrid({
                     movable={movable(b.entry)}
                     className={`absolute ${b.moment ? "rounded-full" : ""} ${drag.dragged?.key === b.entry.key ? "opacity-50" : ""}`}
                     style={{
-                      top: (b.start / 60) * HOUR_PX,
-                      height: Math.max(((b.end - b.start) / 60) * HOUR_PX, 16),
+                      top: yOf(b.start),
+                      height: Math.max(yOf(b.end) - yOf(b.start), 16),
                       left: `calc(${(b.lane / b.lanes) * 100}% + 1px)`,
                       width: `calc(${100 / b.lanes}% - 2px)`,
                     }}
@@ -255,15 +296,15 @@ export function TimeGrid({
                     data-testid="drop-preview"
                     className="pointer-events-none absolute inset-x-0.5 z-10 rounded-md border-2 border-dashed border-accent bg-accent/15"
                     style={{
-                      top: (landing.start / 60) * HOUR_PX,
-                      height: Math.max(((landing.end - landing.start) / 60) * HOUR_PX, 16),
+                      top: yOf(landing.start),
+                      height: Math.max(yOf(landing.end) - yOf(landing.start), 16),
                     }}
                   />
                 )}
                 {day === today && (
                   <div
                     className="pointer-events-none absolute inset-x-0 z-10 border-t-2 border-overdue"
-                    style={{ top: (nowMinutes / DAY_MINUTES) * 24 * HOUR_PX }}
+                    style={{ top: yOf(nowMinutes) }}
                   />
                 )}
               </div>
