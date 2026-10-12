@@ -8,6 +8,7 @@ import {
   parseWritten,
   phrasesOf,
   themeOf,
+  typeOfIdea,
   type Answers,
 } from "./suggestions";
 
@@ -172,5 +173,18 @@ describe("parseWritten", () => {
       { kind: "task", title: "Vacinas do bebé", date: TODAY, time: null, repetition: null },
     ]);
     expect(parseWritten("nonsense", TODAY)).toBeNull();
+  });
+});
+
+describe("typeOfIdea", () => {
+  it("gives each idea its area's Entry Type, and every bill the payment one", () => {
+    expect(typeOfIdea("gym")).toBe("activity");
+    expect(typeOfIdea("groceries")).toBe("home");
+    expect(typeOfIdea("water")).toBe("payment");
+    expect(typeOfIdea("imi")).toBe("payment");
+    expect(typeOfIdea("dentist")).toBe("appointment");
+    expect(typeOfIdea("vet")).toBe("pet");
+    expect(typeOfIdea("textbooks")).toBe("school");
+    expect(typeOfIdea("unknown")).toBe("general");
   });
 });

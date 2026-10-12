@@ -47,7 +47,8 @@ export function SuggestionsPage() {
   const locale = formatLocale(language);
   const today = todayIn(family.timeZone);
   const queryClient = useQueryClient();
-  const general = useEntryTypes().data?.find((type) => type.builtinKey === "general");
+  const types = useEntryTypes().data;
+  const general = types?.find((type) => type.builtinKey === "general");
 
   const [text, setText] = useState("");
   const [areas, setAreas] = useState<Area[]>([]);
@@ -85,7 +86,7 @@ export function SuggestionsPage() {
       .map((draft) => itemOf(draft, t));
     const fromBox = written
       .filter((w) => w.keep)
-      .map((w) => ({ ...w.draft, key: w.key, notes: "", debit: false }));
+      .map((w) => ({ ...w.draft, key: w.key, notes: "", debit: false, type: "general" as const }));
     return [...fromIdeas, ...fromBox]
       .map((item) => ({ ...item, ...edits[item.key] }))
       .sort((a, b) => a.date.localeCompare(b.date));
@@ -145,13 +146,13 @@ export function SuggestionsPage() {
     ]);
 
   async function create() {
-    if (!general) return;
+    if (!types || !general) return;
     setCreating(true);
     setMessage(null);
     const done: Created[] = [];
     try {
       for (const item of items) {
-        const { route, body } = requestOf(item, general, today);
+        const { route, body } = requestOf(item, types, today);
         const saved = await api<{ id: string }>(`/${route}`, { method: "POST", body });
         done.push({ route, id: saved.id });
       }

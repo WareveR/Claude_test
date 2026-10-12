@@ -2,7 +2,8 @@ import type { TFunction } from "i18next";
 import type { ClockTime } from "../../core/entry-time";
 import { addDays, formatPlainDate, type PlainDate } from "../../core/plain-date";
 import type { Repetition } from "../../core/repetition";
-import type { Draft } from "../../core/suggestions";
+import type { BuiltInType } from "../../core/entry-type";
+import { typeOfIdea, type Draft } from "../../core/suggestions";
 import { entryValues, type EntryValues, type TaskValues } from "../../core/voice";
 import type { EntryType } from "../entry-types/model";
 
@@ -17,6 +18,8 @@ export type Item = {
   repetition: Repetition | null;
   /** A bill paid by direct debit: an all-day notice with no Reminders. */
   debit: boolean;
+  /** The built-in Entry Type it takes when created as an Entry. */
+  type: BuiltInType;
 };
 
 /** A change made in the review to one Item's first date, time or Repetition. */
@@ -39,6 +42,7 @@ export function itemOf(draft: Draft, t: TFunction): Item {
     time: draft.time,
     repetition: draft.repetition,
     debit: Boolean(draft.debit),
+    type: typeOfIdea(id),
   };
 }
 
@@ -79,7 +83,7 @@ export function describeItem(
 /** The body of POST /entries or POST /tasks for one Item. */
 export function requestOf(
   item: Item,
-  general: Pick<EntryType, "id" | "defaults">,
+  types: Pick<EntryType, "id" | "defaults" | "builtinKey">[],
   today: PlainDate,
 ): { route: "entries"; body: EntryValues } | { route: "tasks"; body: TaskValues } {
   if (item.kind === "task") {
@@ -97,6 +101,9 @@ export function requestOf(
       },
     };
   }
+  // A type the Family deleted falls back to General, which can't be deleted.
+  const type =
+    types.find((x) => x.builtinKey === item.type) ?? types.find((x) => x.builtinKey === "general")!;
   const allDay = item.debit || !item.time;
   const values = entryValues(
     {
@@ -113,7 +120,7 @@ export function requestOf(
       importance: item.debit ? "low" : null,
       repeat: null,
     },
-    general,
+    type,
     [],
     today,
   );

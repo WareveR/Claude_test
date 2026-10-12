@@ -1,4 +1,5 @@
 import type { ClockTime } from "./entry-time";
+import type { BuiltInType } from "./entry-type";
 import { addDays, addMonths, daysInMonth, weekday, type PlainDate } from "./plain-date";
 import type { Repetition } from "./repetition";
 import { parseVoiceFields } from "./voice";
@@ -110,6 +111,30 @@ export const IDEAS: Idea[] = [
   { id: "sheets", area: "routine", kind: "task", rule: weekly([6]) },
   { id: "cleaning", area: "routine", kind: "task", rule: weekly([5]) },
 ];
+
+/** The built-in Entry Type an area's Entries take, so they get its colour and icon. */
+const AREA_TYPES: Record<Area, BuiltInType> = {
+  car: "appointment",
+  home: "home",
+  bills: "payment",
+  paperwork: "appointment",
+  health: "appointment",
+  school: "school",
+  pets: "pet",
+  routine: "activity",
+};
+
+/** Chores stay at home whatever their area. */
+const HOME_IDEAS = ["groceries", "plants", "sheets", "cleaning"];
+
+/** The Entry Type for one of an idea's drafts: a bill is always a payment. */
+export function typeOfIdea(ideaId: string): BuiltInType {
+  const idea = IDEAS.find((i) => i.id === ideaId);
+  if (!idea) return "general";
+  if (idea.bill) return "payment";
+  if (HOME_IDEAS.includes(idea.id)) return "home";
+  return AREA_TYPES[idea.area];
+}
 
 /** What the Family answered once for a whole area. */
 export type Answers = {
