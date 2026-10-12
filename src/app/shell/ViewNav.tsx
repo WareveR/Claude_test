@@ -15,6 +15,7 @@ const VIEWS = ["day", "week", "month", "year", "agenda", "tasks"] as const;
 export function ViewNav({
   date,
   title,
+  shortTitle,
   previous,
   next,
   newPath,
@@ -23,6 +24,8 @@ export function ViewNav({
 }: {
   date: PlainDate;
   title?: string;
+  /** The title on a narrow screen, where the whole one does not fit. */
+  shortTitle?: string;
   previous?: string;
   next?: string;
   /** Where "+" leads; a new Entry on the view's date unless given, and no "+" when null. */
@@ -105,7 +108,14 @@ export function ViewNav({
               : "text-lg font-semibold first-letter:uppercase short:truncate short:text-base"
           }
         >
-          {title}
+          {shortTitle ? (
+            <>
+              <span className="hidden sm:inline">{title}</span>
+              <span className="sm:hidden">{shortTitle}</span>
+            </>
+          ) : (
+            title
+          )}
         </h1>
       )}
       {extra}

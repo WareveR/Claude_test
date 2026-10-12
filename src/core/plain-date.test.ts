@@ -3,6 +3,7 @@ import {
   addDays,
   addMonths,
   daysInMonth,
+  formatMonthRange,
   formatPlainDate,
   isPlainDate,
   startOfMonth,
@@ -60,5 +61,20 @@ describe("PlainDate", () => {
       formatPlainDate("2026-10-02", "pt-PT", { day: "2-digit", month: "2-digit", year: "numeric" }),
     ).toBe("02/10/2026");
     expect(formatPlainDate("2026-10-02", "en-GB", { weekday: "long" })).toBe("Friday");
+  });
+});
+
+describe("formatMonthRange", () => {
+  it("names the months and year a range falls in, whole or abbreviated", () => {
+    expect(formatMonthRange("2026-10-05", "2026-10-11", "pt-PT")).toBe("outubro de 2026");
+    // Intl puts thin spaces around its dash.
+    expect(formatMonthRange("2026-09-28", "2026-10-04", "pt-PT")).toMatch(
+      /^setembro\s–\soutubro de 2026$/,
+    );
+    expect(formatMonthRange("2026-09-28", "2026-10-04", "pt-PT", "short")).toBe("set. – out. 2026");
+    expect(formatMonthRange("2026-10-05", "2026-10-11", "en-GB", "short")).toBe("Oct 2026");
+    expect(formatMonthRange("2026-12-28", "2027-01-03", "en-GB", "short")).toBe(
+      "Dec 2026 – Jan 2027",
+    );
   });
 });
