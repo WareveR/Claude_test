@@ -10,7 +10,7 @@ test("on a phone no view is wider than the screen", async ({ page }) => {
   await expect(page.getByTestId("header-weather")).toBeVisible();
 
   await page.goto("/");
-  for (const view of ["Day", "Week", "Month", "Year", "Agenda", "Tasks", "Summary"]) {
+  for (const view of ["Day", "Week", "Month", "Year", "Agenda", "Tasks", "Shopping", "Summary"]) {
     await (
       view === "Summary"
         ? page.getByRole("banner").getByRole("button", { name: view })

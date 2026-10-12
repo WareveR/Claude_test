@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { model } from "../ai";
 import { setUpFamily, TestBrowser } from "../test/client";
 
@@ -195,6 +195,15 @@ async function send(browser: TestBrowser, requests: Req[]) {
 }
 
 describe("Voice Entry: change", () => {
+  // The Entries below sit around early October 2026; changes only look 7 days back.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-06T10:00:00Z"));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   async function withPlans() {
     const { browser, ana, types } = await family();
     const typeId = types.find((t) => t.builtinKey === "general")!.id;

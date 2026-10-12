@@ -98,6 +98,7 @@
     "month": "Month",
     "year": "Year",
     "tasks": "Tasks",
+    "shopping": "Shopping",
     "short": {
       "day": "D",
       "week": "W",
@@ -1002,6 +1003,10 @@
         "tasks": {
           "what": "Opens the Family's tasks.",
           "more": "Grouped by when they're due; overdue ones come first."
+        },
+        "shopping": {
+          "what": "Opens the Family's shopping list.",
+          "more": "One list for everyone, grouped by section; it can be narrowed to one shop."
         }
       },
       "previous": {
@@ -1258,5 +1263,50 @@
     "hint": "The hours the Family is usually asleep. In the day and week views they show shorter and shaded, and grow back when something is on.",
     "start": "Bedtime",
     "end": "Wake-up"
+  },
+  "shopping": {
+    "title": "Shopping list",
+    "add": "Add to the list…",
+    "addLabel": "Add to the list",
+    "addButton": "Add",
+    "suggestions": "From earlier lists",
+    "stores": "Shop",
+    "allStores": "All",
+    "sections": {
+      "produce": "Fruit and veg",
+      "meatFish": "Meat and fish",
+      "dairyEggs": "Dairy and eggs",
+      "bakery": "Bakery",
+      "pantry": "Pantry",
+      "drinks": "Drinks",
+      "frozen": "Frozen",
+      "cleaning": "Cleaning",
+      "hygiene": "Toiletries",
+      "baby": "Baby",
+      "pets": "Pets",
+      "other": "Other"
+    },
+    "bought": "Bought",
+    "tick": "Bought: {{name}}",
+    "details": "Details of {{name}}",
+    "remove": "Remove {{name}}",
+    "name": "Name",
+    "quantity": "Quantity (optional)",
+    "quantityHint": "2, 1 kg…",
+    "note": "Note (optional)",
+    "store": "Shop (optional)",
+    "storeHint": "Any shop",
+    "save": "Save",
+    "cancel": "Cancel",
+    "empty": "The list is empty: add what's missing at home.",
+    "emptyStore": "Nothing left for this shop.",
+    "boughtToast": "Bought: {{name}}",
+    "removedToast": "Removed: {{name}}",
+    "undo": "Undo",
+    "history": "History",
+    "hideHistory": "Hide history",
+    "historyEmpty": "Nothing bought yet.",
+    "addAgain": "Add {{name}} again",
+    "hint": "Tap an item once it's in the basket; swipe it sideways to remove it. Bought items leave the list tomorrow."
   }
 }

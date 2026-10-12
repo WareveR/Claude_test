@@ -104,6 +104,10 @@ _Avoid_: Preset, model, recurring list
 The view listing Tasks in four groups (Overdue, Today, Upcoming, No date), with done Tasks behind a "Show done" switch. A Checklist shows as one row with its progress in the group of its round's end, opening its page; its items never show on their own. The Person Filter applies to it as to the calendar views.
 _Avoid_: To-do list, task list
 
+**Shopping List**:
+The Family's one list of things to buy, on its own page next to the Tasks view; it has no dates and never shows on the calendar. An item is a name with an optional quantity ("2", "1 kg"), note and shop (none means any shop), and goes under a section of the shop (Fruit and veg, Meat and fish, Dairy and eggs…, Other) worked out from its name. Items are added one at a time from a single box that suggests the names of earlier lists, most often added first; picking one brings back its last shop. The page can be narrowed to one shop (its items plus those for any shop), remembered per device. Tapping an item ticks it bought, with an Undo, and tapping again puts it back; a bought item leaves the list the next day in the Family Time Zone but stays in the history that feeds the suggestions. Removing an item (its bin button, or a sideways swipe, with an Undo) deletes it for good.
+_Avoid_: Groceries, shopping Checklist (a Checklist has rounds and dates), basket
+
 **Weather Location**:
 A place saved for the weather forecast by searching a town name; the Family keeps up to 10. Exactly one is selected at a time for the whole Family, and switching it on any device switches it everywhere. With none saved, no weather is shown.
 _Avoid_: Home location, city, weather city

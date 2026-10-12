@@ -433,3 +433,21 @@ export const reminderSent = sqliteTable("reminder_sent", {
   key: text("key").primaryKey(),
   sentAt: text("sent_at").notNull(),
 });
+
+/**
+ * One item of the Family's Shopping List. A bought one leaves the list after its day (in the
+ * Family Time Zone) but stays, so its name is suggested again; deleting removes it for good.
+ * Its section is worked out from the name, never stored.
+ */
+export const shoppingItem = sqliteTable("shopping_item", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  /** Free text: "2", "1 kg"; "" for none. */
+  quantity: text("quantity").notNull().default(""),
+  note: text("note").notNull().default(""),
+  /** The shop it is to be bought at, as typed; "" for any shop. */
+  store: text("store").notNull().default(""),
+  boughtAt: text("bought_at"),
+  createdAt: text("created_at").notNull(),
+  changedAt: text("changed_at").notNull(),
+});
