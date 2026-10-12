@@ -16,12 +16,28 @@ export function importanceClass(entry: Pick<Entry, "importance">) {
   return "";
 }
 
+/** An Entry's own icon, else its Entry Type's picture or icon. */
+export function EntryIcon({
+  entry,
+  type,
+  size,
+}: {
+  entry: Pick<Entry, "icon">;
+  type: EntryType | undefined;
+  size: number;
+}) {
+  if (entry.icon) return <Icon name={entry.icon} size={size} />;
+  if (type?.thumbnailKey) return <EntryTypeBadge type={type} size={size} />;
+  return <Icon name={type?.icon} size={size} />;
+}
+
 /** An Entry filled with its Entry Type's colour, with its icon, title and Persons' avatars. */
 export function EntryBlock({
   entry,
   type,
   persons,
   label,
+  labelWide = false,
   movable = false,
   className = "",
   style,
@@ -30,6 +46,8 @@ export function EntryBlock({
   type: EntryType | undefined;
   persons: Person[];
   label?: string;
+  /** Show `label` only on wide screens: a narrow week column needs its width for the title. */
+  labelWide?: boolean;
   /** It can be dragged to another day or time. */
   movable?: boolean;
   className?: string;
@@ -63,25 +81,33 @@ export function EntryBlock({
       style={{ backgroundColor: type?.color ?? "#607d8b", ...style }}
       className={`flex min-w-0 items-start gap-1 overflow-hidden rounded-md px-1 py-0.5 text-xs leading-tight text-white hyphens-auto lg:px-1.5 lg:text-sm ${importanceClass(entry)} ${className}`}
     >
-      {discreet ? null : entry.icon ? (
-        <Icon name={entry.icon} size={12} />
-      ) : type?.thumbnailKey ? (
-        <EntryTypeBadge type={type} size={12} />
-      ) : (
-        <Icon name={type?.icon} size={12} />
-      )}
+      {discreet ? null : <EntryIcon entry={entry} type={type} size={12} />}
       <span data-entry-text className="min-w-0 flex-1 overflow-hidden">
         {/* Without a time (all-day and multi-day bars) the marks float right and the title flows
             around them, so in a narrow column it has the whole width from its second line on. */}
-        {!label && marks && (
-          <span className="float-right ml-1 flex items-center gap-0.5">{marks}</span>
+        {(!label || labelWide) && marks && (
+          <span
+            className={`float-right ml-1 flex items-center gap-0.5 ${label ? "lg:hidden" : ""}`}
+          >
+            {marks}
+          </span>
         )}
-        {label && <span className="mr-1 tabular-nums opacity-90">{label}</span>}
+        {label && (
+          <span className={`mr-1 tabular-nums opacity-90 ${labelWide ? "hidden lg:inline" : ""}`}>
+            {label}
+          </span>
+        )}
         {/* Whole words (hyphenated where the language allows), never cut letters apart. */}
         <span>{discreet ? t("entries.private") : entry.title}</span>
       </span>
       {/* With a time the block is often one line tall: the marks keep to its right. */}
-      {label && marks && <span className="mt-0.5 flex shrink-0 items-center gap-0.5">{marks}</span>}
+      {label && marks && (
+        <span
+          className={`mt-0.5 shrink-0 items-center gap-0.5 ${labelWide ? "hidden lg:flex" : "flex"}`}
+        >
+          {marks}
+        </span>
+      )}
     </EntryLink>
   );
 }
