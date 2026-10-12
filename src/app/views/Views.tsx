@@ -27,7 +27,8 @@ import { usePersonFilter } from "../filter/model";
 import { matchesFilter } from "../../core/person-filter";
 import { useEntryTypes } from "../entry-types/model";
 import { useHolidays } from "../holidays/model";
-import { useDayNotes } from "../layers/model";
+import { useDayNotes, useSunTimes } from "../layers/model";
+import { SunriseIcon, SunsetIcon } from "../weather/WeatherIcon";
 import { useSignedIn } from "../family";
 import { usePersons } from "../persons/model";
 import { useNow } from "../shell/useNow";
@@ -91,7 +92,7 @@ export function DayView() {
         previous={paths.day(addDays(date, -1))}
         next={paths.day(addDays(date, 1))}
         compact
-        extra={<DayWeatherLine weather={weather} />}
+        extra={<DayWeatherLine day={date} weather={weather} />}
       />
       <ViewBody>
         <div className="flex flex-col gap-2 pb-2 empty:hidden">
@@ -114,10 +115,11 @@ export function DayView() {
 }
 
 /**
- * The day's weather beside its title: highest and lowest, chance of rain and wind, and a switch
- * for the hour by hour detail, there even when no hours are kept.
+ * The day's weather beside its title: highest and lowest, chance of rain and wind, sunrise and
+ * sunset when the Sun Layer is on, and a switch for the hour by hour detail, there even when no
+ * hours are kept.
  */
-function DayWeatherLine({ weather }: { weather?: ShownDay }) {
+function DayWeatherLine({ day, weather }: { day: PlainDate; weather?: ShownDay }) {
   const { t } = useTranslation();
   const showHours = useDayHours();
   return (
@@ -134,6 +136,7 @@ function DayWeatherLine({ weather }: { weather?: ShownDay }) {
           </span>
         </ForecastButton>
       )}
+      <SunTimes day={day} />
       <button
         type="button"
         data-testid="day-hours"
@@ -144,6 +147,26 @@ function DayWeatherLine({ weather }: { weather?: ShownDay }) {
       >
         <Clock aria-hidden size={18} strokeWidth={1.75} />
       </button>
+    </span>
+  );
+}
+
+/** Sunrise and sunset beside the day's title, on any day, when this device shows the Sun Layer. */
+function SunTimes({ day }: { day: PlainDate }) {
+  const { t } = useTranslation();
+  const sun = useSunTimes(day);
+  if (!sun || (!sun.rise && !sun.set)) return null;
+  return (
+    <span
+      data-testid="sun-times"
+      className="inline-flex items-center gap-1 text-muted tabular-nums"
+    >
+      <span aria-hidden className="inline-flex items-center gap-1">
+        <SunriseIcon size={14} /> {sun.rise ?? "–"} · <SunsetIcon size={14} /> {sun.set ?? "–"}
+      </span>
+      <span className="sr-only">
+        {t("layers.sunrise")} {sun.rise ?? "–"}, {t("layers.sunset")} {sun.set ?? "–"}
+      </span>
     </span>
   );
 }
@@ -294,8 +317,8 @@ function Month({ first }: { first: PlainDate }) {
         previous={paths.month(addMonths(first, -1))}
         next={paths.month(addMonths(first, 1))}
       />
-      <ViewBody>
-        {/* On wide screens the grid fills the height; a picked day opens over it. */}
+      <ViewBody fill>
+        {/* The grid fills the free height; a picked day opens over it. */}
         <div className="flex flex-1 flex-col lg:min-h-0">
           <MonthGrid
             month={first}
@@ -339,19 +362,20 @@ function Year({ year }: { year: number }) {
   const today = useToday();
   const { t } = useTranslation();
   const [search] = useSearchParams();
-  // The detail (a line per Person) is in the address, so back and reload keep it.
-  const detail = search.get("detail") === "1";
+  // The year always opens in Detail (a line per Person); the compact grid is asked for in the
+  // address, so back, reload and the arrows keep it until the year is opened afresh.
+  const detail = search.get("detail") !== "0";
   const persons = usePersons();
   const date = `${year}-01-01`;
   const { entries, types } = useCalendar(date, `${year}-12-31`);
   const holidays = useHolidays(date, `${year}-12-31`);
-  const withDetail = (path: string) => (detail ? `${path}?detail=1` : path);
+  const withDetail = (path: string) => (detail ? path : `${path}?detail=0`);
   const navigate = useNavigate();
   // A picked day opens over the year, keeping Detail as it was.
   const picked = search.get("day");
   const pickedDay =
     picked && isPlainDate(picked) && picked.startsWith(String(year)) ? picked : null;
-  const dayLink = (day: PlainDate) => `${paths.year(date)}?${detail ? "detail=1&" : ""}day=${day}`;
+  const dayLink = (day: PlainDate) => `${paths.year(date)}?${detail ? "" : "detail=0&"}day=${day}`;
   const notes = useDayNotes(date, `${year}-12-31`);
   const forecast = useDayWeather(date, `${year}-12-31`);
   return (
@@ -363,7 +387,7 @@ function Year({ year }: { year: number }) {
         next={withDetail(paths.year(addMonths(date, 12)))}
         extra={
           <Link
-            to={detail ? paths.year(date) : `${paths.year(date)}?detail=1`}
+            to={detail ? `${paths.year(date)}?detail=0` : paths.year(date)}
             aria-pressed={detail}
             className={`rounded-md border px-3 py-1 text-sm ${detail ? "border-accent bg-accent text-accent-ink" : "border-line"}`}
           >
@@ -372,7 +396,7 @@ function Year({ year }: { year: number }) {
         }
       />
       <ViewBody>
-        <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+        <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto" data-swipe-past-edges>
           {detail ? (
             <YearDetail
               year={year}

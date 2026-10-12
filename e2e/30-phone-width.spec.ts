@@ -45,3 +45,54 @@ test("on a phone the wall shows all seven days without scrolling sideways", asyn
   expect(await page.evaluate("document.documentElement.scrollWidth")).toBeLessThanOrEqual(360);
   await page.getByRole("banner").getByRole("button", { name: "Wall" }).click();
 });
+
+test("on a phone the month grid fills the free height", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/month/2026-02");
+  const days = page.locator("[data-testid^='month-day-']");
+  await expect(days.first()).toBeVisible();
+  // The last week's row reaches the bottom of the screen instead of leaving it empty.
+  const last = await days.last().boundingBox();
+  expect((last?.y ?? 0) + (last?.height ?? 0)).toBeGreaterThan(780 - 8);
+  expect(last?.height ?? 0).toBeGreaterThan(64);
+});
+
+test("on a phone the week view gives an Entry's title the width, without its time", async ({
+  page,
+}) => {
+  await signIn(page);
+  await page.goto("/week/2026-03-02");
+  const ORIGIN = { Origin: "http://localhost:4173" };
+  const types = await (await page.request.get("/api/entry-types")).json();
+  const res = await page.request.post("/api/entries", {
+    headers: ORIGIN,
+    data: {
+      title: "Phone week title",
+      entryTypeId: types[0].id,
+      time: {
+        allDay: false,
+        startDate: "2026-03-03",
+        startTime: "10:00",
+        endDate: "2026-03-03",
+        endTime: "11:00",
+      },
+      personIds: [],
+      importance: "normal",
+      location: "",
+      notes: "",
+      icon: null,
+      private: false,
+      reminders: [],
+      repetition: null,
+      birthYearKnown: false,
+      prepare: false,
+    },
+  });
+  expect(res.ok()).toBeTruthy();
+  await page.reload();
+  const block = page.getByTestId("entry").filter({ hasText: "Phone week title" });
+  await expect(block).toBeVisible();
+  await expect(block.getByText("10:00")).toBeHidden();
+  const created = (await res.json()) as { id: string };
+  await page.request.delete(`/api/entries/${created.id}`, { headers: ORIGIN });
+});

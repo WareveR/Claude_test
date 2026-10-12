@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Filter } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { LAYERS } from "../../core/day-notes";
@@ -11,6 +12,23 @@ import { Chip, Switch } from "../ui/Toggle";
 export function FilterButton() {
   const { t } = useTranslation();
   const filter = usePersonFilter();
+  const ref = useRef<HTMLDetailsElement>(null);
+  // The panel is a native <details>: close it on a tap outside it, or on Escape.
+  useEffect(() => {
+    const onDown = (e: PointerEvent) => {
+      const el = ref.current;
+      if (el?.open && e.target instanceof Node && !el.contains(e.target)) el.open = false;
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && ref.current?.open) ref.current.open = false;
+    };
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, []);
   const persons = (usePersons().data ?? []).filter(
     (p) => !p.archived || filter.personIds.includes(p.id),
   );
@@ -22,7 +40,7 @@ export function FilterButton() {
     });
 
   return (
-    <details className="relative">
+    <details ref={ref} className="relative">
       <summary
         className={`flex cursor-pointer list-none items-center gap-1 rounded-md px-2 py-1 text-sm ${isFiltering(filter) ? "bg-surface font-medium" : ""}`}
         aria-label={t("filter.title")}

@@ -3,7 +3,7 @@ import { YEAR_COLUMNS, yearRowOffset } from "../../core/layout";
 import { addDays, daysInMonth, formatPlainDate, type PlainDate } from "../../core/plain-date";
 import type { EntryType } from "../entry-types/model";
 import type { Shown as Entry } from "../entries/model";
-import { importanceClass } from "./EntryBlock";
+import { EntryIcon, importanceClass } from "./EntryBlock";
 import { entriesOn } from "./MonthGrid";
 
 const SATURDAY = "2026-08-01";
@@ -54,7 +54,8 @@ export function YearGrid({
   /** Where tapping a day goes. */
   dayLink: (day: PlainDate) => string;
 }) {
-  const colorOf = (e: Entry) => types.find((t) => t.id === e.entryTypeId)?.color ?? "#607d8b";
+  const typeOf = (e: Entry) => types.find((t) => t.id === e.entryTypeId);
+  const colorOf = (e: Entry) => typeOf(e)?.color ?? "#607d8b";
   const letters = yearWeekdayLetters(locale);
 
   return (
@@ -120,7 +121,12 @@ export function YearGrid({
                           style={{ backgroundColor: colorOf(e) }}
                           className={`block h-1 rounded-sm lg:h-auto lg:truncate lg:px-0.5 lg:text-[10px] lg:leading-tight lg:text-white ${importanceClass(e)}`}
                         >
-                          <span className="hidden lg:inline">{e.title}</span>
+                          <span className="hidden items-center gap-0.5 lg:flex">
+                            <span className="shrink-0">
+                              <EntryIcon entry={e} type={typeOf(e)} size={10} />
+                            </span>
+                            <span className="min-w-0 truncate">{e.title}</span>
+                          </span>
                         </span>
                       ))}
                       {dayEntries.length > LINES && (

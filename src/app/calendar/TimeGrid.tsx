@@ -280,6 +280,7 @@ export function TimeGrid({
                     type={typeOf(b.entry)}
                     persons={persons}
                     label={b.entry.time.allDay ? undefined : b.entry.time.startTime}
+                    labelWide={days.length > 1}
                     movable={movable(b.entry)}
                     className={`absolute ${b.moment ? "rounded-full" : ""} ${drag.dragged?.key === b.entry.key ? "opacity-50" : ""}`}
                     style={{
