@@ -102,6 +102,19 @@ test("a theme opens its ideas, the box reads phrases, and everything is created 
     expect.arrayContaining(["Car inspection", "Pay the IUC (road tax)"]),
   );
 
+  // Each Entry takes its area's type: a direct debit is a payment, the gym an activity.
+  const types = (await (await page.request.get("/api/entry-types")).json()) as {
+    id: string;
+    builtinKey: string | null;
+  }[];
+  const entries = (await (
+    await page.request.get("/api/entries?from=2026-10-01&to=2027-12-31")
+  ).json()) as { title: string; entryTypeId: string }[];
+  const typeOf = (title: string) =>
+    types.find((x) => x.id === entries.find((e) => e.title === title)?.entryTypeId)?.builtinKey;
+  expect(typeOf("Debit: water")).toBe("payment");
+  expect(typeOf("Suggested gym")).toBe("general");
+
   // Undo removes everything that was just created.
   await done.getByRole("button", { name: "Undo" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Undone" })).toBeVisible();
