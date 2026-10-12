@@ -299,3 +299,70 @@ describe("changing one Occurrence or the following", () => {
     expect((await browser.get(`/entries/${entry.id}`)).status).toBe(404);
   });
 });
+
+describe("Preparation", () => {
+  it("gives a new Entry the list its title calls for, repeating with it", async () => {
+    const { browser, ana } = await family();
+    const activity = await typeId(browser, "activity");
+    const entry = (await (
+      await browser.post("/entries", {
+        ...dentist(activity, [ana.id]),
+        title: "Natação",
+        private: false,
+        repetition: { frequency: "weekly", interval: 1, end: { type: "never" } },
+      })
+    ).json()) as Entry;
+    const lists = (await (await browser.get("/checklists")).json()) as {
+      id: string;
+      name: string;
+      entryId: string;
+      startDate: string;
+      repetition: unknown;
+      personIds: string[];
+    }[];
+    const list = lists.find((l) => l.entryId === entry.id)!;
+    expect(list).toMatchObject({
+      name: "Saco da natação",
+      startDate: "2026-10-13",
+      repetition: { frequency: "weekly" },
+      personIds: [ana.id],
+    });
+    const tasks = (await (await browser.get("/tasks")).json()) as { checklistId: string }[];
+    expect(tasks.filter((t) => t.checklistId === list.id)).toHaveLength(10);
+
+    // Undoing the Entry takes its untouched list with it.
+    await browser.delete(`/entries/${entry.id}`);
+    const after = (await (await browser.get("/checklists")).json()) as { id: string }[];
+    expect(after.find((l) => l.id === list.id)).toBeUndefined();
+  });
+
+  it("uses the type's list, and none when asked not to or nothing fits", async () => {
+    const { browser, appointment } = await family();
+    const meal = await typeId(browser, "meal");
+    await browser.post("/entries", dentist(appointment, []));
+    await browser.post("/entries", {
+      ...dentist(appointment, []),
+      title: "Médico",
+      prepare: false,
+    });
+    await browser.post("/entries", { ...dentist(meal, []), title: "Jantar" });
+    const lists = (await (await browser.get("/checklists")).json()) as { name: string }[];
+    expect(lists.map((l) => l.name)).toEqual(["Para a consulta"]);
+  });
+
+  it("keeps a list that was ticked when its Entry goes, only unlinked", async () => {
+    const { browser, appointment } = await family();
+    const entry = (await (
+      await browser.post("/entries", dentist(appointment, []))
+    ).json()) as Entry;
+    const tasks = (await (await browser.get("/tasks")).json()) as {
+      id: string;
+      checklistId: string | null;
+    }[];
+    const item = tasks.find((t) => t.checklistId)!;
+    await browser.post(`/tasks/${item.id}/done`, { done: true });
+    await browser.delete(`/entries/${entry.id}`);
+    const lists = (await (await browser.get("/checklists")).json()) as { entryId: string | null }[];
+    expect(lists).toEqual([expect.objectContaining({ entryId: null })]);
+  });
+});

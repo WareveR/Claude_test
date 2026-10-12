@@ -8,12 +8,12 @@ test("built-in Entry Types translate until renamed, and custom ones can be added
 }) => {
   await signIn(page);
   await page.getByRole("link", { name: "Settings" }).click();
-  await expect(page.getByRole("link", { name: "Appointment" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Appointment", exact: true })).toBeVisible();
 
   await page.getByRole("link", { name: "This device" }).click();
   await page.getByLabel("Language on this device").selectOption("pt-PT");
   await page.getByRole("link", { name: "Família" }).click();
-  await expect(page.getByRole("link", { name: "Consulta" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Consulta", exact: true })).toBeVisible();
   await page.getByRole("link", { name: "Este dispositivo" }).click();
   await page.getByLabel("Idioma deste dispositivo").selectOption("en");
   await page.getByRole("link", { name: "Family", exact: true }).click();
@@ -30,9 +30,9 @@ test("built-in Entry Types translate until renamed, and custom ones can be added
   await page.getByLabel("Repetition").selectOption("weekly");
   await page.getByLabel("1 hour before").check();
   await page.getByRole("button", { name: "Save" }).click();
-  await expect(page.getByRole("link", { name: "Swimming" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Swimming", exact: true })).toBeVisible();
 
-  await page.getByRole("link", { name: "Swimming" }).click();
+  await page.getByRole("link", { name: "Swimming", exact: true }).click();
   await expect(page.getByLabel("Repetition")).toHaveValue("weekly");
   await expect(page.getByLabel("1 hour before")).toBeChecked();
 });

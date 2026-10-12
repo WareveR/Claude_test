@@ -7,6 +7,7 @@ import { isRepetition, occurrenceDates, type Repetition } from "../../core/repet
 import { randomId } from "../auth/crypto";
 import type { Db } from "../db";
 import { inParts, schema } from "../db";
+import { dropUntouchedPreparation, prepareEntry } from "../preparation";
 import { requireDevice } from "../require-device";
 import type { AppEnv } from "../types";
 import { entryTypeDeleteSteps } from "./entry-types";
@@ -292,7 +293,8 @@ entryRoutes.get("/entries/:id", async (c) => {
 
 entryRoutes.post("/entries", async (c) => {
   const db = c.get("db");
-  const parsed = await parseEntry(db, await c.req.json().catch(() => ({})));
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
+  const parsed = await parseEntry(db, body);
   if (!parsed.values) return c.json({ error: "invalid", ...parsed }, 400);
   const id = randomId();
   const now = c.get("now").toISOString();
@@ -302,6 +304,11 @@ entryRoutes.post("/entries", async (c) => {
       .values({ id, ...columns(parsed.values), createdAt: now, changedAt: now }),
     ...personLinks(db, id, parsed.values.personIds),
   ]);
+  // A new Entry gets the predefined list its title or type calls for, unless the caller says not.
+  if (body.prepare !== false) {
+    const v = parsed.values;
+    await prepareEntry(db, { id, ...v, startDate: v.time.startDate }, c.get("now"));
+  }
   const rows = await db.select().from(schema.entry).where(eq(schema.entry.id, id));
   return c.json((await withPersons(db, rows))[0], 201);
 });
@@ -335,6 +342,7 @@ entryRoutes.delete("/entries/:id", async (c) => {
   const db = c.get("db");
   const row = await loadEntry(db, c.req.param("id"));
   if (row?.birthdayPersonId) return c.json({ error: "birthday_locked" }, 409);
+  if (row) await dropUntouchedPreparation(db, row.id, row.createdAt);
   const deleted = await db
     .delete(schema.entry)
     .where(eq(schema.entry.id, c.req.param("id")))

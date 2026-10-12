@@ -84,6 +84,15 @@ export function EntryPreparation({
                 <span className="min-w-0 flex-1 break-words">{checklist.name}</span>
                 <span className="text-sm text-muted">{t("checklists.progress", progress)}</span>
               </Link>
+              {readOnly && (
+                <ul className="flex flex-col gap-1 pl-6">
+                  {tasks
+                    .filter((task) => task.checklistId === checklist.id && !task.parentId)
+                    .map((item) => (
+                      <ReadTask key={item.id} task={item} tasks={tasks} />
+                    ))}
+                </ul>
+              )}
             </li>
           );
         })}

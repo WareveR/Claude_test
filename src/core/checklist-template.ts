@@ -19,6 +19,8 @@ export const BUILT_IN_TEMPLATES = [
   "winterPrep",
   "flight",
   "newPet",
+  "swimming",
+  "appointment",
 ] as const;
 export type BuiltInTemplate = (typeof BUILT_IN_TEMPLATES)[number];
 
@@ -685,6 +687,62 @@ export const BUILT_IN_TEMPLATE_TEXT: Record<BuiltInTemplate, Record<Language, Te
         "Transportadora",
         "Seguro do animal",
         "Decidir quem cuida dele nas férias",
+      ],
+    },
+  },
+  swimming: {
+    en: {
+      name: "Swimming bag",
+      items: [
+        "Swimsuit",
+        "Swimming cap",
+        "Goggles",
+        "Flip-flops",
+        "Towel",
+        "Pool access card",
+        "Shampoo and shower gel",
+        "Padlock",
+        "Comb or hairbrush",
+        "Snack and water",
+      ],
+    },
+    "pt-PT": {
+      name: "Saco da natação",
+      items: [
+        "Fato de banho",
+        "Touca",
+        "Óculos de natação",
+        "Chinelos",
+        "Toalha",
+        "Cartão de acesso à piscina",
+        "Champô e gel de banho",
+        "Cadeado",
+        "Pente ou escova",
+        "Lanche e água",
+      ],
+    },
+  },
+  appointment: {
+    en: {
+      name: "Doctor's visit",
+      items: [
+        "ID card",
+        "Health card or insurance card",
+        "Earlier tests and reports",
+        "List of medicines",
+        "Questions to ask",
+        "Referral or prescription",
+      ],
+    },
+    "pt-PT": {
+      name: "Para a consulta",
+      items: [
+        "Cartão de Cidadão",
+        "Cartão de utente ou do seguro",
+        "Exames e relatórios anteriores",
+        "Lista de medicamentos",
+        "Perguntas a fazer",
+        "Credencial ou receita",
       ],
     },
   },

@@ -35,10 +35,10 @@ test("Search finds Entries and Tasks by any word, exact text and exclusions", as
   await box.fill("orthodontist -cancelled");
   await expect(results).toHaveCount(2);
 
-  await box.fill('"health card"');
+  await box.fill('"the health card"');
   await expect(results).toHaveCount(1);
   await expect(results.first()).toContainText("Orthodontist check-up");
-  await expect(results.first().locator("mark")).toHaveText("health card");
+  await expect(results.first().locator("mark")).toHaveText("the health card");
 
   // Case and accents don't matter.
   await box.fill("ORCAMENTO");
