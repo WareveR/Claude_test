@@ -165,15 +165,13 @@ function Week({ monday }: { monday: PlainDate }) {
   const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i));
   const tasks = usePeriodTasks(monday, days[6]).tasks.length;
   const forecast = useDayWeather(monday, days[6]);
-  // The months and year the week falls in, abbreviated where the whole does not fit.
-  const title = formatMonthRange(monday, days[6], locale);
-  const shortTitle = formatMonthRange(monday, days[6], locale, "short");
+  // The months and year the week falls in, abbreviated so it keeps to the nav's line.
+  const title = formatMonthRange(monday, days[6], locale, "short");
   return (
     <>
       <ViewNav
         date={monday}
         title={title}
-        shortTitle={shortTitle}
         previous={paths.week(addDays(monday, -7))}
         next={paths.week(addDays(monday, 7))}
       />

@@ -6,8 +6,8 @@ test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 test("create, see, edit and delete Entries in the week view", async ({ page }) => {
   await signIn(page);
   await page.goto("/week/2026-10-12");
-  // The week is titled by its months and year.
-  await expect(page.getByRole("heading", { name: "October 2026" })).toBeVisible();
+  // The week is titled by its months, abbreviated, and year.
+  await expect(page.getByRole("heading", { name: "Oct 2026" })).toBeVisible();
 
   await page.getByRole("link", { name: "New entry" }).click();
   // Cancel and Save stay on screen without scrolling the long form.
