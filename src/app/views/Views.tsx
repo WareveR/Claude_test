@@ -27,7 +27,8 @@ import { usePersonFilter } from "../filter/model";
 import { matchesFilter } from "../../core/person-filter";
 import { useEntryTypes } from "../entry-types/model";
 import { useHolidays } from "../holidays/model";
-import { useDayNotes } from "../layers/model";
+import { useDayNotes, useSunTimes } from "../layers/model";
+import { SunriseIcon, SunsetIcon } from "../weather/WeatherIcon";
 import { useSignedIn } from "../family";
 import { usePersons } from "../persons/model";
 import { useNow } from "../shell/useNow";
@@ -91,7 +92,7 @@ export function DayView() {
         previous={paths.day(addDays(date, -1))}
         next={paths.day(addDays(date, 1))}
         compact
-        extra={<DayWeatherLine weather={weather} />}
+        extra={<DayWeatherLine day={date} weather={weather} />}
       />
       <ViewBody>
         <div className="flex flex-col gap-2 pb-2 empty:hidden">
@@ -114,10 +115,11 @@ export function DayView() {
 }
 
 /**
- * The day's weather beside its title: highest and lowest, chance of rain and wind, and a switch
- * for the hour by hour detail, there even when no hours are kept.
+ * The day's weather beside its title: highest and lowest, chance of rain and wind, sunrise and
+ * sunset when the Sun Layer is on, and a switch for the hour by hour detail, there even when no
+ * hours are kept.
  */
-function DayWeatherLine({ weather }: { weather?: ShownDay }) {
+function DayWeatherLine({ day, weather }: { day: PlainDate; weather?: ShownDay }) {
   const { t } = useTranslation();
   const showHours = useDayHours();
   return (
@@ -134,6 +136,7 @@ function DayWeatherLine({ weather }: { weather?: ShownDay }) {
           </span>
         </ForecastButton>
       )}
+      <SunTimes day={day} />
       <button
         type="button"
         data-testid="day-hours"
@@ -144,6 +147,26 @@ function DayWeatherLine({ weather }: { weather?: ShownDay }) {
       >
         <Clock aria-hidden size={18} strokeWidth={1.75} />
       </button>
+    </span>
+  );
+}
+
+/** Sunrise and sunset beside the day's title, on any day, when this device shows the Sun Layer. */
+function SunTimes({ day }: { day: PlainDate }) {
+  const { t } = useTranslation();
+  const sun = useSunTimes(day);
+  if (!sun || (!sun.rise && !sun.set)) return null;
+  return (
+    <span
+      data-testid="sun-times"
+      className="inline-flex items-center gap-1 text-muted tabular-nums"
+    >
+      <span aria-hidden className="inline-flex items-center gap-1">
+        <SunriseIcon size={14} /> {sun.rise ?? "–"} · <SunsetIcon size={14} /> {sun.set ?? "–"}
+      </span>
+      <span className="sr-only">
+        {t("layers.sunrise")} {sun.rise ?? "–"}, {t("layers.sunset")} {sun.set ?? "–"}
+      </span>
     </span>
   );
 }
