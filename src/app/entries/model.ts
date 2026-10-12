@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { birthdayAge, birthdayTitle } from "../../core/birthday";
 import { occurrencesOf, type OccurrenceException } from "../../core/occurrences";
@@ -8,6 +8,7 @@ import { moveStart } from "../../core/entry-time";
 import { addDays, daysBetween, type PlainDate } from "../../core/plain-date";
 import type { Repetition } from "../../core/repetition";
 import { api } from "../api";
+import { fromList } from "../offline/from-list";
 import type { Scope } from "./ScopeDialog";
 
 export type Entry = {
@@ -50,10 +51,15 @@ export function useEntries(from: PlainDate, to: PlainDate) {
 }
 
 export function useEntry(id: string | undefined) {
+  const queryClient = useQueryClient();
+  // The calendar already holds the Entry: it shows at once while its own request runs.
+  const listed = () => fromList<Entry>(queryClient, ["entries"], id);
   return useQuery({
     queryKey: ["entry", id],
     queryFn: () => api<Entry>(`/entries/${id}`),
     enabled: Boolean(id),
+    initialData: () => listed()?.data,
+    initialDataUpdatedAt: () => listed()?.updatedAt,
   });
 }
 
