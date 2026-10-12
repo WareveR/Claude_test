@@ -4,6 +4,7 @@ import type { EntryType } from "../entry-types/model";
 import type { Shown as Entry } from "../entries/model";
 import type { Person } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
+import { EntryIcon } from "./EntryBlock";
 import { entriesOn } from "./MonthGrid";
 import { isWeekendColumn, monthColumns, yearWeekdayLetters } from "./YearGrid";
 
@@ -36,7 +37,8 @@ export function YearDetail({
   /** Where tapping a day goes. */
   dayLink: (day: PlainDate) => string;
 }) {
-  const colorOf = (e: Entry) => types.find((t) => t.id === e.entryTypeId)?.color ?? "#607d8b";
+  const typeOf = (e: Entry) => types.find((t) => t.id === e.entryTypeId);
+  const colorOf = (e: Entry) => typeOf(e)?.color ?? "#607d8b";
   const lines: { id: string; person: Person | null; owns: (e: Entry) => boolean }[] = [
     ...persons
       .filter((p) => !p.archived)
@@ -104,8 +106,9 @@ export function YearDetail({
                             title={mine.map((e) => e.title).join(", ")}
                             data-testid={`year-cell-${day}-${line.id}`}
                             style={{ backgroundColor: colorOf(mine[0]) }}
-                            className="relative block h-4 rounded-sm"
+                            className="relative flex h-4 items-center justify-center overflow-hidden rounded-sm text-white"
                           >
+                            <EntryIcon entry={mine[0]} type={typeOf(mine[0])} size={10} />
                             {mine.length > 1 && (
                               <i className="absolute top-0.5 right-0.5 size-1 rounded-full bg-white" />
                             )}

@@ -316,8 +316,8 @@ function Month({ first }: { first: PlainDate }) {
         previous={paths.month(addMonths(first, -1))}
         next={paths.month(addMonths(first, 1))}
       />
-      <ViewBody>
-        {/* On wide screens the grid fills the height; a picked day opens over it. */}
+      <ViewBody fill>
+        {/* The grid fills the free height; a picked day opens over it. */}
         <div className="flex flex-1 flex-col lg:min-h-0">
           <MonthGrid
             month={first}

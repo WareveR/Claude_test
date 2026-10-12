@@ -14,9 +14,16 @@ export function TodayPanel({ readOnly }: { readOnly?: boolean }) {
   );
 }
 
-/** A calendar view's body under its bar: on wide screens it fills the free height. */
-export function ViewBody({ children }: { children: ReactNode }) {
-  return <div className="flex min-w-0 flex-col lg:min-h-0 lg:flex-1">{children}</div>;
+/**
+ * A calendar view's body under its bar: on wide screens it fills the free height, and with
+ * `fill` it does on narrow ones too (growing past it scrolls the page).
+ */
+export function ViewBody({ children, fill }: { children: ReactNode; fill?: boolean }) {
+  return (
+    <div className={`flex min-w-0 flex-col lg:min-h-0 lg:flex-1 ${fill ? "flex-1" : ""}`}>
+      {children}
+    </div>
+  );
 }
 
 /**

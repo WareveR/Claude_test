@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { lastDate } from "../../core/entry-time";
 import { monthWeeks } from "../../core/layout";
@@ -6,13 +7,36 @@ import type { EntryType } from "../entry-types/model";
 import type { Shown as Entry } from "../entries/model";
 import type { ShownDay } from "../weather/model";
 import { WeatherBadge } from "../weather/WeatherBadge";
-import { importanceClass } from "./EntryBlock";
+import { EntryIcon, importanceClass } from "./EntryBlock";
 import { NoteLine } from "../layers/NoteLine";
 import { isMovable, useEntryDrag } from "./useEntryDrag";
 
 /** How many Entry lines a day shows before "+N", on narrow and on wide screens. */
 const NARROW = 3;
 const WIDE = 6;
+/** On a phone, the height of a day's top line and of each line under it, in pixels. */
+const TOP_PX = 22;
+const LINE_PX = 14.5;
+
+/**
+ * How many lines fit under the day's number in each row of `weeks` rows, measured from the grid,
+ * so a phone with free height shows more of each day; never fewer than {@link NARROW}.
+ */
+function useLinesThatFit(rows: number) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [lines, setLines] = useState(NARROW);
+  useEffect(() => {
+    const grid = ref.current;
+    if (!grid || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => {
+      const row = grid.clientHeight / rows;
+      setLines(Math.max(NARROW, Math.floor((row - TOP_PX) / LINE_PX)));
+    });
+    observer.observe(grid);
+    return () => observer.disconnect();
+  }, [rows]);
+  return { ref, lines };
+}
 
 export function entriesOn(entries: Entry[], day: PlainDate): Entry[] {
   return entries
@@ -58,9 +82,11 @@ export function MonthGrid({
   const preview = drag.preview;
   const landsOn = (day: PlainDate) =>
     preview !== null && preview.startDate <= day && lastDate(preview) >= day;
-  const colorOf = (e: Entry) => types.find((t) => t.id === e.entryTypeId)?.color ?? "#607d8b";
+  const typeOf = (e: Entry) => types.find((t) => t.id === e.entryTypeId);
+  const colorOf = (e: Entry) => typeOf(e)?.color ?? "#607d8b";
+  const { ref: gridRef, lines: fitLines } = useLinesThatFit(weeks.length);
   return (
-    <div className="flex flex-col bg-surface lg:min-h-0 lg:flex-1" {...drag.zone}>
+    <div className="flex flex-1 flex-col bg-surface lg:min-h-0" {...drag.zone}>
       <div className="grid grid-cols-[repeat(7,minmax(0,1fr))] border-b border-line text-center text-xs font-semibold lg:text-sm">
         {weeks[0].map((day) => (
           <div
@@ -71,12 +97,19 @@ export function MonthGrid({
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-[repeat(7,minmax(0,1fr))] lg:flex-1 lg:auto-rows-fr">
+      {/* The rows share the free height, so a tall screen gives each day more lines. */}
+      <div ref={gridRef} className="grid flex-1 auto-rows-fr grid-cols-[repeat(7,minmax(0,1fr))]">
         {weeks.flat().map((day) => {
           const inMonth = day.slice(0, 7) === month.slice(0, 7);
           const dayEntries = entriesOn(entries, day);
           const names = holidays.get(day);
           const forecast = weather.get(day);
+          // On a phone: the lines left after holidays and notes, keeping one for "+N" if needed.
+          const room = fitLines - (names ? 1 : 0) - (notes.get(day)?.length ?? 0);
+          const narrow = Math.max(
+            Math.min(NARROW, fitLines),
+            dayEntries.length <= room ? room : room - 1,
+          );
           return (
             <Link
               key={day}
@@ -121,21 +154,24 @@ export function MonthGrid({
                 </span>
               ))}
               {/* Wide screens have room for more lines per day. */}
-              {dayEntries.slice(0, WIDE).map((e, i) => (
+              {dayEntries.slice(0, Math.max(WIDE, narrow)).map((e, i) => (
                 <span
                   key={e.key}
                   data-drag-entry={isMovable(e) ? e.key : undefined}
                   style={{ backgroundColor: colorOf(e) }}
-                  className={`truncate rounded ${drag.dragged?.key === e.key ? "opacity-50" : ""} px-0.5 text-[10px] leading-tight text-white lg:px-1 lg:py-0.5 lg:text-xs ${i >= NARROW ? "hidden lg:block" : ""} ${importanceClass(e)}`}
+                  className={`items-center gap-0.5 rounded ${drag.dragged?.key === e.key ? "opacity-50" : ""} px-0.5 text-[10px] leading-tight text-white lg:gap-1 lg:px-1 lg:py-0.5 lg:text-xs ${i >= narrow ? "hidden" : "flex"} ${i >= WIDE ? "lg:hidden" : "lg:flex"} ${importanceClass(e)}`}
                 >
-                  {e.title}
+                  <span className="shrink-0">
+                    <EntryIcon entry={e} type={typeOf(e)} size={10} />
+                  </span>
+                  <span className="min-w-0 truncate">{e.title}</span>
                 </span>
               ))}
-              {dayEntries.length > NARROW && (
+              {(dayEntries.length > narrow || dayEntries.length > WIDE) && (
                 <span
-                  className={`text-[10px] text-muted ${dayEntries.length > WIDE ? "" : "lg:hidden"}`}
+                  className={`text-[10px] text-muted ${dayEntries.length > narrow ? "" : "hidden"} ${dayEntries.length > WIDE ? "lg:inline" : "lg:hidden"}`}
                 >
-                  <span className="lg:hidden">+{dayEntries.length - NARROW}</span>
+                  <span className="lg:hidden">+{dayEntries.length - narrow}</span>
                   <span className="hidden lg:inline">+{dayEntries.length - WIDE}</span>
                 </span>
               )}
