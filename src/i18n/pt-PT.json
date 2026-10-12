@@ -172,7 +172,19 @@
     "rename": "Mudar o nome de {{name}}",
     "newName": "Novo nome do dispositivo",
     "signOut": "Terminar a sessão em {{name}}",
-    "confirmSignOut": "Terminar a sessão em {{name}}?"
+    "confirmSignOut": "Terminar a sessão em {{name}}?",
+    "kind": "Tipo de {{name}}",
+    "id": "ID {{id}}",
+    "signedInAt": "Ligado em: {{when}}",
+    "kinds": {
+      "unknown": "Desconhecido",
+      "phone": "Telemóvel",
+      "tablet": "Tablet",
+      "laptop": "Portátil",
+      "computer": "Computador",
+      "watch": "Relógio",
+      "tv": "Televisão"
+    }
   },
   "password": {
     "title": "Mudar a palavra-passe da família",

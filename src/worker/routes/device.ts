@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
+import { isDeviceKind } from "../../core/device-kind";
 import { isLanguage } from "../../core/languages";
 import type { Device } from "../auth/session";
 import { schema } from "../db";
@@ -16,6 +17,8 @@ function present(device: Device) {
     id: device.id,
     name: device.name,
     language: device.language,
+    kind: device.kind,
+    model: device.model,
     push: device.pushSubscription !== null,
     remindersOn: device.remindersOn,
     reminderPersonIds: device.reminderPersonIds,
@@ -25,17 +28,40 @@ function present(device: Device) {
 deviceRoutes.get("/device", (c) => c.json(present(c.get("device"))));
 
 /** Changes this device's language. */
+/** The device's own language, and the kind and model it finds itself to be. */
 deviceRoutes.patch("/device", async (c) => {
   const body = await c.req.json().catch(() => ({}));
-  if (!isLanguage(body.language)) return c.json({ error: "invalid", field: "language" }, 400);
+  const changes: Partial<Pick<Device, "language" | "kind" | "model">> = {};
+  if (body.language !== undefined) {
+    if (!isLanguage(body.language)) return c.json({ error: "invalid", field: "language" }, 400);
+    changes.language = body.language;
+  }
+  if (body.kind !== undefined) {
+    if (!isDeviceKind(body.kind)) return c.json({ error: "invalid", field: "kind" }, 400);
+    changes.kind = body.kind;
+  }
+  if (body.model !== undefined) {
+    const model = typeof body.model === "string" ? cleanModel(body.model) : "";
+    if (!model) return c.json({ error: "invalid", field: "model" }, 400);
+    changes.model = model;
+  }
+  if (Object.keys(changes).length === 0) return c.json({ error: "invalid" }, 400);
   const device = c.get("device");
   await c
     .get("db")
     .update(schema.signedInDevice)
-    .set({ language: body.language })
+    .set(changes)
     .where(eq(schema.signedInDevice.id, device.id));
-  return c.json({ ...present(device), language: body.language });
+  return c.json(present({ ...device, ...changes }));
 });
+
+/** A model name as shown, printable and short. */
+function cleanModel(model: string): string {
+  return model
+    .replace(/[^\p{L}\p{N} ._()+-]/gu, "")
+    .trim()
+    .slice(0, 40);
+}
 
 /** Where pushes may go: the browsers' own push services, so the Worker never posts elsewhere. */
 const PUSH_HOSTS = [

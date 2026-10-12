@@ -7,6 +7,7 @@ import {
   text,
 } from "drizzle-orm/sqlite-core";
 import type { EntryTypeDefaults, Importance, ReminderOffset } from "../../core/entry-type";
+import type { DeviceKind } from "../../core/device-kind";
 import type { HolidayPlace } from "../../core/holidays";
 import type { Repetition } from "../../core/repetition";
 import type { Segment } from "../../core/briefing";
@@ -57,6 +58,10 @@ export const signedInDevice = sqliteTable("signed_in_device", {
   remindersOn: integer("reminders_on", { mode: "boolean" }).notNull().default(true),
   /** The Persons this device is reminded about; null is everyone. Family-wide items always come. */
   reminderPersonIds: text("reminder_person_ids", { mode: "json" }).$type<string[]>(),
+  /** Phone, tablet, computer…: guessed by the device itself, changeable in Settings. */
+  kind: text("kind").$type<DeviceKind>(),
+  /** The maker's model name when the browser tells it, like "SM-X710". */
+  model: text("model"),
 });
 
 /** What a browser's PushSubscription.toJSON() gives. */

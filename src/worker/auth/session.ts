@@ -27,6 +27,8 @@ export async function startSession(c: Context, db: Db, now: Date): Promise<Devic
     pushSubscription: null,
     remindersOn: true,
     reminderPersonIds: null,
+    kind: null,
+    model: null,
   };
   await db.insert(schema.signedInDevice).values(device);
   setSessionCookie(c, token);
