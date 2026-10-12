@@ -7,8 +7,8 @@ test("an Entry holds the Checklists and Tasks that prepare for it", async ({ pag
   await signIn(page);
   await page.goto("/week/2026-11-02");
   await page.getByRole("link", { name: "New", exact: true }).click();
-  await page.getByLabel("Title").fill("Birthday party");
-  await page.getByLabel("Type", { exact: true }).selectOption({ label: "Appointment" });
+  await page.getByLabel("Title").fill("Grandma's visit");
+  await page.getByLabel("Type", { exact: true }).selectOption({ label: "General" });
   await page.getByLabel("Date", { exact: true }).fill("2026-11-07");
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page).not.toHaveURL(/\/entries\/new/);
@@ -22,9 +22,9 @@ test("an Entry holds the Checklists and Tasks that prepare for it", async ({ pag
   await expect(preparation).toContainText("Nothing linked yet");
   // A new Checklist from the Entry is named after it and due on its day.
   await preparation.getByRole("link", { name: "New task with items" }).click();
-  await expect(page.getByLabel("Name")).toHaveValue("Birthday party");
+  await expect(page.getByLabel("Name")).toHaveValue("Grandma's visit");
   await expect(page.getByLabel("Ends (optional)")).toHaveValue("2026-11-07");
-  await expect(page.getByTestId("linked-entry")).toContainText("For: Birthday party");
+  await expect(page.getByTestId("linked-entry")).toContainText("For: Grandma's visit");
   await page.getByRole("button", { name: "Save" }).click();
   const detail = page.getByTestId("checklist-detail");
   await detail.getByLabel("New item").fill("Cake");
@@ -35,7 +35,7 @@ test("an Entry holds the Checklists and Tasks that prepare for it", async ({ pag
   await page.getByTestId("day-column-2026-11-07").getByTestId("entry").click();
   await page.getByRole("link", { name: "Edit" }).click();
   await preparation.getByRole("link", { name: "New task", exact: true }).click();
-  await expect(page.getByTestId("linked-entry")).toContainText("For: Birthday party");
+  await expect(page.getByTestId("linked-entry")).toContainText("For: Grandma's visit");
   await page.getByLabel("Title").fill("Book the hall");
   await page.getByRole("button", { name: "Save" }).click();
   // Saved before leaving; going straight to another page can cut the save short.
@@ -44,11 +44,29 @@ test("an Entry holds the Checklists and Tasks that prepare for it", async ({ pag
   await page.goto("/week/2026-11-02");
   await page.getByTestId("day-column-2026-11-07").getByTestId("entry").click();
   // The summary lists what is linked, with nothing to tick.
-  await expect(preparation.getByRole("link", { name: /Birthday party/ })).toContainText("0 of 1");
+  await expect(preparation.getByRole("link", { name: /Grandma's visit/ })).toContainText("0 of 1");
   await expect(preparation.getByText("Book the hall")).toBeVisible();
   await expect(preparation.getByRole("checkbox")).toHaveCount(0);
   await page.getByRole("link", { name: "Edit" }).click();
   await preparation.getByRole("checkbox", { name: "Done: Book the hall" }).check();
   await expect(preparation.getByRole("checkbox", { name: "Done: Book the hall" })).toBeChecked();
   await page.screenshot({ path: "test-results/entry-preparation.png", fullPage: true });
+});
+
+test("a new Entry gets the list its title calls for, to read in its summary", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/week/2026-11-09");
+  await page.getByRole("link", { name: "New", exact: true }).click();
+  await page.getByLabel("Title").fill("Swimming");
+  await page.getByLabel("Date", { exact: true }).fill("2026-11-12");
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page).not.toHaveURL(/\/entries\/new/);
+  // Only the Entry is on the calendar; its list goes with it.
+  const day = page.getByTestId("day-column-2026-11-12").getByTestId("entry");
+  await expect(day).toHaveCount(1);
+  await day.click();
+  const preparation = page.getByTestId("preparation");
+  await expect(preparation).toContainText("Swimming bag");
+  await expect(preparation).toContainText("Goggles");
+  await expect(preparation.getByRole("checkbox")).toHaveCount(0);
 });

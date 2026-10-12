@@ -203,16 +203,22 @@ checklistRoutes.get("/checklists/:id", async (c) => {
  * A new Checklist; `items` (names, from a template) become its first items, in that order, each
  * for the Checklist's Persons.
  */
-checklistRoutes.post("/checklists", async (c) => {
-  const db = c.get("db");
-  const body = await c.req.json().catch(() => ({}));
-  const parsed = await parseChecklist(db, body, await familyToday(db, c.get("now")));
-  if (!parsed.values) return c.json({ error: "invalid", field: parsed.field }, 400);
-  const items = body.items === undefined ? [] : cleanItems(body.items);
-  if (!items) return c.json({ error: "invalid", field: "items" }, 400);
-  const { personIds, ...fields } = parsed.values;
+export async function createChecklist(
+  db: Db,
+  values: {
+    name: string;
+    startDate: string | null;
+    endDate: string | null;
+    repetition: Repetition | null;
+    remindAtStart: boolean;
+    entryId: string | null;
+    personIds: string[];
+  },
+  items: string[],
+  at: Date,
+): Promise<string> {
+  const { personIds, ...fields } = values;
   const id = randomId();
-  const at = c.get("now");
   const now = at.toISOString();
   await db.batch([
     db.insert(schema.checklist).values({ id, ...fields, createdAt: now, changedAt: now }),
@@ -233,6 +239,17 @@ checklistRoutes.post("/checklists", async (c) => {
       ];
     }),
   ]);
+  return id;
+}
+
+checklistRoutes.post("/checklists", async (c) => {
+  const db = c.get("db");
+  const body = await c.req.json().catch(() => ({}));
+  const parsed = await parseChecklist(db, body, await familyToday(db, c.get("now")));
+  if (!parsed.values) return c.json({ error: "invalid", field: parsed.field }, 400);
+  const items = body.items === undefined ? [] : cleanItems(body.items);
+  if (!items) return c.json({ error: "invalid", field: "items" }, 400);
+  const id = await createChecklist(db, parsed.values, items, c.get("now"));
   return c.json(await presentOne(db, id), 201);
 });
 

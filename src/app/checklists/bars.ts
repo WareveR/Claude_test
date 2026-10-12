@@ -31,6 +31,8 @@ export function useChecklistBars(from: PlainDate, to: PlainDate): Shown[] {
   return useMemo(
     () =>
       (checklists ?? [])
+        // A list for an Entry's own day goes with the Entry (its summary), not as a bar beside it.
+        .filter((c) => !(c.entryId && c.startDate && c.startDate === c.endDate))
         .map((c) => ({ c, own: (tasks ?? []).filter((t) => t.checklistId === c.id) }))
         .filter(({ own }) =>
           checklistMatches(
