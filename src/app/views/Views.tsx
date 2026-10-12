@@ -361,19 +361,20 @@ function Year({ year }: { year: number }) {
   const today = useToday();
   const { t } = useTranslation();
   const [search] = useSearchParams();
-  // The detail (a line per Person) is in the address, so back and reload keep it.
-  const detail = search.get("detail") === "1";
+  // The year always opens in Detail (a line per Person); the compact grid is asked for in the
+  // address, so back, reload and the arrows keep it until the year is opened afresh.
+  const detail = search.get("detail") !== "0";
   const persons = usePersons();
   const date = `${year}-01-01`;
   const { entries, types } = useCalendar(date, `${year}-12-31`);
   const holidays = useHolidays(date, `${year}-12-31`);
-  const withDetail = (path: string) => (detail ? `${path}?detail=1` : path);
+  const withDetail = (path: string) => (detail ? path : `${path}?detail=0`);
   const navigate = useNavigate();
   // A picked day opens over the year, keeping Detail as it was.
   const picked = search.get("day");
   const pickedDay =
     picked && isPlainDate(picked) && picked.startsWith(String(year)) ? picked : null;
-  const dayLink = (day: PlainDate) => `${paths.year(date)}?${detail ? "detail=1&" : ""}day=${day}`;
+  const dayLink = (day: PlainDate) => `${paths.year(date)}?${detail ? "" : "detail=0&"}day=${day}`;
   const notes = useDayNotes(date, `${year}-12-31`);
   const forecast = useDayWeather(date, `${year}-12-31`);
   return (
@@ -385,7 +386,7 @@ function Year({ year }: { year: number }) {
         next={withDetail(paths.year(addMonths(date, 12)))}
         extra={
           <Link
-            to={detail ? paths.year(date) : `${paths.year(date)}?detail=1`}
+            to={detail ? `${paths.year(date)}?detail=0` : paths.year(date)}
             aria-pressed={detail}
             className={`rounded-md border px-3 py-1 text-sm ${detail ? "border-accent bg-accent text-accent-ink" : "border-line"}`}
           >
@@ -394,7 +395,7 @@ function Year({ year }: { year: number }) {
         }
       />
       <ViewBody>
-        <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+        <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto" data-swipe-past-edges>
           {detail ? (
             <YearDetail
               year={year}
