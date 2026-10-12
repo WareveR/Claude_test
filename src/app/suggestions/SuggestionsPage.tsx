@@ -352,7 +352,7 @@ export function SuggestionsPage() {
                       {(["manual", "debit"] as const).map((p) => (
                         <label
                           key={p}
-                          className="inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full border border-line px-3 py-1 text-sm has-checked:border-accent has-checked:bg-accent has-checked:text-accent-ink"
+                          className="relative inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full border border-line px-3 py-1 text-sm has-checked:border-accent has-checked:bg-accent has-checked:text-accent-ink"
                         >
                           <input
                             type="radio"

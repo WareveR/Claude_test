@@ -107,7 +107,7 @@ function EntryTypeForm({ type }: { type?: EntryType }) {
           <legend className="mb-1 font-medium">{t("entryTypes.color")}</legend>
           <div className="flex flex-wrap gap-2">
             {Object.values(TYPE_COLORS).map((c) => (
-              <label key={c} className="cursor-pointer">
+              <label key={c} className="relative cursor-pointer">
                 <input
                   type="radio"
                   name="color"
@@ -136,7 +136,7 @@ function EntryTypeForm({ type }: { type?: EntryType }) {
           />
           <div className="mt-2 flex items-center gap-3">
             <EntryTypeBadge type={{ color, icon, thumbnailKey }} size={40} />
-            <label className={BUTTON}>
+            <label className={`relative ${BUTTON}`}>
               {t("entryTypes.thumbnail")}
               <input
                 type="file"

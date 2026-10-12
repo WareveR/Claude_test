@@ -73,7 +73,7 @@ export function IconPicker({
       <div className="flex flex-wrap gap-1">
         {before}
         {shown.map((key) => (
-          <label key={key} className="cursor-pointer" title={name(key)}>
+          <label key={key} className="relative cursor-pointer" title={name(key)}>
             <input
               type="radio"
               name="icon"

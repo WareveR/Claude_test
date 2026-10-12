@@ -77,7 +77,7 @@ export function KindSwitch({ kind, onPick }: { kind: NewKind; onPick: (kind: New
         {(["entry", "task"] as const).map((k) => (
           <label
             key={k}
-            className="inline-flex min-h-9 cursor-pointer items-center rounded-full border border-line px-4 py-1 text-sm has-checked:border-accent has-checked:bg-accent has-checked:text-accent-ink has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-accent"
+            className="relative inline-flex min-h-9 cursor-pointer items-center rounded-full border border-line px-4 py-1 text-sm has-checked:border-accent has-checked:bg-accent has-checked:text-accent-ink has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-accent"
           >
             <input
               type="radio"

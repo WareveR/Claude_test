@@ -437,7 +437,7 @@ function EntryForm({
             value={draft.icon}
             onChange={(icon) => set({ icon })}
             before={
-              <label className="cursor-pointer">
+              <label className="relative cursor-pointer">
                 <input
                   type="radio"
                   name="icon"
