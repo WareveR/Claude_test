@@ -11,6 +11,7 @@ export const paths = {
   display: () => "/display",
   summary: () => "/summary",
   tasks: () => "/tasks",
+  shopping: () => "/shopping",
   suggestions: () => "/suggestions",
   search: () => "/search",
   settings: () => "/settings",

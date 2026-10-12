@@ -98,6 +98,7 @@
     "month": "Mês",
     "year": "Ano",
     "tasks": "Tarefas",
+    "shopping": "Compras",
     "short": {
       "day": "D",
       "week": "S",
@@ -1002,6 +1003,10 @@
         "tasks": {
           "what": "Abre as tarefas da Família.",
           "more": "Agrupadas por prazo; as em atraso aparecem primeiro."
+        },
+        "shopping": {
+          "what": "Abre a lista de compras da Família.",
+          "more": "Uma só lista para todos, por secções; dá para ver só o de uma loja."
         }
       },
       "previous": {
@@ -1258,5 +1263,50 @@
     "hint": "As horas em que a família costuma dormir. Nas vistas de dia e semana aparecem mais baixas e sombreadas, e voltam ao tamanho normal quando há algo marcado.",
     "start": "Deitar",
     "end": "Acordar"
+  },
+  "shopping": {
+    "title": "Lista de compras",
+    "add": "Adicionar à lista…",
+    "addLabel": "Adicionar à lista",
+    "addButton": "Adicionar",
+    "suggestions": "De listas anteriores",
+    "stores": "Loja",
+    "allStores": "Todas",
+    "sections": {
+      "produce": "Frutas e legumes",
+      "meatFish": "Talho e peixe",
+      "dairyEggs": "Laticínios e ovos",
+      "bakery": "Padaria",
+      "pantry": "Mercearia",
+      "drinks": "Bebidas",
+      "frozen": "Congelados",
+      "cleaning": "Limpeza",
+      "hygiene": "Higiene",
+      "baby": "Bebé",
+      "pets": "Animais",
+      "other": "Outros"
+    },
+    "bought": "Comprados",
+    "tick": "Comprado: {{name}}",
+    "details": "Detalhes de {{name}}",
+    "remove": "Tirar {{name}}",
+    "name": "Nome",
+    "quantity": "Quantidade (opcional)",
+    "quantityHint": "2, 1 kg…",
+    "note": "Nota (opcional)",
+    "store": "Loja (opcional)",
+    "storeHint": "Qualquer loja",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "empty": "A lista está vazia: junte o que falta em casa.",
+    "emptyStore": "Não falta nada desta loja.",
+    "boughtToast": "Comprado: {{name}}",
+    "removedToast": "Tirado: {{name}}",
+    "undo": "Desfazer",
+    "history": "Histórico",
+    "hideHistory": "Esconder histórico",
+    "historyEmpty": "Ainda nada foi comprado.",
+    "addAgain": "Juntar {{name}} outra vez",
+    "hint": "Toque num artigo quando estiver no cesto; deslize-o para o lado para o tirar. O que foi comprado sai da lista amanhã."
   }
 }

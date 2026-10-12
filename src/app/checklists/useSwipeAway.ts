@@ -14,10 +14,13 @@ export function useSwipeAway(onAway: () => void) {
   const [dx, setDx] = useState(0);
   const [phase, setPhase] = useState<"idle" | "dragging" | "away">("idle");
   const start = useRef<{ x: number; y: number; id: number; swiping: boolean } | null>(null);
+  // Whether the last press was a swipe, so the click that ends it can be ignored.
+  const swiped = useRef(false);
 
   function onPointerDown(e: PointerEvent<HTMLElement>) {
     if (e.button !== 0 || !e.isPrimary || phase === "away") return;
     if ((e.target as Element).closest("input, button, select, textarea, a, form")) return;
+    swiped.current = false;
     start.current = { x: e.clientX, y: e.clientY, id: e.pointerId, swiping: false };
   }
   function onPointerMove(e: PointerEvent<HTMLElement>) {
@@ -42,6 +45,7 @@ export function useSwipeAway(onAway: () => void) {
     const s = start.current;
     start.current = null;
     if (!s?.swiping || e.pointerId !== s.id) return;
+    swiped.current = true;
     const moveX = e.clientX - s.x;
     if (Math.abs(moveX) >= AWAY_PX) {
       setPhase("away");
@@ -71,5 +75,7 @@ export function useSwipeAway(onAway: () => void) {
   return {
     handlers: { onPointerDown, onPointerMove, onPointerUp, onPointerCancel },
     style,
+    /** Whether the press that just ended was a swipe rather than a tap. */
+    swiped: () => swiped.current,
   };
 }

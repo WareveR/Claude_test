@@ -24,6 +24,7 @@ import { SuggestionsPage } from "./suggestions/SuggestionsPage";
 import { TaskPage } from "./tasks/TaskForm";
 import { SearchPage } from "./search/SearchPage";
 import { TasksView } from "./tasks/TasksView";
+import { ShoppingPage } from "./shopping/ShoppingPage";
 import { AgendaView } from "./views/AgendaView";
 import { DayView, MonthView, TodayRedirect, WeekView, YearView } from "./views/Views";
 import { ItemPopupProvider } from "./shell/ItemPopup";
@@ -70,6 +71,7 @@ const router = createBrowserRouter([
       { path: "/agenda/:date", element: <AgendaView /> },
       { path: "/tasks", element: <TasksView /> },
       { path: "/tasks/:id", element: <TaskPage /> },
+      { path: paths.shopping(), element: <ShoppingPage /> },
       { path: paths.suggestions(), element: <SuggestionsPage /> },
       { path: paths.search(), element: <SearchPage /> },
       { path: "/checklists/new", element: <ChecklistPage /> },
