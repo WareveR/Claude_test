@@ -1252,5 +1252,11 @@
   "summary": {
     "nextDays": "Próximos 7 dias",
     "tomorrow": "Amanhã"
+  },
+  "sleep": {
+    "title": "Horas de dormir",
+    "hint": "As horas em que a família costuma dormir. Nas vistas de dia e semana aparecem mais baixas e sombreadas, e voltam ao tamanho normal quando há algo marcado.",
+    "start": "Deitar",
+    "end": "Acordar"
   }
 }

@@ -50,3 +50,29 @@ describe("Rubbish collection", () => {
     expect(bad.status).toBe(400);
   });
 });
+
+describe("Sleeping Hours", () => {
+  it("start at 23 to 7, can be changed by any signed-in device and refuse bad hours", async () => {
+    const browser = await setUpFamily();
+    const status = (await (await browser.get("/status")).json()) as {
+      family: { sleepHours: unknown };
+    };
+    expect(status.family.sleepHours).toEqual({ start: 23, end: 7 });
+
+    const sleepHours = { start: 22, end: 6 };
+    expect((await browser.request("PUT", "/family/sleep", { sleepHours })).status).toBe(200);
+    const after = (await (await browser.get("/status")).json()) as {
+      family: { sleepHours: unknown };
+    };
+    expect(after.family.sleepHours).toEqual(sleepHours);
+
+    const bad = await browser.request("PUT", "/family/sleep", {
+      sleepHours: { start: 24, end: 6 },
+    });
+    expect(bad.status).toBe(400);
+    const stranger = await new TestBrowser("192.0.2.8").request("PUT", "/family/sleep", {
+      sleepHours,
+    });
+    expect(stranger.status).toBe(401);
+  });
+});

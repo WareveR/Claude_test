@@ -1252,5 +1252,11 @@
   "summary": {
     "nextDays": "Next 7 days",
     "tomorrow": "Tomorrow"
+  },
+  "sleep": {
+    "title": "Sleeping hours",
+    "hint": "The hours the Family is usually asleep. In the day and week views they show shorter and shaded, and grow back when something is on.",
+    "start": "Bedtime",
+    "end": "Wake-up"
   }
 }

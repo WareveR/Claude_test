@@ -253,6 +253,7 @@ export function CalendarGrid({
       corner={corner}
       headerActions={headerActions}
       plain={plain}
+      sleepHours={family.sleepHours}
     />
   );
 }

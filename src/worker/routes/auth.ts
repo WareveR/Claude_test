@@ -31,6 +31,7 @@ authRoutes.get("/status", async (c) => {
             timeZone: family.timeZone,
             holidayPlaces: family.holidayPlaces,
             wasteCollection: family.wasteCollection,
+            sleepHours: { start: family.sleepStartHour, end: family.sleepEndHour },
             lastExportAt: family.lastExportAt,
           }
         : null,

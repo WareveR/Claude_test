@@ -1,6 +1,7 @@
 import type { DeviceKind } from "../core/device-kind";
 import type { HolidayPlace } from "../core/holidays";
 import type { WasteCollection } from "../core/waste";
+import type { SleepHours } from "../core/sleep-hours";
 export class ApiError extends Error {
   constructor(
     readonly status: number,
@@ -48,6 +49,7 @@ export type Family = {
   timeZone: string;
   holidayPlaces: HolidayPlace[];
   wasteCollection: WasteCollection;
+  sleepHours: SleepHours;
   lastExportAt: string | null;
 };
 export type Device = {

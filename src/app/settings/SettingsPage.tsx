@@ -13,6 +13,7 @@ import { VoiceSection } from "./VoiceSection";
 import { HelpSection } from "./HelpSection";
 import { AppVersionSection } from "./AppVersionSection";
 import { WasteSection } from "./WasteSection";
+import { SleepSection } from "./SleepSection";
 import { WeatherSection } from "./WeatherSection";
 import { ExportSection } from "./ExportSection";
 import { RemindersSection } from "./RemindersSection";
@@ -101,6 +102,7 @@ function AreaContent({ area }: { area: Area }) {
           <PersonsSection />
           <EntryTypesSection />
           <TemplatesSection />
+          <SleepSection />
         </>
       );
     case "calendar":

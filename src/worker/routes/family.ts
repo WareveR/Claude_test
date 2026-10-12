@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { isHolidayPlaces } from "../../core/holidays";
+import { isSleepHours } from "../../core/sleep-hours";
 import { isWasteCollection } from "../../core/waste";
 import { schema } from "../db";
 import { requireDevice } from "../require-device";
@@ -25,4 +26,17 @@ familyRoutes.put("/family/waste", async (c) => {
   const now = c.get("now").toISOString();
   await c.get("db").update(schema.family).set({ wasteCollection: body.collection, changedAt: now });
   return c.json({ wasteCollection: body.collection });
+});
+
+/** The Family's Sleeping Hours, which the day and week views show shorter and shaded. */
+familyRoutes.put("/family/sleep", async (c) => {
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!isSleepHours(body.sleepHours)) return c.json({ error: "invalid", field: "sleepHours" }, 400);
+  const { start, end } = body.sleepHours;
+  const now = c.get("now").toISOString();
+  await c
+    .get("db")
+    .update(schema.family)
+    .set({ sleepStartHour: start, sleepEndHour: end, changedAt: now });
+  return c.json({ sleepHours: { start, end } });
 });

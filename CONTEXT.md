@@ -48,6 +48,10 @@ _Avoid_: Full-day, date-only
 The single time zone the whole Family's clock times are read in. Entries have no zone of their own, and a Timed Entry keeps its clock time if the Family Time Zone changes.
 _Avoid_: Local time, user time zone
 
+**Sleeping Hours**:
+The whole hours the Family is usually asleep (23:00 to 07:00 unless changed in Settings › Family), wrapping midnight. The day and week views show them half as high and shaded; an hour row with a Timed Entry on any shown day is back at full height, and the views open at the wake-up hour, or just above the earliest Sleeping Hour with an Entry. Entries can still be put in them.
+_Avoid_: Night mode, quiet hours
+
 **Family Language**:
 The language chosen at setup (pt-PT or English in v1) that every email the app sends is written in. Each device may show the app in another supported language; a new device starts in its browser's language when supported, otherwise the Family Language. Date formats, first day of the week and clock follow the language shown, except the year view, which always runs Saturday to Sunday so every year has the same 37-column shape.
 _Avoid_: Locale, default language, user language

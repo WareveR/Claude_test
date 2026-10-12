@@ -3,6 +3,7 @@ import { useState, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import { shiftTime, type EntryTime } from "../../core/entry-time";
 import { daysBetween, formatPlainDate, type PlainDate } from "../../core/plain-date";
+import { minutesAtY } from "../../core/sleep-hours";
 import { api } from "../api";
 import { occurrenceValues, saveEntry, type Entry, type Shown } from "../entries/model";
 import { ScopeDialog, type Scope } from "../entries/ScopeDialog";
@@ -23,15 +24,15 @@ const SPOT_MINUTES = 5;
 
 /**
  * The spot under the pointer. Days carry `data-drop-date`; a time grid column also carries
- * `data-drop-hour-px`, the height of one hour, so the pointer's height gives the minute.
+ * `data-drop-hours`, the height of each hour row, so the pointer's height gives the minute.
  */
 export function spotAt(x: number, y: number): Spot | null {
   const el = document.elementsFromPoint(x, y).find((e) => e.matches(SPOT)) as
     HTMLElement | undefined;
   if (!el) return null;
-  const hourPx = Number(el.dataset.dropHourPx);
-  if (!hourPx) return { date: el.dataset.dropDate!, minutes: null };
-  const raw = ((y - el.getBoundingClientRect().top) / hourPx) * 60;
+  const heights = el.dataset.dropHours?.split(",").map(Number);
+  if (!heights) return { date: el.dataset.dropDate!, minutes: null };
+  const raw = minutesAtY(heights, y - el.getBoundingClientRect().top);
   const minutes = Math.min(24 * 60 - 1, Math.max(0, raw));
   return {
     date: el.dataset.dropDate!,
