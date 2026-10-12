@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Importance } from "../../core/entry-type";
 import type { Repetition } from "../../core/repetition";
 import { api } from "../api";
+import { fromList } from "../offline/from-list";
 
 export type Task = {
   id: string;
@@ -45,10 +46,15 @@ export function useTasks() {
 }
 
 export function useTask(id: string | undefined) {
+  const queryClient = useQueryClient();
+  // The Tasks list already holds the Task: it shows at once while its own request runs.
+  const listed = () => fromList<Task>(queryClient, ["tasks"], id);
   return useQuery({
     queryKey: ["task", id],
     queryFn: () => api<Task>(`/tasks/${id}`),
     enabled: Boolean(id),
+    initialData: () => listed()?.data,
+    initialDataUpdatedAt: () => listed()?.updatedAt,
   });
 }
 
