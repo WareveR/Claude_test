@@ -24,7 +24,7 @@ import {
 import { occurrencesOf } from "../../core/occurrences";
 import { suggestionFor, rankSuggestions } from "../../core/shopping";
 import { readShoppingPhrase, shoppingToAdd, splitShoppingNames } from "../../core/shopping-phrase";
-import { readVoice } from "../ai";
+import { readVoice, transcribe } from "../ai";
 import { schema, type Db } from "../db";
 import { requireDevice } from "../require-device";
 import type { AppEnv } from "../types";
@@ -137,6 +137,27 @@ async function shoppingAnswer(db: Db, names: string[]) {
     already,
   };
 }
+
+/** About a minute of compressed speech; a dictated sentence is far shorter. */
+export const MAX_RECORDING = 2 * 1024 * 1024;
+
+/** Dictation: one recording from the microphone becomes the sentence, read by Workers AI. */
+voiceRoutes.post("/voice/transcribe", async (c) => {
+  const declared = Number(c.req.header("Content-Length") ?? 0);
+  if (declared > MAX_RECORDING) return c.json({ error: "invalid", field: "audio" }, 413);
+  const audio = await c.req.arrayBuffer();
+  if (audio.byteLength === 0 || audio.byteLength > MAX_RECORDING) {
+    return c.json({ error: "invalid", field: "audio" }, audio.byteLength === 0 ? 400 : 413);
+  }
+  const asked = c.req.query("language");
+  const deviceLanguage = c.get("device").language;
+  const language: Language = isLanguage(asked)
+    ? asked
+    : isLanguage(deviceLanguage)
+      ? deviceLanguage
+      : "pt-PT";
+  return c.json({ text: await transcribe(c.env, audio, language) });
+});
 
 voiceRoutes.post("/voice", async (c) => {
   const body = await c.req.json().catch(() => ({}));

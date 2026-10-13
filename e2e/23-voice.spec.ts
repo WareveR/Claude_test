@@ -168,50 +168,71 @@ test("Edit opens the form filled in, and readback can be switched off", async ({
   await expect(readback).toBeChecked();
 });
 
-/** A stand-in for the browser's speech recognition: hears `words` in pieces, never marked final. */
+/**
+ * A stand-in microphone: a short burst of sound, then quiet, so the recording ends on its own;
+ * Workers AI's reading of it is faked as `words`. `error` is the name getUserMedia rejects with.
+ */
 async function fakeMicrophone(page: Page, words: string | null, error?: string, quiet = true) {
+  await page.route("**/api/voice/transcribe**", (route) =>
+    route.fulfill({ json: { text: words } }),
+  );
   await page.addInitScript(
     ({ words, error, quiet }) => {
-      class Fake {
-        lang = "";
-        interimResults = false;
-        maxAlternatives = 1;
-        continuous = false;
-        onresult: ((e: unknown) => void) | null = null;
-        onerror: ((e: unknown) => void) | null = null;
-        onend: (() => void) | null = null;
-        private ended = false;
+      let soundUntil = 0;
+      class FakeRecorder {
+        state = "inactive";
+        mimeType = "audio/webm";
+        ondataavailable: ((e: { data: Blob }) => void) | null = null;
+        onstop: (() => void) | null = null;
+        onerror: (() => void) | null = null;
         start() {
-          setTimeout(() => {
-            if (error) this.onerror?.({ error });
-            else if (words && this.interimResults) {
-              // Like iOS Safari: interim pieces only, then the end.
-              const half = words.slice(0, Math.ceil(words.length / 2));
-              this.onresult?.({ results: [[{ transcript: half }]] });
-              this.onresult?.({ results: [[{ transcript: words }]] });
-            }
-            this.end();
-          }, 50);
+          this.state = "recording";
+          soundUntil = words ? Date.now() + 200 : 0;
         }
         stop() {
-          this.end();
+          if (this.state === "inactive") return;
+          this.state = "inactive";
+          this.ondataavailable?.({ data: new Blob(["sound"], { type: "audio/webm" }) });
+          this.onstop?.();
         }
-        abort() {
-          this.end();
+      }
+      class FakeAudioContext {
+        state = "running";
+        resume() {
+          return Promise.resolve();
         }
-        private end() {
-          if (this.ended) return;
-          this.ended = true;
-          this.onend?.();
+        close() {
+          return Promise.resolve();
+        }
+        createAnalyser() {
+          return {
+            fftSize: 1024,
+            getByteTimeDomainData(samples: Uint8Array) {
+              const loud = Date.now() < soundUntil;
+              samples.forEach((_, i) => (samples[i] = loud ? (i % 2 ? 200 : 56) : 128));
+            },
+          };
+        }
+        createMediaStreamSource() {
+          return { connect() {} };
         }
       }
       const w = globalThis as unknown as {
-        SpeechRecognition: unknown;
-        webkitSpeechRecognition: unknown;
+        MediaRecorder: unknown;
+        AudioContext: unknown;
         speechSynthesis: { speak: (u: { onend?: (() => void) | null }) => void };
       };
-      w.SpeechRecognition = Fake;
-      w.webkitSpeechRecognition = Fake;
+      w.MediaRecorder = FakeRecorder;
+      w.AudioContext = FakeAudioContext;
+      Object.defineProperty(navigator, "mediaDevices", {
+        configurable: true,
+        value: {
+          getUserMedia: () =>
+            error
+              ? Promise.reject(Object.assign(new Error(error), { name: error }))
+              : Promise.resolve({ getTracks: () => [{ stop() {} }] }),
+        },
+      });
       // The readback speaks; keep it instant and silent.
       if (quiet)
         w.speechSynthesis.speak = (u) => {
@@ -257,7 +278,7 @@ test("speaking into the microphone sends what was heard", async ({ page }) => {
 });
 
 test("a blocked microphone says so", async ({ page }) => {
-  await fakeMicrophone(page, null, "not-allowed");
+  await fakeMicrophone(page, null, "NotAllowedError");
   await signIn(page);
   await page.getByRole("button", { name: "Voice Entry" }).click();
   const dialog = page.getByRole("dialog", { name: "Voice Entry" });

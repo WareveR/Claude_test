@@ -15,6 +15,51 @@ export const model = {
   ) => env.AI.run(MODEL, input as never) as Promise<{ response?: unknown }>,
 };
 
+/** Speech to text for dictation, so the recording stays on Cloudflare instead of the browser's own service. */
+export const SPEECH_MODEL = "@cf/openai/whisper-large-v3-turbo";
+
+export const speech = {
+  run: (env: Env, input: { audio: string; language: string }) =>
+    env.AI.run(SPEECH_MODEL, {
+      ...input,
+      task: "transcribe",
+      vad_filter: true,
+    } as never) as Promise<{
+      text?: unknown;
+    }>,
+};
+
+/** Whisper's language codes. */
+const SPEECH_LANGUAGES: Record<Language, string> = { "pt-PT": "pt", en: "en" };
+
+/** Turns one recording into text; null on silence or any failure, so the sentence can be typed. */
+export async function transcribe(
+  env: Env,
+  audio: ArrayBuffer,
+  language: Language,
+): Promise<string | null> {
+  try {
+    const result = await speech.run(env, {
+      audio: toBase64(new Uint8Array(audio)),
+      language: SPEECH_LANGUAGES[language],
+    });
+    const text = typeof result?.text === "string" ? result.text.trim() : "";
+    return text || null;
+  } catch (error) {
+    console.warn("speech model", error);
+    return null;
+  }
+}
+
+function toBase64(bytes: Uint8Array) {
+  let binary = "";
+  // In pieces, so a long recording doesn't overflow the call stack.
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  }
+  return btoa(binary);
+}
+
 const LANGUAGE_NAMES: Record<Language, string> = {
   "pt-PT": "European Portuguese (Portugal, not Brazil)",
   en: "British English",

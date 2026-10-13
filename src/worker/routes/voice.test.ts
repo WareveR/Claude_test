@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { model } from "../ai";
+import { model, speech } from "../ai";
+import { MAX_RECORDING } from "./voice";
 import { setUpFamily, TestBrowser } from "../test/client";
 
 type Prompt = { messages: { role: string; content: string }[] };
@@ -446,5 +447,65 @@ describe("Voice Entry: Shopping List", () => {
     expect(await (await browser.post("/voice", { sentence: "hmm" })).json()).toMatchObject({
       outcome: "failed",
     });
+  });
+});
+
+describe("Voice Entry: dictation", () => {
+  const realSpeech = speech.run;
+  let heard: { audio: string; language: string }[] = [];
+  let spoken: () => Promise<{ text?: unknown }>;
+  beforeEach(() => {
+    heard = [];
+    spoken = async () => ({ text: " Dentista na terça às três " });
+    speech.run = async (_env, input) => {
+      heard.push(input);
+      return spoken();
+    };
+  });
+  afterEach(() => {
+    speech.run = realSpeech;
+  });
+
+  it("sends the recording to Workers AI in the asked language and returns the text", async () => {
+    const browser = await setUpFamily();
+    const res = await browser.upload(
+      "/voice/transcribe?language=pt-PT",
+      new Uint8Array([1, 2, 3]),
+      "audio/webm",
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ text: "Dentista na terça às três" });
+    expect(heard).toEqual([{ audio: "AQID", language: "pt" }]);
+  });
+
+  it("answers null on silence or a model failure, so the sentence can be typed", async () => {
+    const browser = await setUpFamily();
+    spoken = async () => ({ text: "  " });
+    const quiet = await browser.upload("/voice/transcribe", new Uint8Array([1]), "audio/mp4");
+    expect(await quiet.json()).toEqual({ text: null });
+    spoken = async () => {
+      throw new Error("down");
+    };
+    const failed = await browser.upload("/voice/transcribe", new Uint8Array([1]), "audio/mp4");
+    expect(await failed.json()).toEqual({ text: null });
+  });
+
+  it("refuses an empty or too long recording, and a browser that isn't signed in", async () => {
+    const browser = await setUpFamily();
+    const empty = await browser.upload("/voice/transcribe", new Uint8Array(), "audio/webm");
+    expect(empty.status).toBe(400);
+    const long = await browser.upload(
+      "/voice/transcribe",
+      new Uint8Array(MAX_RECORDING + 1),
+      "audio/webm",
+    );
+    expect(long.status).toBe(413);
+    const stranger = await new TestBrowser().upload(
+      "/voice/transcribe",
+      new Uint8Array([1]),
+      "audio/webm",
+    );
+    expect(stranger.status).toBe(401);
+    expect(heard).toHaveLength(0);
   });
 });
