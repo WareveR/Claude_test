@@ -350,6 +350,14 @@ describe("Preparation", () => {
     expect(lists.map((l) => l.name)).toEqual(["Para a consulta"]);
   });
 
+  it("gives a shopping trip no list: it shows the Shopping List instead", async () => {
+    const { browser, appointment } = await family();
+    await browser.post("/entries", { ...dentist(appointment, []), title: "Supermercado" });
+    await browser.post("/entries", { ...dentist(appointment, []), title: "Compras no Lidl" });
+    const lists = (await (await browser.get("/checklists")).json()) as unknown[];
+    expect(lists).toEqual([]);
+  });
+
   it("keeps a list that was ticked when its Entry goes, only unlinked", async () => {
     const { browser, appointment } = await family();
     const entry = (await (

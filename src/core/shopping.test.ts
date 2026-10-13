@@ -7,6 +7,7 @@ import {
   openStores,
   rankSuggestions,
   sameNameOnList,
+  storeNamedIn,
   suggestionFor,
   type ShoppingItem,
 } from "./shopping";
@@ -57,6 +58,14 @@ describe("stores", () => {
   it("shows a shop's items and those for any shop", () => {
     expect(forStore(items, "LIDL").map((i) => i.name)).toEqual(["Leite", "Pão", "Arroz"]);
     expect(forStore(items, "")).toHaveLength(5);
+  });
+
+  it("finds the shop a title names, as a whole word", () => {
+    const stores = ["Continente", "Lidl", "Pingo Doce"];
+    expect(storeNamedIn("Compras no LIDL", stores)).toBe("Lidl");
+    expect(storeNamedIn("Supermercado pingo doce", stores)).toBe("Pingo Doce");
+    expect(storeNamedIn("Supermercado", stores)).toBe("");
+    expect(storeNamedIn("Lidlândia", stores)).toBe("");
   });
 });
 

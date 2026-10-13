@@ -1307,6 +1307,9 @@
     "hideHistory": "Esconder histórico",
     "historyEmpty": "Ainda nada foi comprado.",
     "addAgain": "Juntar {{name}} outra vez",
-    "hint": "Toque num artigo quando estiver no cesto; deslize-o para o lado para o tirar. O que foi comprado sai da lista amanhã."
+    "hint": "Toque num artigo quando estiver no cesto; deslize-o para o lado para o tirar. O que foi comprado sai da lista amanhã.",
+    "entryEmpty": "A lista de compras está vazia",
+    "entryMore": "+{{count}}",
+    "entryOpen": "Abrir lista de compras"
   }
 }

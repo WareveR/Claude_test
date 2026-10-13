@@ -52,6 +52,15 @@ export function forStore<T extends Pick<ShoppingItem, "store">>(items: T[], stor
   return items.filter((item) => !item.store.trim() || sameText(item.store, store));
 }
 
+/**
+ * The shop a title names ("Compras no Lidl" → "Lidl"), among the given ones, whole words only
+ * and ignoring case and accents; "" when it names none.
+ */
+export function storeNamedIn(title: string, stores: string[]): string {
+  const said = ` ${foldName(title)} `;
+  return stores.find((s) => foldName(s) && said.includes(` ${foldName(s)} `)) ?? "";
+}
+
 export type ShoppingGroups<T> = {
   /** The sections with open items, in shop-walk order, oldest item first. */
   sections: { section: ShoppingSection; items: T[] }[];
