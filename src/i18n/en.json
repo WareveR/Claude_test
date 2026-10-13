@@ -1317,5 +1317,41 @@
     "alreadyOnList": "Already on the shopping list: {{names}}",
     "added": "Added to the shopping list: {{names}}",
     "open": "Open shopping list"
+  },
+  "reset": {
+    "title": "Danger zone",
+    "hint": "Deletes what you tick for good. The password, the recovery email and the signed-in devices stay.",
+    "choose": "What to delete",
+    "parts": {
+      "entries": "Calendar entries",
+      "tasks": "Tasks and lists",
+      "shopping": "Shopping list",
+      "persons": "People",
+      "entryTypes": "Entry types",
+      "templates": "Predefined lists",
+      "settings": "Family settings",
+      "errors": "Error log"
+    },
+    "details": {
+      "entries": "Every entry, Private ones included. People's birthdays stay as long as the people do.",
+      "tasks": "Every task, with its items and rounds.",
+      "shopping": "The list's items and the history behind its suggestions.",
+      "persons": "The people, their nicknames and birthdays. Their entries and tasks stay, for the whole family.",
+      "entryTypes": "Types you made go (their entries become General) and the built-in ones are reset.",
+      "templates": "Lists you made go and the built-in ones are reset.",
+      "settings": "Holidays, bins, weather, sleeping hours and calendar feeds.",
+      "errors": "Every logged error."
+    },
+    "all": "Tick everything: start again as a new family",
+    "none": "Untick everything",
+    "before": "Before deleting, this device downloads the full Export and the server keeps a copy that can be restored by hand.",
+    "password": "Family password",
+    "submit_one": "Delete {{count}} part for good",
+    "submit_other": "Delete {{count}} parts for good",
+    "submitAll": "Delete everything and start again",
+    "deleting": "Saving the copy and deleting…",
+    "confirm": "Delete what you ticked? This can't be undone in the app.",
+    "confirmAll": "Delete everything and start again as a new family? This can't be undone in the app.",
+    "done": "Deleted. The Export was saved on this device."
   }
 }

@@ -1317,5 +1317,41 @@
     "alreadyOnList": "Já está na lista de compras: {{names}}",
     "added": "Adicionado à lista de compras: {{names}}",
     "open": "Abrir lista de compras"
+  },
+  "reset": {
+    "title": "Zona de perigo",
+    "hint": "Apaga para sempre o que marcar. A palavra-passe, o email de recuperação e os aparelhos com sessão ficam.",
+    "choose": "O que apagar",
+    "parts": {
+      "entries": "Entradas do calendário",
+      "tasks": "Tarefas e listas",
+      "shopping": "Lista de compras",
+      "persons": "Pessoas",
+      "entryTypes": "Tipos de entrada",
+      "templates": "Listas pré-definidas",
+      "settings": "Definições da família",
+      "errors": "Registo de erros"
+    },
+    "details": {
+      "entries": "Todas as Entradas, as Privadas incluídas. Os aniversários das Pessoas ficam enquanto elas ficarem.",
+      "tasks": "Todas as Tarefas, com os seus itens e rondas.",
+      "shopping": "Os itens da lista e o histórico das sugestões.",
+      "persons": "As Pessoas, as alcunhas e os seus aniversários. As Entradas e Tarefas ficam para a Família.",
+      "entryTypes": "Os tipos criados saem (as suas Entradas passam a Geral) e os de origem voltam ao início.",
+      "templates": "As listas criadas saem e as de origem voltam ao início.",
+      "settings": "Feriados, lixo, meteorologia, horas de sono e feeds de calendário.",
+      "errors": "Todos os erros registados."
+    },
+    "all": "Marcar tudo: recomeçar como família nova",
+    "none": "Desmarcar tudo",
+    "before": "Antes de apagar, este aparelho descarrega a Exportação completa e o servidor guarda uma cópia para se poder repor à mão.",
+    "password": "Palavra-passe da família",
+    "submit_one": "Apagar {{count}} parte para sempre",
+    "submit_other": "Apagar {{count}} partes para sempre",
+    "submitAll": "Apagar tudo e recomeçar",
+    "deleting": "A guardar a cópia e a apagar…",
+    "confirm": "Apagar o que marcou? Na app não se pode desfazer.",
+    "confirmAll": "Apagar tudo e recomeçar como família nova? Na app não se pode desfazer.",
+    "done": "Apagado. A Exportação ficou guardada neste aparelho."
   }
 }

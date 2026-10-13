@@ -16,6 +16,7 @@ import { WasteSection } from "./WasteSection";
 import { SleepSection } from "./SleepSection";
 import { WeatherSection } from "./WeatherSection";
 import { ExportSection } from "./ExportSection";
+import { DangerZoneSection } from "./DangerZoneSection";
 import { RemindersSection } from "./RemindersSection";
 import { FeedsSection } from "./FeedsSection";
 import { PersonsSection } from "../persons/PersonsSection";
@@ -134,6 +135,7 @@ function AreaContent({ area }: { area: Area }) {
           <Link to={paths.errorLog()} className={`${BUTTON} self-start`}>
             {t("errors.log.open")}
           </Link>
+          <DangerZoneSection />
         </>
       );
   }

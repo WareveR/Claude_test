@@ -60,6 +60,18 @@ function save(zipped: Uint8Array, date: string) {
   URL.revokeObjectURL(url);
 }
 
+/** Builds the full Export's ZIP here and saves it, then tells the server it was saved. */
+export async function downloadExport(timeZone: string) {
+  const data = await api<Export>("/export");
+  const images = await fetchImages((data.tables.image ?? []) as ImageRow[]);
+  const files = {
+    "data.json": new TextEncoder().encode(JSON.stringify(data, null, 2)),
+    ...images,
+  };
+  save(await zipFiles(files), todayIn(timeZone));
+  await api("/export/done", { method: "POST" });
+}
+
 /** Settings › Export: a ZIP of all data and images, built here, and every Entry as .ics. */
 export function ExportSection() {
   const { t } = useTranslation();
@@ -67,14 +79,7 @@ export function ExportSection() {
   const queryClient = useQueryClient();
   const download = useMutation({
     mutationFn: async () => {
-      const data = await api<Export>("/export");
-      const images = await fetchImages((data.tables.image ?? []) as ImageRow[]);
-      const files = {
-        "data.json": new TextEncoder().encode(JSON.stringify(data, null, 2)),
-        ...images,
-      };
-      save(await zipFiles(files), todayIn(family.timeZone));
-      await api("/export/done", { method: "POST" });
+      await downloadExport(family.timeZone);
       await queryClient.invalidateQueries({ queryKey: ["status"] });
     },
   });

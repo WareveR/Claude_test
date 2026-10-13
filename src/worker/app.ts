@@ -21,6 +21,7 @@ import { voiceRoutes } from "./routes/voice";
 import { suggestionRoutes } from "./routes/suggestions";
 import { convertRoutes } from "./routes/convert";
 import { shoppingRoutes } from "./routes/shopping";
+import { resetRoutes } from "./routes/reset";
 import { apiSecureHeaders, sameOriginOnly } from "./security";
 import type { AppEnv } from "./types";
 
@@ -68,3 +69,4 @@ app.route("/", voiceRoutes);
 app.route("/", suggestionRoutes);
 app.route("/", convertRoutes);
 app.route("/", shoppingRoutes);
+app.route("/", resetRoutes);

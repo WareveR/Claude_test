@@ -40,7 +40,7 @@ Write down the bookmark it prints. To undo a restore, run section A with `--book
 
 ## B. A nightly or monthly Backup (up to 12 months)
 
-The Scheduler writes the whole database to the `family-calendar-backups` bucket every night after 03:00 Family time. It keeps the last 30 nights as `nightly/YYYY-MM-DD.json` and the first night of each of the last 12 months as `monthly/YYYY-MM.json`.
+The Scheduler writes the whole database to the `family-calendar-backups` bucket every night after 03:00 Family time. It keeps the last 30 nights as `nightly/YYYY-MM-DD.json` and the first night of each of the last 12 months as `monthly/YYYY-MM.json`. Settings › Danger zone also saves a copy just before it deletes anything, as `before-reset/<UTC time>.json`; these are never removed automatically and restore the same way (list them with `--prefix=before-reset/`).
 
 1. List what is there and pick one:
 
