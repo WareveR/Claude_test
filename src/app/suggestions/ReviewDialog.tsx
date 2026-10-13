@@ -16,6 +16,7 @@ const INPUT = "rounded-md border border-line bg-surface px-3 py-2 text-base text
  */
 export function ReviewDialog({
   items,
+  shopping,
   busy,
   error,
   onEdit,
@@ -23,6 +24,8 @@ export function ReviewDialog({
   onClose,
 }: {
   items: Item[];
+  /** Names to put on the Shopping List. */
+  shopping: string[];
   busy: boolean;
   error: string | null;
   onEdit: (key: string, edit: Edit) => void;
@@ -39,6 +42,7 @@ export function ReviewDialog({
     const i = order.indexOf(key);
     return i === -1 ? order.length : i;
   };
+  const count = items.length + shopping.length;
   const shown = [...items].sort((a, b) => place(a.key) - place(b.key));
 
   useEffect(() => {
@@ -57,9 +61,14 @@ export function ReviewDialog({
       >
         <div className="flex flex-col gap-1 p-4 pb-2">
           <h2 id="review-title" className="text-lg font-semibold">
-            {t("suggestions.reviewTitle", { count: items.length })}
+            {t("suggestions.reviewTitle", { count })}
           </h2>
           <p className="text-sm text-muted">{t("suggestions.reviewHint")}</p>
+          {shopping.length > 0 && (
+            <p data-testid="review-shopping" className="font-medium">
+              {t("shopping.addFromText", { names: shopping.join(", ") })}
+            </p>
+          )}
         </div>
         <ul className="min-h-0 flex-1 divide-y divide-line overflow-y-auto border-y border-line">
           {shown.map((item) => (
@@ -131,9 +140,9 @@ export function ReviewDialog({
             type="button"
             className={BUTTON_PRIMARY}
             onClick={onCreate}
-            disabled={busy || items.length === 0}
+            disabled={busy || count === 0}
           >
-            {busy ? t("suggestions.creating") : t("suggestions.create", { count: items.length })}
+            {busy ? t("suggestions.creating") : t("suggestions.create", { count })}
           </button>
         </div>
       </div>

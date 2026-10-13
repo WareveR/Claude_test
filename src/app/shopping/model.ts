@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { useSyncExternalStore } from "react";
 import type { ShoppingItem, ShoppingSuggestion } from "../../core/shopping";
 import { api } from "../api";
@@ -145,4 +145,41 @@ export function setStoreFilter(store: string) {
     unsaved = store;
   }
   for (const listener of storeListeners) listener();
+}
+
+/**
+ * Adds several items at once, from Voice Entry or Suggestions: all or nothing, so what was
+ * added before a failure is removed again. Answers the new items' ids, for Undo.
+ */
+export async function addShoppingItems(items: { name: string; store?: string }[]) {
+  const ids: string[] = [];
+  try {
+    for (const item of items) {
+      const id = newItemId();
+      await api<ShoppingItem>("/shopping/items", {
+        method: "POST",
+        body: { id, name: item.name, quantity: "", note: "", store: item.store ?? "" },
+      });
+      ids.push(id);
+    }
+  } catch (error) {
+    await removeShoppingItems(ids);
+    throw error;
+  }
+  return ids;
+}
+
+/** Undoes `addShoppingItems`. */
+export async function removeShoppingItems(ids: string[]) {
+  for (const id of ids) {
+    await api(`/shopping/items/${id}`, { method: "DELETE" }).catch(() => {});
+  }
+}
+
+/** Refreshes the list and its history after items were added or removed elsewhere. */
+export function refreshShopping(queryClient: QueryClient) {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: ITEMS }),
+    queryClient.invalidateQueries({ queryKey: HISTORY }),
+  ]);
 }

@@ -22,6 +22,8 @@ import {
   type VoiceChange,
 } from "../../core/voice-change";
 import { occurrencesOf } from "../../core/occurrences";
+import { suggestionFor, rankSuggestions } from "../../core/shopping";
+import { readShoppingPhrase, shoppingToAdd, splitShoppingNames } from "../../core/shopping-phrase";
 import { readVoice } from "../ai";
 import { schema, type Db } from "../db";
 import { requireDevice } from "../require-device";
@@ -29,7 +31,8 @@ import type { AppEnv } from "../types";
 import { allEntries } from "./entries";
 
 /**
- * Voice Entry: one spoken or typed sentence becomes a new Entry or Task, or a change to one.
+ * Voice Entry: one spoken or typed sentence becomes a new Entry or Task, a change to one, or
+ * things to put on the Shopping List.
  * Nothing is saved here: the answer carries the requests the browser sends to the usual routes
  * once the Family member says yes, so every rule of those routes still applies.
  */
@@ -113,6 +116,28 @@ async function loadAll(db: Db) {
   return { family, persons, nicknames, types, entries, tasks };
 }
 
+/**
+ * Things to put on the Shopping List: those already open on it are left out, and each takes the
+ * shop it had last, as when typed on the list.
+ */
+async function shoppingAnswer(db: Db, names: string[]) {
+  const rows = await db
+    .select({
+      name: schema.shoppingItem.name,
+      store: schema.shoppingItem.store,
+      boughtAt: schema.shoppingItem.boughtAt,
+      createdAt: schema.shoppingItem.createdAt,
+    })
+    .from(schema.shoppingItem);
+  const { add, already } = shoppingToAdd(names, rows);
+  const ranked = rankSuggestions(rows);
+  return {
+    outcome: "shopping" as const,
+    items: add.map((name) => ({ name, store: suggestionFor(ranked, name)?.store ?? "" })),
+    already,
+  };
+}
+
 voiceRoutes.post("/voice", async (c) => {
   const body = await c.req.json().catch(() => ({}));
   const sentence = typeof body.sentence === "string" ? body.sentence.trim() : "";
@@ -120,6 +145,9 @@ voiceRoutes.post("/voice", async (c) => {
     return c.json({ error: "invalid", field: "sentence" }, 400);
   }
   const db = c.get("db");
+  // "comprar leite e ovos" needs no model.
+  const shopping = readShoppingPhrase(sentence);
+  if (shopping) return c.json(await shoppingAnswer(db, shopping));
   const { family, persons, nicknames, types, entries, tasks } = await loadAll(db);
   const deviceLanguage = c.get("device").language;
   const language = isLanguage(deviceLanguage)
@@ -150,6 +178,14 @@ voiceRoutes.post("/voice", async (c) => {
   const answer = raw as Record<string, unknown>;
 
   if (answer.action === "delete") return c.json({ outcome: "refused" });
+
+  if (answer.action === "shopping") {
+    const items = Array.isArray(answer.items)
+      ? answer.items.filter((i): i is string => typeof i === "string")
+      : [];
+    const names = splitShoppingNames(items.join("\n"));
+    return names.length > 0 ? c.json(await shoppingAnswer(db, names)) : failed;
+  }
 
   if (answer.action === "change") {
     const fields = parseVoiceFields(answer, active.length, types.length);

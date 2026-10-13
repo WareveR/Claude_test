@@ -2,6 +2,7 @@ import type { ClockTime } from "./entry-time";
 import type { BuiltInType } from "./entry-type";
 import { addDays, addMonths, daysInMonth, weekday, type PlainDate } from "./plain-date";
 import type { Repetition } from "./repetition";
+import { readShoppingPhrase } from "./shopping-phrase";
 import { parseVoiceFields } from "./voice";
 
 /**
@@ -420,6 +421,28 @@ export function phrasesOf(text: string): string[] {
     .map((p) => p.trim())
     .filter(Boolean)
     .slice(0, MAX_PHRASES);
+}
+
+/**
+ * Splits what was written or said into things to buy ("comprar leite e ovos", read whole line by
+ * line so its commas stay in it) and the other phrases.
+ */
+export function sortPhrases(text: string): { shopping: string[]; phrases: string[] } {
+  const shopping: string[] = [];
+  const phrases: string[] = [];
+  for (const line of text.split("\n")) {
+    const whole = readShoppingPhrase(line);
+    if (whole) {
+      shopping.push(...whole);
+      continue;
+    }
+    for (const phrase of phrasesOf(line)) {
+      const names = readShoppingPhrase(phrase);
+      if (names) shopping.push(...names);
+      else phrases.push(phrase);
+    }
+  }
+  return { shopping, phrases: phrases.slice(0, MAX_PHRASES) };
 }
 
 /** Something written in the free-text box, as the model read it. */
