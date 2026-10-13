@@ -1,34 +1,15 @@
 import { readbackSentences } from "../../core/readback";
 
-/** Thin, failure-proof wrappers over the browser's speech APIs; every call may be absent or throw. */
+/**
+ * Thin, failure-proof wrappers over the browser's microphone and speech APIs; every call may be
+ * absent or throw. Dictation records here and Workers AI turns the recording into text, so the
+ * audio never goes to the browser's own speech service (Google in Chrome, Apple in Safari).
+ */
 
-type Alternative = { transcript: string };
-type RecognitionEvent = { results: ArrayLike<ArrayLike<Alternative>> };
-type RecognitionError = { error?: string };
-type Recognition = {
-  lang: string;
-  interimResults: boolean;
-  maxAlternatives: number;
-  continuous: boolean;
-  onresult: ((e: RecognitionEvent) => void) | null;
-  onerror: ((e: RecognitionError) => void) | null;
-  onend: (() => void) | null;
-  start: () => void;
-  stop: () => void;
-  abort: () => void;
-};
-type RecognitionClass = new () => Recognition;
-
-const recognitionClass = (): RecognitionClass | undefined => {
-  if (typeof window === "undefined") return undefined;
-  const w = window as unknown as {
-    SpeechRecognition?: RecognitionClass;
-    webkitSpeechRecognition?: RecognitionClass;
-  };
-  return w.SpeechRecognition || w.webkitSpeechRecognition;
-};
-
-export const canListen = () => Boolean(recognitionClass());
+export const canListen = () =>
+  typeof navigator !== "undefined" &&
+  Boolean(navigator.mediaDevices?.getUserMedia) &&
+  typeof MediaRecorder !== "undefined";
 
 const READBACK_KEY = "voice-readback";
 
@@ -49,69 +30,164 @@ export function setReadback(on: boolean) {
   }
 }
 
-let current: Recognition | null = null;
+/** Louder than this (0 silent … 1 full scale) counts as speech. */
+const SPEECH_LEVEL = 0.04;
+/** Quiet this long after speech ends the recording, as the browser's recognizer did. */
+const QUIET_MS = 1300;
+/** No speech at all for this long gives up. */
+const WAIT_MS = 8000;
+/** A dictated sentence never runs longer. */
+const MAX_MS = 20000;
 
+let current: { recorder: MediaRecorder; keep: boolean } | null = null;
+/** Bumped by every stop, so a listen still waiting for the microphone gives up once it gets it. */
+let listening = 0;
+
+/** Ends the current listening and throws away what was recorded. */
 export function stopListening() {
+  listening++;
+  const now = current;
+  current = null;
+  if (!now) return;
+  now.keep = false;
   try {
-    current?.abort();
+    if (now.recorder.state !== "inactive") now.recorder.stop();
   } catch {
     // Nothing to stop.
   }
-  current = null;
 }
 
 /** Ends the current listening and keeps what was heard so far. */
 export function finishListening() {
   try {
-    current?.stop();
+    if (current && current.recorder.state !== "inactive") current.recorder.stop();
   } catch {
     // Nothing to stop.
   }
 }
 
-/** Why listening heard nothing: "denied" when the microphone is blocked, else the browser's code. */
+/** Why listening heard nothing: "denied" when the microphone is blocked, else a short code. */
 export type Heard = { text: string | null; error: "denied" | string | null };
 
 /**
- * Listens once; resolves when the browser stops listening, with what it heard (or null) and why
- * not. Interim results are on because iOS Safari often ends without ever marking a result final;
- * the last words heard are kept and passed to `onWords` as they come.
+ * Listens once: records until the speaker falls quiet (or the button is pressed again), then has
+ * Workers AI read the recording. Resolves with what it heard (or null) and why not; `onWords` gets
+ * the sentence once it is read.
  */
-export function listen(lang: string, onWords?: (words: string) => void): Promise<Heard> {
-  return new Promise((resolve) => {
-    const Ctor = recognitionClass();
-    if (!Ctor) return resolve({ text: null, error: "unsupported" });
-    try {
-      stopListening();
-      const rec = new Ctor();
-      current = rec;
-      let heard: string | null = null;
-      let error: string | null = null;
-      rec.lang = lang;
-      rec.interimResults = true;
-      rec.continuous = false;
-      rec.maxAlternatives = 1;
-      rec.onresult = (e) => {
-        const words = Array.from(e.results, (r) => r[0]?.transcript ?? "")
-          .join("")
-          .trim();
-        if (!words) return;
-        heard = words;
-        onWords?.(words);
-      };
-      rec.onerror = (e) => {
-        const code = e?.error ?? "error";
-        error = code === "not-allowed" ? "denied" : code;
-      };
-      rec.onend = () => {
-        if (current === rec) current = null;
-        resolve({ text: heard, error: heard ? null : error });
-      };
-      rec.start();
-    } catch {
-      resolve({ text: null, error: "error" });
-    }
+export async function listen(lang: string, onWords?: (words: string) => void): Promise<Heard> {
+  if (!canListen()) return { text: null, error: "unsupported" };
+  stopListening();
+  const mine = listening;
+  let stream: MediaStream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch (error) {
+    const name = (error as { name?: string })?.name;
+    return {
+      text: null,
+      error: name === "NotAllowedError" || name === "SecurityError" ? "denied" : "no-microphone",
+    };
+  }
+  if (mine !== listening) {
+    for (const track of stream.getTracks()) track.stop();
+    return { text: null, error: "aborted" };
+  }
+  let recording: { audio: Blob; spoke: boolean; kept: boolean };
+  try {
+    recording = await record(stream);
+  } catch {
+    return { text: null, error: "error" };
+  } finally {
+    for (const track of stream.getTracks()) track.stop();
+  }
+  if (!recording.kept) return { text: null, error: "aborted" };
+  if (!recording.spoke || recording.audio.size === 0) return { text: null, error: "silence" };
+  try {
+    const res = await fetch(`/api/voice/transcribe?language=${encodeURIComponent(lang)}`, {
+      method: "POST",
+      headers: { "Content-Type": recording.audio.type || "application/octet-stream" },
+      body: recording.audio,
+    });
+    if (!res.ok) return { text: null, error: `server-${res.status}` };
+    const body = (await res.json()) as { text?: unknown };
+    const text = typeof body.text === "string" ? body.text.trim() : "";
+    if (!text) return { text: null, error: "silence" };
+    onWords?.(text);
+    return { text, error: null };
+  } catch {
+    return { text: null, error: "network" };
+  }
+}
+
+/** Records one stream until quiet, the time limit, or finishListening/stopListening. */
+function record(stream: MediaStream): Promise<{ audio: Blob; spoke: boolean; kept: boolean }> {
+  return new Promise((resolve, reject) => {
+    const recorder = new MediaRecorder(stream);
+    const chunks: Blob[] = [];
+    const level = meter(stream);
+    const mine = { recorder, keep: true };
+    current = mine;
+    const started = Date.now();
+    let spoke = false;
+    let metered = false;
+    let lastSound = started;
+    const timer = setInterval(() => {
+      const now = Date.now();
+      // A meter the browser keeps suspended hears nothing, so it can't end the recording either.
+      metered = level.audio?.state === "running";
+      if (metered && level.read() > SPEECH_LEVEL) {
+        spoke = true;
+        lastSound = now;
+      }
+      const done = spoke ? now - lastSound > QUIET_MS : now - started > WAIT_MS;
+      // Without a working meter the button or the time limit ends it.
+      if ((metered && done) || now - started > MAX_MS) finishListening();
+    }, 100);
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) chunks.push(e.data);
+    };
+    recorder.onstop = () => {
+      clearInterval(timer);
+      void level.audio?.close().catch(() => undefined);
+      if (current === mine) current = null;
+      resolve({
+        audio: new Blob(chunks, { type: recorder.mimeType || chunks[0]?.type || "" }),
+        // Without a working meter, let Workers AI decide whether anything was said.
+        spoke: spoke || !metered,
+        kept: mine.keep,
+      });
+    };
+    recorder.onerror = () => {
+      clearInterval(timer);
+      if (current === mine) current = null;
+      reject(new Error("recorder"));
+    };
+    recorder.start();
   });
+}
+
+/** How loud the microphone is right now, 0 … 1; always 0 where Web Audio is missing. */
+function meter(stream: MediaStream): { audio: AudioContext | null; read: () => number } {
+  try {
+    const audio = new AudioContext();
+    const analyser = audio.createAnalyser();
+    analyser.fftSize = 1024;
+    audio.createMediaStreamSource(stream).connect(analyser);
+    // Created after the microphone prompt, so outside the tap; ask it to run anyway.
+    void audio.resume().catch(() => undefined);
+    const samples = new Uint8Array(analyser.fftSize);
+    return {
+      audio,
+      read: () => {
+        analyser.getByteTimeDomainData(samples);
+        let sum = 0;
+        for (const v of samples) sum += ((v - 128) / 128) ** 2;
+        return Math.sqrt(sum / samples.length);
+      },
+    };
+  } catch {
+    return { audio: null, read: () => 0 };
+  }
 }
 
 /** Listens once; resolves to the transcript, or null on silence, error or no support. */
