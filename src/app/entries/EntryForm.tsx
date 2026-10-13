@@ -30,6 +30,7 @@ import { readyToEdit } from "../offline/fresh";
 import { BUTTON, BUTTON_DANGER } from "../ui/button";
 import { Chip, Switch } from "../ui/Toggle";
 import { TimeSelect } from "../ui/TimeSelect";
+import { EntryShopping } from "../shopping/EntryShopping";
 
 const INPUT = "rounded-md border border-line bg-surface px-3 py-2 text-base text-ink";
 /** The time picker suggests 15-minute steps but accepts any typed minute. */
@@ -240,6 +241,13 @@ function EntryForm({
       {isNew && <KindSwitch kind="entry" onPick={(k) => kind.switchTo(k, carried())} />}
       {entry && (
         <EntryPreparation entryId={entry.id} className="rounded-lg border border-line p-3" />
+      )}
+      {entry && (
+        <EntryShopping
+          title={entry.title}
+          type={types.find((ty) => ty.id === entry.entryTypeId)?.builtinKey ?? null}
+          className="rounded-lg border border-line p-3"
+        />
       )}
       <form onSubmit={submit} className="flex flex-col gap-4">
         {synced && (

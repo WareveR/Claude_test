@@ -11,6 +11,7 @@ import { useSignedIn } from "../family";
 import { usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
 import { useNow } from "../shell/useNow";
+import { EntryShopping } from "../shopping/EntryShopping";
 import { EntryPreparation } from "./EntryPreparation";
 import { occurrenceValues, useEntry } from "./model";
 
@@ -147,6 +148,7 @@ export function EntrySummary({
         </>
       )}
       {!discreet && <EntryPreparation entryId={id} readOnly />}
+      {!discreet && <EntryShopping title={shown.title} type={type?.builtinKey ?? null} />}
     </div>
   );
 }
