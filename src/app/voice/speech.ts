@@ -38,6 +38,8 @@ const QUIET_MS = 1300;
 const WAIT_MS = 8000;
 /** A dictated sentence never runs longer. */
 const MAX_MS = 20000;
+/** Without a working level meter nothing hears the quiet, so stop sooner. */
+const UNMETERED_MS = 10000;
 
 let current: { recorder: MediaRecorder; keep: boolean } | null = null;
 /** Bumped by every stop, so a listen still waiting for the microphone gives up once it gets it. */
@@ -71,17 +73,25 @@ export type Heard = { text: string | null; error: "denied" | string | null };
 
 /**
  * Listens once: records until the speaker falls quiet (or the button is pressed again), then has
- * Workers AI read the recording. Resolves with what it heard (or null) and why not; `onWords` gets
- * the sentence once it is read.
+ * Workers AI read the recording. Resolves with what it heard (or null) and why not; `onReading`
+ * runs when the recording ends and is sent, and `onWords` gets the sentence once it is read.
  */
-export async function listen(lang: string, onWords?: (words: string) => void): Promise<Heard> {
+export async function listen(
+  lang: string,
+  onWords?: (words: string) => void,
+  onReading?: () => void,
+): Promise<Heard> {
   if (!canListen()) return { text: null, error: "unsupported" };
   stopListening();
   const mine = listening;
+  // Made before the microphone prompt, while the tap still counts: browsers keep an audio
+  // context made later suspended, and a suspended meter can't hear the speaker fall quiet.
+  const audio = startAudio();
   let stream: MediaStream;
   try {
     stream = await navigator.mediaDevices.getUserMedia({ audio: true });
   } catch (error) {
+    void audio?.close().catch(() => undefined);
     const name = (error as { name?: string })?.name;
     return {
       text: null,
@@ -90,11 +100,12 @@ export async function listen(lang: string, onWords?: (words: string) => void): P
   }
   if (mine !== listening) {
     for (const track of stream.getTracks()) track.stop();
+    void audio?.close().catch(() => undefined);
     return { text: null, error: "aborted" };
   }
   let recording: { audio: Blob; spoke: boolean; kept: boolean };
   try {
-    recording = await record(stream);
+    recording = await record(stream, audio);
   } catch {
     return { text: null, error: "error" };
   } finally {
@@ -102,6 +113,7 @@ export async function listen(lang: string, onWords?: (words: string) => void): P
   }
   if (!recording.kept) return { text: null, error: "aborted" };
   if (!recording.spoke || recording.audio.size === 0) return { text: null, error: "silence" };
+  onReading?.();
   try {
     const res = await fetch(`/api/voice/transcribe?language=${encodeURIComponent(lang)}`, {
       method: "POST",
@@ -120,11 +132,14 @@ export async function listen(lang: string, onWords?: (words: string) => void): P
 }
 
 /** Records one stream until quiet, the time limit, or finishListening/stopListening. */
-function record(stream: MediaStream): Promise<{ audio: Blob; spoke: boolean; kept: boolean }> {
+function record(
+  stream: MediaStream,
+  audio: AudioContext | null,
+): Promise<{ audio: Blob; spoke: boolean; kept: boolean }> {
   return new Promise((resolve, reject) => {
     const recorder = new MediaRecorder(stream);
     const chunks: Blob[] = [];
-    const level = meter(stream);
+    const level = meter(stream, audio);
     const mine = { recorder, keep: true };
     current = mine;
     const started = Date.now();
@@ -140,8 +155,9 @@ function record(stream: MediaStream): Promise<{ audio: Blob; spoke: boolean; kep
         lastSound = now;
       }
       const done = spoke ? now - lastSound > QUIET_MS : now - started > WAIT_MS;
-      // Without a working meter the button or the time limit ends it.
-      if ((metered && done) || now - started > MAX_MS) finishListening();
+      // Without a working meter the button or a shorter time limit ends it.
+      const limit = metered ? MAX_MS : UNMETERED_MS;
+      if ((metered && done) || now - started > limit) finishListening();
     }, 100);
     recorder.ondataavailable = (e) => {
       if (e.data.size > 0) chunks.push(e.data);
@@ -166,15 +182,29 @@ function record(stream: MediaStream): Promise<{ audio: Blob; spoke: boolean; kep
   });
 }
 
-/** How loud the microphone is right now, 0 … 1; always 0 where Web Audio is missing. */
-function meter(stream: MediaStream): { audio: AudioContext | null; read: () => number } {
+/** An audio context asked to run at once; null where Web Audio is missing. */
+function startAudio(): AudioContext | null {
   try {
     const audio = new AudioContext();
+    void audio.resume().catch(() => undefined);
+    return audio;
+  } catch {
+    return null;
+  }
+}
+
+/** How loud the microphone is right now, 0 … 1; always 0 without an audio context. */
+function meter(
+  stream: MediaStream,
+  audio: AudioContext | null,
+): { audio: AudioContext | null; read: () => number } {
+  if (!audio) return { audio: null, read: () => 0 };
+  try {
     const analyser = audio.createAnalyser();
     analyser.fftSize = 1024;
     audio.createMediaStreamSource(stream).connect(analyser);
-    // Created after the microphone prompt, so outside the tap; ask it to run anyway.
-    void audio.resume().catch(() => undefined);
+    // A context the browser started suspended may still be allowed to run now.
+    if (audio.state !== "running") void audio.resume().catch(() => undefined);
     const samples = new Uint8Array(analyser.fftSize);
     return {
       audio,
@@ -186,6 +216,7 @@ function meter(stream: MediaStream): { audio: AudioContext | null; read: () => n
       },
     };
   } catch {
+    void audio.close().catch(() => undefined);
     return { audio: null, read: () => 0 };
   }
 }

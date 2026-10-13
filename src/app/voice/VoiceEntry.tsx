@@ -64,7 +64,9 @@ export function VoiceEntry() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
-  const [phase, setPhase] = useState<"idle" | "sending" | "listening" | "readback">("idle");
+  const [phase, setPhase] = useState<"idle" | "sending" | "listening" | "reading" | "readback">(
+    "idle",
+  );
   const [pending, setPending] = useState<Create | null>(null);
   const [shopping, setShopping] = useState<Shopping | null>(null);
   const [error, setError] = useState(false);
@@ -358,9 +360,15 @@ export function VoiceEntry() {
     setUnheard(null);
     setText("");
     setPhase("listening");
-    const heard = await listen(lang, (words) => {
-      if (run.current === mine) setText(words);
-    });
+    const heard = await listen(
+      lang,
+      (words) => {
+        if (run.current === mine) setText(words);
+      },
+      () => {
+        if (run.current === mine) setPhase("reading");
+      },
+    );
     if (run.current !== mine) return;
     setPhase("idle");
     if (heard.text) return void send(heard.text, true);
@@ -547,9 +555,9 @@ export function VoiceEntry() {
                       onChange={(e) => setText(e.target.value)}
                     />
                   </Field>
-                  {phase === "listening" && (
+                  {(phase === "listening" || phase === "reading") && (
                     <p role="status" className="text-sm text-muted">
-                      {t("voice.listening")}
+                      {t(phase === "listening" ? "voice.listening" : "voice.reading")}
                     </p>
                   )}
                   {unheard && (
@@ -584,7 +592,7 @@ export function VoiceEntry() {
                         type="button"
                         aria-label={phase === "listening" ? t("voice.stop") : t("voice.listen")}
                         aria-pressed={phase === "listening"}
-                        disabled={phase === "sending"}
+                        disabled={phase === "sending" || phase === "reading"}
                         className={`rounded-md border p-2 disabled:opacity-60 ${
                           phase === "listening"
                             ? "animate-pulse border-accent bg-accent text-accent-ink"
