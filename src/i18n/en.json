@@ -630,7 +630,8 @@
     "refused": "Voice Entry doesn't delete; open the item to delete it",
     "locked": "A Birthday's date and Person change on the Person",
     "stop": "Stop and send",
-    "micDenied": "The microphone is blocked. Allow it for this site in the browser settings, or type the sentence.",
+    "micDenied": "The microphone is blocked for this site and the browser no longer asks. In Chrome: tap the icon left of the address (or ⋮ › Settings › Site settings › Microphone), choose Allow for this site and try again. If it still fails, check Android Settings › Apps › Chrome › Permissions allows the microphone. You can also type the sentence.",
+    "micDismissed": "The microphone wasn't allowed. Press the microphone again and choose Allow, or type the sentence.",
     "notHeard": "I didn't hear anything. Press the microphone and speak, or type the sentence.",
     "micFailed": "Speech recognition isn't working here ({{code}}). Use the keyboard's microphone to dictate, or type the sentence."
   },

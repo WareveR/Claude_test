@@ -74,8 +74,21 @@ export function finishListening() {
   }
 }
 
-/** Why listening heard nothing: "denied" when the microphone is blocked, else a short code. */
-export type Heard = { text: string | null; error: "denied" | string | null };
+/**
+ * Why listening heard nothing: "denied" when the microphone is blocked for the site, "dismissed"
+ * when its question was closed without an answer, else a short code.
+ */
+export type Heard = { text: string | null; error: "denied" | "dismissed" | string | null };
+
+/** Whether the browser would still ask for the microphone; only a block in settings stops it. */
+async function wouldAsk(): Promise<boolean> {
+  try {
+    const status = await navigator.permissions.query({ name: "microphone" as PermissionName });
+    return status.state === "prompt";
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Listens once: records until the speaker falls quiet (or the button is pressed again), then has
@@ -100,7 +113,7 @@ export async function listen(
     void audio?.close().catch(() => undefined);
     const name = (error as { name?: string })?.name;
     if (name === "NotAllowedError" || name === "SecurityError")
-      return { text: null, error: "denied" };
+      return { text: null, error: (await wouldAsk()) ? "dismissed" : "denied" };
     reportFailure(error, "app", "microphone");
     return { text: null, error: "no-microphone" };
   }
