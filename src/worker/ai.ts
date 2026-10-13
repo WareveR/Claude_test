@@ -143,7 +143,7 @@ export async function writeBriefing(
 const VOICE_SCHEMA = {
   type: "object",
   properties: {
-    action: { type: "string", enum: ["create", "change", "delete"] },
+    action: { type: "string", enum: ["create", "change", "delete", "shopping"] },
     kind: { type: ["string", "null"], enum: ["entry", "task", null] },
     title: { type: ["string", "null"] },
     type: { type: ["integer", "null"] },
@@ -168,6 +168,7 @@ const VOICE_SCHEMA = {
     several: { type: "boolean" },
     on: { type: ["string", "null"] },
     scope: { type: ["string", "null"], enum: ["this", "following", null] },
+    items: { type: "array", items: { type: "string" } },
   },
   required: ["action", "kind", "title", "type", "persons", "date", "time", "allDay", "targets"],
 };
@@ -197,12 +198,13 @@ export function voicePrompt(context: VoiceContext) {
     {
       role: "system",
       content: [
-        'You read one sentence from a family member about the family calendar. "action" is "create" for a new entry or task, "change" to change an existing one, "delete" to remove or cancel one.',
+        'You read one sentence from a family member about the family calendar. "action" is "create" for a new entry or task, "change" to change an existing one, "delete" to remove or cancel one, "shopping" to put things on the family\'s shopping list.',
         `The sentence is in ${LANGUAGE_NAMES[context.language]}; keep the title in that language, short, without the date, time or names.`,
         'An "entry" happens at a time (appointment, birthday, trip, class); a "task" is something to do, possibly by a due date.',
         "Give dates as YYYY-MM-DD and times as HH:mm (24-hour), worked out from today's date; null when the sentence doesn't say.",
         '"persons" lists the numbers of the people it is for; "type" is the number of the best entry type, or null.',
         '"repeat" only when the sentence says it repeats; weekdays are 0 = Monday … 6 = Sunday.',
+        '"shopping" is for buying things or adding them to the shopping list when no day or time is said ("buy milk and eggs", "we\'re out of bread"): "items" lists each thing, short, in the sentence\'s language, without verbs.',
         'For "change": "targets" lists the numbers of the existing items the sentence may mean (all that fit, best first; empty if none); "several" is true when the sentence asks to change two or more different items; "on" is the date of the one occurrence meant for a repeating item, if said; "scope" is "this" for only this time, "following" for from now on, null if not said. Fill only the fields that change and leave the rest null (title only when renamed, persons empty unless they change); "done": true when a task is done.',
         "Answer only with JSON matching the schema.",
       ].join(" "),

@@ -618,7 +618,7 @@
     "undo": "Anular",
     "failed": "Não consegui perceber. Tente outra vez.",
     "saveFailed": "Não foi possível guardar. Tente outra vez.",
-    "hint": "Diga ou escreva uma frase para adicionar uma entrada ou tarefa. Só neste dispositivo.",
+    "hint": "Diga ou escreva uma frase para adicionar uma entrada, uma tarefa ou coisas a comprar. Só neste dispositivo.",
     "readback": "Ler o resumo em voz alta e ouvir a resposta",
     "which": "Qual deles?",
     "scopeQuestion": "Só desta vez ou daqui em diante?",
@@ -1310,6 +1310,10 @@
     "hint": "Toque num artigo quando estiver no cesto; deslize-o para o lado para o tirar. O que foi comprado sai da lista amanhã.",
     "entryEmpty": "A lista de compras está vazia",
     "entryMore": "+{{count}}",
-    "entryOpen": "Abrir lista de compras"
+    "entryOpen": "Abrir lista de compras",
+    "addFromText": "Adicionar à lista de compras: {{names}}",
+    "alreadyOnList": "Já está na lista de compras: {{names}}",
+    "added": "Adicionado à lista de compras: {{names}}",
+    "open": "Abrir lista de compras"
   }
 }

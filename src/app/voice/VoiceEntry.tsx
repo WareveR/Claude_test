@@ -3,9 +3,11 @@ import { Mic } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { api } from "../api";
 import { reportFailure } from "../errors/store";
+import { paths } from "../paths";
+import { addShoppingItems, refreshShopping, removeShoppingItems } from "../shopping/model";
 import { Field, TextInput } from "../screens/form";
 import {
   canListen,
@@ -35,16 +37,23 @@ type Plan = {
   apply: { all?: Req[]; this?: Req[]; following?: Req[] };
   undo: Req[] | null;
 };
+/** Things to put on the Shopping List; `already` are open on it and left out. */
+type Shopping = {
+  outcome: "shopping";
+  items: { name: string; store: string }[];
+  already: string[];
+};
 type Notice = "notFound" | "oneAtATime" | "refused" | "locked";
 type Answer =
   | Create
   | { outcome: "failed"; sentence: string }
   | { outcome: "change"; plan: Plan }
   | { outcome: "choose"; options: Plan[] }
+  | Shopping
   | { outcome: Notice };
 type Scope = "this" | "following" | "all";
 /** What the toast's Undo does; null when there is nothing to undo. */
-type Toast = { undo: (() => Promise<void>) | null };
+type Toast = { undo: (() => Promise<void>) | null; shopping?: boolean };
 
 const route = (kind: "entry" | "task") => (kind === "entry" ? "entries" : "tasks");
 
@@ -57,6 +66,7 @@ export function VoiceEntry() {
   const [text, setText] = useState("");
   const [phase, setPhase] = useState<"idle" | "sending" | "listening" | "readback">("idle");
   const [pending, setPending] = useState<Create | null>(null);
+  const [shopping, setShopping] = useState<Shopping | null>(null);
   const [error, setError] = useState(false);
   const [choices, setChoices] = useState<Plan[] | null>(null);
   const [plan, setPlan] = useState<Plan | null>(null);
@@ -86,6 +96,7 @@ export function VoiceEntry() {
     setOpen(false);
     setPhase("idle");
     setPending(null);
+    setShopping(null);
     setChoices(null);
     setPlan(null);
     setScope(null);
@@ -146,6 +157,64 @@ export function VoiceEntry() {
     } finally {
       saving.current = false;
     }
+  }
+
+  const shoppingSummary = (answer: Shopping) =>
+    t("shopping.addFromText", { names: answer.items.map((i) => i.name).join(", ") });
+
+  async function saveShopping(answer: Shopping) {
+    if (saving.current) return;
+    saving.current = true;
+    stopAll();
+    setError(false);
+    try {
+      const ids = await addShoppingItems(answer.items);
+      await refreshShopping(queryClient);
+      close();
+      const undo = async () => {
+        try {
+          await removeShoppingItems(ids);
+        } finally {
+          await refreshShopping(queryClient);
+        }
+      };
+      setToast({ undo, shopping: true });
+    } catch {
+      await refreshShopping(queryClient);
+      setError(true);
+      setPhase("readback");
+    } finally {
+      saving.current = false;
+    }
+  }
+
+  /** Back to the sentence, to change it. */
+  const editSentence = () => {
+    stopAll();
+    setShopping(null);
+    setError(false);
+    setPhase("idle");
+  };
+
+  async function readBackShopping(answer: Shopping) {
+    const mine = ++run.current;
+    const already =
+      answer.already.length > 0
+        ? t("shopping.alreadyOnList", { names: answer.already.join(", ") })
+        : null;
+    if (answer.items.length === 0) {
+      if (already) await speak(already, lang);
+      return;
+    }
+    await speak(
+      [shoppingSummary(answer), ...(already ? [already] : []), t("voice.saveQuestion")],
+      lang,
+    );
+    if (run.current !== mine || !canListen()) return;
+    const heard = await listenOnce(lang);
+    if (run.current !== mine) return;
+    if (isYes(heard)) void saveShopping(answer);
+    else if (wantsEdit(heard)) editSentence();
   }
 
   async function sendAll(requests: Req[]) {
@@ -262,6 +331,12 @@ export function VoiceEntry() {
     if (answer.outcome === "failed") return openForm("entry", { title: answer.sentence });
     if (answer.outcome === "change") return void startPlan(answer.plan);
     if (answer.outcome === "choose") return void startChoice(answer.options);
+    if (answer.outcome === "shopping") {
+      setShopping(answer);
+      setPhase("readback");
+      if (talk()) void readBackShopping(answer);
+      return;
+    }
     if (answer.outcome !== "create") {
       setNotice(answer.outcome);
       setPhase("idle");
@@ -391,6 +466,51 @@ export function VoiceEntry() {
                     )
                   )}
                 </>
+              ) : phase === "readback" && shopping ? (
+                <>
+                  {shopping.items.length > 0 && (
+                    <p data-testid="voice-summary">{shoppingSummary(shopping)}</p>
+                  )}
+                  {shopping.already.length > 0 && (
+                    <p data-testid="voice-notice" className="text-sm">
+                      {t("shopping.alreadyOnList", { names: shopping.already.join(", ") })}
+                    </p>
+                  )}
+                  {shopping.items.length > 0 && (
+                    <p className="text-sm text-muted">{t("voice.saveQuestion")}</p>
+                  )}
+                  {error && (
+                    <p role="alert" className="text-sm text-overdue">
+                      {t("voice.saveFailed")}
+                    </p>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    {shopping.items.length > 0 ? (
+                      <button
+                        type="button"
+                        className="rounded-md bg-accent px-4 py-2 font-medium text-accent-ink"
+                        onClick={() => void saveShopping(shopping)}
+                      >
+                        {t("voice.save")}
+                      </button>
+                    ) : (
+                      <Link
+                        to={paths.shopping()}
+                        className="rounded-md bg-accent px-4 py-2 font-medium text-accent-ink"
+                        onClick={close}
+                      >
+                        {t("shopping.open")}
+                      </Link>
+                    )}
+                    <button
+                      type="button"
+                      className="rounded-md border border-line px-4 py-2"
+                      onClick={editSentence}
+                    >
+                      {t("voice.edit")}
+                    </button>
+                  </div>
+                </>
               ) : phase === "readback" && pending ? (
                 <>
                   <p data-testid="voice-summary">{pending.summary}</p>
@@ -496,6 +616,11 @@ export function VoiceEntry() {
               <button type="button" className={BUTTON} onClick={() => void undo()}>
                 {t("voice.undo")}
               </button>
+            )}
+            {toast.shopping && (
+              <Link to={paths.shopping()} className={BUTTON} onClick={() => setToast(null)}>
+                {t("shopping.open")}
+              </Link>
             )}
           </div>
         </div>

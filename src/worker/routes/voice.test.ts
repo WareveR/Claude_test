@@ -380,3 +380,71 @@ describe("Voice Entry: change", () => {
     await send(browser, res.plan.apply.all);
   });
 });
+
+describe("Voice Entry: Shopping List", () => {
+  it("reads things to buy without the model, leaving out those already open on the list", async () => {
+    const { browser } = await family();
+    answer = () => {
+      throw new Error("the model is not asked");
+    };
+    await browser.post("/shopping/items", { name: "Ovos" });
+    // Bought earlier: it goes back on the list with its last shop.
+    const leite = (await (
+      await browser.post("/shopping/items", { name: "Leite", store: "Continente" })
+    ).json()) as { id: string };
+    await browser.request("PATCH", `/shopping/items/${leite.id}`, { bought: true });
+
+    const res = await browser.post("/voice", { sentence: "comprar leite, ovos e pão" });
+    expect(await res.json()).toEqual({
+      outcome: "shopping",
+      items: [
+        { name: "Leite", store: "Continente" },
+        { name: "Pão", store: "" },
+      ],
+      already: ["Ovos"],
+    });
+    expect(prompts).toHaveLength(0);
+    // Nothing is saved: the browser adds them once the Family member says yes.
+    expect(((await (await browser.get("/shopping/items")).json()) as unknown[]).length).toBe(2);
+  });
+
+  it("leaves a sentence with a day or a time to the model", async () => {
+    const { browser } = await family();
+    answer = () => ({
+      action: "create",
+      kind: "entry",
+      title: "Bilhetes para o cinema",
+      type: null,
+      persons: [],
+      date: "2026-10-17",
+      time: "20:00",
+      allDay: null,
+      targets: [],
+    });
+    const res = await browser.post("/voice", {
+      sentence: "comprar bilhetes para o cinema sábado às 20h",
+    });
+    expect(await res.json()).toMatchObject({ outcome: "create", kind: "entry" });
+    expect(prompts).toHaveLength(1);
+  });
+
+  it("takes the model's shopping answer for a sentence the parser doesn't know", async () => {
+    const { browser } = await family();
+    answer = () => ({ ...change({ action: "shopping" }), items: ["café", " Café ", "açúcar"] });
+    const res = await browser.post("/voice", { sentence: "o café e o açúcar estão no fim" });
+    expect(await res.json()).toEqual({
+      outcome: "shopping",
+      items: [
+        { name: "Café", store: "" },
+        { name: "Açúcar", store: "" },
+      ],
+      already: [],
+    });
+    expect(prompts[0].messages[0].content).toContain('"shopping"');
+
+    answer = () => ({ ...change({ action: "shopping" }), items: [] });
+    expect(await (await browser.post("/voice", { sentence: "hmm" })).json()).toMatchObject({
+      outcome: "failed",
+    });
+  });
+});
