@@ -1,4 +1,6 @@
 import { readbackSentences } from "../../core/readback";
+import { ApiError, NetworkError } from "../api";
+import { reportFailure } from "../errors/store";
 
 /**
  * Thin, failure-proof wrappers over the browser's microphone and speech APIs; every call may be
@@ -30,8 +32,12 @@ export function setReadback(on: boolean) {
   }
 }
 
-/** Louder than this (0 silent … 1 full scale) counts as speech. */
-const SPEECH_LEVEL = 0.04;
+/** Speech is this many times louder than the room's own noise… */
+const SPEECH_OVER_NOISE = 3;
+/** …and never quieter than this (0 silent … 1 full scale). */
+const SPEECH_LEVEL = 0.015;
+/** How long the room is measured before listening for speech. */
+const CALIBRATE_MS = 300;
 /** Quiet this long after speech ends the recording, as the browser's recognizer did. */
 const QUIET_MS = 1300;
 /** No speech at all for this long gives up. */
@@ -93,26 +99,28 @@ export async function listen(
   } catch (error) {
     void audio?.close().catch(() => undefined);
     const name = (error as { name?: string })?.name;
-    return {
-      text: null,
-      error: name === "NotAllowedError" || name === "SecurityError" ? "denied" : "no-microphone",
-    };
+    if (name === "NotAllowedError" || name === "SecurityError")
+      return { text: null, error: "denied" };
+    reportFailure(error, "app", "microphone");
+    return { text: null, error: "no-microphone" };
   }
   if (mine !== listening) {
     for (const track of stream.getTracks()) track.stop();
     void audio?.close().catch(() => undefined);
     return { text: null, error: "aborted" };
   }
-  let recording: { audio: Blob; spoke: boolean; kept: boolean };
+  let recording: { audio: Blob; kept: boolean };
   try {
     recording = await record(stream, audio);
-  } catch {
+  } catch (error) {
+    reportFailure(error, "app", "recording");
     return { text: null, error: "error" };
   } finally {
     for (const track of stream.getTracks()) track.stop();
   }
   if (!recording.kept) return { text: null, error: "aborted" };
-  if (!recording.spoke || recording.audio.size === 0) return { text: null, error: "silence" };
+  // Even when the meter heard no speech, Workers AI listens: a soft voice may sit under it.
+  if (recording.audio.size === 0) return { text: null, error: "silence" };
   onReading?.();
   try {
     const res = await fetch(`/api/voice/transcribe?language=${encodeURIComponent(lang)}`, {
@@ -120,13 +128,18 @@ export async function listen(
       headers: { "Content-Type": recording.audio.type || "application/octet-stream" },
       body: recording.audio,
     });
-    if (!res.ok) return { text: null, error: `server-${res.status}` };
+    if (!res.ok) {
+      const body = (await res.json().catch(() => ({}))) as { error?: string };
+      reportFailure(new ApiError(res.status, body, "POST /voice/transcribe"), "app");
+      return { text: null, error: `server-${res.status}` };
+    }
     const body = (await res.json()) as { text?: unknown };
     const text = typeof body.text === "string" ? body.text.trim() : "";
     if (!text) return { text: null, error: "silence" };
     onWords?.(text);
     return { text, error: null };
-  } catch {
+  } catch (error) {
+    reportFailure(new NetworkError("POST /voice/transcribe", error), "app");
     return { text: null, error: "network" };
   }
 }
@@ -135,7 +148,7 @@ export async function listen(
 function record(
   stream: MediaStream,
   audio: AudioContext | null,
-): Promise<{ audio: Blob; spoke: boolean; kept: boolean }> {
+): Promise<{ audio: Blob; kept: boolean }> {
   return new Promise((resolve, reject) => {
     const recorder = new MediaRecorder(stream);
     const chunks: Blob[] = [];
@@ -146,18 +159,24 @@ function record(
     let spoke = false;
     let metered = false;
     let lastSound = started;
+    // The room's noise: follows the level down at once and up only slowly, so speech doesn't
+    // count as noise but a phone's gain control raising the hiss between words does.
+    let noise = Infinity;
     const timer = setInterval(() => {
       const now = Date.now();
       // A meter the browser keeps suspended hears nothing, so it can't end the recording either.
       metered = level.audio?.state === "running";
-      if (metered && level.read() > SPEECH_LEVEL) {
+      if (!metered) return void (now - started > UNMETERED_MS && finishListening());
+      const loud = level.read();
+      noise = loud < noise ? loud : noise + (loud - noise) * 0.02;
+      // The first moments, before anyone speaks, only measure the room.
+      if (now - started < CALIBRATE_MS) return;
+      if (loud > Math.max(SPEECH_LEVEL, noise * SPEECH_OVER_NOISE)) {
         spoke = true;
         lastSound = now;
       }
       const done = spoke ? now - lastSound > QUIET_MS : now - started > WAIT_MS;
-      // Without a working meter the button or a shorter time limit ends it.
-      const limit = metered ? MAX_MS : UNMETERED_MS;
-      if ((metered && done) || now - started > limit) finishListening();
+      if (done || now - started > MAX_MS) finishListening();
     }, 100);
     recorder.ondataavailable = (e) => {
       if (e.data.size > 0) chunks.push(e.data);
@@ -168,8 +187,6 @@ function record(
       if (current === mine) current = null;
       resolve({
         audio: new Blob(chunks, { type: recorder.mimeType || chunks[0]?.type || "" }),
-        // Without a working meter, let Workers AI decide whether anything was said.
-        spoke: spoke || !metered,
         kept: mine.keep,
       });
     };

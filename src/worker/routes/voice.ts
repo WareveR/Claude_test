@@ -156,7 +156,9 @@ voiceRoutes.post("/voice/transcribe", async (c) => {
     : isLanguage(deviceLanguage)
       ? deviceLanguage
       : "pt-PT";
-  return c.json({ text: await transcribe(c.env, audio, language) });
+  const result = await transcribe(c.env, audio, language);
+  if ("failed" in result) return c.json({ error: `speech model: ${result.failed}` }, 502);
+  return c.json({ text: result.text });
 });
 
 voiceRoutes.post("/voice", async (c) => {
