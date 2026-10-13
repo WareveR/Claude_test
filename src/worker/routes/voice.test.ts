@@ -478,16 +478,17 @@ describe("Voice Entry: dictation", () => {
     expect(heard).toEqual([{ audio: "AQID", language: "pt" }]);
   });
 
-  it("answers null on silence or a model failure, so the sentence can be typed", async () => {
+  it("answers null on silence, and the model's reason when it fails", async () => {
     const browser = await setUpFamily();
     spoken = async () => ({ text: "  " });
     const quiet = await browser.upload("/voice/transcribe", new Uint8Array([1]), "audio/mp4");
     expect(await quiet.json()).toEqual({ text: null });
     spoken = async () => {
-      throw new Error("down");
+      throw new Error("5006: bad audio");
     };
     const failed = await browser.upload("/voice/transcribe", new Uint8Array([1]), "audio/mp4");
-    expect(await failed.json()).toEqual({ text: null });
+    expect(failed.status).toBe(502);
+    expect(await failed.json()).toEqual({ error: "speech model: 5006: bad audio" });
   });
 
   it("refuses an empty or too long recording, and a browser that isn't signed in", async () => {

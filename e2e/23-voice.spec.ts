@@ -178,6 +178,7 @@ async function fakeMicrophone(page: Page, words: string | null, error?: string, 
   );
   await page.addInitScript(
     ({ words, error, quiet }) => {
+      let soundFrom = 0;
       let soundUntil = 0;
       class FakeRecorder {
         state = "inactive";
@@ -187,7 +188,9 @@ async function fakeMicrophone(page: Page, words: string | null, error?: string, 
         onerror: (() => void) | null = null;
         start() {
           this.state = "recording";
-          soundUntil = words ? Date.now() + 200 : 0;
+          // Quiet while the room is measured, then half a second of speech.
+          soundFrom = Date.now() + 400;
+          soundUntil = words ? soundFrom + 500 : 0;
         }
         stop() {
           if (this.state === "inactive") return;
@@ -208,7 +211,7 @@ async function fakeMicrophone(page: Page, words: string | null, error?: string, 
           return {
             fftSize: 1024,
             getByteTimeDomainData(samples: Uint8Array) {
-              const loud = Date.now() < soundUntil;
+              const loud = Date.now() > soundFrom && Date.now() < soundUntil;
               samples.forEach((_, i) => (samples[i] = loud ? (i % 2 ? 200 : 56) : 128));
             },
           };

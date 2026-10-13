@@ -32,22 +32,25 @@ export const speech = {
 /** Whisper's language codes. */
 const SPEECH_LANGUAGES: Record<Language, string> = { "pt-PT": "pt", en: "en" };
 
-/** Turns one recording into text; null on silence or any failure, so the sentence can be typed. */
+/**
+ * Turns one recording into text: null on silence, and on a model failure the reason, so the
+ * browser can show it instead of "nothing heard".
+ */
 export async function transcribe(
   env: Env,
   audio: ArrayBuffer,
   language: Language,
-): Promise<string | null> {
+): Promise<{ text: string | null } | { failed: string }> {
   try {
     const result = await speech.run(env, {
       audio: toBase64(new Uint8Array(audio)),
       language: SPEECH_LANGUAGES[language],
     });
     const text = typeof result?.text === "string" ? result.text.trim() : "";
-    return text || null;
+    return { text: text || null };
   } catch (error) {
     console.warn("speech model", error);
-    return null;
+    return { failed: String(error instanceof Error ? error.message : error).slice(0, 200) };
   }
 }
 
