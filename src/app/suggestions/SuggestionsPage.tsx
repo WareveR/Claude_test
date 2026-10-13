@@ -11,7 +11,7 @@ import {
   draftsFor,
   IDEAS,
   MAX_TEXT,
-  phrasesOf,
+  sortPhrases,
   themeOf,
   type Answers,
   type Area,
@@ -20,10 +20,13 @@ import {
   type Payment,
   type WrittenDraft,
 } from "../../core/suggestions";
+import { foldName } from "../../core/shopping-sections";
+import { shoppingToAdd } from "../../core/shopping-phrase";
 import { api } from "../api";
 import { useEntryTypes } from "../entry-types/model";
 import { useSignedIn } from "../family";
 import { paths } from "../paths";
+import { addShoppingItems, refreshShopping, type ShoppingItem } from "../shopping/model";
 import { useTasks } from "../tasks/model";
 import { Field } from "../screens/form";
 import { BUTTON, BUTTON_PRIMARY } from "../ui/button";
@@ -34,7 +37,8 @@ import { ReviewDialog } from "./ReviewDialog";
 const INPUT = "rounded-md border border-line bg-surface px-3 py-2 text-base text-ink";
 
 type Written = { key: string; keep: boolean; draft: WrittenDraft };
-type Created = { route: "entries" | "tasks"; id: string };
+type Created = { route: "entries" | "tasks" | "shopping/items"; id: string };
+type ToBuy = { key: string; name: string; keep: boolean };
 
 /**
  * Suggestions: write or say what repeats in the Family's life, or open a theme ("car", "the
@@ -61,6 +65,9 @@ export function SuggestionsPage() {
     expiry: {},
   });
   const [written, setWritten] = useState<Written[]>([]);
+  const [toBuy, setToBuy] = useState<ToBuy[]>([]);
+  /** The names just put on the Shopping List, for the banner. */
+  const [bought, setBought] = useState<string[]>([]);
   const [edits, setEdits] = useState<Record<string, Edit>>({});
   const [reading, setReading] = useState(false);
   const [listening, setListening] = useState(false);
@@ -92,13 +99,25 @@ export function SuggestionsPage() {
       .sort((a, b) => a.date.localeCompare(b.date));
   })();
 
+  const buying = toBuy.filter((b) => b.keep).map((b) => b.name);
+  const count = items.length + buying.length;
+
   const openArea = (area: Area) =>
     setAreas((open) => (open.includes(area) ? open : [...open, area]));
 
   async function read() {
-    const phrases = phrasesOf(text);
-    if (phrases.length === 0) return;
+    const { shopping, phrases } = sortPhrases(text);
+    if (phrases.length === 0 && shopping.length === 0) return;
     setMessage(null);
+    if (shopping.length > 0) {
+      const stamp = Date.now();
+      setToBuy((list) => [
+        ...list,
+        ...shopping
+          .filter((name) => !list.some((b) => foldName(b.name) === foldName(name)))
+          .map((name, i) => ({ key: `b${stamp}-${i}`, name, keep: true })),
+      ]);
+    }
     const rest: string[] = [];
     for (const phrase of phrases) {
       const area = themeOf(phrase);
@@ -143,6 +162,7 @@ export function SuggestionsPage() {
     Promise.all([
       queryClient.invalidateQueries({ queryKey: ["entries"] }),
       queryClient.invalidateQueries({ queryKey: ["tasks"] }),
+      refreshShopping(queryClient),
     ]);
 
   async function create() {
@@ -156,12 +176,26 @@ export function SuggestionsPage() {
         const saved = await api<{ id: string }>(`/${route}`, { method: "POST", body });
         done.push({ route, id: saved.id });
       }
+      let added: string[] = [];
+      let already: string[] = [];
+      if (buying.length > 0) {
+        // What is already open on the Shopping List isn't added twice.
+        const onList = await api<ShoppingItem[]>("/shopping/items");
+        ({ add: added, already } = shoppingToAdd(buying, onList));
+        const ids = await addShoppingItems(added.map((name) => ({ name })));
+        done.push(...ids.map((id) => ({ route: "shopping/items" as const, id })));
+      }
       setMadeNow((ids) => [...ids, ...IDEAS.filter((idea) => picked[idea.id]).map((i) => i.id)]);
       setPicked({});
       setWritten([]);
+      setToBuy([]);
       setEdits({});
       setReviewing(false);
-      setCreated(done);
+      setBought(added);
+      setCreated(done.length > 0 ? done : null);
+      if (already.length > 0) {
+        setMessage(t("shopping.alreadyOnList", { names: already.join(", ") }));
+      }
     } catch {
       // All or nothing: what was created before the failure goes again, so a retry is clean.
       for (const c of done) await api(`/${c.route}/${c.id}`, { method: "DELETE" }).catch(() => {});
@@ -182,6 +216,7 @@ export function SuggestionsPage() {
     setMessage(t("suggestions.undone"));
   }
 
+  const calendarCount = created?.filter((c) => c.route !== "shopping/items").length ?? 0;
   const closedAreas = AREAS.filter((area) => !areas.includes(area));
 
   return (
@@ -240,14 +275,54 @@ export function SuggestionsPage() {
           role="status"
           className="flex flex-wrap items-center gap-3 rounded-lg border border-accent bg-surface p-3 text-sm"
         >
-          <span className="flex-1">{t("suggestions.created", { count: created.length })}</span>
+          <span className="flex flex-1 flex-col gap-1">
+            {calendarCount > 0 && <span>{t("suggestions.created", { count: calendarCount })}</span>}
+            {bought.length > 0 && <span>{t("shopping.added", { names: bought.join(", ") })}</span>}
+          </span>
           <button type="button" className={BUTTON} onClick={() => void undo()}>
             {t("suggestions.undo")}
           </button>
-          <Link to={paths.tasks()} className={BUTTON}>
-            {t("suggestions.seeTasks")}
-          </Link>
+          {calendarCount > 0 && (
+            <Link to={paths.tasks()} className={BUTTON}>
+              {t("suggestions.seeTasks")}
+            </Link>
+          )}
+          {bought.length > 0 && (
+            <Link to={paths.shopping()} className={BUTTON}>
+              {t("shopping.open")}
+            </Link>
+          )}
         </div>
+      )}
+
+      {toBuy.length > 0 && (
+        <section aria-labelledby="to-buy-title" className="flex flex-col gap-2">
+          <h2 id="to-buy-title" className="font-semibold">
+            {t("shopping.title")}
+          </h2>
+          <p className="text-sm text-muted" data-testid="suggestions-shopping">
+            {t("shopping.addFromText", { names: buying.join(", ") || "—" })}
+          </p>
+          <ul className="divide-y divide-line rounded-lg border border-line bg-surface">
+            {toBuy.map((b) => (
+              <li key={b.key}>
+                <label className="flex cursor-pointer items-center gap-3 px-3 py-2">
+                  <input
+                    type="checkbox"
+                    className="size-5 shrink-0 accent-accent"
+                    checked={b.keep}
+                    onChange={(e) =>
+                      setToBuy((list) =>
+                        list.map((x) => (x.key === b.key ? { ...x, keep: e.target.checked } : x)),
+                      )
+                    }
+                  />
+                  <span className="font-medium">{b.name}</span>
+                </label>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       {written.length > 0 && (
@@ -407,13 +482,11 @@ export function SuggestionsPage() {
       )}
 
       <div className="sticky bottom-0 z-[5] -mx-4 mt-auto flex items-center justify-between gap-3 border-t border-line bg-bg/95 px-4 py-3 backdrop-blur">
-        <span className="text-sm text-muted">
-          {t("suggestions.count", { count: items.length })}
-        </span>
+        <span className="text-sm text-muted">{t("suggestions.count", { count })}</span>
         <button
           type="button"
           className={BUTTON_PRIMARY}
-          disabled={items.length === 0}
+          disabled={count === 0}
           onClick={() => {
             setMessage(null);
             setReviewing(true);
@@ -426,6 +499,7 @@ export function SuggestionsPage() {
       {reviewing && (
         <ReviewDialog
           items={items}
+          shopping={buying}
           busy={creating || !general}
           error={creating ? null : message}
           onEdit={(key, edit) => setEdits((e) => ({ ...e, [key]: { ...e[key], ...edit } }))}

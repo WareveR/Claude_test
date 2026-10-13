@@ -7,6 +7,7 @@ import {
   iucDates,
   parseWritten,
   phrasesOf,
+  sortPhrases,
   themeOf,
   typeOfIdea,
   type Answers,
@@ -186,5 +187,25 @@ describe("typeOfIdea", () => {
     expect(typeOfIdea("vet")).toBe("pet");
     expect(typeOfIdea("textbooks")).toBe("school");
     expect(typeOfIdea("unknown")).toBe("general");
+  });
+});
+
+describe("sortPhrases", () => {
+  it("takes the things to buy out, keeping a line's commas, and leaves the rest", () => {
+    expect(sortPhrases("comprar leite, ovos e pão\nginásio à segunda às 19h, carro")).toEqual({
+      shopping: ["Leite", "Ovos", "Pão"],
+      phrases: ["ginásio à segunda às 19h", "carro"],
+    });
+    expect(sortPhrases("car, buy milk and eggs; dentist every year")).toEqual({
+      shopping: ["Milk", "Eggs"],
+      phrases: ["car", "dentist every year"],
+    });
+  });
+
+  it("leaves a purchase with a day to the model", () => {
+    expect(sortPhrases("comprar bilhetes para o cinema sábado às 20h")).toEqual({
+      shopping: [],
+      phrases: ["comprar bilhetes para o cinema sábado às 20h"],
+    });
   });
 });

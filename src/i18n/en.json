@@ -618,7 +618,7 @@
     "undo": "Undo",
     "failed": "Could not understand that. Try again.",
     "saveFailed": "Could not save. Try again.",
-    "hint": "Say or type a sentence to add an Entry or Task. This device only.",
+    "hint": "Say or type a sentence to add an Entry, a Task or things to buy. This device only.",
     "readback": "Read the summary aloud and listen for the answer",
     "which": "Which one?",
     "scopeQuestion": "Only this time or from now on?",
@@ -1307,6 +1307,10 @@
     "hideHistory": "Hide history",
     "historyEmpty": "Nothing bought yet.",
     "addAgain": "Add {{name}} again",
-    "hint": "Tap an item once it's in the basket; swipe it sideways to remove it. Bought items leave the list tomorrow."
+    "hint": "Tap an item once it's in the basket; swipe it sideways to remove it. Bought items leave the list tomorrow.",
+    "addFromText": "Add to the shopping list: {{names}}",
+    "alreadyOnList": "Already on the shopping list: {{names}}",
+    "added": "Added to the shopping list: {{names}}",
+    "open": "Open shopping list"
   }
 }
