@@ -564,9 +564,13 @@ export function VoiceEntry() {
                     <p role="alert" className="text-sm text-overdue">
                       {unheard === "denied"
                         ? t("voice.micDenied")
-                        : unheard === "silence" || unheard === "no-speech" || unheard === "aborted"
-                          ? t("voice.notHeard")
-                          : t("voice.micFailed", { code: unheard })}
+                        : unheard === "dismissed"
+                          ? t("voice.micDismissed")
+                          : unheard === "silence" ||
+                              unheard === "no-speech" ||
+                              unheard === "aborted"
+                            ? t("voice.notHeard")
+                            : t("voice.micFailed", { code: unheard })}
                     </p>
                   )}
                   {notice && (

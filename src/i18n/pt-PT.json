@@ -630,7 +630,8 @@
     "refused": "A entrada por voz não apaga; abra o item para o apagar",
     "locked": "A data e a pessoa de um aniversário mudam na pessoa",
     "stop": "Parar e enviar",
-    "micDenied": "O microfone está bloqueado. Permita-o para este site nas definições do browser, ou escreva a frase.",
+    "micDenied": "O microfone está bloqueado para este site e o browser já não pergunta. No Chrome: toque no ícone à esquerda do endereço (ou ⋮ › Definições › Definições de sites › Microfone), escolha Permitir para este site e volte a tentar. Se continuar, veja em Definições do Android › Apps › Chrome › Autorizações se o microfone está permitido. Também pode escrever a frase.",
+    "micDismissed": "O microfone não foi autorizado. Carregue outra vez no microfone e escolha Permitir, ou escreva a frase.",
     "notHeard": "Não ouvi nada. Carregue no microfone e fale, ou escreva a frase.",
     "micFailed": "O reconhecimento de voz não funciona aqui ({{code}}). Use o microfone do teclado para ditar, ou escreva a frase."
   },

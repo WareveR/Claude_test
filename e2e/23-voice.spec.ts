@@ -172,12 +172,18 @@ test("Edit opens the form filled in, and readback can be switched off", async ({
  * A stand-in microphone: a short burst of sound, then quiet, so the recording ends on its own;
  * Workers AI's reading of it is faked as `words`. `error` is the name getUserMedia rejects with.
  */
-async function fakeMicrophone(page: Page, words: string | null, error?: string, quiet = true) {
+async function fakeMicrophone(
+  page: Page,
+  words: string | null,
+  error?: string,
+  quiet = true,
+  permission: "prompt" | "denied" = "denied",
+) {
   await page.route("**/api/voice/transcribe**", (route) =>
     route.fulfill({ json: { text: words } }),
   );
   await page.addInitScript(
-    ({ words, error, quiet }) => {
+    ({ words, error, quiet, permission }) => {
       let soundFrom = 0;
       let soundUntil = 0;
       class FakeRecorder {
@@ -236,13 +242,17 @@ async function fakeMicrophone(page: Page, words: string | null, error?: string, 
               : Promise.resolve({ getTracks: () => [{ stop() {} }] }),
         },
       });
+      Object.defineProperty(navigator, "permissions", {
+        configurable: true,
+        value: { query: () => Promise.resolve({ state: error ? permission : "granted" }) },
+      });
       // The readback speaks; keep it instant and silent.
       if (quiet)
         w.speechSynthesis.speak = (u) => {
           setTimeout(() => u.onend?.(), 0);
         };
     },
-    { words, error, quiet },
+    { words, error, quiet, permission },
   );
 }
 
@@ -287,4 +297,15 @@ test("a blocked microphone says so", async ({ page }) => {
   const dialog = page.getByRole("dialog", { name: "Voice Entry" });
   await dialog.getByRole("button", { name: "Speak" }).click();
   await expect(dialog.getByRole("alert")).toContainText("The microphone is blocked");
+});
+
+test("a microphone question closed without an answer asks to try again", async ({ page }) => {
+  await fakeMicrophone(page, null, "NotAllowedError", true, "prompt");
+  await signIn(page);
+  await page.getByRole("button", { name: "Voice Entry" }).click();
+  const dialog = page.getByRole("dialog", { name: "Voice Entry" });
+  await dialog.getByRole("button", { name: "Speak" }).click();
+  await expect(dialog.getByRole("alert")).toContainText(
+    "Press the microphone again and choose Allow",
+  );
 });
