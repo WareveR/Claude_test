@@ -216,33 +216,34 @@ test("personal ideas ask who they are for, and a line can be copied for someone 
   const done = page.getByRole("status").filter({ hasText: /Created \d+ Tasks and Entries/ });
   await expect(done).toBeVisible();
 
-  const entries = (await (
-    await page.request.get("/api/entries?from=2026-01-01&to=2031-12-31")
-  ).json()) as { title: string; personIds: string[]; time: { startTime?: string } }[];
-  const gyms = entries.filter((e) => e.title === "Gym" && e.personIds.length > 0);
-  expect(gyms.map((e) => [e.personIds, e.time.startTime]).sort()).toEqual(
-    [
-      [[rita], "07:30"],
-      [[rui], "19:00"],
-    ].sort(),
-  );
-  const tasks = (await (await page.request.get("/api/tasks")).json()) as {
-    title: string;
-    personIds: string[];
-  }[];
-  expect(
-    tasks
-      .filter((x) => x.title === "Water the plants")
-      .map((x) => x.personIds)
-      .sort(),
-  ).toEqual([[], [rui]]);
-
-  await done.getByRole("button", { name: "Undo" }).click();
-  await expect(page.getByRole("status").filter({ hasText: "Undone" })).toBeVisible();
-  for (const id of [rui, rita]) {
-    await page.request.patch(`/api/persons/${id}`, {
-      headers: { Origin: "http://localhost:4173" },
-      data: { archived: true },
-    });
+  // Every spec shares one Family: what this test made goes again even when a check fails.
+  try {
+    const entries = (await (
+      await page.request.get("/api/entries?from=2026-01-01&to=2031-12-31")
+    ).json()) as { title: string; personIds: string[]; time: { startTime?: string } }[];
+    const gyms = entries.filter((e) => e.title === "Gym" && e.personIds.length > 0);
+    expect(gyms.map((e) => [e.personIds, e.time.startTime]).sort()).toEqual(
+      [
+        [[rita], "07:30"],
+        [[rui], "19:00"],
+      ].sort(),
+    );
+    // Other specs water the plants too; only Rui's copy is for someone.
+    const tasks = (await (await page.request.get("/api/tasks")).json()) as {
+      title: string;
+      personIds: string[];
+    }[];
+    expect(tasks.filter((x) => x.title === "Water the plants" && x.personIds.length > 0)).toEqual([
+      expect.objectContaining({ personIds: [rui] }),
+    ]);
+  } finally {
+    await done.getByRole("button", { name: "Undo" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Undone" })).toBeVisible();
+    for (const id of [rui, rita]) {
+      await page.request.patch(`/api/persons/${id}`, {
+        headers: { Origin: "http://localhost:4173" },
+        data: { archived: true },
+      });
+    }
   }
 });
