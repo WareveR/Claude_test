@@ -12,6 +12,7 @@ import { WeatherBadge } from "../weather/WeatherBadge";
 import { VoiceEntry } from "../voice/VoiceEntry";
 import { paths } from "../paths";
 import { useNow } from "./useNow";
+import { MonthMotif } from "../month-theme";
 
 /** The last page outside Settings and Suggestions, where their buttons return to. */
 let outsideSettings: string = paths.today();
@@ -56,8 +57,11 @@ function ScreenSwitch({
 /** The fixed header on every view: the time, weekday, day and month in the Family Time Zone. */
 export function Header({
   showVoice = true,
+  month = null,
 }: {
   /** Display Mode hides the microphone. */ showVoice?: boolean;
+  /** With the Month theme, the month whose drawing the header carries. */
+  month?: number | null;
 }) {
   const { t } = useTranslation();
   const { family, language } = useSignedIn();
@@ -168,6 +172,9 @@ export function Header({
         help="wall"
         onToggle={toggleWall}
       />
+      {month !== null && (
+        <MonthMotif month={month} opacity={0.16} className="absolute inset-0 text-header-ink" />
+      )}
     </header>
   );
 }

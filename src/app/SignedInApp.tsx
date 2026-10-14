@@ -29,6 +29,7 @@ import { AgendaView } from "./views/AgendaView";
 import { DayView, MonthView, TodayRedirect, WeekView, YearView } from "./views/Views";
 import { ItemPopupProvider } from "./shell/ItemPopup";
 import { HelpTips } from "./help/HelpTips";
+import { MonthMotif, useMonthTheme } from "./month-theme";
 import { SummaryPage } from "./summary/SummaryPage";
 import { reportDeviceDetails } from "./settings/device-details";
 
@@ -40,6 +41,7 @@ function EntryRoute() {
 function Layout() {
   const display = useDisplayMode();
   const { pathname } = useLocation();
+  const month = useMonthTheme();
   // A Display Mode device only ever opens the board (and an Entry's details); the board is
   // nothing to a device that is not in Display Mode.
   if (display && !displayAllows(pathname)) return <Navigate to={paths.display()} replace />;
@@ -48,7 +50,10 @@ function Layout() {
     <div className="flex h-dvh flex-col">
       {display && <DisplayEffects />}
       <HelpTips />
-      <Header showVoice={!display} />
+      {month !== null && (
+        <MonthMotif month={month} opacity={0.07} className="fixed inset-0 text-header" />
+      )}
+      <Header showVoice={!display} month={month} />
       <OfflineBanner />
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
         <ItemPopupProvider>

@@ -164,7 +164,8 @@
     "light": "Claro",
     "dark": "Escuro",
     "spring": "Primavera",
-    "ocean": "Oceano"
+    "ocean": "Oceano",
+    "month": "Mês (muda com o mês)"
   },
   "devices": {
     "title": "Dispositivos com sessão iniciada",

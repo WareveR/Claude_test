@@ -14,6 +14,7 @@ import { todayIn } from "../../core/plain-date";
 import { useSignedIn } from "../family";
 import type { PlainDate } from "../../core/plain-date";
 import { FilterButton } from "../filter/FilterButton";
+import { MonthMotif, useMonthOnScreen } from "../month-theme";
 import { paths } from "../paths";
 import { useSwipe } from "../ui/useSwipe";
 
@@ -55,6 +56,7 @@ export function ViewNav({
     view === "week" || view === "month" || view === "year" || view === "agenda"
       ? paths[view](today)
       : paths.day(today);
+  const month = useMonthOnScreen();
   // Sticky, so a long stacked page (a phone, a big zoom) can always move on or switch view;
   // above the grid's now line, so the Person Filter panel opens over it.
   return (
@@ -123,6 +125,9 @@ export function ViewNav({
       )}
       {extra}
       {!compact && <ViewActions date={date} newPath={newPath} className="ml-auto" />}
+      {month !== null && (
+        <MonthMotif month={month} opacity={0.08} className="absolute inset-0 text-header" />
+      )}
     </nav>
   );
 }

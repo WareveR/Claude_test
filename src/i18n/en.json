@@ -164,7 +164,8 @@
     "light": "Light",
     "dark": "Dark",
     "spring": "Spring",
-    "ocean": "Ocean"
+    "ocean": "Ocean",
+    "month": "Month (changes with the month)"
   },
   "devices": {
     "title": "Signed-in devices",
