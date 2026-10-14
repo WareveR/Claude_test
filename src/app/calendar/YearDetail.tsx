@@ -6,6 +6,7 @@ import type { Person } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
 import { EntryIcon } from "./EntryBlock";
 import { entriesOn } from "./MonthGrid";
+import { TODAY_PILL, TODAY_TINT } from "./today";
 import { isWeekendColumn, monthColumns, yearWeekdayLetters } from "./YearGrid";
 
 /**
@@ -77,9 +78,17 @@ export function YearDetail({
                 {columns.map((day, c) => (
                   <th
                     key={c}
-                    className={`pt-1 font-semibold tabular-nums ${shade(day, c)} ${day === today ? "text-accent" : day && holidays.has(day) ? "text-holiday-ink" : isWeekendColumn(c) ? "text-weekend-ink" : "text-muted"}`}
+                    data-testid={day === today ? "year-detail-today" : undefined}
+                    data-today={day === today || undefined}
+                    className={`pt-1 font-semibold tabular-nums ${shade(day, c)} ${day === today ? TODAY_TINT : day && holidays.has(day) ? "text-holiday-ink" : isWeekendColumn(c) ? "text-weekend-ink" : "text-muted"}`}
                   >
-                    {day ? Number(day.slice(8)) : ""}
+                    {day === today ? (
+                      <span className={TODAY_PILL}>{Number(day.slice(8))}</span>
+                    ) : day ? (
+                      Number(day.slice(8))
+                    ) : (
+                      ""
+                    )}
                   </th>
                 ))}
               </tr>
@@ -98,7 +107,7 @@ export function YearDetail({
                     return (
                       <td
                         key={c}
-                        className={`border-l border-line/60 p-px ${day ? shade(day, c) : isWeekendColumn(c) ? "bg-weekend/45" : ""}`}
+                        className={`border-l border-line/60 p-px ${day ? shade(day, c) : isWeekendColumn(c) ? "bg-weekend/45" : ""} ${day === today ? TODAY_TINT : ""}`}
                       >
                         {day && mine.length > 0 && (
                           <Link

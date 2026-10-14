@@ -10,6 +10,7 @@ import { WeatherBadge } from "../weather/WeatherBadge";
 import { EntryIcon, importanceClass } from "./EntryBlock";
 import { NoteLine } from "../layers/NoteLine";
 import { isMovable, useEntryDrag } from "./useEntryDrag";
+import { TODAY_PILL, TODAY_TINT } from "./today";
 
 /** How many Entry lines a day shows before "+N", on narrow and on wide screens. */
 const NARROW = 3;
@@ -117,12 +118,13 @@ export function MonthGrid({
               data-testid={`month-day-${day}`}
               data-drop-date={day}
               aria-current={day === selected ? "date" : undefined}
-              className={`flex min-h-16 min-w-0 flex-col gap-0.5 border-b border-l border-line p-0.5 text-left ${names ? "bg-holiday" : weekday(day) >= 5 ? "bg-weekend" : ""} ${inMonth ? "" : "opacity-40"} ${day === selected ? "outline-2 -outline-offset-2 outline-accent" : ""} ${landsOn(day) ? "ring-2 ring-accent ring-inset" : ""}`}
+              data-today={day === today || undefined}
+              className={`flex min-h-16 min-w-0 flex-col gap-0.5 border-b border-l border-line p-0.5 text-left ${names ? "bg-holiday" : weekday(day) >= 5 ? "bg-weekend" : ""} ${day === today ? TODAY_TINT : ""} ${inMonth ? "" : "opacity-40"} ${day === selected ? "outline-2 -outline-offset-2 outline-accent" : ""} ${landsOn(day) ? "ring-2 ring-accent ring-inset" : ""}`}
             >
               {/* The day's number and its weather share the top line. */}
               <span className="flex items-start justify-between gap-1">
                 <span
-                  className={`px-1 text-xs font-semibold tabular-nums lg:text-sm ${day === today ? "rounded-full bg-accent text-accent-ink" : names ? "text-holiday-ink" : weekday(day) >= 5 ? "text-weekend-ink" : ""}`}
+                  className={`px-1 text-xs font-semibold tabular-nums lg:text-sm ${day === today ? TODAY_PILL : names ? "text-holiday-ink" : weekday(day) >= 5 ? "text-weekend-ink" : ""}`}
                 >
                   {Number(day.slice(8))}
                 </span>
