@@ -5,6 +5,7 @@ import type { EntryType } from "../entry-types/model";
 import type { Shown as Entry } from "../entries/model";
 import { EntryIcon, importanceClass } from "./EntryBlock";
 import { entriesOn } from "./MonthGrid";
+import { TODAY_PILL, TODAY_TINT } from "./today";
 
 const SATURDAY = "2026-08-01";
 /** Entry lines a day shows before "+n". */
@@ -97,20 +98,23 @@ export function YearGrid({
                 return (
                   <td
                     key={c}
-                    className={`border-t border-l border-line/60 p-0 align-top ${names ? "bg-holiday" : isWeekendColumn(c) ? "bg-weekend" : ""}`}
+                    className={`border-t border-l border-line/60 p-0 align-top ${names ? "bg-holiday" : isWeekendColumn(c) ? "bg-weekend" : ""} ${day === today ? TODAY_TINT : ""}`}
                   >
                     <Link
                       to={dayLink(day)}
                       data-testid={`year-day-${day}`}
                       title={[...(names ?? []), ...dayEntries.map((e) => e.title)].join("\n")}
                       data-high={high ? "true" : undefined}
+                      data-today={day === today || undefined}
                       className={`flex min-h-10 flex-col gap-px p-0.5 lg:min-h-16 ${day === today ? "outline-2 -outline-offset-2 outline-accent" : ""}`}
                     >
                       <span
                         style={
-                          high ? { backgroundColor: colorOf(high), color: "white" } : undefined
+                          high && day !== today
+                            ? { backgroundColor: colorOf(high), color: "white" }
+                            : undefined
                         }
-                        className={`self-start rounded-sm px-0.5 leading-tight font-semibold tabular-nums ${!high && names ? "text-holiday-ink" : !high && isWeekendColumn(c) ? "text-weekend-ink" : ""}`}
+                        className={`self-start leading-tight font-semibold tabular-nums ${day === today ? TODAY_PILL : `rounded-sm px-0.5 ${!high && names ? "text-holiday-ink" : !high && isWeekendColumn(c) ? "text-weekend-ink" : ""}`}`}
                       >
                         {Number(day.slice(8))}
                       </span>

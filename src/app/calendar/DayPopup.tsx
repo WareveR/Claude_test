@@ -15,6 +15,7 @@ import { ForecastButton } from "../weather/ForecastButton";
 import type { ShownDay } from "../weather/model";
 import { WeatherBadge } from "../weather/WeatherBadge";
 import { importanceClass } from "./EntryBlock";
+import { TODAY_PILL } from "./today";
 
 /**
  * A day picked in the month or year view, over the page: its weather, holidays, notes and Tasks,
@@ -28,6 +29,7 @@ export function DayPopup({
   holidays,
   notes,
   forecast,
+  today = false,
   onClose,
 }: {
   day: PlainDate;
@@ -38,6 +40,8 @@ export function DayPopup({
   holidays?: string[];
   notes?: string[];
   forecast?: ShownDay;
+  /** Whether the day is today, which then stands out as in the views. */
+  today?: boolean;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -65,6 +69,11 @@ export function DayPopup({
           <h2 id="day-popup-title" className="text-lg font-semibold first-letter:uppercase">
             {formatPlainDate(day, locale, { weekday: "long", day: "numeric", month: "long" })}
           </h2>
+          {today && (
+            <span data-testid="day-popup-today" className={`text-sm font-semibold ${TODAY_PILL}`}>
+              {t("views.today")}
+            </span>
+          )}
           {forecast && (
             <ForecastButton>
               <WeatherBadge day={forecast} faded={forecast.faded} rain />

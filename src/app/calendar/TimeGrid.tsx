@@ -19,6 +19,7 @@ import type { Shown as Entry } from "../entries/model";
 import type { Person } from "../persons/model";
 import { EntryBlock } from "./EntryBlock";
 import { NoteLine } from "../layers/NoteLine";
+import { TODAY_PILL, TODAY_TINT } from "./today";
 import { useGridLayers } from "./compact";
 import { isMovable, useEntryDrag } from "./useEntryDrag";
 
@@ -169,20 +170,27 @@ export function TimeGrid({
             {/* One line: the weekday and the day; three letters when the column is narrow. */}
             <div className="truncate whitespace-nowrap first-letter:uppercase">
               {single ? (
-                <span data-testid="day-title">
+                <span
+                  data-testid="day-title"
+                  className={day === today ? "rounded-full bg-accent px-2 text-accent-ink" : ""}
+                >
                   {formatPlainDate(day, locale, { weekday: "long", day: "numeric", month: "long" })}
                 </span>
               ) : (
                 <>
                   <span className="@max-[7.5rem]:hidden">
                     {formatPlainDate(day, locale, { weekday: "short" }).replace(/[.,]/g, "")}{" "}
-                    {formatPlainDate(day, locale, { day: "numeric" })}
+                    <span className={day === today ? TODAY_PILL : ""}>
+                      {formatPlainDate(day, locale, { day: "numeric" })}
+                    </span>
                   </span>
                   <span className="hidden @max-[7.5rem]:inline">
                     {formatPlainDate(day, locale, { weekday: "short" })
                       .replace(".", "")
                       .slice(0, 3)}{" "}
-                    {formatPlainDate(day, locale, { day: "numeric" })}
+                    <span className={day === today ? TODAY_PILL : ""}>
+                      {formatPlainDate(day, locale, { day: "numeric" })}
+                    </span>
                   </span>
                 </>
               )}
@@ -283,7 +291,8 @@ export function TimeGrid({
                 data-testid={`day-column-${day}`}
                 data-drop-date={day}
                 data-drop-hours={heights.join(",")}
-                className={`relative border-l border-line ${holidays.has(day) ? "bg-holiday/40" : isWeekend(day) ? "bg-weekend/40" : ""}`}
+                data-today={day === today || undefined}
+                className={`relative border-l border-line ${holidays.has(day) ? "bg-holiday/40" : isWeekend(day) ? "bg-weekend/40" : ""} ${day === today ? TODAY_TINT : ""}`}
                 onClick={(e) => {
                   if (readOnly || e.target !== e.currentTarget) return;
                   const minutes = minutesAtY(heights, e.nativeEvent.offsetY);

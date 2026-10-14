@@ -17,6 +17,7 @@ import { periodLabel } from "../../core/period-label";
 import { PeriodCurtain } from "./PeriodCurtain";
 import { AGENDA_DAYS } from "../../core/periods";
 import { usePrefetchNeighbours } from "./prefetch";
+import { TODAY_PILL, TODAY_TINT } from "../calendar/today";
 
 export function AgendaView() {
   const { date = "" } = useParams();
@@ -114,15 +115,20 @@ function Agenda({ from }: { from: PlainDate }) {
               month: "long",
             })}
             data-testid={`agenda-day-${day}`}
+            data-today={day === now.today || undefined}
             className="flex flex-col gap-1"
           >
             <h2
-              className={`flex items-baseline gap-2 border-b border-line pb-1 text-sm font-semibold first-letter:uppercase ${day === now.today ? "text-accent" : weekday(day) >= 5 ? "text-weekend-ink" : ""}`}
+              className={`flex items-baseline gap-2 border-b border-line pb-1 text-sm font-semibold first-letter:uppercase ${day === now.today ? `rounded-sm border-l-4 border-l-accent pt-1 pl-2 text-accent ${TODAY_TINT}` : weekday(day) >= 5 ? "text-weekend-ink" : ""}`}
             >
               <span className="first-letter:uppercase">
                 {formatPlainDate(day, locale, { weekday: "long", day: "numeric", month: "long" })}
               </span>
-              {day === now.today && <span className="text-xs">· {t("views.today")}</span>}
+              {day === now.today && (
+                <span data-testid="agenda-today" className={`text-xs ${TODAY_PILL}`}>
+                  {t("views.today")}
+                </span>
+              )}
             </h2>
             {names && <p className="text-sm text-holiday-ink">{names.join(" · ")}</p>}
             <ul className="flex flex-col gap-1">{items.map((item) => item.node)}</ul>

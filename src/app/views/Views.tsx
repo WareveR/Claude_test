@@ -382,6 +382,7 @@ function Month({ first }: { first: PlainDate }) {
           holidays={holidays.get(selected)}
           notes={notes.get(selected)}
           forecast={forecast.get(selected)}
+          today={selected === today}
           onClose={() => navigate(paths.month(first))}
         />
       )}
@@ -477,6 +478,7 @@ function Year({ year }: { year: number }) {
           holidays={holidays.get(pickedDay)}
           notes={notes.get(pickedDay)}
           forecast={forecast.get(pickedDay)}
+          today={pickedDay === today}
           onClose={() => navigate(withDetail(paths.year(date)))}
         />
       )}
