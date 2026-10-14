@@ -112,7 +112,7 @@ export function SuggestionsPage() {
         notes: "",
         debit: false,
         type: "general",
-        personIds: [],
+        personIds: w.draft.personIds ?? [],
       }));
     return [...fromIdeas, ...fromBox]
       .map((item) => ({ ...item, ...edits[item.key] }))
@@ -380,6 +380,16 @@ export function SuggestionsPage() {
                   <div className="text-sm text-muted">
                     {describeItem({ ...w.draft, ...edits[w.key] }, t, locale)}
                   </div>
+                  {(w.draft.personIds ?? []).length > 0 && (
+                    <div className="text-sm text-muted">
+                      {t("suggestions.for", {
+                        who: persons
+                          .filter((p) => w.draft.personIds.includes(p.id))
+                          .map((p) => p.name)
+                          .join(", "),
+                      })}
+                    </div>
+                  )}
                 </div>
                 <button
                   type="button"

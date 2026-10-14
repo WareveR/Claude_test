@@ -21,8 +21,12 @@ test("a date of birth keeps a Birthday with the age on the calendar", async ({ p
   await expect(page.getByLabel("Title")).toBeDisabled();
   await expect(page.getByRole("button", { name: "Delete entry" })).toHaveCount(0);
   await page.getByLabel("Notes").fill("Loves drawing");
+  const saved = page.waitForResponse(
+    (r) => r.url().includes("/api/entries/") && r.request().method() === "PUT",
+  );
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page).not.toHaveURL(/\/entries\//);
+  expect((await saved).ok()).toBe(true);
 
   // Archiving asks whether to keep the Birthday; kept, it becomes Family-wide and editable.
   await page.goto("/settings/family");

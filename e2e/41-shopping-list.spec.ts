@@ -34,8 +34,13 @@ async function setDetails(page: Page, name: string, details: { quantity?: string
   const editor = page.getByTestId("shopping-editor");
   if (details.quantity !== undefined) await editor.getByLabel("Quantity").fill(details.quantity);
   if (details.shop !== undefined) await editor.getByLabel("Shop").fill(details.shop);
+  // The list updates at once; wait for the server too, so a reload finds the change.
+  const saved = page.waitForResponse(
+    (r) => r.url().includes("/api/shopping/items/") && r.request().method() === "PATCH",
+  );
   await editor.getByRole("button", { name: "Save" }).click();
   await expect(editor).toHaveCount(0);
+  expect((await saved).ok()).toBe(true);
 }
 
 test.afterEach(async ({ page }) => {
