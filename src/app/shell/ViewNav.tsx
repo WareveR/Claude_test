@@ -20,6 +20,8 @@ import { WeekCompactButton } from "../calendar/WeekCompactButton";
 import { TasksButton } from "../tasks/TasksButton";
 import { MonthMotif, useMonthOnScreen } from "../month-theme";
 import { paths } from "../paths";
+import { focusDay } from "../../core/periods";
+import { focusedDay } from "../views/focus";
 import { useSwipe } from "../ui/useSwipe";
 
 const VIEWS = ["day", "week", "month", "year", "agenda", "tasks", "shopping"] as const;
@@ -60,6 +62,9 @@ export function ViewNav({
     view === "week" || view === "month" || view === "year" || view === "agenda"
       ? paths[view](today)
       : paths.day(today);
+  // Another view opens on the day in focus, kept from view to view while this one shows it.
+  const period = (["day", "week", "month", "year", "agenda"] as const).find((p) => p === view);
+  const target = period ? focusDay(period, date, focusedDay(), today) : (focusedDay() ?? date);
   const month = useMonthOnScreen();
   // Sticky, so a long stacked page (a phone, a big zoom) can always move on or switch view;
   // above the grid's now line, so the Person Filter panel opens over it.
@@ -72,7 +77,7 @@ export function ViewNav({
         {VIEWS.map((view) => (
           <NavLink
             key={view}
-            to={view === "tasks" || view === "shopping" ? paths[view]() : paths[view](date)}
+            to={view === "tasks" || view === "shopping" ? paths[view]() : paths[view](target)}
             // Where space is short (a phone, or one on its side) the names shrink to a letter or an
             // icon; the full name stays the link's name.
             aria-label={t(`views.${view}`)}
