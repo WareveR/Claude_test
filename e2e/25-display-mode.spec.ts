@@ -107,15 +107,14 @@ test("the Wall view shows the board", async ({ page }) => {
   await expect(board.locator('[data-testid^="week-weather-"]')).toHaveCount(0);
   await board.getByRole("button", { name: "Show weather" }).click();
   await expect(board.getByTestId(`week-weather-${lisbonDate(0)}`)).toBeVisible();
-  // The week's Tasks are hidden, the button under it says how many, and shows them when pressed.
-  await expect(board.getByTestId("tasks-accordion")).toHaveCount(0);
-  await expect(board.getByTestId("week-tasks-count")).not.toHaveText("0");
-  await board
-    .getByRole("button", { name: /^Show the \d+ hidden tasks$|^Show the hidden task$/ })
-    .click();
-  await expect(board.getByTestId("tasks-accordion")).toContainText("Water the plants");
-  await board.getByRole("button", { name: "Hide tasks" }).click();
-  await expect(board.getByTestId("tasks-accordion")).toHaveCount(0);
+  // The Tasks button says how many the week has and shows them in place of the grid.
+  await expect(board.getByTestId("period-tasks-count")).not.toHaveText("0");
+  await board.getByRole("button", { name: /^Show the period's (\d+ )?tasks?$/ }).click();
+  await expect(board.getByTestId("period-tasks-list")).toContainText("Water the plants");
+  await expect(page.getByTestId("time-scroller")).toBeHidden();
+  await board.getByRole("button", { name: "Show the calendar" }).click();
+  await expect(board.getByTestId("period-tasks-list")).toHaveCount(0);
+  await expect(page.getByTestId("time-scroller")).toBeVisible();
 
   // No microphone, no Settings.
   await expect(page.getByRole("button", { name: "Voice Entry" })).toHaveCount(0);
@@ -222,7 +221,7 @@ test("Back from an Entry returns to the week the board showed", async ({ page })
   await expect(board.getByTestId("back-to-today")).toBeVisible();
 });
 
-test("the Wall and Summary switches are exclusive and both off return to the page before", async ({
+test("the Summary is the Wall's own, and the Wall switched off returns to the page before", async ({
   page,
 }) => {
   await signIn(page);
@@ -231,13 +230,18 @@ test("the Wall and Summary switches are exclusive and both off return to the pag
   const before = page.url();
   const header = page.getByRole("banner");
   const wall = header.getByRole("button", { name: "Wall" });
-  const summary = header.getByRole("button", { name: "Summary" });
+  // Outside the Wall there is no Summary switch.
+  await expect(header.getByRole("button", { name: "Summary" })).toHaveCount(0);
 
-  // Summary on: its own screen, with today's weather and what's coming up.
-  await summary.click();
-  await expect(page).toHaveURL(/\/summary$/);
-  await expect(summary).toHaveAttribute("aria-pressed", "true");
+  // On the Wall the Summary is the board's: in place of the seven days, with what's coming up.
+  await wall.click();
+  await expect(page).toHaveURL(/\/display$/);
+  await expect(wall).toHaveAttribute("aria-pressed", "true");
+  const boardSummary = page.getByTestId("display-board").getByRole("button", { name: "Summary" });
+  await boardSummary.click();
+  await expect(boardSummary).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByTestId("summary").getByTestId("coming-up")).toBeVisible();
+  await expect(page.getByTestId("time-scroller")).toBeHidden();
   // What is left to do is on the right of the Briefing.
   const briefingBox = await page.getByTestId("coming-up").boundingBox();
   const tasksBox = await page.getByTestId("coming-up-tasks").boundingBox();
@@ -247,31 +251,11 @@ test("the Wall and Summary switches are exclusive and both off return to the pag
   await box.check();
   await expect(box).toBeChecked();
 
-  // Wall on turns the Summary off; on the wall the Summary is the board's, and stays on the wall.
-  await wall.click();
-  await expect(page).toHaveURL(/\/display$/);
-  await expect(wall).toHaveAttribute("aria-pressed", "true");
-  await expect(summary).toHaveCount(0);
-  const boardSummary = page.getByTestId("display-board").getByRole("button", { name: "Summary" });
-  await boardSummary.click();
-  await expect(boardSummary).toHaveAttribute("aria-pressed", "true");
-  await expect(page.getByTestId("summary").getByTestId("coming-up")).toBeVisible();
-  await expect(page.getByTestId("time-scroller")).toBeHidden();
   await boardSummary.click();
   await expect(page.getByTestId("time-scroller")).toBeVisible();
 
   // Wall off: back to the week from before.
   await wall.click();
-  await expect(page).toHaveURL(before);
-
-  // Settings opened from the Summary close back to it, and the Summary still returns to the week.
-  await summary.click();
-  await expect(page).toHaveURL(/\/summary$/);
-  await header.getByRole("link", { name: "Settings" }).click();
-  await expect(page).toHaveURL(/\/settings/);
-  await header.getByRole("link", { name: "Close Settings" }).click();
-  await expect(page).toHaveURL(/\/summary$/);
-  await summary.click();
   await expect(page).toHaveURL(before);
 
   // The same from the wall, after a reload too.

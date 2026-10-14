@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ListChecks, Plus, RotateCcw } from "lucide-react";
+import { LayoutTemplate, Plus, RotateCcw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { templateText } from "../../core/checklist-template";
@@ -40,7 +40,7 @@ export function TemplatesSection() {
                 to={`/settings/checklist-templates/${template.id}`}
                 className="flex items-center gap-3 px-3 py-2"
               >
-                <ListChecks aria-hidden size={20} strokeWidth={1.75} color={LIST_COLOR} />
+                <LayoutTemplate aria-hidden size={20} strokeWidth={1.75} color={LIST_COLOR} />
                 <span className="min-w-0 flex-1 break-words">{name}</span>
                 <span className="text-sm text-muted">
                   {t("checklistTemplates.itemCount", { count: items.length })}

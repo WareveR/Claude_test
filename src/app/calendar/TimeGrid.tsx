@@ -46,8 +46,6 @@ export type TimeGridProps = {
   corner?: ReactNode;
   /** Without the day notes and holiday names, for more hours; holidays keep their colour. */
   plain?: boolean;
-  /** One day only: buttons at the right of its header row, which then shows the whole date. */
-  headerActions?: ReactNode;
   /** The Family's Sleeping Hours, shown shorter and shaded unless something is on. */
   sleepHours?: SleepHours;
 };
@@ -87,7 +85,6 @@ export function TimeGrid({
   readOnly = false,
   corner,
   plain = false,
-  headerActions,
   sleepHours = DEFAULT_SLEEP_HOURS,
 }: TimeGridProps) {
   const navigate = useNavigate();
@@ -148,23 +145,18 @@ export function TimeGrid({
   const barRows = Math.max(1, ...bars.map((b) => b.row + 1));
   // Holiday names take their own first line of the all-day row, so bars start below it.
   const holidayRows = !plain && days.some((day) => holidays.has(day)) ? 1 : 0;
-  // The day view: the whole date ("Friday 23 October") with the actions at the row's right.
-  const single = days.length === 1 && headerActions !== undefined;
+  // The day view: the whole date ("Friday 23 October").
+  const single = days.length === 1;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-surface" {...drag.zone}>
       <div className="relative grid border-b border-line" style={{ gridTemplateColumns: columns }}>
-        {single && (
-          <div className="absolute top-1 right-2 z-30" data-testid="day-actions">
-            {headerActions}
-          </div>
-        )}
         <div className="flex items-start justify-center pt-1">{corner}</div>
         {days.map((day) => (
           <div
             key={day}
             data-drop-date={day}
-            className={`@container min-w-0 py-1.5 text-sm font-bold lg:text-base ${single ? "min-h-11 pr-36 pl-2 text-left" : "text-center"} ${holidays.has(day) ? "bg-holiday text-holiday-ink" : isWeekend(day) ? "bg-weekend text-weekend-ink" : ""} ${day === today ? "text-accent" : ""}`}
+            className={`@container min-w-0 py-1.5 text-sm font-bold lg:text-base ${single ? "px-2 text-left" : "text-center"} ${holidays.has(day) ? "bg-holiday text-holiday-ink" : isWeekend(day) ? "bg-weekend text-weekend-ink" : ""} ${day === today ? "text-accent" : ""}`}
           >
             {/* One line: the weekday and the day; three letters when the column is narrow. */}
             <div className="truncate whitespace-nowrap first-letter:uppercase">

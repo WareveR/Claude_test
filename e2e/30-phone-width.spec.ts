@@ -11,11 +11,8 @@ test("on a phone no view is wider than the screen", async ({ page }) => {
 
   await page.goto("/");
   for (const view of ["Day", "Week", "Month", "Year", "Agenda", "Tasks", "Shopping", "Summary"]) {
-    await (
-      view === "Summary"
-        ? page.getByRole("banner").getByRole("button", { name: view })
-        : page.getByRole("link", { name: view, exact: true })
-    ).click();
+    if (view === "Summary") await page.goto("/summary");
+    else await page.getByRole("link", { name: view, exact: true }).click();
     await page.waitForLoadState("networkidle");
     const sideways = await page.evaluate(
       "(() => { window.scrollTo(1000, 0); const x = window.scrollX; window.scrollTo(0, 0); return x; })()",

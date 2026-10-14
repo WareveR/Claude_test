@@ -115,10 +115,9 @@
     "openDay": "Abrir o dia",
     "hideWeather": "Esconder meteorologia",
     "showWeather": "Mostrar meteorologia",
-    "showTasks_other": "Mostrar as {{count}} tarefas escondidas",
-    "showTasks_one": "Mostrar a tarefa escondida",
-    "showTasks_zero": "Mostrar tarefas",
-    "hideTasks": "Esconder tarefas",
+    "showTasks_other": "Mostrar as {{count}} tarefas do período",
+    "showTasks_one": "Mostrar a tarefa do período",
+    "showTasks_zero": "Mostrar as tarefas do período",
     "showHours": "Mostrar o meteo por hora",
     "hideHours": "Esconder o meteo por hora",
     "noHours": "Não há meteo por hora guardado para este dia.",
@@ -127,7 +126,8 @@
       "both": "Dia inteiro e com hora",
       "allDay": "Só dia inteiro",
       "timed": "Só com hora"
-    }
+    },
+    "showCalendar": "Mostrar o calendário"
   },
   "settings": {
     "title": "Definições",
@@ -406,7 +406,8 @@
     "withItems": "Com itens",
     "withItemsHint": "Uma tarefa pode ter uma lista de itens, e cada item os seus próprios itens.",
     "withItemsOnHint": "Ao gravar abre a página dela para juntar os itens. O dia passa a prazo; a hora, a importância, as notas e o Privado não ficam.",
-    "noDueDate": "Sem data"
+    "noDueDate": "Sem data",
+    "nonePeriod": "Sem tarefas neste período."
   },
   "checklists": {
     "new": "Nova tarefa com itens",
