@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { DAYS_ROW } from "./bands";
 import { useNavigate } from "react-router";
 import { daySpan, lastDate } from "../../core/entry-time";
 import { layoutBars, layoutLanes } from "../../core/layout";
@@ -49,6 +50,8 @@ export type TimeGridProps = {
   plain?: boolean;
   /** The Family's Sleeping Hours, shown shorter and shaded unless something is on. */
   sleepHours?: SleepHours;
+  /** Shown right under the days' row, above the All-day Entries: the content's first line. */
+  underHeader?: ReactNode;
 };
 
 function isWeekend(date: PlainDate) {
@@ -87,6 +90,7 @@ export function TimeGrid({
   corner,
   plain = false,
   sleepHours = DEFAULT_SLEEP_HOURS,
+  underHeader,
 }: TimeGridProps) {
   const navigate = useNavigate();
   const scroller = useRef<HTMLDivElement>(null);
@@ -157,7 +161,7 @@ export function TimeGrid({
           <div
             key={day}
             data-drop-date={day}
-            className={`@container min-w-0 py-1.5 text-sm font-bold lg:text-base ${single ? "px-2 text-left" : "text-center"} ${holidays.has(day) ? "bg-holiday text-holiday-ink" : isWeekend(day) ? "bg-weekend text-weekend-ink" : ""} ${day === today ? "text-accent" : ""}`}
+            className={`@container min-w-0 ${DAYS_ROW} ${single ? "px-2 text-left" : "text-center"} ${holidays.has(day) ? "bg-holiday text-holiday-ink" : isWeekend(day) ? "bg-weekend text-weekend-ink" : ""} ${day === today ? "text-accent" : ""}`}
           >
             {/* One line: the weekday and the day; three letters when the column is narrow. */}
             <div className="truncate whitespace-nowrap first-letter:uppercase">
@@ -202,6 +206,7 @@ export function TimeGrid({
           </div>
         ))}
       </div>
+      {underHeader}
       <div
         data-testid="all-day-row"
         className={`grid gap-0.5 border-b border-line py-1 ${showAllDay ? "" : "hidden"} ${showTimed ? "" : "min-h-0 flex-1 content-start overflow-y-auto"}`}

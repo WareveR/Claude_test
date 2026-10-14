@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { DAYS_ROW } from "./bands";
 import { Link } from "react-router";
 import { lastDate } from "../../core/entry-time";
 import { monthWeeks } from "../../core/layout";
@@ -88,11 +89,11 @@ export function MonthGrid({
   const { ref: gridRef, lines: fitLines } = useLinesThatFit(weeks.length);
   return (
     <div className="flex flex-1 flex-col bg-surface lg:min-h-0" {...drag.zone}>
-      <div className="grid grid-cols-[repeat(7,minmax(0,1fr))] border-b border-line text-center text-xs font-semibold lg:text-sm">
+      <div className="grid grid-cols-[repeat(7,minmax(0,1fr))] border-b border-line text-center">
         {weeks[0].map((day) => (
           <div
             key={day}
-            className={`py-1 first-letter:uppercase ${weekday(day) >= 5 ? "bg-weekend text-weekend-ink" : ""}`}
+            className={`${DAYS_ROW} first-letter:uppercase ${weekday(day) >= 5 ? "bg-weekend text-weekend-ink" : ""}`}
           >
             {formatPlainDate(day, locale, { weekday: "short" })}
           </div>

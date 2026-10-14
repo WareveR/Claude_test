@@ -111,25 +111,30 @@ export function DayView() {
         tasks={{ from: date, to: date }}
       />
       <ViewBody>
-        {showHours && (
-          <div className="pb-2">
-            {hours.length > 0 ? (
-              <HourlyStrip hours={hours} lead={<SunTimes day={date} />} />
-            ) : (
-              <div className="flex items-center gap-3 px-4">
-                <SunTimes day={date} />
-                <p data-testid="no-hours" className="text-sm text-muted">
-                  {t("views.noHours")}
-                </p>
-              </div>
-            )}
-          </div>
-        )}
         {tasksShown ? (
           <PeriodTasksList from={date} to={date} />
         ) : (
           <div className={GRID_BOX.lg}>
-            <CalendarGrid days={[date]} />
+            <CalendarGrid
+              days={[date]}
+              // The hour by hour weather is the day's content, under the day's own row.
+              underHeader={
+                showHours && (
+                  <div className="border-b border-line py-2">
+                    {hours.length > 0 ? (
+                      <HourlyStrip hours={hours} lead={<SunTimes day={date} />} />
+                    ) : (
+                      <div className="flex items-center gap-3 px-4">
+                        <SunTimes day={date} />
+                        <p data-testid="no-hours" className="text-sm text-muted">
+                          {t("views.noHours")}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )
+              }
+            />
           </div>
         )}
       </ViewBody>
@@ -281,12 +286,14 @@ export function CalendarGrid({
   readOnly,
   corner,
   plain,
+  underHeader,
 }: {
   days: PlainDate[];
   dayExtra?: (day: PlainDate) => ReactNode;
   readOnly?: boolean;
   corner?: ReactNode;
   plain?: boolean;
+  underHeader?: ReactNode;
 }) {
   const { family } = useSignedIn();
   const locale = useLocale();
@@ -311,6 +318,7 @@ export function CalendarGrid({
       corner={corner}
       plain={plain}
       sleepHours={family.sleepHours}
+      underHeader={underHeader}
     />
   );
 }
