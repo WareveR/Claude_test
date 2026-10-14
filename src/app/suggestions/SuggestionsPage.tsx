@@ -11,6 +11,7 @@ import {
   draftsFor,
   IDEAS,
   MAX_TEXT,
+  PERSONAL_IDEAS,
   sortPhrases,
   themeOf,
   type Answers,
@@ -26,12 +27,15 @@ import { api } from "../api";
 import { useEntryTypes } from "../entry-types/model";
 import { useSignedIn } from "../family";
 import { paths } from "../paths";
+import { usePersons } from "../persons/model";
+import { PersonAvatar } from "../persons/PersonAvatar";
 import { addShoppingItems, refreshShopping, type ShoppingItem } from "../shopping/model";
 import { useTasks } from "../tasks/model";
 import { Field } from "../screens/form";
 import { BUTTON, BUTTON_PRIMARY } from "../ui/button";
+import { Chip } from "../ui/Toggle";
 import { canListen, listenOnce } from "../voice/speech";
-import { describeItem, itemOf, requestOf, type Edit, type Item } from "./model";
+import { copyFor, describeItem, itemOf, perPerson, requestOf, type Edit, type Item } from "./model";
 import { ReviewDialog } from "./ReviewDialog";
 
 const INPUT = "rounded-md border border-line bg-surface px-3 py-2 text-base text-ink";
@@ -39,6 +43,8 @@ const INPUT = "rounded-md border border-line bg-surface px-3 py-2 text-base text
 type Written = { key: string; keep: boolean; draft: WrittenDraft };
 type Created = { route: "entries" | "tasks" | "shopping/items"; id: string };
 type ToBuy = { key: string; name: string; keep: boolean };
+/** A line copied in the review for another Person ("Also for…"). */
+type Copy = { of: string; personId: string; n: number };
 
 /**
  * Suggestions: write or say what repeats in the Family's life, or open a theme ("car", "the
@@ -53,6 +59,7 @@ export function SuggestionsPage() {
   const queryClient = useQueryClient();
   const types = useEntryTypes().data;
   const general = types?.find((type) => type.builtinKey === "general");
+  const persons = (usePersons().data ?? []).filter((p) => !p.archived);
 
   const [text, setText] = useState("");
   const [areas, setAreas] = useState<Area[]>([]);
@@ -69,6 +76,9 @@ export function SuggestionsPage() {
   /** The names just put on the Shopping List, for the banner. */
   const [bought, setBought] = useState<string[]>([]);
   const [edits, setEdits] = useState<Record<string, Edit>>({});
+  /** Who each personal idea is for; none is the whole Family. */
+  const [who, setWho] = useState<Record<string, string[]>>({});
+  const [copies, setCopies] = useState<Copy[]>([]);
   const [reading, setReading] = useState(false);
   const [listening, setListening] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -88,14 +98,33 @@ export function SuggestionsPage() {
 
   const draftsOf = (idea: Idea) => draftsFor(idea, payment[idea.id] ?? "manual", answers, today);
   const items: Item[] = (() => {
-    const fromIdeas = IDEAS.filter((idea) => picked[idea.id])
-      .flatMap((idea) => draftsFor(idea, payment[idea.id] ?? "manual", answers, today))
-      .map((draft) => itemOf(draft, t));
+    const fromIdeas = IDEAS.filter((idea) => picked[idea.id]).flatMap((idea) =>
+      perPerson(
+        draftsFor(idea, payment[idea.id] ?? "manual", answers, today).map((d) => itemOf(d, t)),
+        PERSONAL_IDEAS.has(idea.id) ? (who[idea.id] ?? []) : [],
+      ),
+    );
     const fromBox = written
       .filter((w) => w.keep)
-      .map((w) => ({ ...w.draft, key: w.key, notes: "", debit: false, type: "general" as const }));
+      .map((w): Item => ({
+        ...w.draft,
+        key: w.key,
+        notes: "",
+        debit: false,
+        type: "general",
+        personIds: [],
+      }));
     return [...fromIdeas, ...fromBox]
       .map((item) => ({ ...item, ...edits[item.key] }))
+      .flatMap((item) => [
+        item,
+        ...copies
+          .filter((c) => c.of === item.key)
+          .map((c) => {
+            const copy = copyFor(item, c.personId, c.n);
+            return { ...copy, ...edits[copy.key] };
+          }),
+      ])
       .sort((a, b) => a.date.localeCompare(b.date));
   })();
 
@@ -190,6 +219,8 @@ export function SuggestionsPage() {
       setWritten([]);
       setToBuy([]);
       setEdits({});
+      setWho({});
+      setCopies([]);
       setReviewing(false);
       setBought(added);
       setCreated(done.length > 0 ? done : null);
@@ -442,6 +473,36 @@ export function SuggestionsPage() {
                       ))}
                     </div>
                   )}
+                  {on && PERSONAL_IDEAS.has(idea.id) && persons.length > 0 && (
+                    <fieldset className="ml-8 flex flex-col gap-1">
+                      <legend className="mb-1 text-sm font-medium">
+                        {t("suggestions.forWhom")}
+                      </legend>
+                      <div className="flex flex-wrap gap-2">
+                        {persons.map((p) => {
+                          const ids = who[idea.id] ?? [];
+                          return (
+                            <Chip
+                              key={p.id}
+                              checked={ids.includes(p.id)}
+                              onChange={(e) =>
+                                setWho((w) => ({
+                                  ...w,
+                                  [idea.id]: e.target.checked
+                                    ? [...ids, p.id]
+                                    : ids.filter((id) => id !== p.id),
+                                }))
+                              }
+                            >
+                              <PersonAvatar person={p} size={20} />
+                              {p.name}
+                            </Chip>
+                          );
+                        })}
+                      </div>
+                      <p className="text-xs text-muted">{t("suggestions.forWhomHint")}</p>
+                    </fieldset>
+                  )}
                   {on && idea.rule.type === "expiry" && (
                     <div className="ml-8">
                       <Field label={t("suggestions.questions.expiry")}>
@@ -499,10 +560,23 @@ export function SuggestionsPage() {
       {reviewing && (
         <ReviewDialog
           items={items}
+          persons={persons}
           shopping={buying}
           busy={creating || !general}
           error={creating ? null : message}
           onEdit={(key, edit) => setEdits((e) => ({ ...e, [key]: { ...e[key], ...edit } }))}
+          onCopy={(key, personId) =>
+            setCopies((list) => [
+              ...list,
+              // A copy of a copy is another copy of the same line.
+              {
+                of: key.replace(/\+\d+$/, ""),
+                personId,
+                n: Math.max(0, ...list.map((c) => c.n)) + 1,
+              },
+            ])
+          }
+          onRemoveCopy={(key) => setCopies((list) => list.filter((c) => `${c.of}+${c.n}` !== key))}
           onCreate={() => void create()}
           onClose={() => setReviewing(false)}
         />

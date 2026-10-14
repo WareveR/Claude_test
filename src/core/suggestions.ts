@@ -113,6 +113,31 @@ export const IDEAS: Idea[] = [
   { id: "cleaning", area: "routine", kind: "task", rule: weekly([5]) },
 ];
 
+/**
+ * Ideas that are each Person's own (a gym, a dentist, an ID card): ticking one asks who it is
+ * for, and each Person picked gets a line of their own, since their days and dates differ.
+ */
+export const PERSONAL_IDEAS = new Set([
+  "gymFees",
+  "idCard",
+  "drivingLicence",
+  "passport",
+  "dentist",
+  "gp",
+  "eyes",
+  "bloodTests",
+  "vaccines",
+  "enrolment",
+  "textbooks",
+  "schoolSupplies",
+  "activities",
+  "gym",
+  "swimming",
+  "catechism",
+  "music",
+  "scouts",
+]);
+
 /** The built-in Entry Type an area's Entries take, so they get its colour and icon. */
 const AREA_TYPES: Record<Area, BuiltInType> = {
   car: "appointment",

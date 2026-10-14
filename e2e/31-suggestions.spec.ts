@@ -157,3 +157,92 @@ test("the light bulb also closes Suggestions, back to the view it left", async (
   await page.getByRole("link", { name: "Close Suggestions" }).click();
   await expect(page).toHaveURL(/\/month\/2026-11$/);
 });
+
+test("personal ideas ask who they are for, and a line can be copied for someone else", async ({
+  page,
+}) => {
+  await signIn(page);
+  const make = async (name: string) =>
+    (
+      (await (
+        await page.request.post("/api/persons", {
+          headers: { Origin: "http://localhost:4173" },
+          data: { name, color: "#bbdefb", dateOfBirth: null, nicknames: [] },
+        })
+      ).json()) as {
+        id: string;
+      }
+    ).id;
+  const rui = await make("Rui Sugestão");
+  const rita = await make("Rita Sugestão");
+
+  await page.goto("/suggestions");
+  await page.getByRole("button", { name: "+ Weekly routine" }).click();
+  await page.getByLabel("Gym").check();
+  const gym = page.getByRole("listitem").filter({ hasText: "Gym" });
+  await gym.getByText("Rui Sugestão").click();
+  await gym.getByText("Rita Sugestão").click();
+  // A chore is the whole Family's: it asks nobody.
+  await page.getByLabel("Water the plants").check();
+  await expect(
+    page.getByRole("listitem").filter({ hasText: "Water the plants" }).getByText("Who for"),
+  ).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Review and create" }).click();
+  const dialog = page.getByRole("dialog", { name: /About to create/ });
+  const lines = dialog.getByRole("listitem");
+  await expect(lines.filter({ hasText: "Gym" })).toHaveCount(2);
+  await expect(lines.filter({ hasText: "For Rui Sugestão" })).toHaveCount(1);
+  await expect(lines.filter({ hasText: "For Rita Sugestão" })).toHaveCount(1);
+  await expect(
+    lines.filter({ hasText: "Water the plants" }).getByText("For the family"),
+  ).toBeVisible();
+
+  // Rita goes at another time; Rui also waters the plants, on his own day.
+  const ritaGym = lines.filter({ hasText: "For Rita Sugestão" });
+  await ritaGym.getByRole("button", { name: "Change Gym" }).click();
+  await ritaGym.getByLabel("Time (optional)").fill("07:30");
+  await ritaGym.getByRole("button", { name: "Done" }).click();
+  await expect(ritaGym.getByText(/07:30/)).toBeVisible();
+  const plants = lines.filter({ hasText: "Water the plants" }).first();
+  await plants.getByRole("button", { name: "Change Water the plants" }).click();
+  await plants.getByLabel("Also for…").selectOption({ label: "Rui Sugestão" });
+  await expect(lines.filter({ hasText: "Water the plants" })).toHaveCount(2);
+  await expect(
+    lines.filter({ hasText: "Water the plants" }).filter({ hasText: "For Rui Sugestão" }),
+  ).toHaveCount(1);
+
+  await dialog.getByRole("button", { name: /^Create \d+$/ }).click();
+  const done = page.getByRole("status").filter({ hasText: /Created \d+ Tasks and Entries/ });
+  await expect(done).toBeVisible();
+
+  const entries = (await (
+    await page.request.get("/api/entries?from=2026-01-01&to=2031-12-31")
+  ).json()) as { title: string; personIds: string[]; time: { startTime?: string } }[];
+  const gyms = entries.filter((e) => e.title === "Gym" && e.personIds.length > 0);
+  expect(gyms.map((e) => [e.personIds, e.time.startTime]).sort()).toEqual(
+    [
+      [[rita], "07:30"],
+      [[rui], "19:00"],
+    ].sort(),
+  );
+  const tasks = (await (await page.request.get("/api/tasks")).json()) as {
+    title: string;
+    personIds: string[];
+  }[];
+  expect(
+    tasks
+      .filter((x) => x.title === "Water the plants")
+      .map((x) => x.personIds)
+      .sort(),
+  ).toEqual([[], [rui]]);
+
+  await done.getByRole("button", { name: "Undo" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Undone" })).toBeVisible();
+  for (const id of [rui, rita]) {
+    await page.request.patch(`/api/persons/${id}`, {
+      headers: { Origin: "http://localhost:4173" },
+      data: { archived: true },
+    });
+  }
+});

@@ -921,7 +921,15 @@
       "iuc": "Paga-se no Portal das Finanças.",
       "imi": "Paga-se no Portal das Finanças."
     },
-    "time": "Hora (opcional)"
+    "time": "Hora (opcional)",
+    "forWhom": "Para quem",
+    "forWhomHint": "Cada pessoa fica com a sua linha, para lhe dar o seu dia e hora. Sem ninguém marcado, é para a família.",
+    "family": "a família",
+    "for": "Para {{who}}",
+    "togetherHint": "Várias pessoas na mesma linha fazem uma só entrada, para quando vão juntas.",
+    "alsoFor": "Também para…",
+    "alsoForPick": "Escolher pessoa",
+    "removeCopy": "Remover esta cópia"
   },
   "preparation": {
     "title": "Preparação",

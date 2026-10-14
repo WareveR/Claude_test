@@ -4,31 +4,43 @@ import { useTranslation } from "react-i18next";
 import { formatLocale } from "../../core/languages";
 import { RepetitionFields } from "../entries/RepetitionFields";
 import { useSignedIn } from "../family";
+import type { Person } from "../persons/model";
+import { PersonAvatar } from "../persons/PersonAvatar";
 import { Field } from "../screens/form";
-import { BUTTON, BUTTON_PRIMARY } from "../ui/button";
+import { BUTTON, BUTTON_DANGER, BUTTON_PRIMARY } from "../ui/button";
+import { Chip } from "../ui/Toggle";
 import { describeItem, type Edit, type Item } from "./model";
 
 const INPUT = "rounded-md border border-line bg-surface px-3 py-2 text-base text-ink";
 
 /**
- * Everything about to be created, soonest first. Each one's first date, time and Repetition can be
- * changed here ("every week" to "every month"); nothing is saved until "Create".
+ * Everything about to be created, soonest first. Each one's first date, time, Repetition and
+ * Persons can be changed here ("every week" to "every month"), and a line can be copied for
+ * another Person to give them their own day and time; nothing is saved until "Create".
  */
 export function ReviewDialog({
   items,
+  persons,
   shopping,
   busy,
   error,
   onEdit,
+  onCopy,
+  onRemoveCopy,
   onCreate,
   onClose,
 }: {
   items: Item[];
+  /** The Persons a line can be for; none means the whole Family. */
+  persons: Person[];
   /** Names to put on the Shopping List. */
   shopping: string[];
   busy: boolean;
   error: string | null;
   onEdit: (key: string, edit: Edit) => void;
+  /** Adds a copy of the line for this Person. */
+  onCopy: (key: string, personId: string) => void;
+  onRemoveCopy: (key: string) => void;
   onCreate: () => void;
   onClose: () => void;
 }) {
@@ -40,9 +52,19 @@ export function ReviewDialog({
   const [order] = useState(() => items.map((item) => item.key));
   const place = (key: string) => {
     const i = order.indexOf(key);
-    return i === -1 ? order.length : i;
+    if (i !== -1) return i;
+    // A copy made here sits right under the line it copies.
+    const base = order.indexOf(key.replace(/\+\d+$/, ""));
+    return base === -1 ? order.length : base + 0.5;
   };
   const count = items.length + shopping.length;
+  const forWhom = (item: Item) =>
+    item.personIds.length === 0
+      ? t("suggestions.family")
+      : persons
+          .filter((p) => item.personIds.includes(p.id))
+          .map((p) => p.name)
+          .join(", ");
   const shown = [...items].sort((a, b) => place(a.key) - place(b.key));
 
   useEffect(() => {
@@ -84,6 +106,11 @@ export function ReviewDialog({
                 <div className="min-w-0 flex-1">
                   <div className="font-medium">{item.title}</div>
                   <div className="text-sm text-muted">{describeItem(item, t, locale)}</div>
+                  {persons.length > 0 && (
+                    <div className="text-sm text-muted" data-testid="review-for">
+                      {t("suggestions.for", { who: forWhom(item) })}
+                    </div>
+                  )}
                 </div>
                 <button
                   type="button"
@@ -122,6 +149,60 @@ export function ReviewDialog({
                     start={item.date}
                     onChange={(repetition) => onEdit(item.key, { repetition })}
                   />
+                  {persons.length > 0 && (
+                    <fieldset className="flex flex-col gap-1 text-sm">
+                      <legend className="mb-1 font-medium">{t("suggestions.forWhom")}</legend>
+                      <div className="flex flex-wrap gap-2">
+                        {persons.map((p) => (
+                          <Chip
+                            key={p.id}
+                            checked={item.personIds.includes(p.id)}
+                            onChange={(e) =>
+                              onEdit(item.key, {
+                                personIds: e.target.checked
+                                  ? [...item.personIds, p.id]
+                                  : item.personIds.filter((id) => id !== p.id),
+                              })
+                            }
+                          >
+                            <PersonAvatar person={p} size={20} />
+                            {p.name}
+                          </Chip>
+                        ))}
+                      </div>
+                      <p className="text-xs text-muted">{t("suggestions.togetherHint")}</p>
+                    </fieldset>
+                  )}
+                  {persons.length > 0 && (
+                    <div className="flex flex-wrap items-end gap-2">
+                      <Field label={t("suggestions.alsoFor")}>
+                        <select
+                          className={INPUT}
+                          value=""
+                          onChange={(e) => e.target.value && onCopy(item.key, e.target.value)}
+                        >
+                          <option value="">{t("suggestions.alsoForPick")}</option>
+                          {persons.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.name}
+                            </option>
+                          ))}
+                        </select>
+                      </Field>
+                      {/\+\d+$/.test(item.key) && (
+                        <button
+                          type="button"
+                          className={BUTTON_DANGER}
+                          onClick={() => {
+                            setOpen(null);
+                            onRemoveCopy(item.key);
+                          }}
+                        >
+                          {t("suggestions.removeCopy")}
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </li>
