@@ -105,6 +105,28 @@
   color-scheme: light;
 }
 
+/* Month: the light theme in the colours of the month being looked at, with a faint drawing of the
+   season (snow, hearts, blossom…) in the header and on the page. The month's colours are set on
+   <html> by useMonthTheme. */
+:root[data-theme="month"] {
+  --bg: #f4f2ec;
+  --frame: #fffdf8;
+  --surface: #ffffff;
+  --ink: #1b2420;
+  --muted: #56605a;
+  --line: #d9d6ca;
+  --accent: #1f7a5a;
+  --accent-ink: #ffffff;
+  --header: #1f6f53;
+  --header-ink: #ffffff;
+  --weekend: #dde9f8;
+  --weekend-ink: #1d4f80;
+  --holiday: #fdeadb;
+  --holiday-ink: #9a4a16;
+  --overdue: #b3261e;
+  color-scheme: light;
+}
+
 @theme inline {
   --color-bg: var(--bg);
   --color-frame: var(--frame);
