@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { birthdayAge, birthdayTitle } from "../../core/birthday";
 import { occurrencesOf, type OccurrenceException } from "../../core/occurrences";
@@ -7,7 +7,7 @@ import type { Importance } from "../../core/entry-type";
 import { moveStart } from "../../core/entry-time";
 import { addDays, daysBetween, type PlainDate } from "../../core/plain-date";
 import type { Repetition } from "../../core/repetition";
-import { api } from "../api";
+import { api, RANGE_STALE_TIME } from "../api";
 import { fromList } from "../offline/from-list";
 import type { Scope } from "./ScopeDialog";
 
@@ -45,12 +45,18 @@ export type Shown = Entry & {
 /** The query that holds the Entries overlapping a window. */
 export const entriesKey = (from: PlainDate, to: PlainDate) => ["entries", from, to];
 
-/** Entries overlapping the window, both ends included. */
-export function useEntries(from: PlainDate, to: PlainDate) {
-  return useQuery({
+/** The request for the Entries overlapping a window: shared by the views and their prefetching. */
+export function entriesQuery(from: PlainDate, to: PlainDate) {
+  return queryOptions({
     queryKey: entriesKey(from, to),
     queryFn: () => api<Entry[]>(`/entries?from=${from}&to=${to}`),
+    staleTime: RANGE_STALE_TIME,
   });
+}
+
+/** Entries overlapping the window, both ends included. */
+export function useEntries(from: PlainDate, to: PlainDate) {
+  return useQuery(entriesQuery(from, to));
 }
 
 export function useEntry(id: string | undefined) {
