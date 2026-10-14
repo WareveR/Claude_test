@@ -13,6 +13,8 @@ import { usePeriodTasks } from "../tasks/TasksAccordion";
 import { TaskRow } from "../tasks/TaskRow";
 import { ViewNav } from "../shell/ViewNav";
 import { useCalendar } from "./Views";
+import { periodLabel } from "../../core/period-label";
+import { PeriodCurtain } from "./PeriodCurtain";
 import { AGENDA_DAYS } from "../../core/periods";
 import { usePrefetchNeighbours } from "./prefetch";
 
@@ -127,6 +129,12 @@ function Agenda({ from }: { from: PlainDate }) {
           </section>
         ))}
       </main>
+      <PeriodCurtain
+        period={`agenda:${from}`}
+        lines={periodLabel("range", from, to, locale)}
+        from={from}
+        to={to}
+      />
     </>
   );
 }

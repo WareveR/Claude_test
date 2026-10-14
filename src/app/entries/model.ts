@@ -42,10 +42,13 @@ export type Shown = Entry & {
   href?: string;
 };
 
+/** The query that holds the Entries overlapping a window. */
+export const entriesKey = (from: PlainDate, to: PlainDate) => ["entries", from, to];
+
 /** The request for the Entries overlapping a window: shared by the views and their prefetching. */
 export function entriesQuery(from: PlainDate, to: PlainDate) {
   return queryOptions({
-    queryKey: ["entries", from, to],
+    queryKey: entriesKey(from, to),
     queryFn: () => api<Entry[]>(`/entries?from=${from}&to=${to}`),
     staleTime: RANGE_STALE_TIME,
   });
