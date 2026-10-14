@@ -4,7 +4,6 @@ import { signIn } from "./helpers";
 test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 
 /** One hour's height in the time grid. */
-const HOUR_PX = 44;
 
 async function centre(locator: Locator) {
   const box = (await locator.boundingBox())!;
@@ -36,7 +35,9 @@ test("an Entry dragged in the week view moves to another day and time", async ({
   await expect(dentist).toContainText("10:00");
   const from = await centre(dentist);
   const thursday = await centre(page.getByTestId("day-column-2027-03-04"));
-  await drag(page, from, { x: thursday.x, y: from.y + 2 * HOUR_PX });
+  // A tall screen stretches the hours to fill it: measure one.
+  const hour = (await page.getByTestId("hour-row-10").first().boundingBox())!.height;
+  await drag(page, from, { x: thursday.x, y: from.y + 2 * hour });
   await expect(page.getByTestId("drop-preview")).toBeVisible();
   await expect(page.getByTestId("drag-ghost")).toContainText("12:00");
   // The moved Entry shows at once; wait for the save before leaving the page.
