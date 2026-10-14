@@ -102,7 +102,7 @@ export function describeItem(
 /** The body of POST /entries or POST /tasks for one Item. */
 export function requestOf(
   item: Item,
-  types: Pick<EntryType, "id" | "defaults" | "builtinKey">[],
+  types: Pick<EntryType, "id" | "defaults" | "builtinKey" | "icon">[],
   today: PlainDate,
 ): { route: "entries"; body: EntryValues } | { route: "tasks"; body: TaskValues } {
   if (item.kind === "task") {

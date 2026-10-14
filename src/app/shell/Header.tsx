@@ -1,4 +1,4 @@
-import { CloudSun, Lightbulb, Settings, Tv, type LucideIcon } from "lucide-react";
+import { Lightbulb, Settings, Tv, type LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
@@ -18,12 +18,11 @@ import { MonthMotif } from "../month-theme";
 let outsideSettings: string = paths.today();
 /**
  * The last calendar page (outside the Wall, the Summary, Settings and Suggestions), where switching
- * the Wall or Summary off returns to; were Settings one, closing them and the Summary would send
- * each other back and forth.
+ * the Wall off returns to.
  */
 let outsideScreens: string = paths.today();
 
-/** An on/off switch at the end of the header for a screen of its own: the Wall or the Summary. */
+/** An on/off switch at the end of the header for a screen of its own: the Wall. */
 function ScreenSwitch({
   on,
   icon: Icon,
@@ -78,15 +77,11 @@ export function Header({
     if (!wall && !inSummary && !inSettings && !inSuggestions)
       outsideScreens = location.pathname + location.search;
   }, [inSettings, inSuggestions, inSummary, wall, location.pathname, location.search]);
-  // The two switches are exclusive: turning one on turns the other off, and with both off the
-  // page from before comes back.
+  // Switched off, the page from before comes back. The Summary is a button of the Wall's own.
   const toggleWall = () => {
     if (wall) return leaveDisplayMode(outsideScreens);
     setDisplayMode(true);
     navigate(paths.display());
-  };
-  const toggleSummary = () => {
-    navigate(inSummary ? outsideScreens : paths.summary());
   };
   const today = useForecastDays().get(todayIn(family.timeZone, now));
   const locale = formatLocale(language);
@@ -154,16 +149,6 @@ export function Header({
             <Settings aria-hidden size={20} strokeWidth={1.75} />
           </Link>
         </>
-      )}
-      {/* On the wall the Summary is a button of the board's own, beside its filter. */}
-      {!wall && (
-        <ScreenSwitch
-          on={inSummary}
-          icon={CloudSun}
-          label={t("screens.summary")}
-          help="summary"
-          onToggle={toggleSummary}
-        />
       )}
       {/* Always last and in the same place, on the wall too. */}
       <ScreenSwitch

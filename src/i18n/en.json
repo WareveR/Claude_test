@@ -115,10 +115,9 @@
     "openDay": "Open the day",
     "hideWeather": "Hide weather",
     "showWeather": "Show weather",
-    "showTasks_other": "Show the {{count}} hidden tasks",
-    "showTasks_one": "Show the hidden task",
-    "showTasks_zero": "Show tasks",
-    "hideTasks": "Hide tasks",
+    "showTasks_other": "Show the period's {{count}} tasks",
+    "showTasks_one": "Show the period's task",
+    "showTasks_zero": "Show the period's tasks",
     "showHours": "Show the weather by the hour",
     "hideHours": "Hide the weather by the hour",
     "noHours": "No hourly weather kept for this day.",
@@ -127,7 +126,8 @@
       "both": "All-day and timed",
       "allDay": "All-day only",
       "timed": "Timed only"
-    }
+    },
+    "showCalendar": "Show the calendar"
   },
   "settings": {
     "title": "Settings",
@@ -406,7 +406,8 @@
     "withItems": "With items",
     "withItemsHint": "A task can hold a list of items, and each item items of its own.",
     "withItemsOnHint": "Saving opens its page to add the items. The due day becomes its deadline; the time, importance, notes and Private aren't kept.",
-    "noDueDate": "No due date"
+    "noDueDate": "No due date",
+    "nonePeriod": "No tasks in this period."
   },
   "checklists": {
     "new": "New task with items",
