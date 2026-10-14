@@ -340,7 +340,7 @@ function Month({ first }: { first: PlainDate }) {
   const holidays = useHolidays(weeks[0][0], weeks[weeks.length - 1][6]);
   const notes = useDayNotes(weeks[0][0], weeks[weeks.length - 1][6]);
   const forecast = useDayWeather(weeks[0][0], weeks[weeks.length - 1][6]);
-  const title = formatPlainDate(first, locale, { month: "long", year: "numeric" });
+  const title = formatMonthRange(first, first, locale);
   const dayEntries = entriesOn(entries, selected);
   return (
     <>

@@ -81,24 +81,17 @@ export function formatPlainDate(
   return new Intl.DateTimeFormat(language, { ...options, timeZone: "UTC" }).format(toUtc(date));
 }
 
-/** The months two dates fall in, by name with the year: "outubro de 2026", "outubro – novembro de 2026". */
+/** The months two dates fall in, by name with the year: "outubro 2026", "outubro – novembro 2026". */
 export function formatMonthRange(
   from: PlainDate,
   to: PlainDate,
   language: string,
   month: "long" | "short" = "long",
 ): string {
-  if (month === "long") {
-    return new Intl.DateTimeFormat(language, {
-      month: "long",
-      year: "numeric",
-      timeZone: "UTC",
-    }).formatRange(toUtc(from), toUtc(to));
-  }
-  // Intl's short range is all digits in some languages ("09/2026 – 10/2026"): build it from the
-  // abbreviated month names instead, "set. – out. 2026".
+  // Built from the month names: Intl's ranges put "de" before the year in Portuguese and are all
+  // digits when short in some languages ("09/2026 – 10/2026").
   const name = (d: PlainDate) =>
-    new Intl.DateTimeFormat(language, { month: "short", timeZone: "UTC" }).format(toUtc(d));
+    new Intl.DateTimeFormat(language, { month, timeZone: "UTC" }).format(toUtc(d));
   const [fromYear, toYear] = [from.slice(0, 4), to.slice(0, 4)];
   if (fromYear !== toYear) return `${name(from)} ${fromYear} – ${name(to)} ${toYear}`;
   if (from.slice(0, 7) === to.slice(0, 7)) return `${name(from)} ${toYear}`;

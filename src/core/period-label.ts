@@ -16,9 +16,9 @@ function dayMonth(date: PlainDate, language: string): string {
 }
 
 /**
- * The lines a Period Curtain shows for a period, biggest first: "2027"; "Novembro 2026";
- * "26 Outubro" / "1 Novembro" / "2026" (each with its year when the days span two years);
- * "Segunda, 26 Outubro 2026".
+ * The lines a Period Curtain shows for a period, all drawn the same size: "2027"; "Novembro 2026";
+ * "Segunda" / "26 Outubro 2026"; "22 – 28 Dezembro" / "2025" within one month, else
+ * "26 Outubro" / "1 Novembro" / "2026" (each with its year when the days span two years).
  */
 export function periodLabel(
   kind: PeriodKind,
@@ -35,10 +35,16 @@ export function periodLabel(
   if (kind === "day") {
     // Portuguese names the weekday in full ("segunda-feira"); the curtain says it short, "Segunda".
     const day = formatPlainDate(from, language, { weekday: "long" }).replace(/-feira$/, "");
-    return [`${capitalise(day, language)}, ${dayMonth(from, language)} ${year}`];
+    return [capitalise(day, language), `${dayMonth(from, language)} ${year}`];
   }
   const toYear = to.slice(0, 4);
   if (toYear !== year)
     return [`${dayMonth(from, language)} ${year}`, `${dayMonth(to, language)} ${toYear}`];
+  if (from.slice(0, 7) === to.slice(0, 7)) {
+    // "22 – 28 Dezembro": the month said once, after the two days in the language's order.
+    const days = `${Number(from.slice(8))} – ${Number(to.slice(8))}`;
+    const month = dayMonth(to, language).replace(String(Number(to.slice(8))), days);
+    return [month, year];
+  }
   return [dayMonth(from, language), dayMonth(to, language), year];
 }
