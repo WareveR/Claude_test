@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { useNavigate } from "react-router";
 import { daySpan, lastDate } from "../../core/entry-time";
 import { layoutBars, layoutLanes } from "../../core/layout";
@@ -19,6 +19,7 @@ import type { Shown as Entry } from "../entries/model";
 import type { Person } from "../persons/model";
 import { EntryBlock } from "./EntryBlock";
 import { NoteLine } from "../layers/NoteLine";
+import { useGridLayers } from "./compact";
 import { isMovable, useEntryDrag } from "./useEntryDrag";
 
 /** The height of a waking hour; a Sleeping Hour with nothing on is half as high. */
@@ -55,6 +56,19 @@ function isWeekend(date: PlainDate) {
   return weekday(date) >= 5;
 }
 
+/** The inside height of a box, followed as it resizes; 0 until it is measured. */
+function useHeight(ref: RefObject<HTMLElement | null>): number {
+  const [height, setHeight] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => setHeight(el.clientHeight));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [ref]);
+  return height;
+}
+
 /**
  * Day columns with an all-day row on top and a 24-hour time grid below: the body of the
  * day and week views and of the Display Mode board.
@@ -78,6 +92,10 @@ export function TimeGrid({
 }: TimeGridProps) {
   const navigate = useNavigate();
   const scroller = useRef<HTMLDivElement>(null);
+  // Only the All-day Entries (with the day notes), only the Timed ones, or both.
+  const layers = useGridLayers();
+  const showAllDay = layers !== "timed";
+  const showTimed = layers !== "allDay";
   const drag = useEntryDrag({ entries: given, locale, enabled: !readOnly, scroller });
   const entries = drag.shown(given);
   // Each day's Timed Entries in minutes of that day.
@@ -90,7 +108,11 @@ export function TimeGrid({
   );
   // One height per hour row for all the days, so the rows stay lined up across the week.
   const busy = busyHours(spans.flat());
-  const heights = hourHeights(sleepHours, busy, HOUR_PX);
+  // A tall screen with room to spare: the hours grow until the day fills it, no blank below.
+  const room = useHeight(scroller);
+  const natural = hourTops(hourHeights(sleepHours, busy, HOUR_PX))[24];
+  const full = room > natural ? Math.floor((HOUR_PX * room * 100) / natural) / 100 : HOUR_PX;
+  const heights = hourHeights(sleepHours, busy, full);
   const tops = hourTops(heights);
   const yOf = (minutes: number) => yOfMinutes(heights, minutes);
 
@@ -167,6 +189,7 @@ export function TimeGrid({
             </div>
             {dayExtra?.(day)}
             {!plain &&
+              showAllDay &&
               notes.get(day)?.map((note) => (
                 <div
                   key={note}
@@ -181,7 +204,7 @@ export function TimeGrid({
       </div>
       <div
         data-testid="all-day-row"
-        className="grid gap-0.5 border-b border-line py-1"
+        className={`grid gap-0.5 border-b border-line py-1 ${showAllDay ? "" : "hidden"} ${showTimed ? "" : "min-h-0 flex-1 content-start overflow-y-auto"}`}
         style={{
           gridTemplateColumns: columns,
           gridTemplateRows: `repeat(${barRows + holidayRows}, auto)`,
@@ -225,7 +248,11 @@ export function TimeGrid({
           />
         ))}
       </div>
-      <div ref={scroller} data-testid="time-scroller" className="min-h-0 flex-1 overflow-y-auto">
+      <div
+        ref={scroller}
+        data-testid="time-scroller"
+        className={`min-h-0 flex-1 overflow-y-auto ${showTimed ? "" : "hidden"}`}
+      >
         <div className="relative grid" style={{ gridTemplateColumns: columns, height: tops[24] }}>
           <div className="relative">
             {Array.from({ length: 24 }, (_, h) =>

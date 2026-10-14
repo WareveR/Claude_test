@@ -121,7 +121,13 @@
     "hideTasks": "Esconder tarefas",
     "showHours": "Mostrar o meteo por hora",
     "hideHours": "Esconder o meteo por hora",
-    "noHours": "Não há meteo por hora guardado para este dia."
+    "noHours": "Não há meteo por hora guardado para este dia.",
+    "layers": {
+      "label": "Entradas mostradas: {{shown}}. Tocar para mudar",
+      "both": "Dia inteiro e com hora",
+      "allDay": "Só dia inteiro",
+      "timed": "Só com hora"
+    }
   },
   "settings": {
     "title": "Definições",

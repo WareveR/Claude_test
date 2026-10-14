@@ -7,7 +7,7 @@ import { formatLocale } from "../../core/languages";
 import { formatMonthRange } from "../../core/plain-date";
 import { useSignedIn } from "../family";
 import { FilterButton } from "../filter/FilterButton";
-import { GRID_BOX } from "../shell/SidePanel";
+import { LayersButton } from "../calendar/LayersButton";
 import { CalendarGrid } from "../views/Views";
 import { ForecastButton } from "../weather/ForecastButton";
 import { useForecastDays } from "../weather/model";
@@ -65,12 +65,13 @@ export function DisplayBoard() {
   return (
     <div
       data-testid="display-board"
-      className="flex flex-col lg:min-h-0 lg:flex-1"
+      // The board always fills the screen below the header, a phone's too: no strip left over.
+      className="flex min-h-0 flex-1 flex-col"
       onPointerDownCapture={() => setTouches((n) => n + 1)}
       onScrollCapture={() => setTouches((n) => n + 1)}
     >
-      <div className="flex flex-col lg:min-h-0 lg:flex-1">
-        <div className="flex min-w-0 flex-col lg:min-h-0 lg:flex-1">
+      <div className="flex min-h-0 flex-1 flex-col">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <nav className="flex items-center gap-1 px-3 py-0.5 max-sm:px-2">
             {summary ? (
               <h1 className="min-w-0 truncate text-lg font-semibold max-sm:text-base">
@@ -131,6 +132,7 @@ export function DisplayBoard() {
               >
                 <CloudSun aria-hidden size={20} strokeWidth={1.75} />
               </button>
+              {!summary && <LayersButton />}
               <FilterButton />
             </div>
           </nav>
@@ -144,7 +146,7 @@ export function DisplayBoard() {
               <TasksAccordion from={days[0]} to={days[6]} />
             </div>
           )}
-          <div className={summary ? "hidden" : GRID_BOX.lg}>
+          <div className={summary ? "hidden" : "flex min-h-72 flex-1 flex-col"}>
             {/* All seven days fit the screen, a phone's too: never a sideways scroll. */}
             <div className="relative flex min-h-0 flex-1">
               <div data-testid="wall-days" className="flex min-h-0 min-w-0 flex-1 flex-col">

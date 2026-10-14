@@ -285,3 +285,19 @@ test("the Wall and Summary switches are exclusive and both off return to the pag
   await page.reload();
   await expect(page.getByTestId("display-board")).toHaveCount(0);
 });
+
+test("on a tall screen the Wall's hours stretch to the bottom of the screen", async ({ page }) => {
+  await page.setViewportSize({ width: 600, height: 1300 });
+  await signIn(page);
+  await page.getByRole("banner").getByRole("button", { name: "Wall" }).click();
+  const scroller = page.getByTestId("time-scroller");
+  await expect(scroller).toBeVisible();
+  // The whole day fits without scrolling and nothing is left blank below it.
+  await expect
+    .poll(() => scroller.evaluate((el) => el.scrollHeight - el.clientHeight))
+    .toBeLessThanOrEqual(1);
+  const bottom = await scroller.evaluate((el) => el.getBoundingClientRect().bottom);
+  expect(bottom).toBeGreaterThan(1300 - 2);
+  // Leave the Wall for the specs after this one.
+  await page.getByRole("banner").getByRole("button", { name: "Wall" }).click();
+});
