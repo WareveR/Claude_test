@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { DAYS_ROW } from "./bands";
 import { YEAR_COLUMNS, yearRowOffset } from "../../core/layout";
 import { addDays, daysInMonth, formatPlainDate, type PlainDate } from "../../core/plain-date";
 import type { EntryType } from "../entry-types/model";
@@ -60,7 +61,7 @@ export function YearGrid({
   const letters = yearWeekdayLetters(locale);
 
   return (
-    <div className="relative overflow-x-auto bg-surface p-2">
+    <div className="relative overflow-x-auto bg-surface px-2 pb-2">
       <table className="w-full min-w-[56rem] table-fixed border-collapse text-[10px] lg:text-xs">
         <thead>
           <tr>
@@ -68,7 +69,7 @@ export function YearGrid({
             {letters.map((letter, c) => (
               <th
                 key={c}
-                className={`font-semibold ${isWeekendColumn(c) ? "bg-weekend text-weekend-ink" : "text-muted"}`}
+                className={`${DAYS_ROW} ${isWeekendColumn(c) ? "bg-weekend text-weekend-ink" : "text-muted"}`}
               >
                 {letter}
               </th>
