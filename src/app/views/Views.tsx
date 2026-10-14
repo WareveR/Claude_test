@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { Clock } from "lucide-react";
-import { setDayHours, useDayHours, useTasksHidden, useWeekCompact } from "../calendar/compact";
+import { Thermometer } from "lucide-react";
+import { setDayHours, useDayHours, usePeriodTasksShown, useWeekCompact } from "../calendar/compact";
 import { useTranslation } from "react-i18next";
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router";
 import { formatLocale } from "../../core/languages";
@@ -34,14 +34,13 @@ import { usePersons } from "../persons/model";
 import { useNow } from "../shell/useNow";
 import { paths } from "../paths";
 import { GRID_BOX, ViewBody } from "../shell/SidePanel";
-import { ViewActions, ViewNav } from "../shell/ViewNav";
+import { ViewNav } from "../shell/ViewNav";
 import { ForecastButton } from "../weather/ForecastButton";
 import { HourlyStrip } from "../weather/HourlyStrip";
 import { useDayWeather, usePastWeather, useWeather, type ShownDay } from "../weather/model";
 import { WindReading } from "../weather/ForecastDetail";
 import { WeatherBadge } from "../weather/WeatherBadge";
-import { TasksAccordion, usePeriodTasks } from "../tasks/TasksAccordion";
-import { GridCorner } from "../calendar/GridCorner";
+import { PeriodTasksList } from "../tasks/TasksAccordion";
 import { periodLabel } from "../../core/period-label";
 import { PeriodCurtain } from "./PeriodCurtain";
 import { usePrefetchNeighbours } from "./prefetch";
@@ -91,6 +90,7 @@ export function DayView() {
   const past = usePastWeather(day, day).get(day);
   const forecast = useWeather().data;
   const showHours = useDayHours();
+  const tasksShown = usePeriodTasksShown();
   usePrefetchNeighbours("day", day);
   if (!isPlainDate(date)) return <Navigate to={paths.day(today)} replace />;
   const title = formatPlainDate(date, locale, { weekday: "long", day: "numeric", month: "long" });
@@ -105,11 +105,12 @@ export function DayView() {
         next={paths.day(addDays(date, 1))}
         compact
         extra={<DayWeatherLine weather={weather} />}
+        tasks={{ from: date, to: date }}
       />
       <ViewBody>
-        <div className="flex flex-col gap-2 pb-2 empty:hidden">
-          {showHours &&
-            (hours.length > 0 ? (
+        {showHours && (
+          <div className="pb-2">
+            {hours.length > 0 ? (
               <HourlyStrip hours={hours} lead={<SunTimes day={date} />} />
             ) : (
               <div className="flex items-center gap-3 px-4">
@@ -118,12 +119,16 @@ export function DayView() {
                   {t("views.noHours")}
                 </p>
               </div>
-            ))}
-          {date !== today && <TasksAccordion from={date} to={date} />}
-        </div>
-        <div className={GRID_BOX.lg}>
-          <CalendarGrid days={[date]} headerActions={<ViewActions date={date} />} />
-        </div>
+            )}
+          </div>
+        )}
+        {tasksShown ? (
+          <PeriodTasksList from={date} to={date} />
+        ) : (
+          <div className={GRID_BOX.lg}>
+            <CalendarGrid days={[date]} />
+          </div>
+        )}
       </ViewBody>
       <PeriodCurtain
         period={`day:${date}`}
@@ -164,7 +169,7 @@ function DayWeatherLine({ weather }: { weather?: ShownDay }) {
         onClick={() => setDayHours(!showHours)}
         className={`rounded-md p-1.5 ${showHours ? "bg-accent text-accent-ink" : "text-muted hover:bg-line/60"}`}
       >
-        <Clock aria-hidden size={18} strokeWidth={1.75} />
+        <Thermometer aria-hidden size={18} strokeWidth={1.75} />
       </button>
     </span>
   );
@@ -206,13 +211,11 @@ export function WeekView() {
 
 function Week({ monday }: { monday: PlainDate }) {
   const locale = useLocale();
-  // On a phone on its side the weather, the day notes and the Tasks can be hidden so the hours get
-  // the room; the Tasks are always in the Summary.
+  // On a phone on its side the weather and the day notes can be hidden so the hours get the room.
   const compact = useWeekCompact();
-  const tasksHidden = useTasksHidden();
+  const tasksShown = usePeriodTasksShown();
   usePrefetchNeighbours("week", monday);
   const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i));
-  const tasks = usePeriodTasks(monday, days[6]).tasks.length;
   const forecast = useDayWeather(monday, days[6]);
   // The months and year the week falls in, abbreviated so it keeps to the nav's line.
   const title = formatMonthRange(monday, days[6], locale, "short");
@@ -223,41 +226,40 @@ function Week({ monday }: { monday: PlainDate }) {
         title={title}
         previous={paths.week(addDays(monday, -7))}
         next={paths.week(addDays(monday, 7))}
+        tasks={{ from: monday, to: days[6] }}
       />
       <ViewBody>
-        {!tasksHidden && (
-          <div className="pb-2 empty:hidden">
-            <TasksAccordion from={monday} to={days[6]} />
+        {tasksShown ? (
+          <PeriodTasksList from={monday} to={days[6]} />
+        ) : (
+          <div className={GRID_BOX.lg}>
+            <CalendarGrid
+              days={days}
+              plain={compact}
+              dayExtra={(day) => {
+                if (compact) return null;
+                const weather = forecast.get(day);
+                return (
+                  weather && (
+                    <div data-testid={`week-weather-${day}`}>
+                      <ForecastButton>
+                        <WeatherBadge
+                          day={weather}
+                          faded={weather.faded}
+                          size={16}
+                          rain
+                          iconOnPhone
+                          stacked
+                          className="text-xs"
+                        />
+                      </ForecastButton>
+                    </div>
+                  )
+                );
+              }}
+            />
           </div>
         )}
-        <div className={GRID_BOX.lg}>
-          <CalendarGrid
-            days={days}
-            plain={compact}
-            corner={<GridCorner tasks={tasks} />}
-            dayExtra={(day) => {
-              if (compact) return null;
-              const weather = forecast.get(day);
-              return (
-                weather && (
-                  <div data-testid={`week-weather-${day}`}>
-                    <ForecastButton>
-                      <WeatherBadge
-                        day={weather}
-                        faded={weather.faded}
-                        size={16}
-                        rain
-                        iconOnPhone
-                        stacked
-                        className="text-xs"
-                      />
-                    </ForecastButton>
-                  </div>
-                )
-              );
-            }}
-          />
-        </div>
       </ViewBody>
       <PeriodCurtain
         period={`week:${monday}`}
@@ -275,14 +277,12 @@ export function CalendarGrid({
   dayExtra,
   readOnly,
   corner,
-  headerActions,
   plain,
 }: {
   days: PlainDate[];
   dayExtra?: (day: PlainDate) => ReactNode;
   readOnly?: boolean;
   corner?: ReactNode;
-  headerActions?: ReactNode;
   plain?: boolean;
 }) {
   const { family } = useSignedIn();
@@ -306,7 +306,6 @@ export function CalendarGrid({
       dayExtra={dayExtra}
       readOnly={readOnly}
       corner={corner}
-      headerActions={headerActions}
       plain={plain}
       sleepHours={family.sleepHours}
     />
@@ -342,6 +341,8 @@ function Month({ first }: { first: PlainDate }) {
   const forecast = useDayWeather(weeks[0][0], weeks[weeks.length - 1][6]);
   const title = formatMonthRange(first, first, locale);
   const dayEntries = entriesOn(entries, selected);
+  const tasksShown = usePeriodTasksShown();
+  const last = addDays(addMonths(first, 1), -1);
   return (
     <>
       <ViewNav
@@ -349,23 +350,28 @@ function Month({ first }: { first: PlainDate }) {
         title={title}
         previous={paths.month(addMonths(first, -1))}
         next={paths.month(addMonths(first, 1))}
+        tasks={{ from: first, to: last }}
       />
       <ViewBody fill>
         {/* The grid fills the free height; a picked day opens over it. */}
-        <div className="flex flex-1 flex-col lg:min-h-0">
-          <MonthGrid
-            month={first}
-            entries={entries}
-            types={types}
-            today={today}
-            selected={selected}
-            locale={locale}
-            holidays={holidays}
-            notes={notes}
-            weather={forecast}
-            dayLink={(day) => `${paths.month(day)}?day=${day}`}
-          />
-        </div>
+        {tasksShown ? (
+          <PeriodTasksList from={first} to={last} />
+        ) : (
+          <div className="flex flex-1 flex-col lg:min-h-0">
+            <MonthGrid
+              month={first}
+              entries={entries}
+              types={types}
+              today={today}
+              selected={selected}
+              locale={locale}
+              holidays={holidays}
+              notes={notes}
+              weather={forecast}
+              dayLink={(day) => `${paths.month(day)}?day=${day}`}
+            />
+          </div>
+        )}
       </ViewBody>
       <PeriodCurtain
         period={`month:${first}`}

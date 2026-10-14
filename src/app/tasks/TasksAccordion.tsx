@@ -58,3 +58,35 @@ export function TasksAccordion({ from, to }: { from: PlainDate; to: PlainDate })
     </details>
   );
 }
+
+/**
+ * The period's dated Tasks (and, when it includes today, every overdue Task) shown in place of
+ * the view's calendar.
+ */
+export function PeriodTasksList({ from, to }: { from: PlainDate; to: PlainDate }) {
+  const { t } = useTranslation();
+  const { tasks, now, persons } = usePeriodTasks(from, to);
+  const overdue = tasks.filter((task) => isOverdue(task, now)).length;
+  return (
+    <section
+      data-testid="period-tasks-list"
+      className="mx-4 mb-2 min-h-0 flex-1 overflow-y-auto rounded-md border border-line bg-surface max-sm:mx-2"
+    >
+      <h2 className="px-3 py-2 text-sm font-medium">
+        {t("tasks.accordion", { count: tasks.length })}
+        {overdue > 0 && (
+          <span className="text-overdue"> · {t("tasks.overdueCount", { count: overdue })}</span>
+        )}
+      </h2>
+      {tasks.length === 0 ? (
+        <p className="px-3 pb-3 text-sm text-muted">{t("tasks.nonePeriod")}</p>
+      ) : (
+        <ul className="divide-y divide-line px-3">
+          {tasks.map((task) => (
+            <TaskRow key={task.id} task={task} overdue={isOverdue(task, now)} persons={persons} />
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}

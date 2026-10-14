@@ -46,7 +46,8 @@ test("Coming up is on the Summary, not beside the views", async ({ page }) => {
   await signIn(page);
   await expect(page.getByTestId("day-column-" + lisbonDate(0))).toBeVisible();
   await expect(page.getByTestId("coming-up")).toHaveCount(0);
-  await page.getByRole("banner").getByRole("button", { name: "Summary" }).click();
+  await page.getByRole("banner").getByRole("button", { name: "Wall" }).click();
+  await page.getByTestId("display-board").getByRole("button", { name: "Summary" }).click();
   const panel = page.getByTestId("coming-up");
   await expect(panel.getByRole("heading", { name: "Coming up" })).toBeVisible();
   await expect(panel.getByTestId("briefing-line").first()).toBeVisible();

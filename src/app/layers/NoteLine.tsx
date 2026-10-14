@@ -1,6 +1,6 @@
 import {
   Backpack,
-  Clock,
+  TimerReset,
   Flower2,
   Heart,
   Leaf,
@@ -10,7 +10,7 @@ import {
   Sprout,
   Sun,
   Sunrise,
-  Trash2,
+  Recycle,
   type LucideIcon,
 } from "lucide-react";
 
@@ -22,11 +22,11 @@ const ICONS: Record<string, [LucideIcon, string]> = {
   "🎒": [Backpack, "#f97316"],
   "🌙": [Moon, "#8b5cf6"],
   "🌿": [Sprout, "#22c55e"],
-  "🕑": [Clock, "#0ea5e9"],
+  "🕑": [TimerReset, "#0ea5e9"],
   "💝": [Heart, "#ec4899"],
   "✨": [Sparkles, "#eab308"],
   "🌅": [Sunrise, "#f59e0b"],
-  "🗑️": [Trash2, "#64748b"],
+  "🗑️": [Recycle, "#64748b"],
   "🌸": [Flower2, "#ec4899"],
   "☀️": [Sun, "#f59e0b"],
   "🍂": [Leaf, "#ea580c"],
