@@ -29,11 +29,16 @@ export function IconPicker({
 }) {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
-  const [group, setGroup] = useState<IconGroup>(
-    () =>
-      ICON_GROUPS.find((g) => (g.icons as readonly string[]).includes(value ?? ""))?.id ??
-      ICON_GROUPS[0].id,
-  );
+  const groupOf = (icon: string | null) =>
+    ICON_GROUPS.find((g) => (g.icons as readonly string[]).includes(icon ?? ""))?.id;
+  const [group, setGroup] = useState<IconGroup>(() => groupOf(value) ?? ICON_GROUPS[0].id);
+  // An icon set from outside (a new Entry's title) opens its group, so it shows picked.
+  const [shownValue, setShownValue] = useState(value);
+  if (value !== shownValue) {
+    setShownValue(value);
+    const to = groupOf(value);
+    if (to) setGroup(to);
+  }
   const name = (key: IconKey) => t(`icons.names.${key}`);
   const words = plain(query.trim());
   const shown: readonly IconKey[] = words

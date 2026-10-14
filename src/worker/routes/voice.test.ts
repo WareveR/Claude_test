@@ -91,6 +91,28 @@ describe("Voice Entry: create", () => {
     expect((await browser.post("/entries", created.values)).status).toBe(201);
   });
 
+  it("gives a new Entry the icon its title names, not its group type's", async () => {
+    const { browser } = await family();
+    answer = (p) => ({
+      kind: "entry",
+      title: "Ginásio",
+      type: numberOf(p, "activity"),
+      persons: [],
+      date: "2026-10-06",
+      time: "19:00",
+      endDate: null,
+      endTime: null,
+      allDay: null,
+      location: null,
+      importance: null,
+      repeat: null,
+    });
+    const created = (await (
+      await browser.post("/voice", { sentence: "ginásio terça às 19h" })
+    ).json()) as Created;
+    expect(created.values.icon).toBe("gym");
+  });
+
   it("makes a Task when the sentence is something to do", async () => {
     const { browser, ana } = await family();
     answer = (p) => ({
