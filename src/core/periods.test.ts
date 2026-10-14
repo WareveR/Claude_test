@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { neighbourWindows, periodWindow, stepPeriod } from "./periods";
+import { focusDay, neighbourWindows, periodWindow, stepPeriod } from "./periods";
 
 describe("periodWindow", () => {
   it("covers what each view draws", () => {
@@ -37,5 +37,19 @@ describe("neighbourWindows", () => {
       { from: "2025-01-01", to: "2025-12-31" },
       { from: "2027-01-01", to: "2027-12-31" },
     ]);
+  });
+});
+
+describe("focusDay", () => {
+  it("keeps the day in focus while the period shown holds it", () => {
+    expect(focusDay("month", "2026-10-01", "2026-10-20", "2026-10-14")).toBe("2026-10-20");
+    expect(focusDay("week", "2026-10-12", "2026-10-18", "2026-10-14")).toBe("2026-10-18");
+  });
+  it("else takes today when shown, else the period's first day", () => {
+    expect(focusDay("month", "2026-10-01", "2026-12-03", "2026-10-14")).toBe("2026-10-14");
+    expect(focusDay("month", "2026-10-01", null, "2026-10-14")).toBe("2026-10-14");
+    // The month's grid shows 1 November, but it is not October's.
+    expect(focusDay("month", "2026-10-01", "2026-11-01", "2026-12-14")).toBe("2026-10-01");
+    expect(focusDay("year", "2027-01-01", "2026-10-20", "2026-10-14")).toBe("2027-01-01");
   });
 });

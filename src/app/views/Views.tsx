@@ -45,6 +45,7 @@ import { GridCorner } from "../calendar/GridCorner";
 import { periodLabel } from "../../core/period-label";
 import { PeriodCurtain } from "./PeriodCurtain";
 import { usePrefetchNeighbours } from "./prefetch";
+import { setFocusedDay } from "./focus";
 
 function useToday(): PlainDate {
   return todayIn(useSignedIn().family.timeZone);
@@ -93,6 +94,8 @@ export function DayView() {
   const showHours = useDayHours();
   usePrefetchNeighbours("day", day);
   if (!isPlainDate(date)) return <Navigate to={paths.day(today)} replace />;
+  // Before the bar draws: the other views open on this day.
+  setFocusedDay(date);
   const title = formatPlainDate(date, locale, { weekday: "long", day: "numeric", month: "long" });
   // The hours kept for a day gone by; the forecast's for today and the days ahead.
   const hours = past?.hours ?? (forecast?.hourly ?? []).filter((h) => h.time.startsWith(date));
@@ -334,6 +337,8 @@ function Month({ first }: { first: PlainDate }) {
       : today.startsWith(first.slice(0, 7))
         ? today
         : first;
+  // A picked day is the one in focus when switching view.
+  if (picked === selected) setFocusedDay(selected);
   const weeks = monthWeeks(first);
   usePrefetchNeighbours("month", first);
   const { entries, types } = useCalendar(weeks[0][0], weeks[weeks.length - 1][6]);
@@ -415,6 +420,7 @@ function Year({ year }: { year: number }) {
   const picked = search.get("day");
   const pickedDay =
     picked && isPlainDate(picked) && picked.startsWith(String(year)) ? picked : null;
+  if (pickedDay) setFocusedDay(pickedDay);
   const dayLink = (day: PlainDate) => `${paths.year(date)}?${detail ? "" : "detail=0&"}day=${day}`;
   const notes = useDayNotes(date, `${year}-12-31`);
   const forecast = useDayWeather(date, `${year}-12-31`);
