@@ -66,11 +66,8 @@ describe("PlainDate", () => {
 
 describe("formatMonthRange", () => {
   it("names the months and year a range falls in, whole or abbreviated", () => {
-    expect(formatMonthRange("2026-10-05", "2026-10-11", "pt-PT")).toBe("outubro de 2026");
-    // Intl puts thin spaces around its dash.
-    expect(formatMonthRange("2026-09-28", "2026-10-04", "pt-PT")).toMatch(
-      /^setembro\s–\soutubro de 2026$/,
-    );
+    expect(formatMonthRange("2026-10-05", "2026-10-11", "pt-PT")).toBe("outubro 2026");
+    expect(formatMonthRange("2026-09-28", "2026-10-04", "pt-PT")).toBe("setembro – outubro 2026");
     expect(formatMonthRange("2026-09-28", "2026-10-04", "pt-PT", "short")).toBe("set. – out. 2026");
     expect(formatMonthRange("2026-10-05", "2026-10-11", "en-GB", "short")).toBe("Oct 2026");
     expect(formatMonthRange("2026-12-28", "2027-01-03", "en-GB", "short")).toBe(

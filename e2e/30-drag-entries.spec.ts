@@ -33,10 +33,23 @@ test("an Entry dragged in the week view moves to another day and time", async ({
   await page.goto("/week/2027-03-01");
   const dentist = page.getByTestId("day-column-2027-03-02").getByTestId("entry");
   await expect(dentist).toContainText("10:00");
-  const from = await centre(dentist);
   const thursday = await centre(page.getByTestId("day-column-2027-03-04"));
-  // A tall screen stretches the hours to fill it: measure one.
-  const hour = (await page.getByTestId("hour-row-10").first().boundingBox())!.height;
+  // A tall screen stretches the hours to fill it once the grid is measured, and the grid scrolls
+  // to its opening hour: wait until an hour's height and the Entry's place have settled.
+  const hourRow = page.getByTestId("hour-row-10").first();
+  let seen = "";
+  let hour = 0;
+  let from = { x: 0, y: 0 };
+  await expect
+    .poll(async () => {
+      hour = (await hourRow.boundingBox())!.height;
+      from = await centre(dentist);
+      const now = `${hour}/${from.y}`;
+      const settled = now === seen;
+      seen = now;
+      return settled;
+    })
+    .toBe(true);
   await drag(page, from, { x: thursday.x, y: from.y + 2 * hour });
   await expect(page.getByTestId("drop-preview")).toBeVisible();
   await expect(page.getByTestId("drag-ghost")).toContainText("12:00");

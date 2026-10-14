@@ -14,6 +14,8 @@ import { useForecastDays } from "../weather/model";
 import { WeatherBadge } from "../weather/WeatherBadge";
 import { useSwipe } from "../ui/useSwipe";
 import { SummaryPage } from "../summary/SummaryPage";
+import { periodLabel } from "../../core/period-label";
+import { PeriodCurtain } from "../views/PeriodCurtain";
 import { useRolloverToday } from "./hooks";
 import { useTasksHidden, useWeekCompact } from "../calendar/compact";
 import { GridCorner } from "../calendar/GridCorner";
@@ -72,7 +74,7 @@ export function DisplayBoard() {
     >
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <nav className="flex items-center gap-1 px-3 py-0.5 max-sm:px-2">
+          <nav data-view-nav className="flex items-center gap-1 px-3 py-0.5 max-sm:px-2">
             {summary ? (
               <h1 className="min-w-0 truncate text-lg font-semibold max-sm:text-base">
                 {t("screens.summary")}
@@ -182,6 +184,12 @@ export function DisplayBoard() {
           </div>
         </div>
       </div>
+      <PeriodCurtain
+        period={`wall:${days[0]}`}
+        lines={periodLabel("range", days[0], days[6], locale)}
+        from={days[0]}
+        to={days[6]}
+      />
     </div>
   );
 }

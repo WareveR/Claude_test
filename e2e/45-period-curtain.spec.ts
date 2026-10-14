@@ -56,3 +56,26 @@ test("moving to the next year shows the year while its Entries come", async ({ p
     page.getByTestId(`year-day-${year}-03-10`).getByTestId("year-entry").first(),
   ).toBeVisible();
 });
+
+test("the Wall shows the curtain too, with the season's picture under the Month theme", async ({
+  page,
+}) => {
+  await signIn(page);
+  await page.evaluate(() => localStorage.setItem("theme", "month"));
+  await page.goto("/");
+  await page.getByRole("banner").getByRole("button", { name: "Wall" }).click();
+  const board = page.getByTestId("display-board");
+  await expect(board).toBeVisible();
+  const curtain = page.getByTestId("period-curtain");
+  await expect(curtain).toHaveCount(0);
+
+  await board.getByRole("button", { name: "Next" }).click();
+  await expect(curtain).toBeVisible();
+  await expect(curtain.getByTestId("curtain-season")).toBeAttached();
+  // It names the week's days and its year.
+  await expect(curtain).toContainText(String(new Date(Date.now() + 7 * 86_400_000).getFullYear()));
+  await expect(curtain).toHaveCount(0);
+
+  await page.getByRole("banner").getByRole("button", { name: "Wall" }).click();
+  await page.evaluate(() => localStorage.removeItem("theme"));
+});
