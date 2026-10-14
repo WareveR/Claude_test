@@ -171,7 +171,11 @@
     "dark": "Dark",
     "spring": "Spring",
     "ocean": "Ocean",
-    "month": "Month (changes with the month)"
+    "month": "Month (changes with the month)",
+    "playground": "Playground (bright, for children)",
+    "neon": "Neon (dark, for teenagers)",
+    "paper": "Paper (calm, serif)",
+    "contrast": "High contrast (large text)"
   },
   "devices": {
     "title": "Signed-in devices",
