@@ -252,6 +252,33 @@ describe("changing one Occurrence or the following", () => {
     expect((await browser.delete(`/persons/${ana.id}`)).status).toBe(409);
   });
 
+  it("gives each Entry in a window its own Persons and exceptions", async () => {
+    const { browser, ana, entry } = await karate();
+    const bea = (await (
+      await browser.post("/persons", { name: "Bea", color: "#3d405b" })
+    ).json()) as { id: string };
+    await browser.delete(`/entries/${entry.id}/occurrences/2026-10-13`);
+    const appointment = await typeId(browser, "appointment");
+    const first = (await (
+      await browser.post("/entries", dentist(appointment, [ana.id, bea.id]))
+    ).json()) as Full;
+    const second = (await (
+      await browser.post("/entries", { ...dentist(appointment, [bea.id]), title: "Optician" })
+    ).json()) as Full;
+    const listed = (await (
+      await browser.get("/entries?from=2026-10-12&to=2026-10-18")
+    ).json()) as Full[];
+    const byId = new Map(listed.map((e) => [e.id, e]));
+    expect(byId.size).toBe(3);
+    expect(byId.get(entry.id)).toMatchObject({
+      personIds: [],
+      exceptions: [{ date: "2026-10-13", skipped: true, override: null }],
+    });
+    expect([...byId.get(first.id)!.personIds].sort()).toEqual([ana.id, bea.id].sort());
+    expect(byId.get(first.id)!.exceptions).toEqual([]);
+    expect(byId.get(second.id)!.personIds).toEqual([bea.id]);
+  });
+
   it("refuses a date that isn't an Occurrence", async () => {
     const { browser, entry } = await karate();
     expect((await browser.delete(`/entries/${entry.id}/occurrences/2026-10-12`)).status).toBe(404);

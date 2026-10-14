@@ -22,10 +22,10 @@ import { TimeGrid } from "../calendar/TimeGrid";
 import { YearDetail } from "../calendar/YearDetail";
 import { YearGrid } from "../calendar/YearGrid";
 import { CHECKLIST_BAR_TYPE, useChecklistBars } from "../checklists/bars";
-import { useOccurrences } from "../entries/model";
+import { useOccurrences, type Shown } from "../entries/model";
 import { usePersonFilter } from "../filter/model";
 import { matchesFilter } from "../../core/person-filter";
-import { useEntryTypes } from "../entry-types/model";
+import { useEntryTypes, type EntryType } from "../entry-types/model";
 import { useHolidays } from "../holidays/model";
 import { useDayNotes, useSunTimes } from "../layers/model";
 import { SunriseIcon, SunsetIcon } from "../weather/WeatherIcon";
@@ -42,13 +42,21 @@ import { WindReading } from "../weather/ForecastDetail";
 import { WeatherBadge } from "../weather/WeatherBadge";
 import { TasksAccordion, usePeriodTasks } from "../tasks/TasksAccordion";
 import { GridCorner } from "../calendar/GridCorner";
+import { usePrefetchNeighbours } from "./prefetch";
 
 function useToday(): PlainDate {
   return todayIn(useSignedIn().family.timeZone);
 }
 
-/** A window's Occurrences and Checklist period bars, with the Entry Types to draw them. */
-export function useCalendar(from: PlainDate, to: PlainDate) {
+/**
+ * A window's Occurrences and Checklist period bars, with the Entry Types to draw them. `ready`
+ * says the window's own Entries have arrived; until then `entries` holds only the bars, and
+ * nothing from another window is shown in their place, as its dates would be wrong.
+ */
+export function useCalendar(
+  from: PlainDate,
+  to: PlainDate,
+): { entries: Shown[]; types: EntryType[]; ready: boolean } {
   const occurrences = useOccurrences(from, to);
   const bars = useChecklistBars(from, to);
   const types = useEntryTypes();
@@ -59,6 +67,7 @@ export function useCalendar(from: PlainDate, to: PlainDate) {
       ...(occurrences.data ?? []).filter((e) => matchesFilter(e.personIds, filter)),
     ],
     types: [...(types.data ?? []), CHECKLIST_BAR_TYPE],
+    ready: occurrences.data !== undefined,
   };
 }
 
@@ -80,6 +89,7 @@ export function DayView() {
   const past = usePastWeather(day, day).get(day);
   const forecast = useWeather().data;
   const showHours = useDayHours();
+  usePrefetchNeighbours("day", day);
   if (!isPlainDate(date)) return <Navigate to={paths.day(today)} replace />;
   const title = formatPlainDate(date, locale, { weekday: "long", day: "numeric", month: "long" });
   // The hours kept for a day gone by; the forecast's for today and the days ahead.
@@ -192,6 +202,7 @@ function Week({ monday }: { monday: PlainDate }) {
   // the room; the Tasks are always in the Summary.
   const compact = useWeekCompact();
   const tasksHidden = useTasksHidden();
+  usePrefetchNeighbours("week", monday);
   const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i));
   const tasks = usePeriodTasks(monday, days[6]).tasks.length;
   const forecast = useDayWeather(monday, days[6]);
@@ -310,6 +321,7 @@ function Month({ first }: { first: PlainDate }) {
         ? today
         : first;
   const weeks = monthWeeks(first);
+  usePrefetchNeighbours("month", first);
   const { entries, types } = useCalendar(weeks[0][0], weeks[weeks.length - 1][6]);
   const holidays = useHolidays(weeks[0][0], weeks[weeks.length - 1][6]);
   const notes = useDayNotes(weeks[0][0], weeks[weeks.length - 1][6]);
@@ -374,6 +386,7 @@ function Year({ year }: { year: number }) {
   const detail = search.get("detail") !== "0";
   const persons = usePersons();
   const date = `${year}-01-01`;
+  usePrefetchNeighbours("year", date);
   const { entries, types } = useCalendar(date, `${year}-12-31`);
   const holidays = useHolidays(date, `${year}-12-31`);
   const withDetail = (path: string) => (detail ? path : `${path}?detail=0`);

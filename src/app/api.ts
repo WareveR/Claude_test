@@ -24,6 +24,12 @@ export class NetworkError extends Error {
   }
 }
 
+/**
+ * How long a date window's answer counts as fresh. Coming back to a period within it, or to one
+ * loaded ahead of time, shows at once without asking again; saves invalidate every window anyway.
+ */
+export const RANGE_STALE_TIME = 60_000;
+
 /** Calls the Worker's JSON API; throws ApiError on any non-2xx answer, NetworkError on none. */
 export async function api<T>(path: string, options: { method?: string; body?: unknown } = {}) {
   const method = options.method ?? "GET";
