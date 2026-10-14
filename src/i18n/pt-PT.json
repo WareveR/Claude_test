@@ -171,7 +171,11 @@
     "dark": "Escuro",
     "spring": "Primavera",
     "ocean": "Oceano",
-    "month": "Mês (muda com o mês)"
+    "month": "Mês (muda com o mês)",
+    "playground": "Recreio (alegre, para crianças)",
+    "neon": "Néon (escuro, para jovens)",
+    "paper": "Papel (sóbrio, com serifa)",
+    "contrast": "Alto contraste (letra grande)"
   },
   "devices": {
     "title": "Dispositivos com sessão iniciada",

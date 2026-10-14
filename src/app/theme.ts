@@ -1,7 +1,18 @@
 import { useSyncExternalStore } from "react";
 
 /** The colour theme belongs to this browser only, like Display Mode. */
-export const THEMES = ["auto", "light", "dark", "spring", "ocean", "month"] as const;
+export const THEMES = [
+  "auto",
+  "light",
+  "dark",
+  "spring",
+  "ocean",
+  "month",
+  "playground",
+  "neon",
+  "paper",
+  "contrast",
+] as const;
 export type Theme = (typeof THEMES)[number];
 
 const KEY = "theme";
