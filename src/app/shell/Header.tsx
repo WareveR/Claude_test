@@ -86,7 +86,6 @@ export function Header({
     navigate(paths.display());
   };
   const toggleSummary = () => {
-    if (wall) return leaveDisplayMode(paths.summary());
     navigate(inSummary ? outsideScreens : paths.summary());
   };
   const today = useForecastDays().get(todayIn(family.timeZone, now));
@@ -156,21 +155,24 @@ export function Header({
           </Link>
         </>
       )}
+      {/* On the wall the Summary is a button of the board's own, beside its filter. */}
+      {!wall && (
+        <ScreenSwitch
+          on={inSummary}
+          icon={CloudSun}
+          label={t("screens.summary")}
+          help="summary"
+          onToggle={toggleSummary}
+        />
+      )}
       {/* Always last and in the same place, on the wall too. */}
-      <ScreenSwitch
-        on={inSummary}
-        icon={CloudSun}
-        label={t("screens.summary")}
-        help="summary"
-        onToggle={toggleSummary}
-        className={wall ? "ml-auto" : ""}
-      />
       <ScreenSwitch
         on={wall}
         icon={Tv}
         label={t("screens.wall")}
         help="wall"
         onToggle={toggleWall}
+        className={wall ? "ml-auto" : ""}
       />
       {month !== null && (
         <MonthMotif month={month} opacity={0.16} className="absolute inset-0 text-header-ink" />
