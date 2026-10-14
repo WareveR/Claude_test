@@ -19,6 +19,7 @@ import type { Shown as Entry } from "../entries/model";
 import type { Person } from "../persons/model";
 import { EntryBlock } from "./EntryBlock";
 import { NoteLine } from "../layers/NoteLine";
+import { useGridLayers } from "./compact";
 import { isMovable, useEntryDrag } from "./useEntryDrag";
 
 /** The height of a waking hour; a Sleeping Hour with nothing on is half as high. */
@@ -78,6 +79,10 @@ export function TimeGrid({
 }: TimeGridProps) {
   const navigate = useNavigate();
   const scroller = useRef<HTMLDivElement>(null);
+  // Only the All-day Entries (with the day notes), only the Timed ones, or both.
+  const layers = useGridLayers();
+  const showAllDay = layers !== "timed";
+  const showTimed = layers !== "allDay";
   const drag = useEntryDrag({ entries: given, locale, enabled: !readOnly, scroller });
   const entries = drag.shown(given);
   // Each day's Timed Entries in minutes of that day.
@@ -167,6 +172,7 @@ export function TimeGrid({
             </div>
             {dayExtra?.(day)}
             {!plain &&
+              showAllDay &&
               notes.get(day)?.map((note) => (
                 <div
                   key={note}
@@ -181,7 +187,7 @@ export function TimeGrid({
       </div>
       <div
         data-testid="all-day-row"
-        className="grid gap-0.5 border-b border-line py-1"
+        className={`grid gap-0.5 border-b border-line py-1 ${showAllDay ? "" : "hidden"} ${showTimed ? "" : "min-h-0 flex-1 content-start overflow-y-auto"}`}
         style={{
           gridTemplateColumns: columns,
           gridTemplateRows: `repeat(${barRows + holidayRows}, auto)`,
@@ -225,7 +231,11 @@ export function TimeGrid({
           />
         ))}
       </div>
-      <div ref={scroller} data-testid="time-scroller" className="min-h-0 flex-1 overflow-y-auto">
+      <div
+        ref={scroller}
+        data-testid="time-scroller"
+        className={`min-h-0 flex-1 overflow-y-auto ${showTimed ? "" : "hidden"}`}
+      >
         <div className="relative grid" style={{ gridTemplateColumns: columns, height: tops[24] }}>
           <div className="relative">
             {Array.from({ length: 24 }, (_, h) =>

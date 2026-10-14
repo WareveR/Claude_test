@@ -7,6 +7,7 @@ import { formatLocale } from "../../core/languages";
 import { formatMonthRange } from "../../core/plain-date";
 import { useSignedIn } from "../family";
 import { FilterButton } from "../filter/FilterButton";
+import { LayersButton } from "../calendar/LayersButton";
 import { GRID_BOX } from "../shell/SidePanel";
 import { CalendarGrid } from "../views/Views";
 import { ForecastButton } from "../weather/ForecastButton";
@@ -103,7 +104,8 @@ export function DisplayBoard() {
                 </span>
               </button>
             )}
-            <div className="ml-auto">
+            <div className="ml-auto flex items-center gap-1">
+              <LayersButton />
               <FilterButton />
             </div>
           </nav>
