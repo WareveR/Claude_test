@@ -1,5 +1,5 @@
 import { monthWeeks } from "./layout";
-import { addDays, addMonths, type PlainDate } from "./plain-date";
+import { addDays, addMonths, daysBetween, weekday, type PlainDate } from "./plain-date";
 
 /** The calendar views that step a period at a time with their arrows and swipes. */
 export type Period = "day" | "week" | "month" | "year" | "agenda";
@@ -55,8 +55,10 @@ export function neighbourWindows(period: Period, first: PlainDate): DateWindow[]
 }
 
 /**
- * The day another view opens on: the day last in focus while the period shown holds it, else
- * today when the period holds it, else the period's first day. A month holds only its own days.
+ * The day another view opens on: the day last in focus while the period shown holds it; else that
+ * day moved by whole periods into this one (same weekday, day of the month, or date of the year),
+ * so the arrows carry it along; else today when the period holds it, else the period's first day.
+ * A month holds only its own days.
  */
 export function focusDay(
   period: Period,
@@ -68,6 +70,26 @@ export function focusDay(
     period === "month" ? addDays(addMonths(first, 1), -1) : periodWindow(period, first).to;
   const shown = (day: PlainDate) => day >= first && day <= last;
   if (focus && shown(focus)) return focus;
+  if (focus) return carried(period, first, focus);
   if (shown(today)) return today;
   return first;
+}
+
+/** The day in focus moved by whole periods into the one starting at `first`. */
+function carried(period: Period, first: PlainDate, focus: PlainDate): PlainDate {
+  const months = (date: PlainDate) => Number(date.slice(0, 4)) * 12 + Number(date.slice(5, 7));
+  switch (period) {
+    case "day":
+      return first;
+    case "week":
+      return addDays(first, weekday(focus));
+    case "month":
+      return addMonths(focus, months(first) - months(focus));
+    case "year":
+      return addMonths(focus, 12 * (Number(first.slice(0, 4)) - Number(focus.slice(0, 4))));
+    case "agenda": {
+      const offset = daysBetween(first, focus) % AGENDA_DAYS;
+      return addDays(first, offset < 0 ? offset + AGENDA_DAYS : offset);
+    }
+  }
 }

@@ -17,7 +17,10 @@ test("the Agenda lists Entries and Tasks day by day, in time order", async ({ pa
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page).toHaveURL(/\/tasks$/);
 
-  await page.goto("/month/2027-05");
+  // The Agenda opens on the day in focus: the 1st, picked in the month.
+  await page.goto("/month/2027-05?day=2027-05-01");
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.keyboard.press("Escape");
   await page.getByRole("link", { name: "Agenda" }).click();
   await expect(page).toHaveURL(/\/agenda\/2027-05-01$/);
   const day = page.getByTestId("agenda-day-2027-05-10");
