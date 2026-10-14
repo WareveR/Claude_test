@@ -304,8 +304,9 @@ const SUGGESTIONS_SCHEMA = {
           date: { type: ["string", "null"] },
           time: { type: ["string", "null"] },
           repeat: VOICE_SCHEMA.properties.repeat,
+          persons: { type: "array", items: { type: "integer" } },
         },
-        required: ["kind", "title", "date", "time", "repeat"],
+        required: ["kind", "title", "date", "time", "repeat", "persons"],
       },
     },
   },
@@ -313,9 +314,20 @@ const SUGGESTIONS_SCHEMA = {
 };
 
 /** The prompt that turns the phrases of the Suggestions box into repeating Tasks and Entries. */
-export function suggestionsPrompt(phrases: string[], today: PlainDate, language: Language) {
+export function suggestionsPrompt(
+  phrases: string[],
+  today: PlainDate,
+  language: Language,
+  persons: { name: string; nicknames: string[] }[] = [],
+) {
   const locale = language === "en" ? "en-GB" : "pt-PT";
   const day = formatPlainDate(today, locale, { weekday: "long" });
+  const people = persons
+    .map(
+      (p, i) =>
+        `${i}. ${p.name}${p.nicknames.length > 0 ? ` (also called ${p.nicknames.join(", ")})` : ""}`,
+    )
+    .join("\n");
   return [
     {
       role: "system",
@@ -326,12 +338,14 @@ export function suggestionsPrompt(phrases: string[], today: PlainDate, language:
         'A phrase naming a whole topic ("baby", "garden", "swimming pool") gives up to 8 items a family in Portugal commonly has to remember for it, each with a sensible repeat.',
         'An "entry" happens at a time (class, gym, appointment); a "task" is something to do or pay by a date.',
         'Give "repeat" whenever the thing repeats; weekdays are 0 = Monday … 6 = Sunday. Give the first date as YYYY-MM-DD and times as HH:mm (24-hour), worked out from today; null when not said.',
+        'The family\'s people are numbered below. "persons" holds the numbers of the people a phrase is for, named or by a nickname ("dad", "a mãe"); several when they do it together; empty when it names nobody, which means the whole family.',
+        'When a phrase gives different days or times for different people ("gym: dad Monday 7pm, mum Tuesday 8am"), give one item per person.',
         "Answer only with JSON matching the schema.",
       ].join(" "),
     },
     {
       role: "user",
-      content: `Today is ${day} ${today}.\n\n${phrases.map((p, i) => `${i + 1}. ${p}`).join("\n")}`,
+      content: `Today is ${day} ${today}.\n\nThe family's people:\n${people || "(none)"}\n\nPhrases:\n${phrases.map((p, i) => `${i + 1}. ${p}`).join("\n")}`,
     },
   ];
 }
@@ -342,10 +356,11 @@ export async function readSuggestions(
   phrases: string[],
   today: PlainDate,
   language: Language,
+  persons: { name: string; nicknames: string[] }[] = [],
 ): Promise<unknown | null> {
   try {
     const result = await model.run(env, {
-      messages: suggestionsPrompt(phrases, today, language),
+      messages: suggestionsPrompt(phrases, today, language, persons),
       response_format: { type: "json_schema", json_schema: SUGGESTIONS_SCHEMA },
     });
     if (result && "usage" in result) console.log("suggestions usage", JSON.stringify(result.usage));

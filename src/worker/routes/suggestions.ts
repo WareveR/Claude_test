@@ -1,3 +1,4 @@
+import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { isLanguage } from "../../core/languages";
 import { MAX_PHRASES, MAX_TEXT, parseWritten } from "../../core/suggestions";
@@ -10,7 +11,7 @@ import type { AppEnv } from "../types";
 /**
  * Suggestions: the phrases written or said in the box become repeating Tasks and Entries to
  * review. Nothing is saved here; the browser creates the ones the Family keeps through the usual
- * routes. The model sees only the phrases, never the calendar.
+ * routes. The model sees the phrases and the Persons' names and nicknames, never the calendar.
  */
 export const suggestionRoutes = new Hono<AppEnv>().use(requireDevice);
 
@@ -26,7 +27,12 @@ suggestionRoutes.post("/suggestions/read", async (c) => {
   ) {
     return c.json({ error: "invalid", field: "phrases" }, 400);
   }
-  const [family] = await c.get("db").select().from(schema.family).limit(1);
+  const db = c.get("db");
+  const [[family], persons, nicknames] = await Promise.all([
+    db.select().from(schema.family).limit(1),
+    db.select().from(schema.person).where(eq(schema.person.archived, false)),
+    db.select().from(schema.personNickname),
+  ]);
   const deviceLanguage = c.get("device").language;
   const language = isLanguage(deviceLanguage)
     ? deviceLanguage
@@ -39,7 +45,15 @@ suggestionRoutes.post("/suggestions/read", async (c) => {
     (phrases as string[]).map((p) => p.trim()),
     today,
     language,
+    persons.map((p) => ({
+      name: p.name,
+      nicknames: nicknames.filter((n) => n.personId === p.id).map((n) => n.nickname),
+    })),
   );
-  const items = parseWritten(raw, today);
+  const items = parseWritten(
+    raw,
+    today,
+    persons.map((p) => p.id),
+  );
   return c.json(items ? { outcome: "read", items } : { outcome: "failed" });
 });

@@ -20,7 +20,7 @@ afterEach(() => {
 });
 
 describe("Suggestions: reading the box", () => {
-  it("sends only the numbered phrases and returns checked drafts, saving nothing", async () => {
+  it("sends the numbered phrases and returns checked drafts, saving nothing", async () => {
     const browser = await setUpFamily();
     answer = JSON.stringify({
       items: [
@@ -44,6 +44,30 @@ describe("Suggestions: reading the box", () => {
     expect(prompts[0].messages[1].content).toContain("1. ginásio 2a e 4a às 19h\n2. bebé");
     const tasks = (await (await browser.get("/tasks")).json()) as unknown[];
     expect(tasks).toHaveLength(0);
+  });
+
+  it("tells the model the Persons and their nicknames, and returns whom each item is for", async () => {
+    const browser = await setUpFamily();
+    const rui = (await (
+      await browser.post("/persons", { name: "Rui", color: "#bbdefb", nicknames: ["pai"] })
+    ).json()) as { id: string };
+    const old = (await (
+      await browser.post("/persons", { name: "Avó", color: "#bbdefb" })
+    ).json()) as {
+      id: string;
+    };
+    await browser.request("PATCH", `/persons/${old.id}`, { archived: true });
+    answer = JSON.stringify({
+      items: [
+        { kind: "entry", title: "Ginásio", date: null, time: "19:00", repeat: null, persons: [0] },
+      ],
+    });
+    const res = await browser.post("/suggestions/read", { phrases: ["ginásio do pai às 19h"] });
+    const body = (await res.json()) as { items: { personIds: string[] }[] };
+    expect(body.items[0].personIds).toEqual([rui.id]);
+    const content = prompts[0].messages[1].content;
+    expect(content).toContain("0. Rui (also called pai)");
+    expect(content).not.toContain("Avó");
   });
 
   it("says it failed when the model fails, and refuses an empty box", async () => {

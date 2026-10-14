@@ -170,10 +170,47 @@ describe("parseWritten", () => {
         date: "2026-10-12",
         time: "19:00",
         repetition: { frequency: "weekly", interval: 1, weekdays: [0, 2], end: { type: "never" } },
+        personIds: [],
       },
-      { kind: "task", title: "Vacinas do bebé", date: TODAY, time: null, repetition: null },
+      {
+        kind: "task",
+        title: "Vacinas do bebé",
+        date: TODAY,
+        time: null,
+        repetition: null,
+        personIds: [],
+      },
     ]);
     expect(parseWritten("nonsense", TODAY)).toBeNull();
+  });
+
+  it("turns the model's Person numbers into ids, dropping unknown ones", () => {
+    const items = parseWritten(
+      {
+        items: [
+          {
+            kind: "entry",
+            title: "Ginásio",
+            date: null,
+            time: "19:00",
+            repeat: null,
+            persons: [1],
+          },
+          {
+            kind: "entry",
+            title: "Natação",
+            date: null,
+            time: null,
+            repeat: null,
+            persons: [0, 1, 7],
+          },
+          { kind: "task", title: "Regar", date: null, time: null, repeat: null, persons: "pai" },
+        ],
+      },
+      TODAY,
+      ["ana", "rui"],
+    );
+    expect(items?.map((i) => i.personIds)).toEqual([["rui"], ["ana", "rui"], []]);
   });
 });
 

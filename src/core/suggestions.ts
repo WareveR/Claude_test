@@ -477,10 +477,19 @@ export type WrittenDraft = {
   date: PlainDate;
   time: ClockTime | null;
   repetition: Repetition | null;
+  /** The Persons the phrase named; none means the whole Family. */
+  personIds: string[];
 };
 
-/** The model's list checked item by item: a bad item is dropped, a bad field left out. */
-export function parseWritten(value: unknown, today: PlainDate): WrittenDraft[] | null {
+/**
+ * The model's list checked item by item: a bad item is dropped, a bad field left out. The
+ * model numbers Persons by their place in `personIds`.
+ */
+export function parseWritten(
+  value: unknown,
+  today: PlainDate,
+  personIds: string[] = [],
+): WrittenDraft[] | null {
   const items = (value as { items?: unknown } | null)?.items;
   if (!Array.isArray(items)) return null;
   const out: WrittenDraft[] = [];
@@ -488,7 +497,7 @@ export function parseWritten(value: unknown, today: PlainDate): WrittenDraft[] |
     if (typeof item !== "object" || item === null) continue;
     const v = item as Record<string, unknown>;
     if (v.kind !== "entry" && v.kind !== "task") continue;
-    const f = parseVoiceFields(v, 0, 0);
+    const f = parseVoiceFields(v, personIds.length, 0);
     if (!f.title) continue;
     const repetition: Repetition | null = f.repeat
       ? {
@@ -500,7 +509,14 @@ export function parseWritten(value: unknown, today: PlainDate): WrittenDraft[] |
       : null;
     const from = f.date && f.date >= today ? f.date : today;
     const date = repetition?.weekdays ? nextWeekday(repetition.weekdays, from) : from;
-    out.push({ kind: v.kind, title: f.title, date, time: f.time, repetition });
+    out.push({
+      kind: v.kind,
+      title: f.title,
+      date,
+      time: f.time,
+      repetition,
+      personIds: f.persons.map((i) => personIds[i]),
+    });
   }
   return out;
 }
