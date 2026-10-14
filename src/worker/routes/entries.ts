@@ -156,24 +156,39 @@ export function present(row: EntryRow, personIds: string[], exceptions: Exceptio
   };
 }
 
+function groupBy<T>(items: T[], key: (item: T) => string): Map<string, T[]> {
+  const groups = new Map<string, T[]>();
+  for (const item of items) {
+    const group = groups.get(key(item));
+    if (group) group.push(item);
+    else groups.set(key(item), [item]);
+  }
+  return groups;
+}
+
 async function withPersons(db: Db, rows: EntryRow[]) {
   if (rows.length === 0) return [];
-  const links = await inParts(
-    rows.map((r) => r.id),
-    (ids) => db.select().from(schema.entryPerson).where(inArray(schema.entryPerson.entryId, ids)),
-  );
   const repeating = rows.filter((r) => r.repetition).map((r) => r.id);
-  const exceptions = await inParts(repeating, (ids) =>
-    db
-      .select()
-      .from(schema.occurrenceException)
-      .where(inArray(schema.occurrenceException.entryId, ids)),
-  );
+  // Both reads at once, then grouped by Entry: a year's window holds hundreds of Entries.
+  const [links, exceptions] = await Promise.all([
+    inParts(
+      rows.map((r) => r.id),
+      (ids) => db.select().from(schema.entryPerson).where(inArray(schema.entryPerson.entryId, ids)),
+    ),
+    inParts(repeating, (ids) =>
+      db
+        .select()
+        .from(schema.occurrenceException)
+        .where(inArray(schema.occurrenceException.entryId, ids)),
+    ),
+  ]);
+  const personsOf = groupBy(links, (l) => l.entryId);
+  const exceptionsOf = groupBy(exceptions, (e) => e.entryId);
   return rows.map((row) =>
     present(
       row,
-      links.filter((l) => l.entryId === row.id).map((l) => l.personId),
-      exceptions.filter((e) => e.entryId === row.id),
+      (personsOf.get(row.id) ?? []).map((l) => l.personId),
+      exceptionsOf.get(row.id) ?? [],
     ),
   );
 }

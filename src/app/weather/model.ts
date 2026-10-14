@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { addDays, todayIn, type PlainDate } from "../../core/plain-date";
 import {
@@ -9,7 +9,7 @@ import {
   type HourWeather,
   type WeatherPlace,
 } from "../../core/weather";
-import { api } from "../api";
+import { api, RANGE_STALE_TIME } from "../api";
 import { useSignedIn } from "../family";
 
 export type WeatherLocation = WeatherPlace & { id: string };
@@ -62,17 +62,25 @@ export function useForecastDays(): Map<PlainDate, ShownDay> {
   return useMemo(() => forecastDays(data, today), [data, today]);
 }
 
-/** The kept readings of the days before today in `from`..`to`, by date. */
-export function usePastWeather(from: PlainDate, to: PlainDate): Map<PlainDate, PastDay> {
-  const { family } = useSignedIn();
-  const today = todayIn(family.timeZone);
+/**
+ * The request for the kept readings of the days before `today` in `from`..`to`: shared by the
+ * views and their prefetching. Disabled when the window has no day gone by.
+ */
+export function pastWeatherQuery(from: PlainDate, to: PlainDate, today: PlainDate) {
   const last = addDays(today, -1);
   const end = to < last ? to : last;
-  const { data } = useQuery({
+  return queryOptions({
     queryKey: ["weather-past", from, end],
     queryFn: () => api<PastDay[]>(`/weather/past?from=${from}&to=${end}`),
     enabled: from <= end,
+    staleTime: RANGE_STALE_TIME,
   });
+}
+
+/** The kept readings of the days before today in `from`..`to`, by date. */
+export function usePastWeather(from: PlainDate, to: PlainDate): Map<PlainDate, PastDay> {
+  const { family } = useSignedIn();
+  const { data } = useQuery(pastWeatherQuery(from, to, todayIn(family.timeZone)));
   return useMemo(() => new Map((data ?? []).map((p) => [p.day.date, p])), [data]);
 }
 

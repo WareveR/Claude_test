@@ -13,9 +13,8 @@ import { usePeriodTasks } from "../tasks/TasksAccordion";
 import { TaskRow } from "../tasks/TaskRow";
 import { ViewNav } from "../shell/ViewNav";
 import { useCalendar } from "./Views";
-
-/** How many days the agenda lists at a time. */
-export const AGENDA_DAYS = 30;
+import { AGENDA_DAYS } from "../../core/periods";
+import { usePrefetchNeighbours } from "./prefetch";
 
 export function AgendaView() {
   const { date = "" } = useParams();
@@ -34,6 +33,7 @@ function Agenda({ from }: { from: PlainDate }) {
   const to = addDays(from, AGENDA_DAYS - 1);
   const { entries, types } = useCalendar(from, to);
   const holidays = useHolidays(from, to);
+  usePrefetchNeighbours("agenda", from, { weather: false });
   const { tasks, now, persons } = usePeriodTasks(from, to);
   const overdue = tasks.filter((task) => isOverdue(task, now) && task.dueDate! < from);
   const days: PlainDate[] = [];
