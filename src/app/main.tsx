@@ -77,7 +77,13 @@ registerServiceWorker();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={persistOptions}
+      // The stored copy can predate the last save by up to a second: calendar ranges read from it
+      // show at once but are asked for again, however recently they were loaded.
+      onSuccess={() => queryClient.invalidateQueries({ queryKey: ["entries"] })}
+    >
       <CrashBoundary>
         <App />
       </CrashBoundary>
