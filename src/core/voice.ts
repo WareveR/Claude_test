@@ -1,5 +1,10 @@
 import { clockTime, isClockTime, minutesOf, type ClockTime, type EntryTime } from "./entry-time";
-import type { EntryTypeDefaults, Importance, ReminderOffset } from "./entry-type";
+import {
+  newEntryIcon,
+  type EntryTypeDefaults,
+  type Importance,
+  type ReminderOffset,
+} from "./entry-type";
 import type { Language } from "./languages";
 import { addDays, formatPlainDate, isPlainDate, type PlainDate } from "./plain-date";
 import type { Repetition } from "./repetition";
@@ -134,11 +139,16 @@ function repetitionOf(repeat: VoiceCreate["repeat"]): Repetition | null {
 
 /**
  * Turns the model's answer into a new Entry, filling what the sentence didn't say from the Entry
- * Type's defaults, as the form would.
+ * Type's defaults, as the form would, and with the icon its title names ("Ginásio" → the gym).
  */
 export function entryValues(
   answer: VoiceCreate,
-  type: { id: string; defaults: EntryTypeDefaults },
+  type: {
+    id: string;
+    defaults: EntryTypeDefaults;
+    builtinKey?: string | null;
+    icon?: string | null;
+  },
   personIds: string[],
   today: PlainDate,
 ): EntryValues {
@@ -174,7 +184,7 @@ export function entryValues(
     importance: answer.importance ?? d.importance ?? "normal",
     location: answer.location ?? d.location ?? "",
     notes: d.notes ?? "",
-    icon: null,
+    icon: newEntryIcon(answer.title, type),
     private: false,
     reminders: d.reminders ?? [],
     repetition: repetitionOf(answer.repeat) ?? d.repetition ?? null,

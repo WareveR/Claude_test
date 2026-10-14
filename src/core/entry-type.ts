@@ -310,3 +310,41 @@ export const BUILT_IN_DEFAULTS: Record<
   },
   general: { color: TYPE_COLORS.general, icon: "calendar", defaults: {} },
 };
+
+/** A title's words, lower case and without accents: "Natação às 10h" → natacao, as, 10h. */
+export function titleWords(title: string): string[] {
+  return title
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .split(/[^a-z0-9]+/);
+}
+
+/** Words in an Entry's title that name an icon of their own, in either language. */
+const ICON_WORDS: [Icon, string[]][] = [
+  ["gym", ["ginasio", "gym", "treino", "workout", "musculacao"]],
+  ["swimming", ["natacao", "piscina", "swimming", "swim"]],
+  ["running", ["corrida", "running", "jogging"]],
+  ["football", ["futebol", "football", "soccer"]],
+  ["yoga", ["yoga", "ioga", "pilates"]],
+  ["music", ["musica", "music"]],
+  ["church", ["catequese", "catechism", "missa"]],
+  ["tent", ["escuteiros", "escuteiro", "scouts"]],
+  ["cart", ["supermercado", "groceries"]],
+  ["dentist", ["dentista", "dentist"]],
+];
+
+/**
+ * The icon a new Entry gets. A built-in Entry Type is a whole group ("Activity" draws a bike), so
+ * an Entry whose title names an icon of its own ("Ginásio" → the gym) takes that one; anything
+ * else, and every Entry of a type the Family made, gets none and shows its type's icon.
+ */
+export function newEntryIcon(
+  title: string,
+  type: { builtinKey?: string | null; icon?: string | null },
+): Icon | null {
+  if (!type.builtinKey) return null;
+  const said = new Set(titleWords(title));
+  const named = ICON_WORDS.find(([, keys]) => keys.some((k) => said.has(k)))?.[0] ?? null;
+  return named === type.icon ? null : named;
+}

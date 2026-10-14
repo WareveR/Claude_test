@@ -33,3 +33,13 @@ test("icons come in groups and are found by name", async ({ page }) => {
   );
   await expect(page.getByRole("radio", { name: "Waxing" })).toBeChecked();
 });
+
+test("a new Entry takes the icon its title names until one is picked", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/week/2026-12-07");
+  await page.getByRole("link", { name: "New", exact: true }).click();
+  await page.getByLabel("Title").fill("Gym with Rui");
+  await expect(page.getByRole("radio", { name: "Gym", exact: true })).toBeChecked();
+  await page.getByLabel("Title").fill("Dinner");
+  await expect(page.getByRole("radio", { name: "The type's" })).toBeChecked();
+});

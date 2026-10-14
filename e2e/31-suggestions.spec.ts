@@ -109,11 +109,13 @@ test("a theme opens its ideas, the box reads phrases, and everything is created 
   }[];
   const entries = (await (
     await page.request.get("/api/entries?from=2026-10-01&to=2027-12-31")
-  ).json()) as { title: string; entryTypeId: string }[];
+  ).json()) as { title: string; entryTypeId: string; icon: string | null }[];
   const typeOf = (title: string) =>
     types.find((x) => x.id === entries.find((e) => e.title === title)?.entryTypeId)?.builtinKey;
   expect(typeOf("Debit: water")).toBe("payment");
   expect(typeOf("Suggested gym")).toBe("general");
+  // A gym Entry draws the gym, not its type's icon.
+  expect(entries.find((e) => e.title === "Suggested gym")?.icon).toBe("gym");
 
   // Undo removes everything that was just created.
   await done.getByRole("button", { name: "Undo" }).click();
@@ -220,8 +222,15 @@ test("personal ideas ask who they are for, and a line can be copied for someone 
   try {
     const entries = (await (
       await page.request.get("/api/entries?from=2026-01-01&to=2031-12-31")
-    ).json()) as { title: string; personIds: string[]; time: { startTime?: string } }[];
+    ).json()) as {
+      title: string;
+      personIds: string[];
+      icon: string | null;
+      time: { startTime?: string };
+    }[];
     const gyms = entries.filter((e) => e.title === "Gym" && e.personIds.length > 0);
+    // The gym idea is an Activity, yet each gym Entry draws the gym, not the Activity's bike.
+    expect(gyms.map((e) => e.icon)).toEqual(["gym", "gym"]);
     expect(gyms.map((e) => [e.personIds, e.time.startTime]).sort()).toEqual(
       [
         [[rita], "07:30"],
