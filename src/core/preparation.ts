@@ -1,5 +1,5 @@
 import type { BuiltInTemplate } from "./checklist-template";
-import type { BuiltInType } from "./entry-type";
+import { titleWords, type BuiltInType } from "./entry-type";
 
 /**
  * Words in an Entry's title that call for a predefined list, in either language. A shopping
@@ -24,15 +24,8 @@ const BY_TYPE: Partial<Record<BuiltInType, BuiltInTemplate>> = {
   appointment: "appointment",
 };
 
-const words = (title: string) =>
-  title
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase()
-    .split(/[^a-z0-9]+/);
-
 function namedByTitle(title: string): BuiltInTemplate | "shoppingList" | null {
-  const said = new Set(words(title));
+  const said = new Set(titleWords(title));
   for (const [named, keys] of BY_WORD) if (keys.some((k) => said.has(k))) return named;
   return null;
 }

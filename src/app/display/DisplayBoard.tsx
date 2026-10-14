@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, CloudSun } from "lucide-react";
+import { ChevronLeft, ChevronRight, Newspaper } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router";
@@ -17,9 +17,10 @@ import { SummaryPage } from "../summary/SummaryPage";
 import { periodLabel } from "../../core/period-label";
 import { PeriodCurtain } from "../views/PeriodCurtain";
 import { useRolloverToday } from "./hooks";
-import { useTasksHidden, useWeekCompact } from "../calendar/compact";
-import { GridCorner } from "../calendar/GridCorner";
-import { TasksAccordion, usePeriodTasks } from "../tasks/TasksAccordion";
+import { usePeriodTasksShown, useWeekCompact } from "../calendar/compact";
+import { WeekCompactButton } from "../calendar/WeekCompactButton";
+import { PeriodTasksList } from "../tasks/TasksAccordion";
+import { TasksButton } from "../tasks/TasksButton";
 
 /**
  * Display Mode: a seven-day time grid starting today across the whole screen (the coming days'
@@ -58,9 +59,8 @@ export function DisplayBoard() {
     () => !summary && setWeeksAway(weeksAway + 1),
   );
   const days = boardDays(today, weeksAway);
-  // The week's Tasks stay out of the way unless asked for; the Summary always has them.
-  const tasksHidden = useTasksHidden();
-  const tasks = usePeriodTasks(days[0], days[6]).tasks.length;
+  // The week's Tasks can take the grid's place.
+  const tasksShown = usePeriodTasksShown();
   // The days carry their numbers; the row says only the month, so it stays one short line.
   const title = formatMonthRange(days[0], days[6], locale);
   const arrow = "rounded-md p-1 hover:bg-surface";
@@ -132,9 +132,11 @@ export function DisplayBoard() {
                 className={`rounded-md p-1.5 ${summary ? "bg-accent text-accent-ink" : "hover:bg-surface"}`}
                 onClick={() => show(weeksAway, !summary)}
               >
-                <CloudSun aria-hidden size={20} strokeWidth={1.75} />
+                <Newspaper aria-hidden size={20} strokeWidth={1.75} />
               </button>
-              {!summary && <LayersButton />}
+              {!summary && !tasksShown && <WeekCompactButton />}
+              {!summary && !tasksShown && <LayersButton />}
+              {!summary && <TasksButton from={days[0]} to={days[6]} />}
               <FilterButton />
             </div>
           </nav>
@@ -143,12 +145,8 @@ export function DisplayBoard() {
               <SummaryPage />
             </div>
           )}
-          {!summary && !tasksHidden && (
-            <div className="pb-2 empty:hidden">
-              <TasksAccordion from={days[0]} to={days[6]} />
-            </div>
-          )}
-          <div className={summary ? "hidden" : "flex min-h-72 flex-1 flex-col"}>
+          {!summary && tasksShown && <PeriodTasksList from={days[0]} to={days[6]} />}
+          <div className={summary || tasksShown ? "hidden" : "flex min-h-72 flex-1 flex-col"}>
             {/* All seven days fit the screen, a phone's too: never a sideways scroll. */}
             <div className="relative flex min-h-0 flex-1">
               <div data-testid="wall-days" className="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -156,7 +154,6 @@ export function DisplayBoard() {
                   days={days}
                   readOnly
                   plain={compact}
-                  corner={<GridCorner tasks={tasks} />}
                   dayExtra={(day) => {
                     if (compact) return null;
                     const weather = forecast.get(day);

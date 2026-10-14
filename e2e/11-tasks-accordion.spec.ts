@@ -25,8 +25,13 @@ test("Coming up holds today's and overdue Tasks, other days' accordions only the
   await left.getByRole("checkbox", { name: "Done: Pay the electricity bill" }).check();
   await expect(left.getByText("Pay the electricity bill")).toHaveClass(/line-through/);
 
-  // Another day's own Tasks accordion doesn't hold overdue Tasks.
+  // Another day's Tasks, shown in place of its calendar, don't hold overdue Tasks.
   await page.goto("/");
   await page.getByRole("link", { name: "Next" }).click();
-  await expect(page.getByTestId("tasks-accordion")).toHaveCount(0);
+  await page.getByTestId("period-tasks").click();
+  await expect(page.getByTestId("period-tasks-list")).toBeVisible();
+  await expect(page.getByTestId("period-tasks-list")).not.toContainText("Renew the passport");
+  await expect(page.getByTestId("time-scroller")).toHaveCount(0);
+  await page.getByRole("button", { name: "Show the calendar" }).click();
+  await expect(page.getByTestId("time-scroller")).toBeVisible();
 });

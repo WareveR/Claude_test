@@ -15,8 +15,13 @@ import { useSignedIn } from "../family";
 import type { PlainDate } from "../../core/plain-date";
 import { FilterButton } from "../filter/FilterButton";
 import { LayersButton } from "../calendar/LayersButton";
+import { usePeriodTasksShown } from "../calendar/compact";
+import { WeekCompactButton } from "../calendar/WeekCompactButton";
+import { TasksButton } from "../tasks/TasksButton";
 import { MonthMotif, useMonthOnScreen } from "../month-theme";
 import { paths } from "../paths";
+import { focusDay } from "../../core/periods";
+import { focusedDay } from "../views/focus";
 import { useSwipe } from "../ui/useSwipe";
 
 const VIEWS = ["day", "week", "month", "year", "agenda", "tasks", "shopping"] as const;
@@ -29,6 +34,7 @@ export function ViewNav({
   next,
   newPath,
   extra,
+  tasks,
   compact = false,
 }: {
   date: PlainDate;
@@ -39,10 +45,9 @@ export function ViewNav({
   newPath?: string | null;
   /** Shown beside the title. */
   extra?: ReactNode;
-  /**
-   * Search, Filter and "+" sit elsewhere (the day view's own header row), and the title is only
-   * for screen readers, as that row shows the date.
-   */
+  /** The period whose Tasks the view can show in place of its calendar. */
+  tasks?: { from: PlainDate; to: PlainDate };
+  /** The title is only for screen readers, as the view's own header row shows the date. */
   compact?: boolean;
 }) {
   const { t } = useTranslation();
@@ -57,6 +62,9 @@ export function ViewNav({
     view === "week" || view === "month" || view === "year" || view === "agenda"
       ? paths[view](today)
       : paths.day(today);
+  // Another view opens on the day in focus, kept from view to view while this one shows it.
+  const period = (["day", "week", "month", "year", "agenda"] as const).find((p) => p === view);
+  const target = period ? focusDay(period, date, focusedDay(), today) : (focusedDay() ?? date);
   const month = useMonthOnScreen();
   // Sticky, so a long stacked page (a phone, a big zoom) can always move on or switch view;
   // above the grid's now line, so the Person Filter panel opens over it.
@@ -69,7 +77,7 @@ export function ViewNav({
         {VIEWS.map((view) => (
           <NavLink
             key={view}
-            to={view === "tasks" || view === "shopping" ? paths[view]() : paths[view](date)}
+            to={view === "tasks" || view === "shopping" ? paths[view]() : paths[view](target)}
             // Where space is short (a phone, or one on its side) the names shrink to a letter or an
             // icon; the full name stays the link's name.
             aria-label={t(`views.${view}`)}
@@ -125,7 +133,7 @@ export function ViewNav({
         </h1>
       )}
       {extra}
-      {!compact && <ViewActions date={date} newPath={newPath} className="ml-auto" />}
+      <ViewActions date={date} newPath={newPath} tasks={tasks} className="ml-auto" />
       {month !== null && (
         <MonthMotif month={month} opacity={0.08} className="absolute inset-0 text-header" />
       )}
@@ -133,22 +141,32 @@ export function ViewNav({
   );
 }
 
-/** Search, the Person Filter and "+" (a new Entry on the date, unless given; none when null). */
+/**
+ * The view's one row of options: what the grid shows, the period's Tasks instead of the calendar,
+ * Search, the Person Filter and "+" (a new Entry on the date, unless given; none when null).
+ */
 export function ViewActions({
   date,
   newPath,
+  tasks,
   className = "",
 }: {
   date: PlainDate;
   newPath?: string | null;
+  tasks?: { from: PlainDate; to: PlainDate };
   className?: string;
 }) {
   const { t } = useTranslation();
-  // The day and week grids can show only their All-day or only their Timed Entries.
   const view = useLocation().pathname.split("/")[1];
+  const tasksShown = usePeriodTasksShown();
+  const grid = !(tasks && tasksShown);
   return (
     <div className={`flex items-center gap-1 ${className}`}>
-      {(view === "day" || view === "week") && <LayersButton />}
+      {/* The week's weather and notes can make way for the hours. */}
+      {view === "week" && grid && <WeekCompactButton />}
+      {/* The day and week grids can show only their All-day or only their Timed Entries. */}
+      {(view === "day" || view === "week") && grid && <LayersButton />}
+      {tasks && <TasksButton from={tasks.from} to={tasks.to} />}
       <Link
         to={paths.search()}
         aria-label={t("search.title")}

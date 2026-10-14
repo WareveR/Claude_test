@@ -53,3 +53,21 @@ export function neighbourWindows(period: Period, first: PlainDate): DateWindow[]
     periodWindow(period, stepPeriod(period, first, step)),
   );
 }
+
+/**
+ * The day another view opens on: the day last in focus while the period shown holds it, else
+ * today when the period holds it, else the period's first day. A month holds only its own days.
+ */
+export function focusDay(
+  period: Period,
+  first: PlainDate,
+  focus: PlainDate | null,
+  today: PlainDate,
+): PlainDate {
+  const last =
+    period === "month" ? addDays(addMonths(first, 1), -1) : periodWindow(period, first).to;
+  const shown = (day: PlainDate) => day >= first && day <= last;
+  if (focus && shown(focus)) return focus;
+  if (shown(today)) return today;
+  return first;
+}

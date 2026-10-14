@@ -1,8 +1,8 @@
-import { CalendarClock, CalendarDays, Clock } from "lucide-react";
+import { CalendarClock, CalendarRange, Clock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { GRID_LAYERS, setGridLayers, useGridLayers } from "./compact";
 
-const ICONS = { both: CalendarClock, allDay: CalendarDays, timed: Clock };
+const ICONS = { both: CalendarClock, allDay: CalendarRange, timed: Clock };
 
 /**
  * Switches what the day and week grids show, in turn: everything, only the All-day Entries (with

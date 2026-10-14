@@ -9,7 +9,7 @@ import {
   moveStart,
   type EntryTime,
 } from "../../core/entry-time";
-import { IMPORTANCES, type EntryTypeDefaults } from "../../core/entry-type";
+import { IMPORTANCES, newEntryIcon, type EntryTypeDefaults } from "../../core/entry-type";
 import { addDays, isPlainDate, todayIn } from "../../core/plain-date";
 import { api, ApiError } from "../api";
 import { REMINDER_CHOICES, reminderLabel, typeName, useEntryTypes } from "../entry-types/model";
@@ -154,6 +154,12 @@ function EntryForm({
   const set = (patch: Partial<EntryDraft>) => setDraft((d) => ({ ...d, ...patch }));
   const kind = useNewKind("entry");
   const isNew = !entry && !occurrence;
+  // A new Entry takes the icon its title names until one is picked by hand.
+  const [iconPicked, setIconPicked] = useState(false);
+  const titleIcon = (title: string, typeId: string) =>
+    isNew && !iconPicked
+      ? { icon: newEntryIcon(title, types.find((ty) => ty.id === typeId) ?? {}) }
+      : {};
   /** What a Task made from this new Entry keeps; its time only if one was picked or changed. */
   const carried = (): Carried => ({
     title: draft.title,
@@ -207,7 +213,13 @@ function EntryForm({
     // A new Entry takes the type's defaults; an existing one keeps its values.
     if (entry) set({ entryTypeId: typeId });
     else
-      setDraft(applyDefaults({ ...draft, entryTypeId: typeId }, type.defaults, Boolean(startTime)));
+      setDraft(
+        applyDefaults(
+          { ...draft, entryTypeId: typeId, ...titleIcon(draft.title, typeId) },
+          type.defaults,
+          Boolean(startTime),
+        ),
+      );
   }
 
   function toggleAllDay(allDay: boolean) {
@@ -265,7 +277,9 @@ function EntryForm({
               required
               autoFocus={!entry && !kind.switched}
               value={draft.title}
-              onChange={(e) => set({ title: e.target.value })}
+              onChange={(e) =>
+                set({ title: e.target.value, ...titleIcon(e.target.value, draft.entryTypeId) })
+              }
               // A time picked on the calendar already says it is an Entry.
               onBlur={(e) => isNew && startTime === null && kind.onTitleBlur(e, carried())}
             />
@@ -443,14 +457,20 @@ function EntryForm({
           <legend className="mb-1 font-medium">{t("entries.icon")}</legend>
           <IconPicker
             value={draft.icon}
-            onChange={(icon) => set({ icon })}
+            onChange={(icon) => {
+              setIconPicked(true);
+              set({ icon });
+            }}
             before={
               <label className="relative cursor-pointer">
                 <input
                   type="radio"
                   name="icon"
                   checked={draft.icon === null}
-                  onChange={() => set({ icon: null })}
+                  onChange={() => {
+                    setIconPicked(true);
+                    set({ icon: null });
+                  }}
                   className="peer sr-only"
                 />
                 <span className="flex h-10 items-center rounded-md px-2 text-xs peer-checked:bg-accent peer-checked:text-accent-ink">
