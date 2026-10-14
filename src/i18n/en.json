@@ -121,7 +121,13 @@
     "hideTasks": "Hide tasks",
     "showHours": "Show the weather by the hour",
     "hideHours": "Hide the weather by the hour",
-    "noHours": "No hourly weather kept for this day."
+    "noHours": "No hourly weather kept for this day.",
+    "layers": {
+      "label": "Entries shown: {{shown}}. Tap to change",
+      "both": "All-day and timed",
+      "allDay": "All-day only",
+      "timed": "Timed only"
+    }
   },
   "settings": {
     "title": "Settings",
