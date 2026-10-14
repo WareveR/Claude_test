@@ -58,7 +58,10 @@ export function ViewNav({
   // Sticky, so a long stacked page (a phone, a big zoom) can always move on or switch view;
   // above the grid's now line, so the Person Filter panel opens over it.
   return (
-    <nav className="sticky top-0 z-20 flex flex-wrap items-center gap-2 border-b border-line bg-bg px-4 py-2 short:flex-nowrap short:py-1">
+    <nav
+      data-view-nav
+      className="sticky top-0 z-20 flex flex-wrap items-center gap-2 border-b border-line bg-bg px-4 py-2 short:flex-nowrap short:py-1"
+    >
       <div className="flex rounded-md border border-line">
         {VIEWS.map((view) => (
           <NavLink

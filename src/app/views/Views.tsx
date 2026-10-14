@@ -42,6 +42,8 @@ import { WindReading } from "../weather/ForecastDetail";
 import { WeatherBadge } from "../weather/WeatherBadge";
 import { TasksAccordion, usePeriodTasks } from "../tasks/TasksAccordion";
 import { GridCorner } from "../calendar/GridCorner";
+import { periodLabel } from "../../core/period-label";
+import { PeriodCurtain } from "./PeriodCurtain";
 
 function useToday(): PlainDate {
   return todayIn(useSignedIn().family.timeZone);
@@ -113,6 +115,12 @@ export function DayView() {
           <CalendarGrid days={[date]} headerActions={<ViewActions date={date} />} />
         </div>
       </ViewBody>
+      <PeriodCurtain
+        period={`day:${date}`}
+        lines={periodLabel("day", date, date, locale)}
+        from={date}
+        to={date}
+      />
     </>
   );
 }
@@ -240,6 +248,12 @@ function Week({ monday }: { monday: PlainDate }) {
           />
         </div>
       </ViewBody>
+      <PeriodCurtain
+        period={`week:${monday}`}
+        lines={periodLabel("range", monday, days[6], locale)}
+        from={monday}
+        to={days[6]}
+      />
     </>
   );
 }
@@ -341,6 +355,12 @@ function Month({ first }: { first: PlainDate }) {
           />
         </div>
       </ViewBody>
+      <PeriodCurtain
+        period={`month:${first}`}
+        lines={periodLabel("month", first, first, locale)}
+        from={weeks[0][0]}
+        to={weeks[weeks.length - 1][6]}
+      />
       {picked === selected && (
         <DayPopup
           day={selected}
@@ -429,6 +449,12 @@ function Year({ year }: { year: number }) {
           )}
         </div>
       </ViewBody>
+      <PeriodCurtain
+        period={`year:${year}`}
+        lines={periodLabel("year", date, date, locale)}
+        from={date}
+        to={`${year}-12-31`}
+      />
       {pickedDay && (
         <DayPopup
           day={pickedDay}

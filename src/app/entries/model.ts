@@ -42,10 +42,13 @@ export type Shown = Entry & {
   href?: string;
 };
 
+/** The query that holds the Entries overlapping a window. */
+export const entriesKey = (from: PlainDate, to: PlainDate) => ["entries", from, to];
+
 /** Entries overlapping the window, both ends included. */
 export function useEntries(from: PlainDate, to: PlainDate) {
   return useQuery({
-    queryKey: ["entries", from, to],
+    queryKey: entriesKey(from, to),
     queryFn: () => api<Entry[]>(`/entries?from=${from}&to=${to}`),
   });
 }

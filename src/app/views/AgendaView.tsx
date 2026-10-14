@@ -13,6 +13,8 @@ import { usePeriodTasks } from "../tasks/TasksAccordion";
 import { TaskRow } from "../tasks/TaskRow";
 import { ViewNav } from "../shell/ViewNav";
 import { useCalendar } from "./Views";
+import { periodLabel } from "../../core/period-label";
+import { PeriodCurtain } from "./PeriodCurtain";
 
 /** How many days the agenda lists at a time. */
 export const AGENDA_DAYS = 30;
@@ -127,6 +129,12 @@ function Agenda({ from }: { from: PlainDate }) {
           </section>
         ))}
       </main>
+      <PeriodCurtain
+        period={`agenda:${from}`}
+        lines={periodLabel("range", from, to, locale)}
+        from={from}
+        to={to}
+      />
     </>
   );
 }
