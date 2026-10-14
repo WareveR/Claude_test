@@ -14,10 +14,12 @@ describe("periodLabel", () => {
 
   it("names a day with its weekday, short in Portuguese", () => {
     expect(periodLabel("day", "2026-10-26", "2026-10-26", "pt-PT")).toEqual([
-      "Segunda, 26 Outubro 2026",
+      "Segunda",
+      "26 Outubro 2026",
     ]);
     expect(periodLabel("day", "2026-10-26", "2026-10-26", "en-GB")).toEqual([
-      "Monday, 26 October 2026",
+      "Monday",
+      "26 October 2026",
     ]);
   });
 
@@ -31,6 +33,17 @@ describe("periodLabel", () => {
       "26 October",
       "1 November",
       "2026",
+    ]);
+  });
+
+  it("names a week within one month once", () => {
+    expect(periodLabel("range", "2025-12-22", "2025-12-28", "pt-PT")).toEqual([
+      "22 – 28 Dezembro",
+      "2025",
+    ]);
+    expect(periodLabel("range", "2025-12-22", "2025-12-28", "en-GB")).toEqual([
+      "22 – 28 December",
+      "2025",
     ]);
   });
 

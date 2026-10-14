@@ -8,14 +8,15 @@ import {
   useSyncExternalStore,
 } from "react";
 import type { PlainDate } from "../../core/plain-date";
-import { useDisplayMode } from "../display/mode";
+import { monthMotif } from "../../core/month-theme";
+import { MonthMotif, useMonthOnScreen } from "../month-theme";
 import { entriesKey } from "../entries/model";
 
 /** The curtain stays at least this long, so every move through the dates feels the same. */
 export const CURTAIN_MIN_MS = 1000;
 /** Past this the curtain lifts even when the Entries have not come. */
 export const CURTAIN_MAX_MS = 4000;
-const FADE_OUT_MS = 250;
+const FADE_OUT_MS = 300;
 
 /**
  * Whether the Entries of a window have come (or failed): the same query `useOccurrences` reads,
@@ -40,7 +41,7 @@ type Shown = { period: string; held: boolean; overdue: boolean };
  * fades in large over the view's body (below its nav, which stays usable), holds at least a second
  * and until the period's Entries have come, then fades out with them already drawn. A view opened
  * afresh shows it only while its Entries are still to come; refetches of the same period never do.
- * Swipes and clicks go through it; a wall tablet never shows it.
+ * Swipes and clicks go through it.
  */
 export function PeriodCurtain({
   period,
@@ -55,7 +56,7 @@ export function PeriodCurtain({
   to: PlainDate;
 }) {
   const ready = usePeriodReady(from, to);
-  const wall = useDisplayMode();
+  const month = useMonthOnScreen();
   const [shown, setShown] = useState<Shown | null>(() =>
     ready ? null : { period, held: false, overdue: false },
   );
@@ -106,28 +107,38 @@ export function PeriodCurtain({
     return () => window.removeEventListener("resize", place);
   }, [present]);
 
-  if (wall) return null;
   return (
     <div
       ref={box}
       aria-live="polite"
       data-testid={present ? "period-curtain" : undefined}
-      className={`pointer-events-none fixed bottom-0 z-[19] flex flex-col items-center justify-center gap-1 bg-surface/85 px-4 text-center text-ink backdrop-blur-sm transition-[opacity,visibility] motion-reduce:transition-none ${
-        visible
-          ? "visible opacity-100 duration-150 ease-out"
-          : "invisible opacity-0 duration-250 ease-in"
+      className={`pointer-events-none fixed bottom-0 z-[19] flex flex-col items-center justify-center gap-1 overflow-hidden bg-surface/85 px-4 text-center text-ink backdrop-blur-sm transition-[opacity,visibility] duration-300 ease-in-out motion-reduce:transition-none ${
+        visible ? "visible opacity-100" : "invisible opacity-0"
       }`}
     >
+      {present && month !== null && (
+        <>
+          {/* With the Month theme: the season scattered faintly behind, and large above the name. */}
+          <MonthMotif month={month} opacity={0.12} className="absolute inset-0 text-header" />
+          <svg
+            aria-hidden
+            data-testid="curtain-season"
+            viewBox="0 0 24 24"
+            className="mb-3 size-24 text-header opacity-70 md:size-32"
+            fill="currentColor"
+            stroke="currentColor"
+            strokeWidth="0"
+            dangerouslySetInnerHTML={{ __html: monthMotif(month) }}
+          />
+        </>
+      )}
       {present &&
         lines.map((line, i) => (
+          // Every line the same size, whatever the view, so each move looks alike.
           <span
             key={i}
-            className={`font-semibold tracking-tight tabular-nums ${
-              lines.length === 1
-                ? "text-5xl md:text-7xl"
-                : i === lines.length - 1 && lines.length === 3
-                  ? "text-3xl text-muted md:text-5xl"
-                  : "text-4xl md:text-6xl"
+            className={`text-4xl font-semibold tracking-tight tabular-nums md:text-6xl ${
+              i > 0 && /^\d{4}$/.test(line) ? "text-muted" : ""
             }`}
           >
             {line}
