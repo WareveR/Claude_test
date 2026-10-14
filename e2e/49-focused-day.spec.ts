@@ -28,10 +28,17 @@ test("switching view keeps the day in focus", async ({ page }) => {
   await view("Day");
   await expect(page).toHaveURL(/\/day\/2031-12-08$/);
 
-  // Moved to a month without it, the view opens on that month's first day.
+  // The arrows carry it along: the same day of the next month, the same weekday a week on.
   await view("Month");
   await nav.getByRole("link", { name: "Next" }).click();
   await expect(page).toHaveURL(/\/month\/2032-01$/);
   await view("Day");
-  await expect(page).toHaveURL(/\/day\/2032-01-01$/);
+  await expect(page).toHaveURL(/\/day\/2032-01-08$/);
+  await view("Week");
+  await expect(page).toHaveURL(/\/week\/2032-01-05$/);
+  await nav.getByRole("link", { name: "Next" }).click();
+  await nav.getByRole("link", { name: "Next" }).click();
+  await expect(page).toHaveURL(/\/week\/2032-01-19$/);
+  await view("Day");
+  await expect(page).toHaveURL(/\/day\/2032-01-22$/);
 });

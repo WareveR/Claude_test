@@ -45,11 +45,19 @@ describe("focusDay", () => {
     expect(focusDay("month", "2026-10-01", "2026-10-20", "2026-10-14")).toBe("2026-10-20");
     expect(focusDay("week", "2026-10-12", "2026-10-18", "2026-10-14")).toBe("2026-10-18");
   });
-  it("else takes today when shown, else the period's first day", () => {
-    expect(focusDay("month", "2026-10-01", "2026-12-03", "2026-10-14")).toBe("2026-10-14");
-    expect(focusDay("month", "2026-10-01", null, "2026-10-14")).toBe("2026-10-14");
+  it("else carries the day in focus into the period shown", () => {
+    // The same weekday, day of the month, or date of the year.
+    expect(focusDay("week", "2026-10-19", "2026-10-16", "2026-10-14")).toBe("2026-10-23");
+    expect(focusDay("month", "2026-10-01", "2026-12-03", "2026-10-14")).toBe("2026-10-03");
+    expect(focusDay("month", "2027-02-01", "2027-01-31", "2026-10-14")).toBe("2027-02-28");
     // The month's grid shows 1 November, but it is not October's.
     expect(focusDay("month", "2026-10-01", "2026-11-01", "2026-12-14")).toBe("2026-10-01");
-    expect(focusDay("year", "2027-01-01", "2026-10-20", "2026-10-14")).toBe("2027-01-01");
+    expect(focusDay("year", "2027-01-01", "2026-10-20", "2026-10-14")).toBe("2027-10-20");
+    expect(focusDay("agenda", "2026-11-13", "2026-10-20", "2026-10-14")).toBe("2026-11-19");
+    expect(focusDay("agenda", "2026-09-14", "2026-10-20", "2026-10-14")).toBe("2026-09-20");
+  });
+  it("with none in focus, takes today when shown, else the period's first day", () => {
+    expect(focusDay("month", "2026-10-01", null, "2026-10-14")).toBe("2026-10-14");
+    expect(focusDay("year", "2027-01-01", null, "2026-10-14")).toBe("2027-01-01");
   });
 });

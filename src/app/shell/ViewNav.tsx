@@ -21,7 +21,7 @@ import { TasksButton } from "../tasks/TasksButton";
 import { MonthMotif, useMonthOnScreen } from "../month-theme";
 import { paths } from "../paths";
 import { focusDay } from "../../core/periods";
-import { focusedDay } from "../views/focus";
+import { focusedDay, setFocusedDay } from "../views/focus";
 import { useSwipe } from "../ui/useSwipe";
 
 const VIEWS = ["day", "week", "month", "year", "agenda", "tasks", "shopping"] as const;
@@ -65,6 +65,8 @@ export function ViewNav({
   // Another view opens on the day in focus, kept from view to view while this one shows it.
   const period = (["day", "week", "month", "year", "agenda"] as const).find((p) => p === view);
   const target = period ? focusDay(period, date, focusedDay(), today) : (focusedDay() ?? date);
+  // Kept as the day in focus, so stepping on with the arrows carries it from period to period.
+  if (period) setFocusedDay(target);
   const month = useMonthOnScreen();
   // Sticky, so a long stacked page (a phone, a big zoom) can always move on or switch view;
   // above the grid's now line, so the Person Filter panel opens over it.
@@ -113,7 +115,12 @@ export function ViewNav({
           >
             <ChevronLeft aria-hidden size={20} strokeWidth={1.75} />
           </Link>
-          <Link to={todayPath} data-help="today" className="rounded-md px-2 py-1 text-sm">
+          <Link
+            to={todayPath}
+            onClick={() => setFocusedDay(today)}
+            data-help="today"
+            className="rounded-md px-2 py-1 text-sm"
+          >
             {t("views.today")}
           </Link>
           <Link to={next} aria-label={t("views.next")} data-help="next" className="rounded-md p-1">
