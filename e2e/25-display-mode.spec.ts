@@ -139,8 +139,11 @@ test("the Summary lists the coming days; Private items show only Private and the
   await expect(board.getByText("Therapy with Dr Silva")).toHaveCount(0);
   await expect(board.getByText("Secret errand")).toHaveCount(0);
 
-  // The Summary lists the next seven days' Entries, today's first.
-  await page.getByRole("banner").getByRole("button", { name: "Summary" }).click();
+  // The Summary opens inside the Wall, beside the filter, and lists the next seven days' Entries,
+  // today's first.
+  await expect(page.getByRole("banner").getByRole("button", { name: "Summary" })).toHaveCount(0);
+  await board.getByRole("button", { name: "Summary" }).click();
+  await expect(page).toHaveURL(/\/display\?summary=1$/);
   const week = page.getByTestId("week-entries");
   await expect(week.getByRole("heading", { name: "Today" })).toBeVisible();
   const list = week.getByTestId("today-entry");
@@ -244,18 +247,21 @@ test("the Wall and Summary switches are exclusive and both off return to the pag
   await box.check();
   await expect(box).toBeChecked();
 
-  // Wall on turns the Summary off.
+  // Wall on turns the Summary off; on the wall the Summary is the board's, and stays on the wall.
   await wall.click();
   await expect(page).toHaveURL(/\/display$/);
   await expect(wall).toHaveAttribute("aria-pressed", "true");
-  await expect(summary).toHaveAttribute("aria-pressed", "false");
-  // Summary on from the wall leaves the wall.
-  await summary.click();
-  await expect(page).toHaveURL(/\/summary$/);
-  await expect(wall).toHaveAttribute("aria-pressed", "false");
+  await expect(summary).toHaveCount(0);
+  const boardSummary = page.getByTestId("display-board").getByRole("button", { name: "Summary" });
+  await boardSummary.click();
+  await expect(boardSummary).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByTestId("summary").getByTestId("coming-up")).toBeVisible();
+  await expect(page.getByTestId("time-scroller")).toBeHidden();
+  await boardSummary.click();
+  await expect(page.getByTestId("time-scroller")).toBeVisible();
 
-  // Both off: back to the week from before.
-  await summary.click();
+  // Wall off: back to the week from before.
+  await wall.click();
   await expect(page).toHaveURL(before);
 
   // Settings opened from the Summary close back to it, and the Summary still returns to the week.

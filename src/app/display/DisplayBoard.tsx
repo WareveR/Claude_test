@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, CloudSun } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router";
@@ -13,6 +13,7 @@ import { ForecastButton } from "../weather/ForecastButton";
 import { useForecastDays } from "../weather/model";
 import { WeatherBadge } from "../weather/WeatherBadge";
 import { useSwipe } from "../ui/useSwipe";
+import { SummaryPage } from "../summary/SummaryPage";
 import { periodLabel } from "../../core/period-label";
 import { PeriodCurtain } from "../views/PeriodCurtain";
 import { useRolloverToday } from "./hooks";
@@ -36,18 +37,25 @@ export function DisplayBoard() {
   // The week shown is in the address, so Back from an Entry returns to it.
   const [search, setSearch] = useSearchParams();
   const weeksAway = Number(search.get("week")) || 0;
-  const setWeeksAway = (weeks: number) =>
-    setSearch(weeks === 0 ? {} : { week: String(weeks) }, { replace: true });
+  // The Summary opens inside the Wall, in place of the grid, and keeps the week shown behind it.
+  const summary = search.get("summary") === "1";
+  const show = (weeks: number, withSummary: boolean) =>
+    setSearch(
+      { ...(weeks !== 0 && { week: String(weeks) }), ...(withSummary && { summary: "1" }) },
+      { replace: true },
+    );
+  const setWeeksAway = (weeks: number) => show(weeks, false);
   const [touches, setTouches] = useState(0);
+  // Left alone, the Wall comes back to this week's grid.
   useEffect(() => {
-    if (weeksAway === 0) return;
+    if (weeksAway === 0 && !summary) return;
     const id = setTimeout(() => setSearch({}, { replace: true }), AUTO_RETURN_MS);
     return () => clearTimeout(id);
-  }, [weeksAway, touches, setSearch]);
+  }, [weeksAway, summary, touches, setSearch]);
 
   useSwipe(
-    () => setWeeksAway(weeksAway - 1),
-    () => setWeeksAway(weeksAway + 1),
+    () => !summary && setWeeksAway(weeksAway - 1),
+    () => !summary && setWeeksAway(weeksAway + 1),
   );
   const days = boardDays(today, weeksAway);
   // The week's Tasks stay out of the way unless asked for; the Summary always has them.
@@ -67,56 +75,80 @@ export function DisplayBoard() {
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <nav data-view-nav className="flex items-center gap-1 px-3 py-0.5 max-sm:px-2">
-            <button
-              type="button"
-              aria-label={t("views.previous")}
-              className={arrow}
-              onClick={() => setWeeksAway(weeksAway - 1)}
-            >
-              <ChevronLeft aria-hidden size={20} strokeWidth={1.75} />
-            </button>
-            <h1
-              className="min-w-0 truncate text-lg font-semibold first-letter:uppercase max-sm:text-base"
-              data-testid="board-range"
-            >
-              {title}
-            </h1>
-            <button
-              type="button"
-              aria-label={t("views.next")}
-              className={arrow}
-              onClick={() => setWeeksAway(weeksAway + 1)}
-            >
-              <ChevronRight aria-hidden size={20} strokeWidth={1.75} />
-            </button>
-            {weeksAway !== 0 && (
-              // On the arrows' row; where space is short it says only "Today".
-              <button
-                type="button"
-                data-testid="back-to-today"
-                aria-label={t("display.backToToday")}
-                className="ml-1 shrink-0 rounded-full bg-accent px-3 py-0.5 text-sm font-medium whitespace-nowrap text-accent-ink"
-                onClick={() => setWeeksAway(0)}
-              >
-                <span aria-hidden className="max-md:hidden">
-                  {t("display.backToToday")}
-                </span>
-                <span aria-hidden className="hidden max-md:inline">
-                  {t("display.today")}
-                </span>
-              </button>
+            {summary ? (
+              <h1 className="min-w-0 truncate text-lg font-semibold max-sm:text-base">
+                {t("screens.summary")}
+              </h1>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  aria-label={t("views.previous")}
+                  className={arrow}
+                  onClick={() => setWeeksAway(weeksAway - 1)}
+                >
+                  <ChevronLeft aria-hidden size={20} strokeWidth={1.75} />
+                </button>
+                <h1
+                  className="min-w-0 truncate text-lg font-semibold first-letter:uppercase max-sm:text-base"
+                  data-testid="board-range"
+                >
+                  {title}
+                </h1>
+                <button
+                  type="button"
+                  aria-label={t("views.next")}
+                  className={arrow}
+                  onClick={() => setWeeksAway(weeksAway + 1)}
+                >
+                  <ChevronRight aria-hidden size={20} strokeWidth={1.75} />
+                </button>
+                {weeksAway !== 0 && (
+                  // On the arrows' row; where space is short it says only "Today".
+                  <button
+                    type="button"
+                    data-testid="back-to-today"
+                    aria-label={t("display.backToToday")}
+                    className="ml-1 shrink-0 rounded-full bg-accent px-3 py-0.5 text-sm font-medium whitespace-nowrap text-accent-ink"
+                    onClick={() => setWeeksAway(0)}
+                  >
+                    <span aria-hidden className="max-md:hidden">
+                      {t("display.backToToday")}
+                    </span>
+                    <span aria-hidden className="hidden max-md:inline">
+                      {t("display.today")}
+                    </span>
+                  </button>
+                )}
+              </>
             )}
             <div className="ml-auto flex items-center gap-1">
-              <LayersButton />
+              <button
+                type="button"
+                aria-label={t("screens.summary")}
+                aria-pressed={summary}
+                data-help="summary"
+                data-testid="wall-summary"
+                className={`rounded-md p-1.5 ${summary ? "bg-accent text-accent-ink" : "hover:bg-surface"}`}
+                onClick={() => show(weeksAway, !summary)}
+              >
+                <CloudSun aria-hidden size={20} strokeWidth={1.75} />
+              </button>
+              {!summary && <LayersButton />}
               <FilterButton />
             </div>
           </nav>
-          {!tasksHidden && (
+          {summary && (
+            <div className="min-h-0 flex-1 overflow-y-auto px-3 max-sm:px-2">
+              <SummaryPage />
+            </div>
+          )}
+          {!summary && !tasksHidden && (
             <div className="pb-2 empty:hidden">
               <TasksAccordion from={days[0]} to={days[6]} />
             </div>
           )}
-          <div className="flex min-h-72 flex-1 flex-col">
+          <div className={summary ? "hidden" : "flex min-h-72 flex-1 flex-col"}>
             {/* All seven days fit the screen, a phone's too: never a sideways scroll. */}
             <div className="relative flex min-h-0 flex-1">
               <div data-testid="wall-days" className="flex min-h-0 min-w-0 flex-1 flex-col">
