@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { useNavigate } from "react-router";
 import { daySpan, lastDate } from "../../core/entry-time";
 import { layoutBars, layoutLanes } from "../../core/layout";
@@ -56,6 +56,19 @@ function isWeekend(date: PlainDate) {
   return weekday(date) >= 5;
 }
 
+/** The inside height of a box, followed as it resizes; 0 until it is measured. */
+function useHeight(ref: RefObject<HTMLElement | null>): number {
+  const [height, setHeight] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => setHeight(el.clientHeight));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [ref]);
+  return height;
+}
+
 /**
  * Day columns with an all-day row on top and a 24-hour time grid below: the body of the
  * day and week views and of the Display Mode board.
@@ -95,7 +108,11 @@ export function TimeGrid({
   );
   // One height per hour row for all the days, so the rows stay lined up across the week.
   const busy = busyHours(spans.flat());
-  const heights = hourHeights(sleepHours, busy, HOUR_PX);
+  // A tall screen with room to spare: the hours grow until the day fills it, no blank below.
+  const room = useHeight(scroller);
+  const natural = hourTops(hourHeights(sleepHours, busy, HOUR_PX))[24];
+  const full = room > natural ? Math.floor((HOUR_PX * room * 100) / natural) / 100 : HOUR_PX;
+  const heights = hourHeights(sleepHours, busy, full);
   const tops = hourTops(heights);
   const yOf = (minutes: number) => yOfMinutes(heights, minutes);
 
