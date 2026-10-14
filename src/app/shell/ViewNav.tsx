@@ -14,6 +14,7 @@ import { todayIn } from "../../core/plain-date";
 import { useSignedIn } from "../family";
 import type { PlainDate } from "../../core/plain-date";
 import { FilterButton } from "../filter/FilterButton";
+import { LayersButton } from "../calendar/LayersButton";
 import { MonthMotif, useMonthOnScreen } from "../month-theme";
 import { paths } from "../paths";
 import { useSwipe } from "../ui/useSwipe";
@@ -143,8 +144,11 @@ export function ViewActions({
   className?: string;
 }) {
   const { t } = useTranslation();
+  // The day and week grids can show only their All-day or only their Timed Entries.
+  const view = useLocation().pathname.split("/")[1];
   return (
     <div className={`flex items-center gap-1 ${className}`}>
+      {(view === "day" || view === "week") && <LayersButton />}
       <Link
         to={paths.search()}
         aria-label={t("search.title")}
