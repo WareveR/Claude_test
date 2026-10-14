@@ -921,7 +921,15 @@
       "iuc": "It is paid on the Portal das Finanças.",
       "imi": "It is paid on the Portal das Finanças."
     },
-    "time": "Time (optional)"
+    "time": "Time (optional)",
+    "forWhom": "Who for",
+    "forWhomHint": "Each person gets a line of their own, to give them their own day and time. With nobody ticked, it is for the family.",
+    "family": "the family",
+    "for": "For {{who}}",
+    "togetherHint": "Several people on one line make one entry, for when they go together.",
+    "alsoFor": "Also for…",
+    "alsoForPick": "Pick someone",
+    "removeCopy": "Remove this copy"
   },
   "preparation": {
     "title": "Preparation",

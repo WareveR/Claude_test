@@ -20,10 +20,28 @@ export type Item = {
   debit: boolean;
   /** The built-in Entry Type it takes when created as an Entry. */
   type: BuiltInType;
+  /** Who it is for; none means the whole Family. */
+  personIds: string[];
 };
 
-/** A change made in the review to one Item's first date, time or Repetition. */
-export type Edit = Partial<Pick<Item, "date" | "time" | "repetition">>;
+/** A change made in the review to one Item's first date, time, Repetition or Persons. */
+export type Edit = Partial<Pick<Item, "date" | "time" | "repetition" | "personIds">>;
+
+/**
+ * Each Item once per Person it is for: an Item for Ana and Rui becomes Ana's and Rui's, each
+ * with its own key, so each can get its own day and time; one for no Person stays as it is.
+ */
+export function perPerson(items: Item[], personIds: string[]): Item[] {
+  if (personIds.length === 0) return items;
+  return items.flatMap((item) =>
+    personIds.map((id) => ({ ...item, key: `${item.key}@${id}`, personIds: [id] })),
+  );
+}
+
+/** A copy of an Item for another Person ("Also for…"), with a key of its own. */
+export function copyFor(item: Item, personId: string, n: number): Item {
+  return { ...item, key: `${item.key}+${n}`, personIds: [personId] };
+}
 
 /** An idea's draft with its title, in the device's language. */
 export function itemOf(draft: Draft, t: TFunction): Item {
@@ -43,6 +61,7 @@ export function itemOf(draft: Draft, t: TFunction): Item {
     repetition: draft.repetition,
     debit: Boolean(draft.debit),
     type: typeOfIdea(id),
+    personIds: [],
   };
 }
 
@@ -94,7 +113,7 @@ export function requestOf(
         notes: item.notes,
         dueDate: item.date,
         dueTime: item.time,
-        personIds: [],
+        personIds: item.personIds,
         private: false,
         repetition: item.repetition,
         checklistId: null,
@@ -121,7 +140,7 @@ export function requestOf(
       repeat: null,
     },
     type,
-    [],
+    item.personIds,
     today,
   );
   return {
