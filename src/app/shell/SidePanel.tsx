@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { ComingUp } from "../briefing/ComingUp";
 import { HourlyStrip } from "../weather/HourlyStrip";
 import { SunBand } from "../weather/SunBand";
+import { useViewNavHeight } from "./viewNavHeight";
 
 /** Today at a glance: its hourly weather, sunrise and sunset, and "Coming up". The Summary screen. */
 export function TodayPanel({ readOnly }: { readOnly?: boolean }) {
@@ -19,6 +20,7 @@ export function TodayPanel({ readOnly }: { readOnly?: boolean }) {
  * `fill` it does on narrow ones too (growing past it scrolls the page).
  */
 export function ViewBody({ children, fill }: { children: ReactNode; fill?: boolean }) {
+  useViewNavHeight();
   return (
     <div className={`flex min-w-0 flex-col lg:min-h-0 lg:flex-1 ${fill ? "flex-1" : ""}`}>
       {children}

@@ -1,6 +1,6 @@
-import type { ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import { Link } from "react-router";
-import { DAYS_ROW } from "./bands";
+import { DAYS_ROW, DAYS_ROW_STICKY } from "./bands";
 import { YEAR_COLUMNS, yearRowOffset } from "../../core/layout";
 import { addDays, daysInMonth, formatPlainDate, type PlainDate } from "../../core/plain-date";
 import type { EntryType } from "../entry-types/model";
@@ -21,6 +21,83 @@ export function yearWeekdayLetters(locale: string): string[] {
 }
 
 export const isWeekendColumn = (column: number) => column % 7 < 2;
+
+const TABLE = "w-full min-w-[56rem] table-fixed border-collapse text-[10px] lg:text-xs";
+
+/**
+ * The year's sheet, which scrolls sideways on a narrow screen. Its weekday letters are a table of
+ * their own: a row inside a sideways scroller cannot stick under the bar, so the letters stick
+ * outside it and follow its sideways scroll (and it theirs). `corner` sits over the first column,
+ * `cornerWidth` wide; `children` are the year's table bodies.
+ */
+export function YearSheet({
+  corner,
+  cornerWidth,
+  locale,
+  testId,
+  children,
+}: {
+  corner?: ReactNode;
+  cornerWidth: string;
+  locale: string;
+  testId?: string;
+  children: ReactNode;
+}) {
+  const head = useRef<HTMLDivElement>(null);
+  const body = useRef<HTMLDivElement>(null);
+  // Each scroller carries the other along, so the letters stay over their days.
+  const follow = (to: HTMLDivElement | null, left: number) => {
+    if (to && to.scrollLeft !== left) to.scrollLeft = left;
+  };
+  // Both tables share their columns' widths.
+  const columns = (
+    <colgroup>
+      <col className={cornerWidth} />
+      {Array.from({ length: YEAR_COLUMNS }, (_, c) => (
+        <col key={c} />
+      ))}
+    </colgroup>
+  );
+  return (
+    <div className="calendar-sheet relative bg-surface px-2 pb-2">
+      {/* Under the bar on a phone; on a wide screen the year scrolls in its own box, at its top. */}
+      <div
+        ref={head}
+        onScroll={(e) => follow(body.current, e.currentTarget.scrollLeft)}
+        data-testid="days-row"
+        className={`${DAYS_ROW_STICKY} -mx-2 overflow-x-auto bg-surface px-2 [scrollbar-width:none] lg:top-0`}
+      >
+        <table className={TABLE}>
+          {columns}
+          <thead>
+            <tr>
+              <th>{corner}</th>
+              {yearWeekdayLetters(locale).map((letter, c) => (
+                <th
+                  key={c}
+                  className={`${DAYS_ROW} ${isWeekendColumn(c) ? "bg-weekend text-weekend-ink" : "text-muted"}`}
+                >
+                  {letter}
+                </th>
+              ))}
+            </tr>
+          </thead>
+        </table>
+      </div>
+      <div
+        ref={body}
+        onScroll={(e) => follow(head.current, e.currentTarget.scrollLeft)}
+        data-testid={testId}
+        className="overflow-x-auto"
+      >
+        <table className={TABLE}>
+          {columns}
+          {children}
+        </table>
+      </div>
+    </div>
+  );
+}
 
 /** The day of the month in each of a month's 37 columns, or null where the month has none. */
 export function monthColumns(year: number, month: number): (PlainDate | null)[] {
@@ -68,102 +145,86 @@ export function YearGrid({
 }) {
   const typeOf = (e: Entry) => types.find((t) => t.id === e.entryTypeId);
   const colorOf = (e: Entry) => typeOf(e)?.color ?? "#607d8b";
-  const letters = yearWeekdayLetters(locale);
 
   return (
-    <div className="calendar-sheet relative overflow-x-auto bg-surface px-2 pb-2">
-      <table className="w-full min-w-[56rem] table-fixed border-collapse text-[10px] lg:text-xs">
-        <thead>
-          <tr>
-            <th className="w-16">{corner}</th>
-            {letters.map((letter, c) => (
-              <th
-                key={c}
-                className={`${DAYS_ROW} ${isWeekendColumn(c) ? "bg-weekend text-weekend-ink" : "text-muted"}`}
+    <YearSheet corner={corner} cornerWidth="w-16" locale={locale}>
+      <tbody>
+        {Array.from({ length: 12 }, (_, m) => (
+          <tr key={m}>
+            <th className="pr-1 text-left font-semibold">
+              <Link
+                to={monthLink(`${year}-${String(m + 1).padStart(2, "0")}-01`)}
+                data-testid={`year-month-${m + 1}`}
+                className="block first-letter:uppercase hover:underline"
               >
-                {letter}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {Array.from({ length: 12 }, (_, m) => (
-            <tr key={m}>
-              <th className="pr-1 text-left font-semibold">
-                <Link
-                  to={monthLink(`${year}-${String(m + 1).padStart(2, "0")}-01`)}
-                  data-testid={`year-month-${m + 1}`}
-                  className="block first-letter:uppercase hover:underline"
-                >
-                  {formatPlainDate(`${year}-${String(m + 1).padStart(2, "0")}-01`, locale, {
-                    month: "short",
-                  })}
-                </Link>
-              </th>
-              {monthColumns(year, m + 1).map((day, c) => {
-                if (!day) {
-                  return (
-                    <td
-                      key={c}
-                      className={`border-t border-line/60 ${isWeekendColumn(c) ? "bg-weekend/45" : ""}`}
-                    />
-                  );
-                }
-                const dayEntries = entriesOn(entries, day);
-                const high = dayEntries.find((e) => e.importance === "high");
-                const names = holidays.get(day);
+                {formatPlainDate(`${year}-${String(m + 1).padStart(2, "0")}-01`, locale, {
+                  month: "short",
+                })}
+              </Link>
+            </th>
+            {monthColumns(year, m + 1).map((day, c) => {
+              if (!day) {
                 return (
                   <td
                     key={c}
-                    className={`border-t border-l border-line/60 p-0 align-top ${names ? "bg-holiday" : isWeekendColumn(c) ? "bg-weekend" : ""} ${day === today ? TODAY_TINT : ""}`}
-                  >
-                    <Link
-                      to={dayLink(day)}
-                      data-testid={`year-day-${day}`}
-                      title={[...(names ?? []), ...dayEntries.map((e) => e.title)].join("\n")}
-                      data-high={high ? "true" : undefined}
-                      data-today={day === today || undefined}
-                      aria-current={day === selected ? "date" : undefined}
-                      className={`flex min-h-10 flex-col gap-px p-0.5 lg:min-h-16 ${day === selected ? "outline-2 -outline-offset-2 outline-accent" : ""}`}
-                    >
-                      <span
-                        style={
-                          high && day !== today
-                            ? { backgroundColor: colorOf(high), color: "white" }
-                            : undefined
-                        }
-                        className={`self-start leading-tight font-semibold tabular-nums ${day === today ? TODAY_PILL : `rounded-sm px-0.5 ${!high && names ? "text-holiday-ink" : !high && isWeekendColumn(c) ? "text-weekend-ink" : ""}`}`}
-                      >
-                        {Number(day.slice(8))}
-                      </span>
-                      {dayEntries.slice(0, LINES).map((e) => (
-                        <span
-                          key={e.key}
-                          data-testid="year-entry"
-                          style={{ backgroundColor: colorOf(e) }}
-                          className={`block h-1 rounded-sm lg:h-auto lg:truncate lg:px-0.5 lg:text-[10px] lg:leading-tight lg:text-white ${importanceClass(e)}`}
-                        >
-                          <span className="hidden items-center gap-0.5 lg:flex">
-                            <span className="shrink-0">
-                              <EntryIcon entry={e} type={typeOf(e)} size={10} />
-                            </span>
-                            <span className="min-w-0 truncate">{e.title}</span>
-                          </span>
-                        </span>
-                      ))}
-                      {dayEntries.length > LINES && (
-                        <span className="text-[9px] leading-none text-muted">
-                          +{dayEntries.length - LINES}
-                        </span>
-                      )}
-                    </Link>
-                  </td>
+                    className={`border-t border-line/60 ${isWeekendColumn(c) ? "bg-weekend/45" : ""}`}
+                  />
                 );
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+              }
+              const dayEntries = entriesOn(entries, day);
+              const high = dayEntries.find((e) => e.importance === "high");
+              const names = holidays.get(day);
+              return (
+                <td
+                  key={c}
+                  className={`border-t border-l border-line/60 p-0 align-top ${names ? "bg-holiday" : isWeekendColumn(c) ? "bg-weekend" : ""} ${day === today ? TODAY_TINT : ""}`}
+                >
+                  <Link
+                    to={dayLink(day)}
+                    data-testid={`year-day-${day}`}
+                    title={[...(names ?? []), ...dayEntries.map((e) => e.title)].join("\n")}
+                    data-high={high ? "true" : undefined}
+                    data-today={day === today || undefined}
+                    aria-current={day === selected ? "date" : undefined}
+                    className={`flex min-h-10 flex-col gap-px p-0.5 lg:min-h-16 ${day === selected ? "outline-2 -outline-offset-2 outline-accent" : ""}`}
+                  >
+                    <span
+                      style={
+                        high && day !== today
+                          ? { backgroundColor: colorOf(high), color: "white" }
+                          : undefined
+                      }
+                      className={`self-start leading-tight font-semibold tabular-nums ${day === today ? TODAY_PILL : `rounded-sm px-0.5 ${!high && names ? "text-holiday-ink" : !high && isWeekendColumn(c) ? "text-weekend-ink" : ""}`}`}
+                    >
+                      {Number(day.slice(8))}
+                    </span>
+                    {dayEntries.slice(0, LINES).map((e) => (
+                      <span
+                        key={e.key}
+                        data-testid="year-entry"
+                        style={{ backgroundColor: colorOf(e) }}
+                        className={`block h-1 rounded-sm lg:h-auto lg:truncate lg:px-0.5 lg:text-[10px] lg:leading-tight lg:text-white ${importanceClass(e)}`}
+                      >
+                        <span className="hidden items-center gap-0.5 lg:flex">
+                          <span className="shrink-0">
+                            <EntryIcon entry={e} type={typeOf(e)} size={10} />
+                          </span>
+                          <span className="min-w-0 truncate">{e.title}</span>
+                        </span>
+                      </span>
+                    ))}
+                    {dayEntries.length > LINES && (
+                      <span className="text-[9px] leading-none text-muted">
+                        +{dayEntries.length - LINES}
+                      </span>
+                    )}
+                  </Link>
+                </td>
+              );
+            })}
+          </tr>
+        ))}
+      </tbody>
+    </YearSheet>
   );
 }
