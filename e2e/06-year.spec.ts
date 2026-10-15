@@ -11,10 +11,10 @@ test("the year view marks High days and lists the Entries of each day", async ({
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page).not.toHaveURL(/\/entries\//);
 
-  // The year opens with a line for each person; the whole Family's grid is beside it.
+  // The year opens with a line for each person; switched off, the whole Family's grid.
   await page.goto("/year/2026");
   await expect(page.getByTestId("year-detail")).toBeVisible();
-  await page.getByRole("link", { name: "The whole Family" }).click();
+  await page.getByRole("button", { name: "A line for each person" }).click();
   await expect(page).toHaveURL(/\/year\/2026\?detail=0$/);
   await expect(page.getByTestId("year-day-2026-12-24")).toHaveAttribute("data-high", "true");
   await expect(
@@ -31,7 +31,7 @@ test("the year view marks High days and lists the Entries of each day", async ({
   await expect(page).toHaveURL(/\/year\/2027\?detail=0$/);
   await page.goto("/year/2026");
   await expect(page.getByTestId("year-detail")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Each person" })).toHaveAttribute(
+  await expect(page.getByRole("button", { name: "A line for each person" })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
@@ -40,7 +40,7 @@ test("the year view marks High days and lists the Entries of each day", async ({
 test("Detail shows a line per Person and one for the Family in each month", async ({ page }) => {
   await signIn(page);
   await page.goto("/year/2026");
-  await expect(page.getByRole("link", { name: "Each person" })).toHaveAttribute(
+  await expect(page.getByRole("button", { name: "A line for each person" })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
@@ -71,7 +71,9 @@ test("Detail shows a line per Person and one for the Family in each month", asyn
 
   await page.goto("/year/2026?detail=0");
   await expect(page.getByTestId("year-detail")).toHaveCount(0);
-  await page.getByRole("link", { name: "Each person" }).click();
+  const each = page.getByRole("button", { name: "A line for each person" });
+  await expect(each).toHaveAttribute("aria-pressed", "false");
+  await each.click();
   await expect(page).toHaveURL(/\/year\/2026$/);
   await expect(page.getByTestId("year-detail")).toBeVisible();
 });

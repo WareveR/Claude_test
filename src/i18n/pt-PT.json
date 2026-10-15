@@ -127,9 +127,7 @@
       "timed": "Só com hora"
     },
     "showCalendar": "Mostrar o calendário",
-    "yearLines": "Linhas do ano",
-    "yearFamily": "Toda a família",
-    "yearEach": "Cada um",
+    "yearEach": "Uma linha por pessoa",
     "weekTitle": "Semana {{week}}, {{year}}",
     "weekShort": "Sem. {{week}}, {{year}}",
     "openWeek": "Abrir a semana {{week}}",

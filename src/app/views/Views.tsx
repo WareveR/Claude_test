@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
-import { Rows3, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import { usePeriodTasksShown, useWeatherShown } from "../calendar/compact";
 import { useTranslation } from "react-i18next";
-import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router";
+import { Navigate, useNavigate, useParams, useSearchParams } from "react-router";
 import { formatLocale } from "../../core/languages";
 import {
   addDays,
@@ -438,31 +438,19 @@ function Year({ year }: { year: number }) {
   // The day in focus is outlined, as in the other views.
   const selected = pickedDay ?? focusDay("year", date, focusedDay(), today);
   const dayLink = (day: PlainDate) => `${paths.year(date)}?${detail ? "" : "detail=0&"}day=${day}`;
-  // The whole Family at once, or a line for each of its members, above the months' names.
+  // On, a line for each of the Family's members; off, the whole Family at once. Above the
+  // months' names; kept in the address, so back and reload keep it.
   const lines = (
-    <span
-      role="group"
-      aria-label={t("views.yearLines")}
-      className="flex rounded-md border border-line"
+    <button
+      type="button"
+      aria-label={t("views.yearEach")}
+      aria-pressed={detail}
+      data-testid="year-each"
+      onClick={() => navigate(detail ? `${paths.year(date)}?detail=0` : paths.year(date))}
+      className={`rounded-md p-1 ${detail ? "bg-accent text-accent-ink" : "hover:bg-line/60"}`}
     >
-      {(
-        [
-          [false, Users, t("views.yearFamily")],
-          [true, Rows3, t("views.yearEach")],
-        ] as const
-      ).map(([each, Icon, label]) => (
-        <Link
-          key={label}
-          to={each ? paths.year(date) : `${paths.year(date)}?detail=0`}
-          aria-label={label}
-          aria-pressed={detail === each}
-          data-testid={each ? "year-each" : "year-family"}
-          className={`flex flex-1 justify-center p-1 ${detail === each ? "bg-accent text-accent-ink" : ""}`}
-        >
-          <Icon aria-hidden size={16} strokeWidth={1.75} />
-        </Link>
-      ))}
-    </span>
+      <Users aria-hidden size={18} strokeWidth={1.75} />
+    </button>
   );
   const notes = useDayNotes(date, `${year}-12-31`);
   const forecast = useDayWeather(date, `${year}-12-31`);

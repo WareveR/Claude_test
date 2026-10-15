@@ -22,6 +22,12 @@ export function yearWeekdayLetters(locale: string): string[] {
 
 export const isWeekendColumn = (column: number) => column % 7 < 2;
 
+/**
+ * The months' (and the Persons') names: they stay at the left while the days scroll sideways
+ * under them, as the weekday letters stay at the top.
+ */
+export const NAMES_COLUMN = "sticky left-0 z-10 bg-surface";
+
 const TABLE = "w-full min-w-[56rem] table-fixed border-collapse text-[10px] lg:text-xs";
 
 /**
@@ -60,18 +66,19 @@ export function YearSheet({
   );
   return (
     <div className="calendar-sheet relative bg-surface px-2 pb-2">
-      {/* Under the bar on a phone; on a wide screen the year scrolls in its own box, at its top. */}
+      {/* Under the bar on a phone; on a wide screen the year scrolls in its own box, at its top.
+          Its shadows fill the sheet's margins beside it, so no day shows through there. */}
       <div
         ref={head}
         onScroll={(e) => follow(body.current, e.currentTarget.scrollLeft)}
         data-testid="days-row"
-        className={`${DAYS_ROW_STICKY} -mx-2 overflow-x-auto bg-surface px-2 [scrollbar-width:none] lg:top-0`}
+        className={`${DAYS_ROW_STICKY} overflow-x-auto bg-surface shadow-[-0.5rem_0_var(--color-surface),0.5rem_0_var(--color-surface)] [scrollbar-width:none] lg:top-0`}
       >
         <table className={TABLE}>
           {columns}
           <thead>
             <tr>
-              <th>{corner}</th>
+              <th className={NAMES_COLUMN}>{corner}</th>
               {yearWeekdayLetters(locale).map((letter, c) => (
                 <th
                   key={c}
@@ -151,7 +158,7 @@ export function YearGrid({
       <tbody>
         {Array.from({ length: 12 }, (_, m) => (
           <tr key={m}>
-            <th className="pr-1 text-left font-semibold">
+            <th className={`${NAMES_COLUMN} pr-1 text-left font-semibold`}>
               <Link
                 to={monthLink(`${year}-${String(m + 1).padStart(2, "0")}-01`)}
                 data-testid={`year-month-${m + 1}`}
