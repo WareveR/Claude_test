@@ -8,7 +8,7 @@ import { PersonAvatar } from "../persons/PersonAvatar";
 import { EntryIcon } from "./EntryBlock";
 import { entriesOn } from "./MonthGrid";
 import { TODAY_PILL, TODAY_TINT } from "./today";
-import { isWeekendColumn, monthColumns, YearSheet } from "./YearGrid";
+import { isWeekendColumn, monthColumns, NAMES_COLUMN, YearSheet } from "./YearGrid";
 
 /**
  * The year in detail, in the same 37 Saturday-to-Sunday columns as the year grid: each month
@@ -66,7 +66,7 @@ export function YearDetail({
         return (
           <tbody key={m} className="border-t-2 border-line">
             <tr>
-              <th className="pt-1 pr-1 text-left text-sm font-semibold">
+              <th className={`${NAMES_COLUMN} pt-1 pr-1 text-left text-sm font-semibold`}>
                 <Link
                   to={monthLink(`${year}-${String(m + 1).padStart(2, "0")}-01`)}
                   data-testid={`year-month-${m + 1}`}
@@ -102,7 +102,7 @@ export function YearDetail({
             </tr>
             {lines.map((line) => (
               <tr key={line.id} data-testid={`year-line-${m + 1}-${line.id}`}>
-                <th className="truncate py-px pr-1 text-left font-normal">
+                <th className={`${NAMES_COLUMN} truncate py-px pr-1 text-left font-normal`}>
                   <span className="flex items-center gap-1">
                     {line.person && (
                       <PersonAvatar person={{ ...line.person, photoKey: null }} size={16} />

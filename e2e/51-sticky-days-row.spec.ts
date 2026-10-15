@@ -56,3 +56,21 @@ test("on a phone the year's weekday letters stay under the bar and scroll sidewa
   await grid.evaluate((el) => el.scrollTo({ left: 150 }));
   await expect.poll(() => page.getByTestId("days-row").evaluate((el) => el.scrollLeft)).toBe(150);
 });
+
+test("on a phone the year's months and Persons stay at the left while the days scroll sideways", async ({
+  page,
+}) => {
+  await signIn(page);
+  await page.goto("/year/2026");
+  const grid = page.getByTestId("year-detail");
+  await expect(grid).toBeVisible();
+  const month = grid.getByTestId("year-month-3");
+  const person = grid.locator('[data-testid^="year-line-3-"] th').first();
+  const left = (await month.boundingBox())?.x ?? 0;
+  await grid.evaluate((el) => el.scrollTo({ left: 300 }));
+  await expect.poll(async () => (await month.boundingBox())?.x).toBeCloseTo(left, 0);
+  expect((await person.boundingBox())?.x ?? 0).toBeCloseTo(left, -1);
+  // The switch over them stays too.
+  const each = page.getByRole("button", { name: "A line for each person" });
+  expect((await each.boundingBox())?.x ?? 0).toBeLessThan(left + 64);
+});
