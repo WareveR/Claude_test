@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Thermometer } from "lucide-react";
+import { Rows3, Thermometer, Users } from "lucide-react";
 import { setDayHours, useDayHours, usePeriodTasksShown, useWeekCompact } from "../calendar/compact";
 import { useTranslation } from "react-i18next";
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router";
@@ -44,7 +44,8 @@ import { PeriodTasksList } from "../tasks/TasksAccordion";
 import { periodLabel } from "../../core/period-label";
 import { PeriodCurtain } from "./PeriodCurtain";
 import { usePrefetchNeighbours } from "./prefetch";
-import { setFocusedDay } from "./focus";
+import { focusedDay, setFocusedDay } from "./focus";
+import { focusDay } from "../../core/periods";
 
 function useToday(): PlainDate {
   return todayIn(useSignedIn().family.timeZone);
@@ -436,7 +437,35 @@ function Year({ year }: { year: number }) {
   const pickedDay =
     picked && isPlainDate(picked) && picked.startsWith(String(year)) ? picked : null;
   if (pickedDay) setFocusedDay(pickedDay);
+  // The day in focus is outlined, as in the other views.
+  const selected = pickedDay ?? focusDay("year", date, focusedDay(), today);
   const dayLink = (day: PlainDate) => `${paths.year(date)}?${detail ? "" : "detail=0&"}day=${day}`;
+  // The whole Family at once, or a line for each of its members, above the months' names.
+  const lines = (
+    <span
+      role="group"
+      aria-label={t("views.yearLines")}
+      className="flex rounded-md border border-line"
+    >
+      {(
+        [
+          [false, Users, t("views.yearFamily")],
+          [true, Rows3, t("views.yearEach")],
+        ] as const
+      ).map(([each, Icon, label]) => (
+        <Link
+          key={label}
+          to={each ? paths.year(date) : `${paths.year(date)}?detail=0`}
+          aria-label={label}
+          aria-pressed={detail === each}
+          data-testid={each ? "year-each" : "year-family"}
+          className={`flex flex-1 justify-center p-1 ${detail === each ? "bg-accent text-accent-ink" : ""}`}
+        >
+          <Icon aria-hidden size={16} strokeWidth={1.75} />
+        </Link>
+      ))}
+    </span>
+  );
   const notes = useDayNotes(date, `${year}-12-31`);
   const forecast = useDayWeather(date, `${year}-12-31`);
   return (
@@ -446,15 +475,6 @@ function Year({ year }: { year: number }) {
         title={String(year)}
         previous={withDetail(paths.year(addMonths(date, -12)))}
         next={withDetail(paths.year(addMonths(date, 12)))}
-        extra={
-          <Link
-            to={detail ? `${paths.year(date)}?detail=0` : paths.year(date)}
-            aria-pressed={detail}
-            className={`rounded-md border px-3 py-1 text-sm ${detail ? "border-accent bg-accent text-accent-ink" : "border-line"}`}
-          >
-            {t("views.yearDetail")}
-          </Link>
-        }
       />
       <ViewBody>
         <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto" data-swipe-past-edges>
@@ -469,6 +489,9 @@ function Year({ year }: { year: number }) {
               familyLabel={t("views.family")}
               holidays={holidays}
               dayLink={dayLink}
+              monthLink={paths.month}
+              selected={selected}
+              corner={lines}
             />
           ) : (
             <YearGrid
@@ -479,6 +502,9 @@ function Year({ year }: { year: number }) {
               locale={locale}
               holidays={holidays}
               dayLink={dayLink}
+              monthLink={paths.month}
+              selected={selected}
+              corner={lines}
             />
           )}
         </div>

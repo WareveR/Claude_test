@@ -11,10 +11,10 @@ test("the year view marks High days and lists the Entries of each day", async ({
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page).not.toHaveURL(/\/entries\//);
 
-  // The year opens in Detail; the compact grid is behind the Detail toggle.
+  // The year opens with a line for each person; the whole Family's grid is beside it.
   await page.goto("/year/2026");
   await expect(page.getByTestId("year-detail")).toBeVisible();
-  await page.getByRole("link", { name: "Detail" }).click();
+  await page.getByRole("link", { name: "The whole Family" }).click();
   await expect(page).toHaveURL(/\/year\/2026\?detail=0$/);
   await expect(page.getByTestId("year-day-2026-12-24")).toHaveAttribute("data-high", "true");
   await expect(
@@ -26,18 +26,24 @@ test("the year view marks High days and lists the Entries of each day", async ({
   await expect(page.getByRole("dialog")).toContainText("Christmas Eve dinner");
   await page.getByRole("dialog").getByRole("button", { name: "Close" }).click();
   await expect(page).toHaveURL(/\/year\/2026\?detail=0$/);
-  // The arrows keep the compact grid, but the year opened afresh is in Detail again.
+  // The arrows keep the Family's grid, but the year opened afresh has each person's lines again.
   await page.getByRole("link", { name: "Next" }).click();
   await expect(page).toHaveURL(/\/year\/2027\?detail=0$/);
   await page.goto("/year/2026");
   await expect(page.getByTestId("year-detail")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Detail" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("link", { name: "Each person" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
 });
 
 test("Detail shows a line per Person and one for the Family in each month", async ({ page }) => {
   await signIn(page);
   await page.goto("/year/2026");
-  await expect(page.getByRole("link", { name: "Detail" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("link", { name: "Each person" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
   const detail = page.getByTestId("year-detail");
   await expect(detail).toBeVisible();
   // Christmas Eve dinner is for no Person in particular, so it sits on the Family line.
@@ -49,9 +55,23 @@ test("Detail shows a line per Person and one for the Family in each month", asyn
   await expect(page).toHaveURL(/\/year\/2026\?day=2026-12-24$/);
   await expect(page.getByRole("dialog")).toContainText("Christmas Eve dinner");
 
+  await page.getByRole("dialog").getByRole("button", { name: "Close" }).click();
+
+  // A day with nothing on opens too, and offers to go to the day.
+  await detail.getByTestId("year-detail-day-2026-12-23").click();
+  await expect(page).toHaveURL(/\/year\/2026\?day=2026-12-23$/);
+  await expect(page.getByRole("dialog")).toContainText("Nothing on this day.");
+  await page.getByRole("dialog").getByRole("link", { name: "Open the day" }).click();
+  await expect(page).toHaveURL(/\/day\/2026-12-23$/);
+
+  // A month's name opens the month.
+  await page.goto("/year/2026");
+  await page.getByTestId("year-month-12").click();
+  await expect(page).toHaveURL(/\/month\/2026-12$/);
+
   await page.goto("/year/2026?detail=0");
   await expect(page.getByTestId("year-detail")).toHaveCount(0);
-  await page.getByRole("link", { name: "Detail" }).click();
+  await page.getByRole("link", { name: "Each person" }).click();
   await expect(page).toHaveURL(/\/year\/2026$/);
   await expect(page.getByTestId("year-detail")).toBeVisible();
 });

@@ -91,7 +91,6 @@
     }
   },
   "views": {
-    "yearDetail": "Detalhe",
     "family": "Família",
     "day": "Dia",
     "week": "Semana",
@@ -127,7 +126,10 @@
       "allDay": "Só dia inteiro",
       "timed": "Só com hora"
     },
-    "showCalendar": "Mostrar o calendário"
+    "showCalendar": "Mostrar o calendário",
+    "yearLines": "Linhas do ano",
+    "yearFamily": "Toda a família",
+    "yearEach": "Cada um"
   },
   "settings": {
     "title": "Definições",

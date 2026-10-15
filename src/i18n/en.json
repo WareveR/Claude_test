@@ -91,7 +91,6 @@
     }
   },
   "views": {
-    "yearDetail": "Detail",
     "family": "Family",
     "day": "Day",
     "week": "Week",
@@ -127,7 +126,10 @@
       "allDay": "All-day only",
       "timed": "Timed only"
     },
-    "showCalendar": "Show the calendar"
+    "showCalendar": "Show the calendar",
+    "yearLines": "Lines of the year",
+    "yearFamily": "The whole Family",
+    "yearEach": "Each person"
   },
   "settings": {
     "title": "Settings",
