@@ -38,20 +38,19 @@ export type TimeGridProps = {
   locale: string;
   /** Public Holiday names by date. */
   holidays?: Map<string, string[]>;
-  /** Calendar Layer notes by date (Moon, seasons…), shown small under the day's name. */
+  /**
+   * Calendar Layer notes by date (Moon, clock change, waste collection…), shown with the holiday
+   * names on the All-day row.
+   */
   notes?: Map<string, string[]>;
-  /** Something to show under a day's name, like its weather. */
+  /** Something to show on a day's row with its name, like its weather. */
   dayExtra?: (day: PlainDate) => ReactNode;
   /** Display Mode: tapping an empty spot starts nothing. */
   readOnly?: boolean;
   /** What sits in the corner above the hours, beside the day names. */
   corner?: ReactNode;
-  /** Without the day notes and holiday names, for more hours; holidays keep their colour. */
-  plain?: boolean;
   /** The Family's Sleeping Hours, shown shorter and shaded unless something is on. */
   sleepHours?: SleepHours;
-  /** Shown right under the days' row, above the All-day Entries: the content's first line. */
-  underHeader?: ReactNode;
 };
 
 function isWeekend(date: PlainDate) {
@@ -88,9 +87,7 @@ export function TimeGrid({
   dayExtra,
   readOnly = false,
   corner,
-  plain = false,
   sleepHours = DEFAULT_SLEEP_HOURS,
-  underHeader,
 }: TimeGridProps) {
   const navigate = useNavigate();
   const scroller = useRef<HTMLDivElement>(null);
@@ -148,8 +145,8 @@ export function TimeGrid({
     days.length,
   );
   const barRows = Math.max(1, ...bars.map((b) => b.row + 1));
-  // Holiday names take their own first line of the all-day row, so bars start below it.
-  const holidayRows = !plain && days.some((day) => holidays.has(day)) ? 1 : 0;
+  // Holiday names and the day notes take the all-day row's first line, so bars start below it.
+  const holidayRows = days.some((day) => holidays.has(day) || notes.has(day)) ? 1 : 0;
   // The day view: the whole date ("Friday 23 October").
   const single = days.length === 1;
 
@@ -161,7 +158,7 @@ export function TimeGrid({
           <div
             key={day}
             data-drop-date={day}
-            className={`@container min-w-0 ${DAYS_ROW} ${single ? "px-2 text-left" : "text-center"} ${holidays.has(day) ? "bg-holiday text-holiday-ink" : isWeekend(day) ? "bg-weekend text-weekend-ink" : ""} ${day === today ? "text-accent" : ""}`}
+            className={`@container min-w-0 ${DAYS_ROW} ${single ? "flex flex-wrap items-center gap-x-4 gap-y-1 px-2 text-left" : "text-center"} ${holidays.has(day) ? "bg-holiday text-holiday-ink" : isWeekend(day) ? "bg-weekend text-weekend-ink" : ""} ${day === today ? "text-accent" : ""}`}
           >
             {/* One line: the weekday and the day; three letters when the column is narrow. */}
             <div className="truncate whitespace-nowrap first-letter:uppercase">
@@ -192,21 +189,9 @@ export function TimeGrid({
               )}
             </div>
             {dayExtra?.(day)}
-            {!plain &&
-              showAllDay &&
-              notes.get(day)?.map((note) => (
-                <div
-                  key={note}
-                  data-testid={`note-${day}`}
-                  className="truncate px-1 text-[11px] font-normal text-muted lg:text-xs"
-                >
-                  <NoteLine note={note} />
-                </div>
-              ))}
           </div>
         ))}
       </div>
-      {underHeader}
       <div
         data-testid="all-day-row"
         className={`grid gap-0.5 border-b border-line py-1 ${showAllDay ? "" : "hidden"} ${showTimed ? "" : "min-h-0 flex-1 content-start overflow-y-auto"}`}
@@ -224,16 +209,29 @@ export function TimeGrid({
             style={{ gridColumn: i + 2, gridRow: "1 / -1" }}
           />
         ))}
+        {/* The day's notices first: holiday names, Moon, clock change, waste collection. */}
         {days.map((day, i) => {
-          const names = plain ? undefined : holidays.get(day);
-          return names ? (
-            <div
-              key={day}
-              data-testid={`holiday-${day}`}
-              className="truncate px-1 text-xs text-holiday-ink lg:text-sm"
-              style={{ gridColumn: i + 2, gridRow: 1 }}
-            >
-              {names.join(" · ")}
+          const names = holidays.get(day);
+          const dayNotes = notes.get(day);
+          return names || dayNotes ? (
+            <div key={day} className="min-w-0" style={{ gridColumn: i + 2, gridRow: 1 }}>
+              {names && (
+                <div
+                  data-testid={`holiday-${day}`}
+                  className="truncate px-1 text-xs text-holiday-ink lg:text-sm"
+                >
+                  {names.join(" · ")}
+                </div>
+              )}
+              {dayNotes?.map((note) => (
+                <div
+                  key={note}
+                  data-testid={`note-${day}`}
+                  className="truncate px-1 text-[11px] text-muted lg:text-xs"
+                >
+                  <NoteLine note={note} />
+                </div>
+              ))}
             </div>
           ) : null;
         })}

@@ -81,6 +81,31 @@ export function formatPlainDate(
   return new Intl.DateTimeFormat(language, { ...options, timeZone: "UTC" }).format(toUtc(date));
 }
 
+/** The ISO week a date falls in (weeks start on Monday; week 1 holds the year's first Thursday). */
+export function isoWeek(date: PlainDate): { week: number; year: number } {
+  const thursday = addDays(date, 3 - weekday(date));
+  const year = Number(thursday.slice(0, 4));
+  return { week: Math.floor(daysBetween(`${year}-01-01`, thursday) / 7) + 1, year };
+}
+
+/**
+ * A day's full name with the year, the words capitalised and no "de" or "-feira":
+ * "Terça, 10 Novembro 2026"; short, "Ter, 10 Nov 2026".
+ */
+export function formatDayTitle(date: PlainDate, language: string, short = false): string {
+  const part = (options: Intl.DateTimeFormatOptions) =>
+    formatPlainDate(date, language, options)
+      .replace(/-feira$/, "")
+      .replace(/\.$/, "");
+  const capital = (word: string) => word.charAt(0).toUpperCase() + word.slice(1);
+  // Three letters when short, as some languages' short names are whole words ("terça").
+  const weekdayName = capital(
+    part({ weekday: short ? "short" : "long" }).slice(0, short ? 3 : undefined),
+  );
+  const month = capital(part({ month: short ? "short" : "long" }));
+  return `${weekdayName}, ${Number(date.slice(8))} ${month} ${date.slice(0, 4)}`;
+}
+
 /** The months two dates fall in, by name with the year: "outubro 2026", "outubro – novembro 2026". */
 export function formatMonthRange(
   from: PlainDate,

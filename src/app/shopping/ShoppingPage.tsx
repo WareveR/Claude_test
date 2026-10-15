@@ -66,7 +66,7 @@ export function ShoppingPage() {
 
   return (
     <>
-      <ViewNav date={today} title={t("shopping.title")} newPath={null} />
+      <ViewNav date={today} title={t("shopping.title")} />
       <main
         className="mx-auto flex w-full max-w-xl flex-col gap-4 px-4 pb-24"
         data-testid="shopping-list"

@@ -1,14 +1,15 @@
 import type { ReactNode } from "react";
-import { Rows3, Thermometer, Users } from "lucide-react";
-import { setDayHours, useDayHours, usePeriodTasksShown, useWeekCompact } from "../calendar/compact";
+import { Rows3, Users } from "lucide-react";
+import { usePeriodTasksShown, useWeatherShown } from "../calendar/compact";
 import { useTranslation } from "react-i18next";
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router";
 import { formatLocale } from "../../core/languages";
 import {
   addDays,
   addMonths,
+  formatDayTitle,
   formatMonthRange,
-  formatPlainDate,
+  isoWeek,
   isPlainDate,
   minutesNowIn,
   startOfWeek,
@@ -91,13 +92,13 @@ export function DayView() {
   const weather = useDayWeather(day, day).get(day);
   const past = usePastWeather(day, day).get(day);
   const forecast = useWeather().data;
-  const showHours = useDayHours();
+  const weatherShown = useWeatherShown();
   const tasksShown = usePeriodTasksShown();
   usePrefetchNeighbours("day", day);
   if (!isPlainDate(date)) return <Navigate to={paths.day(today)} replace />;
   // Before the bar draws: the other views open on this day.
   setFocusedDay(date);
-  const title = formatPlainDate(date, locale, { weekday: "long", day: "numeric", month: "long" });
+  const title = formatDayTitle(date, locale);
   // The hours kept for a day gone by; the forecast's for today and the days ahead.
   const hours = past?.hours ?? (forecast?.hourly ?? []).filter((h) => h.time.startsWith(date));
   return (
@@ -105,10 +106,9 @@ export function DayView() {
       <ViewNav
         date={date}
         title={title}
+        shortTitle={formatDayTitle(date, locale, true)}
         previous={paths.day(addDays(date, -1))}
         next={paths.day(addDays(date, 1))}
-        compact
-        extra={<DayWeatherLine weather={weather} />}
         tasks={{ from: date, to: date }}
       />
       <ViewBody>
@@ -118,21 +118,27 @@ export function DayView() {
           <div className={GRID_BOX.lg}>
             <CalendarGrid
               days={[date]}
-              // The hour by hour weather is the day's content, under the day's own row.
-              underHeader={
-                showHours && (
-                  <div className="border-b border-line py-2">
-                    {hours.length > 0 ? (
-                      <HourlyStrip hours={hours} lead={<SunTimes day={date} />} />
-                    ) : (
-                      <div className="flex items-center gap-3 px-4">
-                        <SunTimes day={date} />
-                        <p data-testid="no-hours" className="text-sm text-muted">
-                          {t("views.noHours")}
-                        </p>
-                      </div>
-                    )}
-                  </div>
+              // The weather shares the day's own row: the day's, then hour by hour.
+              dayExtra={() =>
+                weatherShown && (
+                  <>
+                    <DayWeather weather={weather} />
+                    <div data-testid="day-hours" className="w-full empty:hidden">
+                      {hours.length > 0 ? (
+                        <HourlyStrip hours={hours} lead={<SunTimes day={date} />} />
+                      ) : (
+                        <div className="flex items-center gap-3 empty:hidden">
+                          <SunTimes day={date} />
+                          {/* Said only for a day with weather but no hours kept. */}
+                          {weather && (
+                            <p data-testid="no-hours" className="text-sm font-normal text-muted">
+                              {t("views.noHours")}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </>
                 )
               }
             />
@@ -149,38 +155,23 @@ export function DayView() {
   );
 }
 
-/**
- * The day's weather beside its title: highest and lowest, chance of rain and wind, and a switch
- * for the hour by hour detail, there even when no hours are kept.
- */
-function DayWeatherLine({ weather }: { weather?: ShownDay }) {
-  const { t } = useTranslation();
-  const showHours = useDayHours();
+/** The day's weather beside its name: highest and lowest, chance of rain and wind. */
+function DayWeather({ weather }: { weather?: ShownDay }) {
+  if (!weather) return null;
   return (
-    <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-      {weather && (
-        <ForecastButton>
-          <span data-testid="day-weather" className="inline-flex items-center gap-3">
-            <WeatherBadge day={weather} faded={weather.faded} rain />
-            {weather.wind !== undefined && (
-              <span className="text-muted">
-                <WindReading speed={weather.wind} from={weather.windDir} />
-              </span>
-            )}
-          </span>
-        </ForecastButton>
-      )}
-      <button
-        type="button"
-        data-testid="day-hours"
-        aria-pressed={showHours}
-        aria-label={showHours ? t("views.hideHours") : t("views.showHours")}
-        onClick={() => setDayHours(!showHours)}
-        className={`rounded-md p-1.5 ${showHours ? "bg-accent text-accent-ink" : "text-muted hover:bg-line/60"}`}
+    <ForecastButton>
+      <span
+        data-testid="day-weather"
+        className="inline-flex items-center gap-3 text-sm font-normal"
       >
-        <Thermometer aria-hidden size={18} strokeWidth={1.75} />
-      </button>
-    </span>
+        <WeatherBadge day={weather} faded={weather.faded} rain />
+        {weather.wind !== undefined && (
+          <span className="text-muted">
+            <WindReading speed={weather.wind} from={weather.windDir} />
+          </span>
+        )}
+      </span>
+    </ForecastButton>
   );
 }
 
@@ -219,20 +210,23 @@ export function WeekView() {
 }
 
 function Week({ monday }: { monday: PlainDate }) {
+  const { t } = useTranslation();
   const locale = useLocale();
   // On a phone on its side the weather and the day notes can be hidden so the hours get the room.
-  const compact = useWeekCompact();
+  const weatherShown = useWeatherShown();
   const tasksShown = usePeriodTasksShown();
   usePrefetchNeighbours("week", monday);
   const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i));
   const forecast = useDayWeather(monday, days[6]);
-  // The months and year the week falls in, abbreviated so it keeps to the nav's line.
-  const title = formatMonthRange(monday, days[6], locale, "short");
+  // The week's number in its year: "Semana 42, 2026".
+  const { week, year } = isoWeek(monday);
+  const title = t("views.weekTitle", { week, year });
   return (
     <>
       <ViewNav
         date={monday}
         title={title}
+        shortTitle={t("views.weekShort", { week, year })}
         previous={paths.week(addDays(monday, -7))}
         next={paths.week(addDays(monday, 7))}
         tasks={{ from: monday, to: days[6] }}
@@ -244,9 +238,8 @@ function Week({ monday }: { monday: PlainDate }) {
           <div className={GRID_BOX.lg}>
             <CalendarGrid
               days={days}
-              plain={compact}
               dayExtra={(day) => {
-                if (compact) return null;
+                if (!weatherShown) return null;
                 const weather = forecast.get(day);
                 return (
                   weather && (
@@ -286,15 +279,11 @@ export function CalendarGrid({
   dayExtra,
   readOnly,
   corner,
-  plain,
-  underHeader,
 }: {
   days: PlainDate[];
   dayExtra?: (day: PlainDate) => ReactNode;
   readOnly?: boolean;
   corner?: ReactNode;
-  plain?: boolean;
-  underHeader?: ReactNode;
 }) {
   const { family } = useSignedIn();
   const locale = useLocale();
@@ -317,9 +306,7 @@ export function CalendarGrid({
       dayExtra={dayExtra}
       readOnly={readOnly}
       corner={corner}
-      plain={plain}
       sleepHours={family.sleepHours}
-      underHeader={underHeader}
     />
   );
 }
@@ -353,6 +340,7 @@ function Month({ first }: { first: PlainDate }) {
   const holidays = useHolidays(weeks[0][0], weeks[weeks.length - 1][6]);
   const notes = useDayNotes(weeks[0][0], weeks[weeks.length - 1][6]);
   const forecast = useDayWeather(weeks[0][0], weeks[weeks.length - 1][6]);
+  const weatherShown = useWeatherShown();
   const title = formatMonthRange(first, first, locale);
   const dayEntries = entriesOn(entries, selected);
   const tasksShown = usePeriodTasksShown();
@@ -381,7 +369,7 @@ function Month({ first }: { first: PlainDate }) {
               locale={locale}
               holidays={holidays}
               notes={notes}
-              weather={forecast}
+              weather={weatherShown ? forecast : undefined}
               dayLink={(day) => `${paths.month(day)}?day=${day}`}
             />
           </div>

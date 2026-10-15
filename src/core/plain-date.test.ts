@@ -3,9 +3,11 @@ import {
   addDays,
   addMonths,
   daysInMonth,
+  formatDayTitle,
   formatMonthRange,
   formatPlainDate,
   isPlainDate,
+  isoWeek,
   startOfMonth,
   startOfWeek,
   minutesNowIn,
@@ -73,5 +75,24 @@ describe("formatMonthRange", () => {
     expect(formatMonthRange("2026-12-28", "2027-01-03", "en-GB", "short")).toBe(
       "Dec 2026 – Jan 2027",
     );
+  });
+});
+
+describe("isoWeek", () => {
+  it("counts weeks from the one holding the year's first Thursday", () => {
+    expect(isoWeek("2026-10-15")).toEqual({ week: 42, year: 2026 });
+    expect(isoWeek("2026-01-01")).toEqual({ week: 1, year: 2026 });
+    // 1 January 2027 is a Friday: still in 2026's last week.
+    expect(isoWeek("2027-01-01")).toEqual({ week: 53, year: 2026 });
+    expect(isoWeek("2024-12-30")).toEqual({ week: 1, year: 2025 });
+  });
+});
+
+describe("formatDayTitle", () => {
+  it("names the day in full, or short", () => {
+    expect(formatDayTitle("2026-11-10", "pt-PT")).toBe("Terça, 10 Novembro 2026");
+    expect(formatDayTitle("2026-11-10", "pt-PT", true)).toBe("Ter, 10 Nov 2026");
+    expect(formatDayTitle("2026-11-10", "en-GB")).toBe("Tuesday, 10 November 2026");
+    expect(formatDayTitle("2026-11-10", "en-GB", true)).toBe("Tue, 10 Nov 2026");
   });
 });
