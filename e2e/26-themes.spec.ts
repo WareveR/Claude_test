@@ -56,3 +56,43 @@ test("the four themes for different ages each change the look, not only the colo
   await page.reload();
   await expect(html).toHaveAttribute("data-theme", "contrast");
 });
+
+test("the four nature themes lay a material over the page and the header", async ({ page }) => {
+  await signIn(page);
+  const blocked: string[] = [];
+  page.on("console", (msg) => {
+    if (/Content Security Policy/i.test(msg.text())) blocked.push(msg.text());
+  });
+  const html = page.locator("html");
+  const header = page.locator("header").first();
+  const picker = page.getByLabel("Theme on this device");
+  await page.goto("/settings/device");
+
+  for (const [label, theme, pageTexture, headerTexture] of [
+    ["Wood (oak and walnut)", "wood", "oak", "walnut"],
+    ["Stone (limestone and slate)", "stone", "limestone", "slate"],
+    ["Forest (ferns and leaves)", "forest", "moss", "canopy"],
+    ["Cork (a cork board)", "cork", "cork", "dark-cork"],
+  ] as const) {
+    await picker.selectOption({ label });
+    await expect(html).toHaveAttribute("data-theme", theme);
+    await expect(page.locator("body")).toHaveCSS(
+      "background-image",
+      new RegExp(`/textures/${pageTexture}\\.webp`),
+    );
+    await expect(header).toHaveCSS(
+      "background-image",
+      new RegExp(`/textures/${headerTexture}\\.webp`),
+    );
+    for (const texture of [pageTexture, headerTexture]) {
+      const res = await page.request.get(`/textures/${texture}.webp`);
+      expect(res.ok()).toBe(true);
+      expect(res.headers()["content-type"]).toBe("image/webp");
+    }
+  }
+  // The calendar stays a near-solid sheet over the material.
+  await page.goto("/month/2026-10");
+  const sheet = page.locator(".calendar-sheet").first();
+  await expect(sheet).toHaveCSS("background-color", /rgba\(255, 253, 248, 0\.86\)|color\(srgb/);
+  expect(blocked).toEqual([]);
+});

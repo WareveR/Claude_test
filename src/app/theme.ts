@@ -12,6 +12,10 @@ export const THEMES = [
   "neon",
   "paper",
   "contrast",
+  "wood",
+  "stone",
+  "forest",
+  "cork",
 ] as const;
 export type Theme = (typeof THEMES)[number];
 

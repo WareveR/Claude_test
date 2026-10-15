@@ -181,7 +181,11 @@
     "playground": "Recreio (alegre, para crianças)",
     "neon": "Néon (escuro, para jovens)",
     "paper": "Papel (sóbrio, com serifa)",
-    "contrast": "Alto contraste (letra grande)"
+    "contrast": "Alto contraste (letra grande)",
+    "wood": "Madeira (carvalho e nogueira)",
+    "stone": "Pedra (calcário e ardósia)",
+    "forest": "Floresta (fetos e folhas)",
+    "cork": "Cortiça (um quadro de cortiça)"
   },
   "devices": {
     "title": "Dispositivos com sessão iniciada",
