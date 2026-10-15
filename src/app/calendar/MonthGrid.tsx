@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { DAYS_ROW } from "./bands";
+import { DAYS_ROW, DAYS_ROW_STICKY } from "./bands";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { lastDate } from "../../core/entry-time";
@@ -98,7 +98,11 @@ export function MonthGrid({
   const { ref: gridRef, lines: fitLines } = useLinesThatFit(weeks.length);
   return (
     <div className="calendar-sheet flex flex-1 flex-col bg-surface lg:min-h-0" {...drag.zone}>
-      <div className={`grid ${columns} border-b border-line text-center`}>
+      {/* Stays under the bar while the weeks scroll by, and leaves with the last of them. */}
+      <div
+        data-testid="days-row"
+        className={`grid ${columns} ${DAYS_ROW_STICKY} border-b border-line bg-surface text-center`}
+      >
         {weekLink && <div className={DAYS_ROW} />}
         {weeks[0].map((day) => (
           <div

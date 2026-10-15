@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
-import { DAYS_ROW } from "./bands";
+import { DAYS_ROW, DAYS_ROW_STICKY } from "./bands";
 import { Link, useNavigate } from "react-router";
 import { daySpan, lastDate } from "../../core/entry-time";
 import { layoutBars, layoutLanes } from "../../core/layout";
@@ -158,7 +158,12 @@ export function TimeGrid({
 
   return (
     <div className="calendar-sheet flex min-h-0 flex-1 flex-col bg-surface" {...drag.zone}>
-      <div className="relative grid border-b border-line" style={{ gridTemplateColumns: columns }}>
+      {/* Stays under the bar while the page scrolls the grid by; the hours scroll under it. */}
+      <div
+        data-testid="days-row"
+        className={`grid ${DAYS_ROW_STICKY} border-b border-line bg-surface`}
+        style={{ gridTemplateColumns: columns }}
+      >
         <div className="flex items-start justify-center pt-1">{corner}</div>
         {days.map((day) => (
           <div
