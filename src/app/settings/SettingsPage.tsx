@@ -101,9 +101,9 @@ function AreaContent({ area }: { area: Area }) {
       return (
         <>
           <PersonsSection />
+          <SleepSection />
           <EntryTypesSection />
           <TemplatesSection />
-          <SleepSection />
         </>
       );
     case "calendar":
