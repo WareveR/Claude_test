@@ -116,6 +116,7 @@ export function ViewNav({
       ref={navRef}
       data-view-nav
       data-fit={level}
+      data-view={view}
       className="sticky top-0 z-20 flex items-center gap-2 border-b border-line bg-bg px-4 py-2 short:py-1 max-sm:gap-1 max-sm:px-2"
     >
       {level >= 3 ? (
