@@ -61,4 +61,10 @@ test("each view outlines the day in focus, and its names and numbers open day an
   // A day's name opens that day.
   await page.getByTestId("day-name-2031-11-21").click();
   await expect(page).toHaveURL(/\/day\/2031-11-21$/);
+  // And the year outlines it too.
+  await view("Year");
+  await expect(page.getByTestId("year-detail-day-2031-11-21")).toHaveAttribute(
+    "aria-current",
+    "date",
+  );
 });

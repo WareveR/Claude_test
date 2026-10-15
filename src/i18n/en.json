@@ -91,7 +91,6 @@
     }
   },
   "views": {
-    "yearDetail": "Detail",
     "family": "Family",
     "day": "Day",
     "week": "Week",
@@ -128,6 +127,9 @@
       "timed": "Timed only"
     },
     "showCalendar": "Show the calendar",
+    "yearLines": "Lines of the year",
+    "yearFamily": "The whole Family",
+    "yearEach": "Each person",
     "weekTitle": "Week {{week}}, {{year}}",
     "weekShort": "Wk {{week}}, {{year}}",
     "openWeek": "Open week {{week}}"

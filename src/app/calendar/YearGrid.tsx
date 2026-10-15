@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { DAYS_ROW } from "./bands";
 import { YEAR_COLUMNS, yearRowOffset } from "../../core/layout";
@@ -45,6 +46,9 @@ export function YearGrid({
   locale,
   holidays = new Map(),
   dayLink,
+  monthLink,
+  selected,
+  corner,
 }: {
   year: number;
   entries: Entry[];
@@ -55,6 +59,12 @@ export function YearGrid({
   holidays?: Map<string, string[]>;
   /** Where tapping a day goes. */
   dayLink: (day: PlainDate) => string;
+  /** Where tapping a month's name goes. */
+  monthLink: (first: PlainDate) => string;
+  /** The day in focus, outlined. */
+  selected?: PlainDate;
+  /** Above the months' names, on the weekday letters' row. */
+  corner?: ReactNode;
 }) {
   const typeOf = (e: Entry) => types.find((t) => t.id === e.entryTypeId);
   const colorOf = (e: Entry) => typeOf(e)?.color ?? "#607d8b";
@@ -65,7 +75,7 @@ export function YearGrid({
       <table className="w-full min-w-[56rem] table-fixed border-collapse text-[10px] lg:text-xs">
         <thead>
           <tr>
-            <th className="w-10" />
+            <th className="w-16">{corner}</th>
             {letters.map((letter, c) => (
               <th
                 key={c}
@@ -79,10 +89,16 @@ export function YearGrid({
         <tbody>
           {Array.from({ length: 12 }, (_, m) => (
             <tr key={m}>
-              <th className="pr-1 text-left font-semibold first-letter:uppercase">
-                {formatPlainDate(`${year}-${String(m + 1).padStart(2, "0")}-01`, locale, {
-                  month: "short",
-                })}
+              <th className="pr-1 text-left font-semibold">
+                <Link
+                  to={monthLink(`${year}-${String(m + 1).padStart(2, "0")}-01`)}
+                  data-testid={`year-month-${m + 1}`}
+                  className="block first-letter:uppercase hover:underline"
+                >
+                  {formatPlainDate(`${year}-${String(m + 1).padStart(2, "0")}-01`, locale, {
+                    month: "short",
+                  })}
+                </Link>
               </th>
               {monthColumns(year, m + 1).map((day, c) => {
                 if (!day) {
@@ -107,7 +123,8 @@ export function YearGrid({
                       title={[...(names ?? []), ...dayEntries.map((e) => e.title)].join("\n")}
                       data-high={high ? "true" : undefined}
                       data-today={day === today || undefined}
-                      className={`flex min-h-10 flex-col gap-px p-0.5 lg:min-h-16 ${day === today ? "outline-2 -outline-offset-2 outline-accent" : ""}`}
+                      aria-current={day === selected ? "date" : undefined}
+                      className={`flex min-h-10 flex-col gap-px p-0.5 lg:min-h-16 ${day === selected ? "outline-2 -outline-offset-2 outline-accent" : ""}`}
                     >
                       <span
                         style={

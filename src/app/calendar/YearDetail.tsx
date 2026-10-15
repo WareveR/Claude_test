@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { DAYS_ROW } from "./bands";
 import { formatPlainDate, type PlainDate } from "../../core/plain-date";
@@ -25,6 +26,9 @@ export function YearDetail({
   familyLabel,
   holidays = new Map(),
   dayLink,
+  monthLink,
+  selected,
+  corner,
 }: {
   year: number;
   entries: Entry[];
@@ -36,8 +40,14 @@ export function YearDetail({
   familyLabel: string;
   /** Public Holiday names by date. */
   holidays?: Map<string, string[]>;
-  /** Where tapping a day goes. */
+  /** Where tapping a day goes, from its number or any of its lines. */
   dayLink: (day: PlainDate) => string;
+  /** Where tapping a month's name goes. */
+  monthLink: (first: PlainDate) => string;
+  /** The day in focus, outlined. */
+  selected?: PlainDate;
+  /** Above the months' names, on the weekday letters' row. */
+  corner?: ReactNode;
 }) {
   const typeOf = (e: Entry) => types.find((t) => t.id === e.entryTypeId);
   const colorOf = (e: Entry) => typeOf(e)?.color ?? "#607d8b";
@@ -55,7 +65,7 @@ export function YearDetail({
       <table className="w-full min-w-[56rem] table-fixed border-collapse text-[10px] lg:text-xs">
         <thead>
           <tr>
-            <th className="w-28" />
+            <th className="w-28">{corner}</th>
             {yearWeekdayLetters(locale).map((letter, c) => (
               <th
                 key={c}
@@ -71,10 +81,16 @@ export function YearDetail({
           return (
             <tbody key={m} className="border-t-2 border-line">
               <tr>
-                <th className="pt-1 pr-1 text-left text-sm font-semibold first-letter:uppercase">
-                  {formatPlainDate(`${year}-${String(m + 1).padStart(2, "0")}-01`, locale, {
-                    month: "long",
-                  })}
+                <th className="pt-1 pr-1 text-left text-sm font-semibold">
+                  <Link
+                    to={monthLink(`${year}-${String(m + 1).padStart(2, "0")}-01`)}
+                    data-testid={`year-month-${m + 1}`}
+                    className="block first-letter:uppercase hover:underline"
+                  >
+                    {formatPlainDate(`${year}-${String(m + 1).padStart(2, "0")}-01`, locale, {
+                      month: "long",
+                    })}
+                  </Link>
                 </th>
                 {columns.map((day, c) => (
                   <th
@@ -83,12 +99,18 @@ export function YearDetail({
                     data-today={day === today || undefined}
                     className={`pt-1 font-semibold tabular-nums ${shade(day, c)} ${day === today ? TODAY_TINT : day && holidays.has(day) ? "text-holiday-ink" : isWeekendColumn(c) ? "text-weekend-ink" : "text-muted"}`}
                   >
-                    {day === today ? (
-                      <span className={TODAY_PILL}>{Number(day.slice(8))}</span>
-                    ) : day ? (
-                      Number(day.slice(8))
-                    ) : (
-                      ""
+                    {/* Every day opens, with Entries or without. */}
+                    {day && (
+                      <Link
+                        to={dayLink(day)}
+                        data-testid={`year-detail-day-${day}`}
+                        aria-current={day === selected ? "date" : undefined}
+                        className={`block rounded-sm ${day === selected ? "outline-2 -outline-offset-1 outline-accent" : ""}`}
+                      >
+                        <span className={day === today ? TODAY_PILL : ""}>
+                          {Number(day.slice(8))}
+                        </span>
+                      </Link>
                     )}
                   </th>
                 ))}
