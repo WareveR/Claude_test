@@ -665,6 +665,7 @@
       "school": "Calendário escolar",
       "moon": "Fases da lua",
       "seasons": "Mudança de estação",
+      "zodiac": "Signos do zodíaco",
       "clock": "Mudança da hora",
       "special": "Dias especiais",
       "sky": "Eclipses e chuvas de meteoros",
@@ -683,6 +684,20 @@
         "summer": "Início do verão",
         "autumn": "Início do outono",
         "winter": "Início do inverno"
+      },
+      "zodiac": {
+        "aries": "Início de Carneiro",
+        "taurus": "Início de Touro",
+        "gemini": "Início de Gémeos",
+        "cancer": "Início de Caranguejo",
+        "leo": "Início de Leão",
+        "virgo": "Início de Virgem",
+        "libra": "Início de Balança",
+        "scorpio": "Início de Escorpião",
+        "sagittarius": "Início de Sagitário",
+        "capricorn": "Início de Capricórnio",
+        "aquarius": "Início de Aquário",
+        "pisces": "Início de Peixes"
       },
       "clock": {
         "forward": "Hora muda esta noite: adiantar 1 h",

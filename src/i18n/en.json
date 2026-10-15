@@ -665,6 +665,7 @@
       "school": "School calendar",
       "moon": "Moon phases",
       "seasons": "Change of season",
+      "zodiac": "Zodiac signs",
       "clock": "Clock change",
       "special": "Special days",
       "sky": "Eclipses and meteor showers",
@@ -683,6 +684,20 @@
         "summer": "Summer begins",
         "autumn": "Autumn begins",
         "winter": "Winter begins"
+      },
+      "zodiac": {
+        "aries": "Start of Aries",
+        "taurus": "Start of Taurus",
+        "gemini": "Start of Gemini",
+        "cancer": "Start of Cancer",
+        "leo": "Start of Leo",
+        "virgo": "Start of Virgo",
+        "libra": "Start of Libra",
+        "scorpio": "Start of Scorpio",
+        "sagittarius": "Start of Sagittarius",
+        "capricorn": "Start of Capricorn",
+        "aquarius": "Start of Aquarius",
+        "pisces": "Start of Pisces"
       },
       "clock": {
         "forward": "Clocks change tonight: forward 1 h",

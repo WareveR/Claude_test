@@ -10,6 +10,7 @@ export const LAYERS = [
   "special",
   "moon",
   "seasons",
+  "zodiac",
   "clock",
   "sky",
   "sun",
@@ -23,6 +24,22 @@ export type DayNote = { layer: Layer; key: string; time?: string };
 export type Place = { latitude: number; longitude: number };
 
 type Astro = typeof Astronomy;
+
+/** The signs of the tropical zodiac, from Aries, which the Sun enters at 0° of ecliptic longitude. */
+export const ZODIAC = [
+  "aries",
+  "taurus",
+  "gemini",
+  "cancer",
+  "leo",
+  "virgo",
+  "libra",
+  "scorpio",
+  "sagittarius",
+  "capricorn",
+  "aquarius",
+  "pisces",
+] as const;
 
 const MOON = ["moon.new", "moon.firstQuarter", "moon.full", "moon.lastQuarter"];
 
@@ -182,6 +199,21 @@ export function dayNotes(
           time: clock(time.date, timeZone),
         });
       }
+    }
+  }
+
+  if (on("zodiac")) {
+    // The Sun moves about 1° a day, so each 30° boundary is searched in the month before it.
+    for (let t = A.MakeTime(start); t.date < end;) {
+      const sign = (Math.floor(A.SunPosition(t).elon / 30) + 1) % 12;
+      const found = A.SearchSunLongitude(sign * 30, t, 40);
+      if (!found || found.date >= end) break;
+      add(todayIn(timeZone, found.date), {
+        layer: "zodiac",
+        key: `zodiac.${ZODIAC[sign]}`,
+        time: clock(found.date, timeZone),
+      });
+      t = found.AddDays(1);
     }
   }
 
