@@ -132,7 +132,8 @@
     "yearEach": "Cada um",
     "weekTitle": "Semana {{week}}, {{year}}",
     "weekShort": "Sem. {{week}}, {{year}}",
-    "openWeek": "Abrir a semana {{week}}"
+    "openWeek": "Abrir a semana {{week}}",
+    "tree": "Árvore"
   },
   "settings": {
     "title": "Definições",
@@ -1049,6 +1050,10 @@
         "shopping": {
           "what": "Abre a lista de compras da Família.",
           "more": "Uma só lista para todos, por secções; dá para ver só o de uma loja."
+        },
+        "tree": {
+          "what": "Abre a árvore genealógica da família.",
+          "more": "Com fotos, alcunhas e histórias; toca em duas pessoas para saber o parentesco."
         }
       },
       "previous": {
@@ -1374,7 +1379,8 @@
       "entryTypes": "Tipos de entrada",
       "templates": "Listas pré-definidas",
       "settings": "Definições da família",
-      "errors": "Registo de erros"
+      "errors": "Registo de erros",
+      "tree": "Árvore da família"
     },
     "details": {
       "entries": "Todas as Entradas, as Privadas incluídas. Os aniversários das Pessoas ficam enquanto elas ficarem.",
@@ -1384,7 +1390,8 @@
       "entryTypes": "Os tipos criados saem (as suas Entradas passam a Geral) e os de origem voltam ao início.",
       "templates": "As listas criadas saem e as de origem voltam ao início.",
       "settings": "Feriados, lixo, meteorologia, horas de sono e feeds de calendário.",
-      "errors": "Todos os erros registados."
+      "errors": "Todos os erros registados.",
+      "tree": "As pessoas da árvore, as suas ligações e histórias."
     },
     "all": "Marcar tudo: recomeçar como família nova",
     "none": "Desmarcar tudo",
@@ -1397,5 +1404,210 @@
     "confirm": "Apagar o que marcou? Na app não se pode desfazer.",
     "confirmAll": "Apagar tudo e recomeçar como família nova? Na app não se pode desfazer.",
     "done": "Apagado. A Exportação ficou guardada neste aparelho."
+  },
+  "tree": {
+    "title": "Árvore da família",
+    "add": "Adicionar pessoa",
+    "from": "Ver a partir de",
+    "hint": "Toca numa pessoa para ver a sua ficha. Toca noutra a seguir para saber o parentesco entre as duas.",
+    "emptyTitle": "A árvore ainda está vazia",
+    "emptyHint": "Começa pela bebé e vai juntando os pais, os avós e o resto da família, com fotos, alcunhas e histórias.",
+    "couple": "Casal",
+    "closeCard": "Fechar",
+    "gen": {
+      "same": "Geração de {{name}}",
+      "parents": "Pais",
+      "grandparents": "Avós",
+      "greatGrandparents": "Bisavós",
+      "greatGreatGrandparents": "Trisavós",
+      "children": "Filhos",
+      "grandchildren": "Netos",
+      "above_one": "{{count}} geração acima",
+      "above_other": "{{count}} gerações acima",
+      "below_one": "{{count}} geração abaixo",
+      "below_other": "{{count}} gerações abaixo"
+    },
+    "ofRoot": "{{word}} de {{name}}",
+    "born": "Nasceu a {{date}}",
+    "age_one": "{{count}} ano",
+    "age_other": "{{count}} anos",
+    "bornIn": "Natural de {{place}}",
+    "died": "Faleceu a {{date}}",
+    "diedAge_one": "com {{count}} ano",
+    "diedAge_other": "com {{count}} anos",
+    "birthdaySoon_one": "Faz {{count}} ano daqui a {{days}} dias 🎂",
+    "birthdaySoon_other": "Faz {{count}} anos daqui a {{days}} dias 🎂",
+    "birthdayToday_one": "Faz {{count}} ano hoje! 🎉",
+    "birthdayToday_other": "Faz {{count}} anos hoje! 🎉",
+    "parents": "Pais",
+    "partners": "Companheiro(a)",
+    "siblings": "Irmãos",
+    "children": "Filhos",
+    "edit": "Editar",
+    "addParent": "Pai ou mãe",
+    "addPartner": "Companheiro(a)",
+    "addChild": "Filho(a)",
+    "addSibling": "Irmão(ã)",
+    "commonAncestors": "Antepassados em comum: {{names}}",
+    "and": " e ",
+    "isOf": "{{b}} é {{word}} de {{a}}",
+    "isOfVia": "{{b}} é {{word}} de {{via}}, {{viaWord}} de {{a}}",
+    "isPartnerOf": "{{b}} é {{word}} de {{via}}, que é {{viaWord}} de {{a}}",
+    "notRelated": "{{a}} e {{b}} não têm parentesco na árvore (ainda).",
+    "directLine": "Linha reta, {{degree}}.º grau",
+    "sideLine": "Linha colateral, {{degree}}.º grau",
+    "byMarriage": "Parentesco por afinidade",
+    "kin": {
+      "child": {
+        "f": "filha",
+        "m": "filho",
+        "x": "filho(a)"
+      },
+      "grandchild": {
+        "f": "neta",
+        "m": "neto",
+        "x": "neto(a)"
+      },
+      "greatGrandchild": {
+        "f": "bisneta",
+        "m": "bisneto",
+        "x": "bisneto(a)"
+      },
+      "greatGreatGrandchild": {
+        "f": "trineta",
+        "m": "trineto",
+        "x": "trineto(a)"
+      },
+      "descendant": {
+        "f": "descendente ({{count}} gerações abaixo)",
+        "m": "descendente ({{count}} gerações abaixo)",
+        "x": "descendente ({{count}} gerações abaixo)"
+      },
+      "parent": {
+        "f": "mãe",
+        "m": "pai",
+        "x": "mãe ou pai"
+      },
+      "grandparent": {
+        "f": "avó",
+        "m": "avô",
+        "x": "avó ou avô"
+      },
+      "greatGrandparent": {
+        "f": "bisavó",
+        "m": "bisavô",
+        "x": "bisavó ou bisavô"
+      },
+      "greatGreatGrandparent": {
+        "f": "trisavó",
+        "m": "trisavô",
+        "x": "trisavó ou trisavô"
+      },
+      "ancestor": {
+        "f": "antepassada ({{count}} gerações acima)",
+        "m": "antepassado ({{count}} gerações acima)",
+        "x": "antepassado(a) ({{count}} gerações acima)"
+      },
+      "sibling": {
+        "f": "irmã",
+        "m": "irmão",
+        "x": "irmão(ã)"
+      },
+      "halfSibling": {
+        "f": "meia-irmã",
+        "m": "meio-irmão",
+        "x": "meio-irmão(ã)"
+      },
+      "nephew": {
+        "f": "sobrinha",
+        "m": "sobrinho",
+        "x": "sobrinho(a)"
+      },
+      "grandNephew": {
+        "f": "sobrinha-neta",
+        "m": "sobrinho-neto",
+        "x": "sobrinho(a)-neto(a)"
+      },
+      "uncle": {
+        "f": "tia",
+        "m": "tio",
+        "x": "tio(a)"
+      },
+      "greatUncle": {
+        "f": "tia-avó",
+        "m": "tio-avô",
+        "x": "tio(a)-avô(ó)"
+      },
+      "cousin": {
+        "f": "prima direita",
+        "m": "primo direito",
+        "x": "primo(a) direito(a)"
+      },
+      "nthCousin": {
+        "f": "prima em {{count}}.º grau",
+        "m": "primo em {{count}}.º grau",
+        "x": "primo(a) em {{count}}.º grau"
+      },
+      "distantCousin": {
+        "f": "prima afastada",
+        "m": "primo afastado",
+        "x": "primo(a) afastado(a)"
+      },
+      "partner": {
+        "f": "mulher",
+        "m": "marido",
+        "x": "companheiro(a)"
+      },
+      "stepChild": {
+        "f": "enteada",
+        "m": "enteado",
+        "x": "enteado(a)"
+      },
+      "stepParent": {
+        "f": "madrasta",
+        "m": "padrasto",
+        "x": "madrasta ou padrasto"
+      },
+      "parentInLaw": {
+        "f": "sogra",
+        "m": "sogro",
+        "x": "sogra ou sogro"
+      },
+      "childInLaw": {
+        "f": "nora",
+        "m": "genro",
+        "x": "nora ou genro"
+      },
+      "siblingInLaw": {
+        "f": "cunhada",
+        "m": "cunhado",
+        "x": "cunhado(a)"
+      }
+    },
+    "asParent": "Pai ou mãe de {{name}}",
+    "asPartner": "Companheiro(a) de {{name}}",
+    "asChild": "Filho(a) de {{name}}",
+    "asSibling": "Irmão(ã) de {{name}}",
+    "photo": "Escolher foto",
+    "removePhoto": "Tirar foto",
+    "name": "Nome",
+    "nickname": "Alcunha",
+    "nicknameExample": "Vovó, Tio Zé…",
+    "sex": "Para dizer avó ou avô, tia ou tio",
+    "sexes": {
+      "f": "Feminino",
+      "m": "Masculino",
+      "x": "Não dizer"
+    },
+    "birthDate": "Data de nascimento",
+    "deathDate": "Data de falecimento",
+    "birthPlace": "Terra natal",
+    "parentN": "Pai ou mãe {{n}}",
+    "noParent": "— Sem pai ou mãe na árvore —",
+    "notes": "Histórias e notas",
+    "notesExample": "Do que gosta, onde viveu, a profissão, uma história para contar à bebé…",
+    "save": "Guardar",
+    "confirmDelete": "Apagar {{name}} da árvore? Os filhos e companheiros ficam, sem a ligação.",
+    "delete": "Apagar da árvore"
   }
 }

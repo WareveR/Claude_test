@@ -30,6 +30,9 @@ export const EXPORTED: Record<string, string[]> = {
   calendar_feed_person: [],
   weather_location: [],
   shopping_item: [],
+  relative: [],
+  relative_parent: [],
+  relative_partner: [],
 };
 
 export const NOT_EXPORTED = new Set([

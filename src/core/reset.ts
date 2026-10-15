@@ -6,6 +6,7 @@ export const RESET_PARTS = [
   "entries",
   "tasks",
   "shopping",
+  "tree",
   "persons",
   "entryTypes",
   "templates",
