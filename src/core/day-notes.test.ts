@@ -83,6 +83,22 @@ describe("day notes", () => {
     expect(keys(notes, "2026-12-21")).toEqual(["season.winter"]);
   });
 
+  it("marks the day the Sun enters each zodiac sign", () => {
+    const notes = dayNotes(A, {
+      from: "2026-01-01",
+      to: "2026-12-31",
+      timeZone: TZ,
+      layers: ["zodiac"],
+      place: null,
+    });
+    const all = [...notes].flatMap(([date, list]) => list.map((n) => `${date} ${n.key}`));
+    expect(all).toHaveLength(12);
+    expect(keys(notes, "2026-03-20")).toEqual(["zodiac.aries"]);
+    expect(keys(notes, "2026-10-23")).toEqual(["zodiac.scorpio"]);
+    expect(keys(notes, "2026-12-21")).toEqual(["zodiac.capricorn"]);
+    expect(keys(notes, "2026-01-20")).toEqual(["zodiac.aquarius"]);
+  });
+
   it("marks the nights the clocks change", () => {
     const notes = dayNotes(A, {
       from: "2026-01-01",
