@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { signIn } from "./helpers";
+import { openView, signIn } from "./helpers";
 
 test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon", viewport: { width: 360, height: 780 } });
 
@@ -12,7 +12,7 @@ test("on a phone no view is wider than the screen", async ({ page }) => {
   await page.goto("/");
   for (const view of ["Day", "Week", "Month", "Year", "Agenda", "Tasks", "Shopping", "Summary"]) {
     if (view === "Summary") await page.goto("/summary");
-    else await page.getByRole("link", { name: view, exact: true }).click();
+    else await openView(page, view);
     await page.waitForLoadState("networkidle");
     const sideways = await page.evaluate(
       "(() => { window.scrollTo(1000, 0); const x = window.scrollX; window.scrollTo(0, 0); return x; })()",
@@ -92,4 +92,24 @@ test("on a phone the week view gives an Entry's title the width, without its tim
   await expect(block.getByText("10:00")).toBeHidden();
   const created = (await res.json()) as { id: string };
   await page.request.delete(`/api/entries/${created.id}`, { headers: ORIGIN });
+});
+
+test("on a phone the views bar stays one line, folding the views and options into menus", async ({
+  page,
+}) => {
+  await signIn(page);
+  const nav = page.locator("nav[data-view-nav]");
+  for (const path of ["/day/2026-10-15", "/week/2026-10-12", "/month/2026-09", "/year/2026"]) {
+    await page.goto(path);
+    await expect(page.getByTestId("view-title")).toBeVisible();
+    expect((await nav.boundingBox())?.height).toBeLessThan(56);
+  }
+  // The Filter stays on the bar; the weather and the period's Tasks are one tap away.
+  await page.goto("/week/2026-10-12");
+  await expect(nav.getByLabel("Person filter").first()).toBeVisible();
+  await expect(page.getByTestId("weather-toggle")).toBeHidden();
+  await page.getByTestId("view-options").click();
+  await expect(page.getByTestId("weather-toggle")).toBeVisible();
+  await openView(page, "Month");
+  await expect(page).toHaveURL(/\/month\//);
 });

@@ -102,7 +102,8 @@ test("on a phone the Day view's hour by hour detail shows sunrise and sunset whe
   const before = new Date(Date.now() - 30 * 86_400_000).toISOString().slice(0, 10);
   await page.goto(`/day/${before}`);
   await expect(page.getByTestId("sun-times")).toBeVisible();
-  // Hiding the weather hides them too.
+  // Hiding the weather hides them too; on a phone it is in the view's options menu.
+  await page.getByTestId("view-options").click();
   await page.getByRole("button", { name: "Hide weather" }).click();
   await expect(page.getByTestId("sun-times")).toHaveCount(0);
 });

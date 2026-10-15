@@ -133,7 +133,9 @@
     "weekTitle": "Week {{week}}, {{year}}",
     "weekShort": "Wk {{week}}, {{year}}",
     "openWeek": "Open week {{week}}",
-    "tree": "Tree"
+    "tree": "Tree",
+    "menu": "Views",
+    "options": "View options"
   },
   "settings": {
     "title": "Settings",

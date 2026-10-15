@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { signIn } from "./helpers";
+import { openView, signIn } from "./helpers";
 
 test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 
@@ -157,7 +157,7 @@ test.describe("on a phone", () => {
 
   test("the Shopping List never scrolls sideways", async ({ page }) => {
     await signIn(page);
-    await page.getByRole("link", { name: "Shopping", exact: true }).click();
+    await openView(page, "Shopping");
     await addItem(page, `Queijo da serra amanteigado curado de ovelha ${MARK}`);
     await setDetails(page, `Queijo da serra amanteigado curado de ovelha ${MARK}`, {
       quantity: "1 kg",
