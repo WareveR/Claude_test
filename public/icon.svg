@@ -1,16 +1,30 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#0f766e"/>
-  <rect x="112" y="128" width="288" height="264" rx="28" fill="#ffffff"/>
-  <rect x="112" y="128" width="288" height="72" rx="28" fill="#f2cc8f"/>
-  <rect x="112" y="172" width="288" height="28" fill="#f2cc8f"/>
-  <rect x="168" y="100" width="24" height="64" rx="12" fill="#ffffff"/>
-  <rect x="320" y="100" width="24" height="64" rx="12" fill="#ffffff"/>
-  <g fill="#0f766e">
-    <rect x="152" y="230" width="48" height="40" rx="8"/>
-    <rect x="232" y="230" width="48" height="40" rx="8"/>
-    <rect x="312" y="230" width="48" height="40" rx="8" fill="#e07a5f"/>
-    <rect x="152" y="300" width="48" height="40" rx="8"/>
-    <rect x="232" y="300" width="48" height="40" rx="8"/>
-    <rect x="312" y="300" width="48" height="40" rx="8"/>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2b8a66"/>
+      <stop offset="1" stop-color="#1b6a4e"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <g fill="#f2cc8f">
+    <circle cx="180" cy="146" r="34"/>
+    <path d="M128 240 V226 A52 44 0 0 1 232 226 V240 Z"/>
+  </g>
+  <g fill="#e07a5f">
+    <circle cx="332" cy="146" r="34"/>
+    <path d="M280 240 V226 A52 44 0 0 1 384 226 V240 Z"/>
+  </g>
+  <g fill="#fbe7c9">
+    <circle cx="256" cy="178" r="24"/>
+    <path d="M222 240 V232 A34 30 0 0 1 290 232 V240 Z"/>
+  </g>
+  <rect x="116" y="226" width="280" height="180" rx="32" fill="#fffdf8"/>
+  <g fill="#a9d8bf">
+    <rect x="152" y="262" width="56" height="48" rx="12"/>
+    <rect x="228" y="262" width="56" height="48" rx="12"/>
+    <rect x="304" y="262" width="56" height="48" rx="12" fill="#e07a5f"/>
+    <rect x="152" y="326" width="56" height="48" rx="12"/>
+    <rect x="228" y="326" width="56" height="48" rx="12"/>
+    <rect x="304" y="326" width="56" height="48" rx="12"/>
   </g>
 </svg>
