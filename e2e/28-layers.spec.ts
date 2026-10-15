@@ -26,13 +26,14 @@ test("Calendar Layers turned on in the filter panel mark the days", async ({ pag
   await page.reload();
   await expect(page.getByTestId("note-2026-10-26")).toContainText("Full moon");
 
-  // The week's corner button that hides the weather hides the notes too.
+  // In the week the notes sit with the All-day Entries: hiding the weather keeps them.
   await page.goto("/week/2026-10-26");
-  await expect(page.getByTestId("note-2026-10-26")).toContainText("Full moon");
+  await expect(page.getByTestId("all-day-row").getByTestId("note-2026-10-26")).toContainText(
+    "Full moon",
+  );
   await page.getByRole("button", { name: "Hide weather" }).click();
-  await expect(page.getByTestId("note-2026-10-26")).toHaveCount(0);
-  await page.getByRole("button", { name: "Show weather" }).click();
   await expect(page.getByTestId("note-2026-10-26")).toContainText("Full moon");
+  await page.getByRole("button", { name: "Show weather" }).click();
   await page.goto("/month/2026-10");
 
   await page.getByLabel("Person filter").first().click();

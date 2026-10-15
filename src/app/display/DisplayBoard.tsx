@@ -17,8 +17,8 @@ import { SummaryPage } from "../summary/SummaryPage";
 import { periodLabel } from "../../core/period-label";
 import { PeriodCurtain } from "../views/PeriodCurtain";
 import { useRolloverToday } from "./hooks";
-import { usePeriodTasksShown, useWeekCompact } from "../calendar/compact";
-import { WeekCompactButton } from "../calendar/WeekCompactButton";
+import { usePeriodTasksShown, useWeatherShown } from "../calendar/compact";
+import { WeatherButton } from "../calendar/WeatherButton";
 import { PeriodTasksList } from "../tasks/TasksAccordion";
 import { TasksButton } from "../tasks/TasksButton";
 
@@ -33,8 +33,8 @@ export function DisplayBoard() {
   const locale = formatLocale(language);
   const today = useRolloverToday(family.timeZone);
   const forecast = useForecastDays();
-  // Like the week view: the weather and day notes can be hidden so the hours get the room.
-  const compact = useWeekCompact();
+  // Like the week view: the weather can be hidden so the hours get the room.
+  const weatherShown = useWeatherShown();
   // The week shown is in the address, so Back from an Entry returns to it.
   const [search, setSearch] = useSearchParams();
   const weeksAway = Number(search.get("week")) || 0;
@@ -134,7 +134,7 @@ export function DisplayBoard() {
               >
                 <Newspaper aria-hidden size={20} strokeWidth={1.75} />
               </button>
-              {!summary && !tasksShown && <WeekCompactButton />}
+              {!summary && !tasksShown && <WeatherButton />}
               {!summary && !tasksShown && <LayersButton />}
               {!summary && <TasksButton from={days[0]} to={days[6]} />}
               <FilterButton />
@@ -153,9 +153,8 @@ export function DisplayBoard() {
                 <CalendarGrid
                   days={days}
                   readOnly
-                  plain={compact}
                   dayExtra={(day) => {
-                    if (compact) return null;
+                    if (!weatherShown) return null;
                     const weather = forecast.get(day);
                     return (
                       weather && (

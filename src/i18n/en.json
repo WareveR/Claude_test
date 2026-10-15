@@ -1118,6 +1118,10 @@
         "name": "Summary",
         "what": "Shows today at a glance: the weather by the hour, sunrise and sunset, and what's coming up.",
         "more": "Press it again to return to where you were."
+      },
+      "weatherToggle": {
+        "what": "Shows or hides the weather: on the weekday row of the day and the week, and beside each day of the month.",
+        "more": "In the day view it also shows the next hours."
       }
     }
   },

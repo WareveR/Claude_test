@@ -8,7 +8,7 @@ import type { PlainDate } from "../../core/plain-date";
 import { FilterButton } from "../filter/FilterButton";
 import { LayersButton } from "../calendar/LayersButton";
 import { usePeriodTasksShown } from "../calendar/compact";
-import { WeekCompactButton } from "../calendar/WeekCompactButton";
+import { WeatherButton } from "../calendar/WeatherButton";
 import { TasksButton } from "../tasks/TasksButton";
 import { MonthMotif, useMonthOnScreen } from "../month-theme";
 import { paths } from "../paths";
@@ -151,8 +151,8 @@ export function ViewActions({
   const grid = !(tasks && tasksShown);
   return (
     <div className={`flex items-center gap-1 ${className}`}>
-      {/* The week's weather and notes can make way for the hours. */}
-      {view === "week" && grid && <WeekCompactButton />}
+      {/* The weather shows in the day, the week and the month, or makes way for the hours. */}
+      {(view === "day" || view === "week" || view === "month") && grid && <WeatherButton />}
       {/* The day and week grids can show only their All-day or only their Timed Entries. */}
       {(view === "day" || view === "week") && grid && <LayersButton />}
       {tasks && <TasksButton from={tasks.from} to={tasks.to} />}
