@@ -4,6 +4,7 @@ import { familyNow } from "../core/task";
 import { APP_VERSION } from "../core/version";
 import type { Db } from "./db";
 import { schema } from "./db";
+import { relativePhotoKeys } from "./routes/relatives";
 
 /** Both daily jobs wait until the night is quiet, before the Briefings at dawn. */
 const NIGHT_HOUR = 3;
@@ -114,7 +115,10 @@ export async function imageCleanupJob(db: Db, env: Env, now: Date) {
       .from(schema.entryType)
       .where(isNotNull(schema.entryType.thumbnailKey)),
   ]);
-  const used = new Set([...photos, ...thumbnails].map((r) => r.key));
+  const used = new Set([
+    ...[...photos, ...thumbnails].map((r) => r.key),
+    ...(await relativePhotoKeys(db)),
+  ]);
   const images = await db.select({ key: schema.image.key }).from(schema.image);
   const usedKeys = images.map((i) => i.key).filter((key) => used.has(key));
   // D1 binds at most 100 parameters per query.

@@ -1,4 +1,11 @@
-import { ChevronLeft, ChevronRight, ListChecks, ListOrdered, ShoppingCart } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ListChecks,
+  ListOrdered,
+  ShoppingCart,
+  TreeDeciduous,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, NavLink, useLocation, useNavigate } from "react-router";
@@ -16,7 +23,7 @@ import { focusDay } from "../../core/periods";
 import { focusedDay, setFocusedDay } from "../views/focus";
 import { useSwipe } from "../ui/useSwipe";
 
-const VIEWS = ["day", "week", "month", "year", "agenda", "tasks", "shopping"] as const;
+const VIEWS = ["day", "week", "month", "year", "agenda", "tasks", "shopping", "tree"] as const;
 
 /** Switches between views and moves through dates, keeping the date in the address. */
 export function ViewNav({
@@ -68,7 +75,11 @@ export function ViewNav({
         {VIEWS.map((view) => (
           <NavLink
             key={view}
-            to={view === "tasks" || view === "shopping" ? paths[view]() : paths[view](target)}
+            to={
+              view === "tasks" || view === "shopping" || view === "tree"
+                ? paths[view]()
+                : paths[view](target)
+            }
             // Where space is short (a phone, or one on its side) the names shrink to a letter or an
             // icon; the full name stays the link's name.
             aria-label={t(`views.${view}`)}
@@ -83,6 +94,8 @@ export function ViewNav({
                 <ListChecks size={18} strokeWidth={1.75} />
               ) : view === "shopping" ? (
                 <ShoppingCart size={18} strokeWidth={1.75} />
+              ) : view === "tree" ? (
+                <TreeDeciduous size={18} strokeWidth={1.75} />
               ) : view === "agenda" ? (
                 <ListOrdered size={18} strokeWidth={1.75} />
               ) : (

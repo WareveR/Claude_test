@@ -239,6 +239,13 @@
       "when": 1791847817610,
       "tag": "0033_shopping_list",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "6",
+      "when": 1792056410817,
+      "tag": "0034_family_tree",
+      "breakpoints": true
     }
   ]
 }

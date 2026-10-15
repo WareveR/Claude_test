@@ -451,3 +451,52 @@ export const shoppingItem = sqliteTable("shopping_item", {
   createdAt: text("created_at").notNull(),
   changedAt: text("changed_at").notNull(),
 });
+
+/**
+ * Someone in the Family Tree: to show the children where they come from. Not a Person: never
+ * on the calendar, and may have lived long ago.
+ */
+export const relative = sqliteTable("relative", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  nickname: text("nickname").notNull().default(""),
+  /** "f", "m", or "" when not said; picks words like "avó" or "avô". */
+  sex: text("sex").notNull().default(""),
+  birthDate: text("birth_date"),
+  deathDate: text("death_date"),
+  birthPlace: text("birth_place").notNull().default(""),
+  /** R2 key of the photo, shrunk in the browser; images are never overwritten. */
+  photoKey: text("photo_key"),
+  /** Free text: stories, what they liked, where they lived. */
+  notes: text("notes").notNull().default(""),
+  createdAt: text("created_at").notNull(),
+  changedAt: text("changed_at").notNull(),
+});
+
+/** A Relative's parent; at most two each. */
+export const relativeParent = sqliteTable(
+  "relative_parent",
+  {
+    childId: text("child_id")
+      .notNull()
+      .references(() => relative.id, { onDelete: "cascade" }),
+    parentId: text("parent_id")
+      .notNull()
+      .references(() => relative.id, { onDelete: "cascade" }),
+  },
+  (t) => [primaryKey({ columns: [t.childId, t.parentId] })],
+);
+
+/** Two Relatives who are or were a couple, stored once with the smaller id first. */
+export const relativePartner = sqliteTable(
+  "relative_partner",
+  {
+    aId: text("a_id")
+      .notNull()
+      .references(() => relative.id, { onDelete: "cascade" }),
+    bId: text("b_id")
+      .notNull()
+      .references(() => relative.id, { onDelete: "cascade" }),
+  },
+  (t) => [primaryKey({ columns: [t.aId, t.bId] })],
+);

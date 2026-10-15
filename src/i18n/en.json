@@ -132,7 +132,8 @@
     "yearEach": "Each person",
     "weekTitle": "Week {{week}}, {{year}}",
     "weekShort": "Wk {{week}}, {{year}}",
-    "openWeek": "Open week {{week}}"
+    "openWeek": "Open week {{week}}",
+    "tree": "Tree"
   },
   "settings": {
     "title": "Settings",
@@ -1049,6 +1050,10 @@
         "shopping": {
           "what": "Opens the Family's shopping list.",
           "more": "One list for everyone, grouped by section; it can be narrowed to one shop."
+        },
+        "tree": {
+          "what": "Opens the family tree.",
+          "more": "With photos, nicknames and stories; tap two people to see how they are related."
         }
       },
       "previous": {
@@ -1374,7 +1379,8 @@
       "entryTypes": "Entry types",
       "templates": "Predefined lists",
       "settings": "Family settings",
-      "errors": "Error log"
+      "errors": "Error log",
+      "tree": "Family tree"
     },
     "details": {
       "entries": "Every entry, Private ones included. People's birthdays stay as long as the people do.",
@@ -1384,7 +1390,8 @@
       "entryTypes": "Types you made go (their entries become General) and the built-in ones are reset.",
       "templates": "Lists you made go and the built-in ones are reset.",
       "settings": "Holidays, bins, weather, sleeping hours and calendar feeds.",
-      "errors": "Every logged error."
+      "errors": "Every logged error.",
+      "tree": "The tree's people, their links and stories."
     },
     "all": "Tick everything: start again as a new family",
     "none": "Untick everything",
@@ -1397,5 +1404,210 @@
     "confirm": "Delete what you ticked? This can't be undone in the app.",
     "confirmAll": "Delete everything and start again as a new family? This can't be undone in the app.",
     "done": "Deleted. The Export was saved on this device."
+  },
+  "tree": {
+    "title": "Family tree",
+    "add": "Add someone",
+    "from": "Draw from",
+    "hint": "Tap someone to see their card. Tap someone else next to see how the two are related.",
+    "emptyTitle": "The tree is still empty",
+    "emptyHint": "Start with the baby, then add parents, grandparents and the rest of the family, with photos, nicknames and stories.",
+    "couple": "Couple",
+    "closeCard": "Close",
+    "gen": {
+      "same": "{{name}}'s generation",
+      "parents": "Parents",
+      "grandparents": "Grandparents",
+      "greatGrandparents": "Great-grandparents",
+      "greatGreatGrandparents": "Great-great-grandparents",
+      "children": "Children",
+      "grandchildren": "Grandchildren",
+      "above_one": "{{count}} generation up",
+      "above_other": "{{count}} generations up",
+      "below_one": "{{count}} generation down",
+      "below_other": "{{count}} generations down"
+    },
+    "ofRoot": "{{name}}'s {{word}}",
+    "born": "Born {{date}}",
+    "age_one": "{{count}} year old",
+    "age_other": "{{count}} years old",
+    "bornIn": "From {{place}}",
+    "died": "Died {{date}}",
+    "diedAge_one": "aged {{count}}",
+    "diedAge_other": "aged {{count}}",
+    "birthdaySoon_one": "Turns {{count}} in {{days}} days 🎂",
+    "birthdaySoon_other": "Turns {{count}} in {{days}} days 🎂",
+    "birthdayToday_one": "Turns {{count}} today! 🎉",
+    "birthdayToday_other": "Turns {{count}} today! 🎉",
+    "parents": "Parents",
+    "partners": "Partners",
+    "siblings": "Siblings",
+    "children": "Children",
+    "edit": "Edit",
+    "addParent": "Parent",
+    "addPartner": "Partner",
+    "addChild": "Child",
+    "addSibling": "Sibling",
+    "commonAncestors": "Common ancestors: {{names}}",
+    "and": " and ",
+    "isOf": "{{b}} is {{a}}'s {{word}}",
+    "isOfVia": "{{b}} is the {{word}} of {{via}}, {{a}}'s {{viaWord}}",
+    "isPartnerOf": "{{b}} is the {{word}} of {{via}}, {{a}}'s {{viaWord}}",
+    "notRelated": "{{a}} and {{b}} aren't related in the tree (yet).",
+    "directLine": "Direct line, degree {{degree}}",
+    "sideLine": "Side line, degree {{degree}}",
+    "byMarriage": "Related by marriage",
+    "kin": {
+      "child": {
+        "f": "daughter",
+        "m": "son",
+        "x": "child"
+      },
+      "grandchild": {
+        "f": "granddaughter",
+        "m": "grandson",
+        "x": "grandchild"
+      },
+      "greatGrandchild": {
+        "f": "great-granddaughter",
+        "m": "great-grandson",
+        "x": "great-grandchild"
+      },
+      "greatGreatGrandchild": {
+        "f": "great-great-granddaughter",
+        "m": "great-great-grandson",
+        "x": "great-great-grandchild"
+      },
+      "descendant": {
+        "f": "descendant ({{count}} generations down)",
+        "m": "descendant ({{count}} generations down)",
+        "x": "descendant ({{count}} generations down)"
+      },
+      "parent": {
+        "f": "mother",
+        "m": "father",
+        "x": "parent"
+      },
+      "grandparent": {
+        "f": "grandmother",
+        "m": "grandfather",
+        "x": "grandparent"
+      },
+      "greatGrandparent": {
+        "f": "great-grandmother",
+        "m": "great-grandfather",
+        "x": "great-grandparent"
+      },
+      "greatGreatGrandparent": {
+        "f": "great-great-grandmother",
+        "m": "great-great-grandfather",
+        "x": "great-great-grandparent"
+      },
+      "ancestor": {
+        "f": "ancestor ({{count}} generations up)",
+        "m": "ancestor ({{count}} generations up)",
+        "x": "ancestor ({{count}} generations up)"
+      },
+      "sibling": {
+        "f": "sister",
+        "m": "brother",
+        "x": "sibling"
+      },
+      "halfSibling": {
+        "f": "half-sister",
+        "m": "half-brother",
+        "x": "half-sibling"
+      },
+      "nephew": {
+        "f": "niece",
+        "m": "nephew",
+        "x": "niece or nephew"
+      },
+      "grandNephew": {
+        "f": "great-niece",
+        "m": "great-nephew",
+        "x": "great-niece or great-nephew"
+      },
+      "uncle": {
+        "f": "aunt",
+        "m": "uncle",
+        "x": "aunt or uncle"
+      },
+      "greatUncle": {
+        "f": "great-aunt",
+        "m": "great-uncle",
+        "x": "great-aunt or great-uncle"
+      },
+      "cousin": {
+        "f": "first cousin",
+        "m": "first cousin",
+        "x": "first cousin"
+      },
+      "nthCousin": {
+        "f": "cousin of the {{count}}th degree",
+        "m": "cousin of the {{count}}th degree",
+        "x": "cousin of the {{count}}th degree"
+      },
+      "distantCousin": {
+        "f": "distant cousin",
+        "m": "distant cousin",
+        "x": "distant cousin"
+      },
+      "partner": {
+        "f": "wife",
+        "m": "husband",
+        "x": "partner"
+      },
+      "stepChild": {
+        "f": "stepdaughter",
+        "m": "stepson",
+        "x": "stepchild"
+      },
+      "stepParent": {
+        "f": "stepmother",
+        "m": "stepfather",
+        "x": "step-parent"
+      },
+      "parentInLaw": {
+        "f": "mother-in-law",
+        "m": "father-in-law",
+        "x": "parent-in-law"
+      },
+      "childInLaw": {
+        "f": "daughter-in-law",
+        "m": "son-in-law",
+        "x": "child-in-law"
+      },
+      "siblingInLaw": {
+        "f": "sister-in-law",
+        "m": "brother-in-law",
+        "x": "sibling-in-law"
+      }
+    },
+    "asParent": "Parent of {{name}}",
+    "asPartner": "Partner of {{name}}",
+    "asChild": "Child of {{name}}",
+    "asSibling": "Sibling of {{name}}",
+    "photo": "Choose photo",
+    "removePhoto": "Remove photo",
+    "name": "Name",
+    "nickname": "Nickname",
+    "nicknameExample": "Granny, Uncle Joe…",
+    "sex": "To say grandmother or grandfather",
+    "sexes": {
+      "f": "Female",
+      "m": "Male",
+      "x": "Don't say"
+    },
+    "birthDate": "Date of birth",
+    "deathDate": "Date of death",
+    "birthPlace": "Home town",
+    "parentN": "Parent {{n}}",
+    "noParent": "— No parent in the tree —",
+    "notes": "Stories and notes",
+    "notesExample": "What they like, where they lived, their job, a story to tell the baby…",
+    "save": "Save",
+    "confirmDelete": "Delete {{name}} from the tree? Their children and partners stay, without the link.",
+    "delete": "Delete from the tree"
   }
 }
