@@ -16,5 +16,9 @@ export async function openView(page: Page, name: string) {
   await nav.waitFor();
   const menu = page.getByTestId("views-menu");
   if (await menu.isVisible()) await menu.click();
-  await nav.getByRole("link", { name, exact: true }).click();
+  const link = nav.getByRole("link", { name, exact: true });
+  const view = (await link.getAttribute("href"))?.split("/")[1];
+  await link.click();
+  // A big view (the year) can take a moment to draw; until then the old bar is still there.
+  await page.locator(`nav[data-view-nav][data-view="${view}"]`).waitFor();
 }
