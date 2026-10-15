@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { DAYS_ROW } from "./bands";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { daySpan, lastDate } from "../../core/entry-time";
 import { layoutBars, layoutLanes } from "../../core/layout";
 import { formatPlainDate, weekday, type PlainDate } from "../../core/plain-date";
@@ -47,6 +47,10 @@ export type TimeGridProps = {
   dayExtra?: (day: PlainDate) => ReactNode;
   /** Display Mode: tapping an empty spot starts nothing. */
   readOnly?: boolean;
+  /** The day in focus, outlined on the days' row. */
+  selected?: PlainDate;
+  /** Where tapping a day's name goes, unless read-only: that day. */
+  dayLink?: (day: PlainDate) => string;
   /** What sits in the corner above the hours, beside the day names. */
   corner?: ReactNode;
   /** The Family's Sleeping Hours, shown shorter and shaded unless something is on. */
@@ -85,6 +89,8 @@ export function TimeGrid({
   holidays = new Map(),
   notes = new Map(),
   dayExtra,
+  selected,
+  dayLink,
   readOnly = false,
   corner,
   sleepHours = DEFAULT_SLEEP_HOURS,
@@ -158,10 +164,14 @@ export function TimeGrid({
           <div
             key={day}
             data-drop-date={day}
-            className={`@container min-w-0 ${DAYS_ROW} ${single ? "flex flex-wrap items-center gap-x-4 gap-y-1 px-2 text-left" : "text-center"} ${holidays.has(day) ? "bg-holiday text-holiday-ink" : isWeekend(day) ? "bg-weekend text-weekend-ink" : ""} ${day === today ? "text-accent" : ""}`}
+            aria-current={!single && day === selected ? "date" : undefined}
+            className={`@container min-w-0 ${!single && day === selected ? "outline-2 -outline-offset-2 outline-accent" : ""} ${DAYS_ROW} ${single ? "flex flex-wrap items-center gap-x-4 gap-y-1 px-2 text-left" : "text-center"} ${holidays.has(day) ? "bg-holiday text-holiday-ink" : isWeekend(day) ? "bg-weekend text-weekend-ink" : ""} ${day === today ? "text-accent" : ""}`}
           >
             {/* One line: the weekday and the day; three letters when the column is narrow. */}
-            <div className="truncate whitespace-nowrap first-letter:uppercase">
+            <DayName
+              to={!single && !readOnly && dayLink ? dayLink(day) : undefined}
+              testId={`day-name-${day}`}
+            >
               {single ? (
                 <span
                   data-testid="day-title"
@@ -187,7 +197,7 @@ export function TimeGrid({
                   </span>
                 </>
               )}
-            </div>
+            </DayName>
             {dayExtra?.(day)}
           </div>
         ))}
@@ -345,5 +355,17 @@ export function TimeGrid({
       </div>
       {drag.overlay}
     </div>
+  );
+}
+
+/** A day's name on the days' row: a link to that day where it leads somewhere. */
+function DayName({ to, testId, children }: { to?: string; testId: string; children: ReactNode }) {
+  const className = "block truncate whitespace-nowrap first-letter:uppercase";
+  return to ? (
+    <Link to={to} data-testid={testId} className={`${className} hover:underline`}>
+      {children}
+    </Link>
+  ) : (
+    <div className={className}>{children}</div>
   );
 }

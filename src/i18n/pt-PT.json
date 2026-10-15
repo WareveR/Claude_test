@@ -129,7 +129,8 @@
     },
     "showCalendar": "Mostrar o calendário",
     "weekTitle": "Semana {{week}}, {{year}}",
-    "weekShort": "Sem. {{week}}, {{year}}"
+    "weekShort": "Sem. {{week}}, {{year}}",
+    "openWeek": "Abrir a semana {{week}}"
   },
   "settings": {
     "title": "Definições",
