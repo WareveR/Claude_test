@@ -131,7 +131,8 @@
     "yearFamily": "Toda a família",
     "yearEach": "Cada um",
     "weekTitle": "Semana {{week}}, {{year}}",
-    "weekShort": "Sem. {{week}}, {{year}}"
+    "weekShort": "Sem. {{week}}, {{year}}",
+    "openWeek": "Abrir a semana {{week}}"
   },
   "settings": {
     "title": "Definições",

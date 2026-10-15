@@ -131,7 +131,8 @@
     "yearFamily": "The whole Family",
     "yearEach": "Each person",
     "weekTitle": "Week {{week}}, {{year}}",
-    "weekShort": "Wk {{week}}, {{year}}"
+    "weekShort": "Wk {{week}}, {{year}}",
+    "openWeek": "Open week {{week}}"
   },
   "settings": {
     "title": "Settings",
