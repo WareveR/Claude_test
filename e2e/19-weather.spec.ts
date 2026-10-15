@@ -39,7 +39,7 @@ test("the first saved place is selected and its weather shows in every view", as
   await page.getByRole("link", { name: "Week", exact: true }).click();
   // The week shows each day's chance of rain too.
   await expect(page.locator('[data-testid^="week-weather-"]').nth(1)).toContainText("%");
-  // The corner button hides the weather for more hours, remembered on this device.
+  // The weather button hides the weather for more hours, remembered on this device.
   await page.getByRole("button", { name: "Hide weather" }).click();
   await expect(page.locator('[data-testid^="week-weather-"]')).toHaveCount(0);
   await page.reload();
@@ -53,10 +53,8 @@ test("the first saved place is selected and its weather shows in every view", as
     new Date(Date.now() - 86_400_000),
   );
   await page.goto(`/day/${yesterday}`);
-  await expect(page.locator("nav").getByText("15°/8°")).toBeVisible();
-  // Its hours only when asked for, remembered on this device.
-  await expect(page.getByTestId("hourly-strip")).toHaveCount(0);
-  await page.getByRole("button", { name: "Show the weather by the hour" }).click();
+  // On the day's own row, with its hours.
+  await expect(page.getByTestId("day-weather")).toContainText("15°/8°");
   await expect(page.getByTestId("hourly-strip")).toContainText("9°");
 
   // Today has its weather too: highest and lowest, rain and wind, without UV or humidity.
@@ -67,8 +65,11 @@ test("the first saved place is selected and its weather shows in every view", as
   await expect(today).not.toContainText("UV");
   await expect(today).not.toContainText("70%");
   await expect(page.getByTestId("hourly-strip")).toContainText("%");
-  await page.getByRole("button", { name: "Hide the weather by the hour" }).click();
+  // The same button as the week's hides it all, remembered on this device.
+  await page.getByRole("button", { name: "Hide weather" }).click();
   await expect(page.getByTestId("hourly-strip")).toHaveCount(0);
+  await expect(page.getByTestId("day-weather")).toHaveCount(0);
+  await page.getByRole("button", { name: "Show weather" }).click();
 
   await page.goto("/");
   await page.getByRole("link", { name: "Month", exact: true }).click();
@@ -85,8 +86,7 @@ test("on a phone the Day view's hour by hour detail shows sunrise and sunset whe
   const later = new Date(Date.now() + 60 * 86_400_000).toISOString().slice(0, 10);
   await page.goto(`/day/${later}`);
   await expect(page.getByTestId("sun-times")).toHaveCount(0);
-  // They live in the hour by hour detail, not beside the title.
-  await page.getByTestId("day-hours").click();
+  // They live in the hour by hour detail, on the day's row.
   await page.getByLabel("Person filter").first().click();
   await page
     .getByRole("group", { name: "Person filter" })
@@ -102,8 +102,8 @@ test("on a phone the Day view's hour by hour detail shows sunrise and sunset whe
   const before = new Date(Date.now() - 30 * 86_400_000).toISOString().slice(0, 10);
   await page.goto(`/day/${before}`);
   await expect(page.getByTestId("sun-times")).toBeVisible();
-  // Hiding the hours hides them too; the switch is kept on this device, so put it back.
-  await page.getByTestId("day-hours").click();
+  // Hiding the weather hides them too.
+  await page.getByRole("button", { name: "Hide weather" }).click();
   await expect(page.getByTestId("sun-times")).toHaveCount(0);
 });
 

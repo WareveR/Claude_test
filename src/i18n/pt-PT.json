@@ -1116,6 +1116,10 @@
         "name": "Resumo",
         "what": "Mostra o dia de hoje num relance: a meteorologia hora a hora, o nascer e o pôr do sol e o que aí vem.",
         "more": "Carregue outra vez para voltar onde estava."
+      },
+      "weatherToggle": {
+        "what": "Mostra ou esconde a meteorologia: na linha dos dias da semana no dia e na semana, e ao lado de cada dia no mês.",
+        "more": "Na vista de dia mostra também as próximas horas."
       }
     }
   },

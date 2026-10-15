@@ -42,19 +42,16 @@ function deviceSwitch(key: string, initial: boolean) {
 }
 
 /**
- * Whether the week view and the Wall hide the weather and the day notes (Moon, holidays, waste
- * collection) to give the grid the room.
+ * Whether the day, week and month views and the Wall show the weather: on the weekday row of the
+ * day and the week (the day's hour by hour too), and beside each day's number in the month.
  */
-export const [useWeekCompact, setWeekCompact] = deviceSwitch("week-compact", false);
+export const [useWeatherShown, setWeatherShown] = deviceSwitch("weather-shown", true);
 
 /**
  * Whether the day, week and month views and the Wall show the period's Tasks in place of their
  * calendar.
  */
 export const [usePeriodTasksShown, setPeriodTasksShown] = deviceSwitch("period-tasks", false);
-
-/** Whether the day view shows the day's weather hour by hour under its bar. */
-export const [useDayHours, setDayHours] = deviceSwitch("day-hours", false);
 
 /** One of a few choices remembered on this device, read by every view that shows it. */
 function deviceChoice<T extends string>(key: string, choices: readonly T[], initial: T) {
