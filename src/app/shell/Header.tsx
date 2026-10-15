@@ -1,11 +1,12 @@
-import { Lightbulb, Settings, Tv, type LucideIcon } from "lucide-react";
+import { Lightbulb, Plus, Search, Settings, Tv, type LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { formatLocale } from "../../core/languages";
 import { leaveDisplayMode, setDisplayMode, useDisplayMode } from "../display/mode";
 import { useSignedIn } from "../family";
-import { todayIn } from "../../core/plain-date";
+import { isPlainDate, todayIn, type PlainDate } from "../../core/plain-date";
+import { focusedDay } from "../views/focus";
 import { ForecastButton } from "../weather/ForecastButton";
 import { useForecastDays } from "../weather/model";
 import { WeatherBadge } from "../weather/WeatherBadge";
@@ -21,6 +22,13 @@ let outsideSettings: string = paths.today();
  * the Wall off returns to.
  */
 let outsideScreens: string = paths.today();
+
+/** Where "+" leads: a new Entry on the day view's day, else on the day in focus, else today. */
+function newPath(pathname: string, today: PlainDate): string {
+  const [, view, date] = pathname.split("/");
+  const day = view === "day" && date && isPlainDate(date) ? date : (focusedDay() ?? today);
+  return `/entries/new?date=${day}`;
+}
 
 /** An on/off switch at the end of the header for a screen of its own: the Wall. */
 function ScreenSwitch({
@@ -124,18 +132,40 @@ export function Header({
           help="weather"
           className="shrink-0 rounded-md px-1 py-1 text-sm whitespace-nowrap"
         >
-          <WeatherBadge day={today} />
+          <WeatherBadge day={today} iconOnPhone />
         </ForecastButton>
       )}
       {showVoice && !wall && <VoiceEntry />}
       {!wall && (
         <>
+          <Link
+            to={paths.search()}
+            aria-label={t("search.title")}
+            data-help="search"
+            className={`${showVoice ? "" : "ml-auto "}shrink-0 rounded-md p-1 hover:bg-header-ink/15 sm:p-2`}
+          >
+            <Search aria-hidden size={20} strokeWidth={1.75} />
+          </Link>
+          {/* A new Entry or Task on the day shown, or the day in focus in the other views. */}
+          <Link
+            to={newPath(location.pathname, todayIn(family.timeZone, now))}
+            onClick={(event) => {
+              // The view below may have moved the focus since the header drew.
+              event.preventDefault();
+              navigate(newPath(location.pathname, todayIn(family.timeZone, now)));
+            }}
+            aria-label={t("newItem.title")}
+            data-help="newEntry"
+            className="shrink-0 rounded-full bg-header-ink/20 p-1 hover:bg-header-ink/30 sm:p-1.5"
+          >
+            <Plus aria-hidden size={20} strokeWidth={2} />
+          </Link>
           {/* Like Settings: the same button opens Suggestions and, from inside, closes them. */}
           <Link
             to={inSuggestions ? outsideSettings : paths.suggestions()}
             aria-label={inSuggestions ? t("suggestions.close") : t("suggestions.title")}
             data-help={inSuggestions ? "close" : "suggestions"}
-            className={`shrink-0 rounded-md p-1.5 hover:bg-header-ink/15 sm:p-2 ${inSuggestions ? "bg-header-ink/20" : ""}`}
+            className={`shrink-0 rounded-md p-1 hover:bg-header-ink/15 sm:p-2 ${inSuggestions ? "bg-header-ink/20" : ""}`}
           >
             <Lightbulb aria-hidden size={20} strokeWidth={1.75} />
           </Link>
@@ -144,7 +174,7 @@ export function Header({
             to={inSettings ? outsideSettings : paths.settings()}
             aria-label={inSettings ? t("settings.close") : t("settings.title")}
             data-help={inSettings ? "close" : "settings"}
-            className={`${showVoice ? "" : "ml-auto "}shrink-0 rounded-md p-1.5 hover:bg-header-ink/15 sm:p-2 ${inSettings ? "bg-header-ink/20" : ""}`}
+            className={`shrink-0 rounded-md p-1 hover:bg-header-ink/15 sm:p-2 ${inSettings ? "bg-header-ink/20" : ""}`}
           >
             <Settings aria-hidden size={20} strokeWidth={1.75} />
           </Link>

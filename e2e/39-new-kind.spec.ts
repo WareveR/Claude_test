@@ -5,7 +5,7 @@ test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 
 test("one New for Entries and Tasks, picked from the title or by hand", async ({ page }) => {
   await signIn(page);
-  await page.goto("/week/2026-12-14");
+  await page.goto("/day/2026-12-14");
   await page.getByRole("link", { name: "New", exact: true }).click();
   const kind = page.getByRole("radiogroup", { name: "Entry or task" });
   await expect(kind.getByRole("radio", { name: "Entry" })).toBeChecked();
