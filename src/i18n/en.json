@@ -180,7 +180,11 @@
     "playground": "Playground (bright, for children)",
     "neon": "Neon (dark, for teenagers)",
     "paper": "Paper (calm, serif)",
-    "contrast": "High contrast (large text)"
+    "contrast": "High contrast (large text)",
+    "wood": "Wood (oak and walnut)",
+    "stone": "Stone (limestone and slate)",
+    "forest": "Forest (ferns and leaves)",
+    "cork": "Cork (a cork board)"
   },
   "devices": {
     "title": "Signed-in devices",

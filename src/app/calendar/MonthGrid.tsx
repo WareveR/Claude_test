@@ -97,7 +97,7 @@ export function MonthGrid({
   const colorOf = (e: Entry) => typeOf(e)?.color ?? "#607d8b";
   const { ref: gridRef, lines: fitLines } = useLinesThatFit(weeks.length);
   return (
-    <div className="flex flex-1 flex-col bg-surface lg:min-h-0" {...drag.zone}>
+    <div className="calendar-sheet flex flex-1 flex-col bg-surface lg:min-h-0" {...drag.zone}>
       <div className={`grid ${columns} border-b border-line text-center`}>
         {weekLink && <div className={DAYS_ROW} />}
         {weeks[0].map((day) => (

@@ -157,7 +157,7 @@ export function TimeGrid({
   const single = days.length === 1;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-surface" {...drag.zone}>
+    <div className="calendar-sheet flex min-h-0 flex-1 flex-col bg-surface" {...drag.zone}>
       <div className="relative grid border-b border-line" style={{ gridTemplateColumns: columns }}>
         <div className="flex items-start justify-center pt-1">{corner}</div>
         {days.map((day) => (

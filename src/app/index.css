@@ -306,6 +306,123 @@
   border: 3px solid var(--ink);
 }
 
+/* The four nature themes below lay a real material over the page and the header: drawn textures
+   in public/textures (made by scripts/nature-textures.py; the content policy keeps images out of
+   the CSS itself). Cards, fields and the calendar keep a near-solid surface over it, so text stays
+   as readable as on a plain theme. */
+
+/* Wood: light oak boards for the page, a walnut board for the header. */
+:root[data-theme="wood"] {
+  --bg: #e0cbab;
+  --frame: #fbf5ea;
+  --surface: #fffbf3;
+  --ink: #2a1c10;
+  --muted: #503c28;
+  --line: #d6c19e;
+  --accent: #7a3f17;
+  --accent-ink: #ffffff;
+  --header: #5d3b23;
+  --header-ink: #fff6e8;
+  --weekend: #f1e3c8e0;
+  --weekend-ink: #6a4314;
+  --holiday: #f7dccb;
+  --holiday-ink: #8f3a12;
+  --overdue: #b3261e;
+  --texture: url("/textures/oak.webp");
+  --texture-size: 384px;
+  --header-texture: url("/textures/walnut.webp");
+  color-scheme: light;
+}
+
+/* Stone: pale limestone for the page, dark slate for the header. */
+:root[data-theme="stone"] {
+  --bg: #d4d1c7;
+  --frame: #f7f6f2;
+  --surface: #fdfdfb;
+  --ink: #1e2328;
+  --muted: #474e55;
+  --line: #cbc8be;
+  --accent: #2a5574;
+  --accent-ink: #ffffff;
+  --header: #323c43;
+  --header-ink: #f1f4f6;
+  --weekend: #e3e8ece0;
+  --weekend-ink: #2a4a63;
+  --holiday: #f1e3d6;
+  --holiday-ink: #8a4516;
+  --overdue: #b3261e;
+  --texture: url("/textures/limestone.webp");
+  --texture-size: 512px;
+  --header-texture: url("/textures/slate.webp");
+  color-scheme: light;
+}
+
+/* Forest: pressed ferns and leaf shade on pale moss for the page, a canopy of leaves and ferns
+   for the header. */
+:root[data-theme="forest"] {
+  --bg: #d9e0cb;
+  --frame: #f6f9f0;
+  --surface: #fcfdf8;
+  --ink: #18271b;
+  --muted: #43523d;
+  --line: #cad5bc;
+  --accent: #285f30;
+  --accent-ink: #ffffff;
+  --header: #1d3e26;
+  --header-ink: #eff8ea;
+  --weekend: #e3edd3e0;
+  --weekend-ink: #33571f;
+  --holiday: #f5e6cc;
+  --holiday-ink: #85500f;
+  --overdue: #b3261e;
+  --texture: url("/textures/moss.webp");
+  --texture-size: 512px;
+  --header-texture: url("/textures/canopy.webp");
+  color-scheme: light;
+}
+
+/* Cork: a natural cork board for the page, with the calendar pinned on it, and dark expanded
+   cork for the header. */
+:root[data-theme="cork"] {
+  --bg: #ceb18c;
+  --frame: #fdf8ef;
+  --surface: #fffdf8;
+  --ink: #26170b;
+  --muted: #45311e;
+  --line: #e0cdb0;
+  --accent: #8f2d18;
+  --accent-ink: #ffffff;
+  --header: #492f1d;
+  --header-ink: #fff3e2;
+  --weekend: #f6e7cfe0;
+  --weekend-ink: #74450f;
+  --holiday: #f9e0d6;
+  --holiday-ink: #95321a;
+  --overdue: #b3261e;
+  --texture: url("/textures/cork.webp");
+  --texture-size: 384px;
+  --header-texture: url("/textures/dark-cork.webp");
+  color-scheme: light;
+}
+
+:root:is([data-theme="wood"], [data-theme="stone"], [data-theme="forest"], [data-theme="cork"])
+  :is(body, .bg-bg) {
+  background-image: var(--texture);
+  background-size: var(--texture-size);
+}
+:root:is([data-theme="wood"], [data-theme="stone"], [data-theme="forest"], [data-theme="cork"])
+  header.bg-header {
+  background-image: var(--header-texture);
+  background-size: 512px auto;
+  background-position: center;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.55);
+}
+/* The calendar is a sheet over the material: the texture shows only faintly through it. */
+:root:is([data-theme="wood"], [data-theme="stone"], [data-theme="forest"], [data-theme="cork"])
+  .calendar-sheet {
+  background-color: color-mix(in srgb, var(--surface) 86%, transparent);
+}
+
 @theme inline {
   --color-bg: var(--bg);
   --color-frame: var(--frame);

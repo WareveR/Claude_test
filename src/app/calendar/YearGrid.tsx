@@ -71,7 +71,7 @@ export function YearGrid({
   const letters = yearWeekdayLetters(locale);
 
   return (
-    <div className="relative overflow-x-auto bg-surface px-2 pb-2">
+    <div className="calendar-sheet relative overflow-x-auto bg-surface px-2 pb-2">
       <table className="w-full min-w-[56rem] table-fixed border-collapse text-[10px] lg:text-xs">
         <thead>
           <tr>

@@ -116,7 +116,7 @@ export default defineConfig({
         // when the device is signed out; the service worker never keeps them.
         // Push and notification-click handling lives in public/push-sw.js.
         importScripts: ["push-sw.js"],
-        globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
+        globPatterns: ["**/*.{js,css,html,svg,png,webp,woff2}"],
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/api\//],
         // date-holidays is large and loaded lazily; it must still work offline.
