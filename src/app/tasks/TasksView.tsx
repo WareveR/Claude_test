@@ -109,7 +109,7 @@ export function TasksView() {
 
   return (
     <>
-      <ViewNav date={now.today} title={t("views.tasks")} newPath={null} />
+      <ViewNav date={now.today} title={t("views.tasks")} />
       <main
         className="task-drag-zone mx-auto flex w-full max-w-xl flex-col gap-4 px-4 pb-6"
         {...drag.zone}

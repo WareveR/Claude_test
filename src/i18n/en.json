@@ -127,7 +127,9 @@
       "allDay": "All-day only",
       "timed": "Timed only"
     },
-    "showCalendar": "Show the calendar"
+    "showCalendar": "Show the calendar",
+    "weekTitle": "Week {{week}}, {{year}}",
+    "weekShort": "Wk {{week}}, {{year}}"
   },
   "settings": {
     "title": "Settings",

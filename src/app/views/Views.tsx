@@ -6,8 +6,9 @@ import { formatLocale } from "../../core/languages";
 import {
   addDays,
   addMonths,
+  formatDayTitle,
   formatMonthRange,
-  formatPlainDate,
+  isoWeek,
   isPlainDate,
   minutesNowIn,
   startOfWeek,
@@ -95,7 +96,7 @@ export function DayView() {
   if (!isPlainDate(date)) return <Navigate to={paths.day(today)} replace />;
   // Before the bar draws: the other views open on this day.
   setFocusedDay(date);
-  const title = formatPlainDate(date, locale, { weekday: "long", day: "numeric", month: "long" });
+  const title = formatDayTitle(date, locale);
   // The hours kept for a day gone by; the forecast's for today and the days ahead.
   const hours = past?.hours ?? (forecast?.hourly ?? []).filter((h) => h.time.startsWith(date));
   return (
@@ -103,9 +104,9 @@ export function DayView() {
       <ViewNav
         date={date}
         title={title}
+        shortTitle={formatDayTitle(date, locale, true)}
         previous={paths.day(addDays(date, -1))}
         next={paths.day(addDays(date, 1))}
-        compact
         tasks={{ from: date, to: date }}
       />
       <ViewBody>
@@ -207,6 +208,7 @@ export function WeekView() {
 }
 
 function Week({ monday }: { monday: PlainDate }) {
+  const { t } = useTranslation();
   const locale = useLocale();
   // On a phone on its side the weather and the day notes can be hidden so the hours get the room.
   const weatherShown = useWeatherShown();
@@ -214,13 +216,15 @@ function Week({ monday }: { monday: PlainDate }) {
   usePrefetchNeighbours("week", monday);
   const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i));
   const forecast = useDayWeather(monday, days[6]);
-  // The months and year the week falls in, abbreviated so it keeps to the nav's line.
-  const title = formatMonthRange(monday, days[6], locale, "short");
+  // The week's number in its year: "Semana 42, 2026".
+  const { week, year } = isoWeek(monday);
+  const title = t("views.weekTitle", { week, year });
   return (
     <>
       <ViewNav
         date={monday}
         title={title}
+        shortTitle={t("views.weekShort", { week, year })}
         previous={paths.week(addDays(monday, -7))}
         next={paths.week(addDays(monday, 7))}
         tasks={{ from: monday, to: days[6] }}

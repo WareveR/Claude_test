@@ -127,7 +127,9 @@
       "allDay": "Só dia inteiro",
       "timed": "Só com hora"
     },
-    "showCalendar": "Mostrar o calendário"
+    "showCalendar": "Mostrar o calendário",
+    "weekTitle": "Semana {{week}}, {{year}}",
+    "weekShort": "Sem. {{week}}, {{year}}"
   },
   "settings": {
     "title": "Definições",

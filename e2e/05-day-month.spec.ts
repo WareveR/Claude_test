@@ -14,11 +14,12 @@ test("day and month views show Entries", async ({ page }) => {
   await expect(page.getByTestId("day-column-2026-11-04").getByTestId("entry")).toContainText(
     "Parents' evening",
   );
-  // The day's own row has the whole date; Search, the filter and "+" are on the one bar above.
+  // The bar names the day in full beside its arrows; Search and "+" are on the header.
   await expect(page.getByTestId("day-title")).toHaveText("Wednesday 4 November");
-  const actions = page.locator("nav[data-view-nav]");
-  await expect(actions.getByRole("link", { name: "Search" })).toBeVisible();
-  await expect(actions.getByRole("link", { name: "New", exact: true })).toHaveAttribute(
+  await expect(page.getByRole("heading", { name: "Wednesday, 4 November 2026" })).toBeVisible();
+  const header = page.getByRole("banner");
+  await expect(header.getByRole("link", { name: "Search" })).toBeVisible();
+  await expect(header.getByRole("link", { name: "New", exact: true })).toHaveAttribute(
     "href",
     "/entries/new?date=2026-11-04",
   );
