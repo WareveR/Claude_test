@@ -42,3 +42,23 @@ test("switching view keeps the day in focus", async ({ page }) => {
   await view("Day");
   await expect(page).toHaveURL(/\/day\/2032-01-22$/);
 });
+
+test("each view outlines the day in focus, and its names and numbers open day and week", async ({
+  page,
+}) => {
+  await signIn(page);
+  await page.goto("/day/2031-11-19");
+  const nav = page.locator("nav[data-view-nav]");
+  const view = (name: string) => nav.getByRole("link", { name, exact: true }).click();
+
+  // The month outlines it, not today.
+  await view("Month");
+  await expect(page.getByTestId("month-day-2031-11-19")).toHaveAttribute("aria-current", "date");
+  // The week numbers on the left open their week, which outlines it too.
+  await page.getByTestId("month-week-2031-11-17").click();
+  await expect(page).toHaveURL(/\/week\/2031-11-17$/);
+  await expect(page.locator('[aria-current="date"][data-drop-date="2031-11-19"]')).toBeVisible();
+  // A day's name opens that day.
+  await page.getByTestId("day-name-2031-11-21").click();
+  await expect(page).toHaveURL(/\/day\/2031-11-21$/);
+});

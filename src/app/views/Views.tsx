@@ -44,7 +44,8 @@ import { PeriodTasksList } from "../tasks/TasksAccordion";
 import { periodLabel } from "../../core/period-label";
 import { PeriodCurtain } from "./PeriodCurtain";
 import { usePrefetchNeighbours } from "./prefetch";
-import { setFocusedDay } from "./focus";
+import { focusedDay, setFocusedDay } from "./focus";
+import { focusDay } from "../../core/periods";
 
 function useToday(): PlainDate {
   return todayIn(useSignedIn().family.timeZone);
@@ -210,6 +211,7 @@ export function WeekView() {
 function Week({ monday }: { monday: PlainDate }) {
   const { t } = useTranslation();
   const locale = useLocale();
+  const today = useToday();
   // On a phone on its side the weather and the day notes can be hidden so the hours get the room.
   const weatherShown = useWeatherShown();
   const tasksShown = usePeriodTasksShown();
@@ -236,6 +238,9 @@ function Week({ monday }: { monday: PlainDate }) {
           <div className={GRID_BOX.lg}>
             <CalendarGrid
               days={days}
+              // The day in focus is outlined; a day's name opens that day.
+              selected={focusDay("week", monday, focusedDay(), today)}
+              dayLink={paths.day}
               dayExtra={(day) => {
                 if (!weatherShown) return null;
                 const weather = forecast.get(day);
@@ -275,11 +280,15 @@ function Week({ monday }: { monday: PlainDate }) {
 export function CalendarGrid({
   days,
   dayExtra,
+  selected,
+  dayLink,
   readOnly,
   corner,
 }: {
   days: PlainDate[];
   dayExtra?: (day: PlainDate) => ReactNode;
+  selected?: PlainDate;
+  dayLink?: (day: PlainDate) => string;
   readOnly?: boolean;
   corner?: ReactNode;
 }) {
@@ -302,6 +311,8 @@ export function CalendarGrid({
       holidays={holidays}
       notes={notes}
       dayExtra={dayExtra}
+      selected={selected}
+      dayLink={dayLink}
       readOnly={readOnly}
       corner={corner}
       sleepHours={family.sleepHours}
@@ -327,9 +338,8 @@ function Month({ first }: { first: PlainDate }) {
   const selected =
     picked && isPlainDate(picked) && picked.startsWith(first.slice(0, 7))
       ? picked
-      : today.startsWith(first.slice(0, 7))
-        ? today
-        : first;
+      : // Else the day in focus, carried into this month: the one the other views open on.
+        focusDay("month", first, focusedDay(), today);
   // A picked day is the one in focus when switching view.
   if (picked === selected) setFocusedDay(selected);
   const weeks = monthWeeks(first);
@@ -369,6 +379,7 @@ function Month({ first }: { first: PlainDate }) {
               notes={notes}
               weather={weatherShown ? forecast : undefined}
               dayLink={(day) => `${paths.month(day)}?day=${day}`}
+              weekLink={paths.week}
             />
           </div>
         )}
