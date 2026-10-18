@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { base64UrlBytes, cleanVapidKey } from "../../core/vapid-key";
 import { api } from "../api";
 import { usePersons } from "../persons/model";
 import { BUTTON } from "../ui/button";
@@ -14,15 +15,6 @@ type DeviceState = {
   remindersOn: boolean;
   reminderPersonIds: string[] | null;
 };
-
-function keyBytes(base64url: string) {
-  const padded = base64url
-    .replace(/-/g, "+")
-    .replace(/_/g, "/")
-    .padEnd(Math.ceil(base64url.length / 4) * 4, "=");
-  const raw = atob(padded);
-  return Uint8Array.from(raw, (c) => c.charCodeAt(0));
-}
 
 const supported = () =>
   typeof window !== "undefined" &&
@@ -66,7 +58,7 @@ export function RemindersSection() {
         (await registration.pushManager.getSubscription()) ??
         (await registration.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: keyBytes(publicKey),
+          applicationServerKey: base64UrlBytes(cleanVapidKey(publicKey)),
         }));
       return api<DeviceState>("/device/push", { method: "PUT", body: subscription.toJSON() });
     },

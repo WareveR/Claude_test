@@ -6,7 +6,8 @@ sends nothing and Settings says Reminders aren't set up.
 ## Set up once, at deploy
 
 1. Make a key pair: `node scripts/vapid-keys.mjs`.
-2. Store all three as Worker secrets:
+2. Store all three as Worker secrets, pasting only the value after `=` (the Worker also strips
+   a pasted `NAME=`, quotes and spaces):
 
    ```sh
    npx wrangler secret put VAPID_PUBLIC_KEY

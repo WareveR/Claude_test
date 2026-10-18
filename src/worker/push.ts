@@ -1,3 +1,4 @@
+import { cleanVapidKey } from "../core/vapid-key";
 import type { PushSubscriptionJson } from "./db/schema";
 
 /**
@@ -42,9 +43,9 @@ export type VapidKeys = { publicKey: string; privateKey: string; subject: string
 /** The VAPID keys, or null when the Worker has none (Reminders are then off). */
 export function vapidKeys(env: Env): VapidKeys | null {
   const vars = env as unknown as Record<string, string | undefined>;
-  const publicKey = vars.VAPID_PUBLIC_KEY;
-  const privateKey = vars.VAPID_PRIVATE_KEY;
-  const subject = vars.VAPID_SUBJECT;
+  const publicKey = cleanVapidKey(vars.VAPID_PUBLIC_KEY ?? "");
+  const privateKey = cleanVapidKey(vars.VAPID_PRIVATE_KEY ?? "");
+  const subject = vars.VAPID_SUBJECT?.trim();
   return publicKey && privateKey && subject ? { publicKey, privateKey, subject } : null;
 }
 
