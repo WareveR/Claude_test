@@ -1,7 +1,14 @@
 import { env } from "cloudflare:test";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import worker from "../index";
-import { encryptPayload, fromBase64Url, pusher, toBase64Url, vapidAuthorization } from "../push";
+import {
+  encryptPayload,
+  fromBase64Url,
+  pusher,
+  toBase64Url,
+  vapidAuthorization,
+  vapidKeys,
+} from "../push";
 import type { PushMessage } from "../push";
 import { PASSWORD, setUpFamily, TestBrowser } from "../test/client";
 
@@ -327,5 +334,17 @@ describe("Web Push", () => {
       new TextEncoder().encode(`${h}.${c}`),
     );
     expect(ok).toBe(true);
+  });
+});
+
+describe("VAPID secrets pasted with extras", () => {
+  it("serves the bare public key when the secret holds the script's whole line", () => {
+    const keys = vapidKeys({
+      ...env,
+      VAPID_PUBLIC_KEY: `VAPID_PUBLIC_KEY=${env.VAPID_PUBLIC_KEY}\n`,
+      VAPID_PRIVATE_KEY: ` "${env.VAPID_PRIVATE_KEY}" `,
+    } as Env);
+    expect(keys?.publicKey).toBe(env.VAPID_PUBLIC_KEY);
+    expect(keys?.privateKey).toBe(env.VAPID_PRIVATE_KEY);
   });
 });
