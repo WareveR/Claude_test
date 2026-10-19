@@ -66,10 +66,22 @@ export type Device = {
   model: string | null;
 };
 
+export type Role = "owner" | "admin" | "member";
+/** The signed-in adult: who they are and what they may do. */
+export type Account = {
+  id: string;
+  email: string;
+  role: Role;
+  /** Shows the tools for testing and diagnosing the app. */
+  dev: boolean;
+  personId: string | null;
+};
+
 export type Status = {
   familyExists: boolean;
   newSetupCode: boolean;
   signedIn: boolean;
   family: Family | null;
+  account: Account | null;
   device: Device | null;
 };

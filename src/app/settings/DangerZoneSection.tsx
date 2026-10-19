@@ -104,7 +104,7 @@ export function DangerZoneSection() {
             {error && (
               <ErrorText>
                 {error instanceof ApiError && error.body.error === "wrong_password"
-                  ? t("signIn.wrong")
+                  ? t("password.wrong")
                   : error instanceof ApiError && error.body.error === "too_many_attempts"
                     ? t("signIn.tooMany", { seconds: error.body.retryAfter })
                     : t("errors.unexpected")}

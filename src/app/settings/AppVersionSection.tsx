@@ -119,7 +119,10 @@ function VersionHistory() {
 
 type TestState = "idle" | "sending" | "sent" | "noPush" | "notSetUp" | "failed";
 
-/** Tests and diagnostics, on the test copy only and closed by default: the screen this device draws on and a test notification. */
+/**
+ * Tests and diagnostics, for Accounts with Dev on (and on the test copy), closed by default: the
+ * screen this device draws on and a test notification.
+ */
 function Diagnostics() {
   const { t } = useTranslation();
   const screenSize = useSyncExternalStore(onResize, screenLine, () => "");
@@ -170,6 +173,7 @@ function Diagnostics() {
 /** Settings › App version: which version this device runs, a button to update it now, and the list of versions. */
 export function AppVersionSection() {
   const { t } = useTranslation();
+  const { account } = useSignedIn();
   const [state, setState] = useState<"idle" | "checking" | "updating" | "latest">("idle");
   return (
     <section className="flex flex-col gap-2">
@@ -197,7 +201,7 @@ export function AppVersionSection() {
         </p>
       )}
       <VersionHistory />
-      {DEV_TOOLS && <Diagnostics />}
+      {(DEV_TOOLS || account.dev) && <Diagnostics />}
     </section>
   );
 }

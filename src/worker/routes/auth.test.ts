@@ -1,6 +1,6 @@
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
-import { PASSWORD, TestBrowser, VALID_SETUP, setUpFamily } from "../test/client";
+import { addAccount, EMAIL, PASSWORD, TestBrowser, VALID_SETUP, setUpFamily } from "../test/client";
 
 describe("first-run setup", () => {
   it("creates the Family, signs the device in and locks itself", async () => {
@@ -52,7 +52,7 @@ describe("first-run setup", () => {
 
   it("stores the password only as a PBKDF2 hash", async () => {
     await setUpFamily();
-    const row = await env.DB.prepare("SELECT password_hash FROM family").first<{
+    const row = await env.DB.prepare("SELECT password_hash FROM account").first<{
       password_hash: string;
     }>();
     expect(row?.password_hash).toMatch(/^pbkdf2-sha256\$100000\$/);
@@ -61,12 +61,12 @@ describe("first-run setup", () => {
 });
 
 describe("sign-in", () => {
-  it("signs a device in with the Family Password", async () => {
+  it("signs a device in with an Account's email and password", async () => {
     await setUpFamily();
     const phone = new TestBrowser();
     expect((await phone.get("/device")).status).toBe(401);
 
-    const res = await phone.post("/session", { password: PASSWORD });
+    const res = await phone.post("/session", { email: EMAIL, password: PASSWORD });
     expect(res.status).toBe(201);
     expect(res.headers.get("Set-Cookie")).toMatch(
       /^__Host-session=[^;]+; Max-Age=31536000; Path=\/; HttpOnly; Secure; SameSite=Lax$/,
@@ -77,7 +77,7 @@ describe("sign-in", () => {
   it("stores only the session's hash", async () => {
     await setUpFamily();
     const phone = new TestBrowser();
-    await phone.post("/session", { password: PASSWORD });
+    await phone.post("/session", { email: EMAIL, password: PASSWORD });
     const token = phone.cookie.split("=")[1];
     const rows = await env.DB.prepare("SELECT session_hash FROM signed_in_device").all<{
       session_hash: string;
@@ -88,7 +88,10 @@ describe("sign-in", () => {
 
   it("refuses a wrong password", async () => {
     await setUpFamily();
-    const res = await new TestBrowser().post("/session", { password: "wrong password" });
+    const res = await new TestBrowser().post("/session", {
+      email: EMAIL,
+      password: "wrong password",
+    });
     expect(res.status).toBe(401);
   });
 
@@ -96,9 +99,11 @@ describe("sign-in", () => {
     await setUpFamily();
     const guesser = new TestBrowser("203.0.113.66");
     for (let i = 0; i < 5; i++) {
-      expect((await guesser.post("/session", { password: `wrong ${i}` })).status).toBe(401);
+      expect(
+        (await guesser.post("/session", { email: EMAIL, password: `wrong ${i}` })).status,
+      ).toBe(401);
     }
-    const blocked = await guesser.post("/session", { password: PASSWORD });
+    const blocked = await guesser.post("/session", { email: EMAIL, password: PASSWORD });
     expect(blocked.status).toBe(429);
     expect(await blocked.json()).toMatchObject({ retryAfter: 1 });
   });
@@ -106,16 +111,22 @@ describe("sign-in", () => {
   it("counts wrong attempts for the whole Family too", async () => {
     await setUpFamily();
     for (let i = 0; i < 5; i++) {
-      await new TestBrowser(`203.0.113.${100 + i}`).post("/session", { password: "wrong one" });
+      await new TestBrowser(`203.0.113.${100 + i}`).post("/session", {
+        email: EMAIL,
+        password: "wrong one",
+      });
     }
-    const other = await new TestBrowser("203.0.113.200").post("/session", { password: PASSWORD });
+    const other = await new TestBrowser("203.0.113.200").post("/session", {
+      email: EMAIL,
+      password: PASSWORD,
+    });
     expect(other.status).toBe(429);
   });
 
   it("ends a session after a year without use", async () => {
     await setUpFamily();
     const phone = new TestBrowser();
-    await phone.post("/session", { password: PASSWORD });
+    await phone.post("/session", { email: EMAIL, password: PASSWORD });
     await env.DB.prepare("UPDATE signed_in_device SET last_used_at = ?")
       .bind(new Date(Date.now() - 366 * 24 * 3600 * 1000).toISOString())
       .run();
@@ -144,5 +155,56 @@ describe("request safety", () => {
     expect(res.headers.get("Content-Security-Policy")).toContain("frame-ancestors 'none'");
     expect(res.headers.get("Strict-Transport-Security")).toContain("max-age=31536000");
     expect(res.headers.get("Referrer-Policy")).toBe("no-referrer");
+  });
+});
+
+describe("Accounts", () => {
+  it("makes whoever sets up the Family its Owner, and says so in the status", async () => {
+    const browser = await setUpFamily();
+    expect(await (await browser.get("/status")).json()).toMatchObject({
+      account: { email: EMAIL, role: "owner", dev: false, personId: null },
+    });
+  });
+
+  it("signs each Account in with its own email, whatever its case", async () => {
+    await setUpFamily();
+    await addAccount("ana@example.com");
+    const phone = new TestBrowser("203.0.113.7");
+    expect((await phone.post("/session", { email: EMAIL, password: "wrong one!" })).status).toBe(
+      401,
+    );
+    // An unknown email gets the same answer as a wrong password.
+    const unknown = await phone.post("/session", { email: "x@example.com", password: PASSWORD });
+    expect(unknown.status).toBe(401);
+    expect(await unknown.json()).toEqual({ error: "wrong_password" });
+    expect(
+      (await phone.post("/session", { email: " Ana@Example.com", password: PASSWORD })).status,
+    ).toBe(201);
+    expect(await (await phone.get("/status")).json()).toMatchObject({
+      account: { email: "ana@example.com", role: "member" },
+    });
+  });
+
+  it("says which Person an Account is, one Account per Person", async () => {
+    const browser = await setUpFamily();
+    const ana = await addAccount("ana@example.com", "admin");
+    const member = await addAccount("rui@example.com", "member", "198.51.100.21");
+    const person = (await (
+      await browser.post("/persons", { name: "David", color: "#3d405b" })
+    ).json()) as { id: string };
+    expect((await browser.request("PUT", "/account/person", { personId: "nobody" })).status).toBe(
+      400,
+    );
+    expect((await browser.request("PUT", "/account/person", { personId: person.id })).status).toBe(
+      200,
+    );
+    expect(await (await browser.get("/status")).json()).toMatchObject({
+      account: { personId: person.id },
+    });
+    expect((await ana.request("PUT", "/account/person", { personId: person.id })).status).toBe(409);
+    // A Member's Person is set by whoever invites them.
+    expect((await member.request("PUT", "/account/person", { personId: person.id })).status).toBe(
+      403,
+    );
   });
 });

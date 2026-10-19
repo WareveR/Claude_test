@@ -13,6 +13,7 @@ import { allEntries } from "./entries";
  */
 export const EXPORTED: Record<string, string[]> = {
   family: ["password_hash", "setup_code_hash"],
+  account: ["password_hash"],
   person: [],
   person_nickname: [],
   image: [],

@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { api, ApiError } from "../api";
 import { ErrorText, Field, SubmitButton, TextInput } from "../screens/form";
 
-/** A new recovery email only takes effect once its inbox confirms it. */
+/** A new email for signing in only takes effect once its inbox confirms it. */
 export function RecoveryEmailSection() {
   const { t } = useTranslation();
   const [password, setPassword] = useState("");
@@ -55,12 +55,14 @@ export function RecoveryEmailSection() {
             {!(error instanceof ApiError)
               ? t("errors.network")
               : error.body.error === "wrong_password"
-                ? t("signIn.wrong")
+                ? t("password.wrong")
                 : error.body.error === "too_many_attempts"
                   ? t("signIn.tooMany", { seconds: error.body.retryAfter })
                   : error.body.error === "invalid"
-                    ? t("setup.invalid.recoveryEmail")
-                    : t("errors.unexpected")}
+                    ? t("setup.invalid.email")
+                    : error.body.error === "email_taken"
+                      ? t("recovery.emailTaken")
+                      : t("errors.unexpected")}
           </ErrorText>
         )}
         <SubmitButton busy={change.isPending}>{t("recovery.emailChange")}</SubmitButton>

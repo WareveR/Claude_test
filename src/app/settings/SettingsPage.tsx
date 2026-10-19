@@ -20,6 +20,7 @@ import { DangerZoneSection } from "./DangerZoneSection";
 import { RemindersSection } from "./RemindersSection";
 import { FeedsSection } from "./FeedsSection";
 import { PersonsSection } from "../persons/PersonsSection";
+import { AccountSection } from "./AccountSection";
 import { DevicesSection } from "./DevicesSection";
 import { PasswordSection } from "./PasswordSection";
 import { RecoveryEmailSection } from "./RecoveryEmailSection";
@@ -96,6 +97,7 @@ export function SettingsPage() {
 
 function AreaContent({ area }: { area: Area }) {
   const { t } = useTranslation();
+  const { account } = useSignedIn();
   switch (area) {
     case "family":
       return (
@@ -128,6 +130,7 @@ function AreaContent({ area }: { area: Area }) {
     case "account":
       return (
         <>
+          <AccountSection />
           <PasswordSection />
           <RecoveryEmailSection />
           <DevicesSection />
@@ -135,7 +138,7 @@ function AreaContent({ area }: { area: Area }) {
           <Link to={paths.errorLog()} className={`${BUTTON} self-start`}>
             {t("errors.log.open")}
           </Link>
-          <DangerZoneSection />
+          {account.role === "owner" && <DangerZoneSection />}
         </>
       );
   }

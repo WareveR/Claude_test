@@ -11,9 +11,9 @@
     "title": "Create the Family calendar",
     "setupCode": "Setup code",
     "familyName": "Family name",
-    "password": "Family Password",
+    "password": "Your password",
     "passwordHint": "At least 10 characters. A memorable phrase works.",
-    "recoveryEmail": "Recovery email",
+    "email": "Your email",
     "language": "Family Language",
     "timeZone": "Family Time Zone",
     "submit": "Create",
@@ -21,42 +21,44 @@
     "invalid": {
       "name": "Enter the Family's name.",
       "password": "The password needs at least 10 characters.",
-      "recoveryEmail": "That email doesn't look valid.",
+      "email": "That email doesn't look valid.",
       "language": "Choose a language.",
       "timeZone": "Choose a time zone."
     }
   },
   "signIn": {
     "title": "Sign in",
-    "password": "Family Password",
+    "email": "Email",
+    "password": "Password",
     "submit": "Sign in",
-    "wrong": "Wrong password.",
+    "wrong": "Wrong email or password.",
     "tooMany": "Too many attempts. Try again in {{seconds}} s.",
     "signOut": "Sign out on this device"
   },
   "recovery": {
     "forgot": "Forgot password?",
     "title": "Forgot the password?",
-    "email": "Recovery email",
+    "email": "Your email",
     "send": "Send recovery link",
     "sent": "If that address is registered, a recovery link is on its way. Check your inbox.",
     "back": "Back to sign in",
     "newPasswordTitle": "Choose a new password",
     "newPassword": "New password",
     "choose": "Choose password",
-    "done": "Your password is changed and every device was signed out. Sign in with the new one.",
+    "done": "Your password is changed and all your devices were signed out. Sign in with the new one.",
     "invalidLink": "This link is no longer valid. Ask for a new one.",
-    "confirmTitle": "Recovery email",
+    "confirmTitle": "New email",
     "confirming": "Confirming…",
-    "confirmed": "Recovery email confirmed.",
+    "confirmed": "Email confirmed. You now sign in with it.",
     "continue": "Continue",
     "newSetupCodeTitle": "Set a new password",
-    "newSetupCodeHint": "The recovery email was used up, so this calendar needs a new password. Enter the setup code from the server and choose a new Family Password.",
-    "emailTitle": "Recovery email",
-    "emailHint": "Where we send the link if the Family Password is forgotten. The new address must be confirmed from its inbox.",
-    "emailNew": "New recovery email",
-    "emailChange": "Change recovery email",
-    "emailSent": "We sent a confirmation link to {{email}}. The change applies once you open it."
+    "newSetupCodeHint": "A new setup code was set, so the Owner's account needs a new password. Enter the setup code from the server and choose it.",
+    "emailTitle": "Your email",
+    "emailHint": "You sign in with this email, and the link goes there if you forget your password. The new address must be confirmed from its inbox.",
+    "emailNew": "New email",
+    "emailChange": "Change email",
+    "emailSent": "We sent a confirmation link to {{email}}. The change applies once you open it.",
+    "emailTaken": "That email already belongs to someone else in the Family."
   },
   "errors": {
     "network": "No connection. Check the internet and try again.",
@@ -215,15 +217,17 @@
       "computer": "Computer",
       "watch": "Watch",
       "tv": "TV"
-    }
+    },
+    "of": "{{name}}'s"
   },
   "password": {
-    "title": "Change the Family Password",
+    "title": "Change your password",
     "current": "Current password",
     "new": "New password",
-    "hint": "Every device, this one included, will need to sign in again.",
-    "confirm": "Every device will need to sign in again. Continue?",
-    "submit": "Change password"
+    "hint": "All your devices, this one included, will need to sign in again.",
+    "confirm": "All your devices will need to sign in again. Continue?",
+    "submit": "Change password",
+    "wrong": "Wrong password."
   },
   "persons": {
     "title": "Persons",
@@ -1382,7 +1386,7 @@
   },
   "reset": {
     "title": "Danger zone",
-    "hint": "Deletes what you tick for good. The password, the recovery email and the signed-in devices stay.",
+    "hint": "Deletes what you tick for good. The accounts and the signed-in devices stay.",
     "choose": "What to delete",
     "parts": {
       "entries": "Calendar entries",
@@ -1409,7 +1413,7 @@
     "all": "Tick everything: start again as a new family",
     "none": "Untick everything",
     "before": "Before deleting, this device downloads the full Export and the server keeps a copy that can be restored by hand.",
-    "password": "Family password",
+    "password": "Your password",
     "submit_one": "Delete {{count}} part for good",
     "submit_other": "Delete {{count}} parts for good",
     "submitAll": "Delete everything and start again",
@@ -1622,5 +1626,17 @@
     "save": "Save",
     "confirmDelete": "Delete {{name}} from the tree? Their children and partners stay, without the link.",
     "delete": "Delete from the tree"
+  },
+  "account": {
+    "title": "Your account",
+    "person": "This account belongs to",
+    "noPerson": "Choose who you are",
+    "personTaken": "That Person already has another account.",
+    "roles": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "member": "Member"
+    },
+    "isPerson": "This account belongs to {{name}}."
   }
 }

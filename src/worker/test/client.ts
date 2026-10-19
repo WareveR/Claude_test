@@ -1,9 +1,11 @@
 import { env } from "cloudflare:test";
 import { exports } from "cloudflare:workers";
+import { hashPassword } from "../auth/password";
 
 export const ORIGIN = "https://calendar.example";
 export const SETUP_CODE = env.SETUP_CODE;
 export const PASSWORD = "correct horse battery";
+export const EMAIL = "david@example.com";
 
 /** A browser talking to the API: keeps its session cookie and sends the app's Origin. */
 export class TestBrowser {
@@ -59,7 +61,7 @@ export const VALID_SETUP = {
   setupCode: SETUP_CODE,
   name: "Pires",
   password: PASSWORD,
-  recoveryEmail: "david@example.com",
+  email: EMAIL,
   language: "pt-PT",
   timeZone: "Europe/Lisbon",
 };
@@ -69,5 +71,26 @@ export async function setUpFamily(): Promise<TestBrowser> {
   const browser = new TestBrowser("198.51.100.9");
   const res = await browser.post("/setup", VALID_SETUP);
   if (res.status !== 201) throw new Error(`setup failed: ${res.status}`);
+  return browser;
+}
+
+/**
+ * Adds another Account straight to the database (inviting members comes later) and returns a
+ * browser signed in with it.
+ */
+export async function addAccount(
+  email: string,
+  role: "admin" | "member" = "member",
+  ip = "198.51.100.20",
+): Promise<TestBrowser> {
+  const now = new Date().toISOString();
+  await env.DB.prepare(
+    "INSERT INTO account (id, email, password_hash, role, dev, created_at, changed_at) VALUES (?, ?, ?, ?, 0, ?, ?)",
+  )
+    .bind(crypto.randomUUID(), email, await hashPassword(PASSWORD), role, now, now)
+    .run();
+  const browser = new TestBrowser(ip);
+  const res = await browser.post("/session", { email, password: PASSWORD });
+  if (res.status !== 201) throw new Error(`sign-in failed: ${res.status}`);
   return browser;
 }

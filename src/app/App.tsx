@@ -27,6 +27,7 @@ export function App() {
   if (!status.data) return null;
   if (status.data.familyExists && status.data.newSetupCode) return <NewSetupCodeScreen />;
   if (!status.data.familyExists) return <SetupScreen />;
-  if (!status.data.signedIn || !status.data.family || !status.data.device) return <SignInScreen />;
-  return <SignedInApp family={status.data.family} device={status.data.device} />;
+  const { family, account, device } = status.data;
+  if (!status.data.signedIn || !family || !account || !device) return <SignInScreen />;
+  return <SignedInApp family={family} account={account} device={device} />;
 }

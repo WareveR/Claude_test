@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { api, ApiError } from "../api";
 import { ErrorText, Field, SubmitButton, TextInput } from "../screens/form";
 
-/** Changing the Family Password signs out every device, this one too. */
+/** Changing your own password signs out all your devices, this one too. */
 export function PasswordSection() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -48,7 +48,7 @@ export function PasswordSection() {
         {error && (
           <ErrorText>
             {error instanceof ApiError && error.body.error === "wrong_password"
-              ? t("signIn.wrong")
+              ? t("password.wrong")
               : error instanceof ApiError && error.body.error === "too_many_attempts"
                 ? t("signIn.tooMany", { seconds: error.body.retryAfter })
                 : error instanceof ApiError && error.body.error === "invalid"

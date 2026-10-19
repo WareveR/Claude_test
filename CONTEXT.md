@@ -76,12 +76,12 @@ _Avoid_: View filter, member filter
 An Entry of the built-in Birthday type. It is either synced from a Person's date of birth (attached to that Person; its date and Person change only on the Person) or entered by hand for someone outside the Family. The birth year is optional; when known, the age reached is shown. A birthday party is a separate, ordinary Entry.
 _Avoid_: Anniversary, birthdate entry
 
-**Family Password**:
-The single secret that signs any device in as the Family: at least 10 characters, no complexity rules. It is recovered through the Family's one registered recovery email, or, as a last resort, through a new setup code in the hosting settings.
-_Avoid_: Login, account password, PIN
+**Account**:
+How one adult signs in: their own email and password (at least 10 characters, no complexity rules), belonging to one Person. A Person without one, like a child, never signs in. Each Account has a role: the **Owner** (whoever set up the Family; exactly one, the only one who can use the Danger zone), an **Admin** or a **Member**; and a **Dev** switch that shows the tools for testing and diagnosing the app. A forgotten password is recovered by a link sent to the Account's email; the Owner's last resort is a new setup code in the hosting settings. It replaced the Family Password (ADR-0009).
+_Avoid_: User, login, profile, Family Password
 
 **Signed-in Device**:
-A browser or device holding a Family session that lasts a year from its last use. Each one is listed and can be signed out on its own; changing the Family Password signs out all of them. A device that is signed out, or finds it has been, deletes its offline copy of the calendar at once. Every Signed-in Device can edit.
+A browser or device signed in to one Account, holding a session that lasts a year from its last use. Each one is listed and can be signed out on its own: a Member sees their own devices, the Owner and Admins see everyone's. Changing an Account's password signs out all of that Account's devices. A device that is signed out, or finds it has been, deletes its offline copy of the calendar at once.
 _Avoid_: Session, user, client
 
 **Display Mode**:
@@ -145,9 +145,9 @@ A copy of the Family's data kept so it can be brought back after a mistake or a 
 _Avoid_: Snapshot, archive, history
 
 **Export**:
-A file the Family downloads from Settings to keep its data outside the app: either everything (all data and images) or all Entries as an .ics calendar file. It holds everything the Family sees, Private Entries and Tasks, archived Persons and closed Checklist rounds included, but never the Family Password, secrets, Signed-in Devices or the Error Log. Settings shows when the last full Export was downloaded. A full Export can be used to restore, the same way as a Backup; the app has no import.
+A file the Family downloads from Settings to keep its data outside the app: either everything (all data and images) or all Entries as an .ics calendar file. It holds everything the Family sees, Private Entries and Tasks, archived Persons and closed Checklist rounds included, but never a password, secrets, Signed-in Devices or the Error Log. Settings shows when the last full Export was downloaded. A full Export can be used to restore, the same way as a Backup; the app has no import.
 _Avoid_: Download, dump, Calendar Feed (a live link, not a file)
 
 **Danger zone**:
-The last part of Settings › Account, where the Family deletes data for good: any of Entries, Tasks and Checklists, the Shopping List, Persons (with their nicknames and synced Birthdays; their Entries and Tasks stay, Family-wide), Entry Types (those made by the Family go, their Entries moving to General, and the built-in ones are reset), Checklist templates (reset to the built-in ones), Family settings (Public Holiday places, bins, Weather Locations, Sleeping Hours, Calendar Feeds) and the Error Log; or all of them, to start again as a new Family. Deleting Entries keeps the synced Birthdays of Persons who stay. The Family Password, the recovery email, the Family's name, language and time zone, and the Signed-in Devices always stay. The Family Password is asked first, then the device downloads a full Export, and the server saves a full copy beside the Backups, restored by hand like them, before deleting. Not offered in Display Mode.
+The last part of Settings › Account, only for the Owner, where the Family deletes data for good: any of Entries, Tasks and Checklists, the Shopping List, Persons (with their nicknames and synced Birthdays; their Entries and Tasks stay, Family-wide), Entry Types (those made by the Family go, their Entries moving to General, and the built-in ones are reset), Checklist templates (reset to the built-in ones), Family settings (Public Holiday places, bins, Weather Locations, Sleeping Hours, Calendar Feeds) and the Error Log; or all of them, to start again as a new Family. Deleting Entries keeps the synced Birthdays of Persons who stay. The Accounts, the Family's name, language and time zone, and the Signed-in Devices always stay. The Owner's password is asked first, then the device downloads a full Export, and the server saves a full copy beside the Backups, restored by hand like them, before deleting. Not offered in Display Mode.
 _Avoid_: Reset, wipe, factory reset

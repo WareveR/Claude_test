@@ -1,3 +1,4 @@
+import { ownerAccount } from "../auth/account";
 import { and, desc, eq, gt, gte, lt } from "drizzle-orm";
 import { Hono, type ErrorHandler } from "hono";
 import { isErrorCode, newErrorCode } from "../../core/error-code";
@@ -157,10 +158,11 @@ errorRoutes.post("/errors/:code/report", async (c) => {
     .update(schema.errorLog)
     .set({ comment: comment || null, reportedAt: now.toISOString() })
     .where(eq(schema.errorLog.id, row.id));
-  if (!family.recoveryEmail) return c.json({ error: "no_recovery_email" }, 409);
+  const owner = await ownerAccount(db);
+  if (!owner) return c.json({ error: "no_recovery_email" }, 409);
   const texts = textsFor(family.language);
   const sent = await sendEmail(c.env, {
-    to: family.recoveryEmail,
+    to: owner.email,
     subject: texts.reportSubject(row.code),
     text: texts.reportText(describe(row), comment),
   });
@@ -202,10 +204,11 @@ export async function errorSummaryJob(db: Db, env: Env, now: Date) {
     .from(schema.errorLog)
     .where(and(gte(schema.errorLog.at, since), lt(schema.errorLog.at, now.toISOString())))
     .orderBy(schema.errorLog.at);
-  if (errors.length === 0 || !family.recoveryEmail) return;
+  const owner = await ownerAccount(db);
+  if (errors.length === 0 || !owner) return;
   const texts = textsFor(family.language);
   await sendEmail(env, {
-    to: family.recoveryEmail,
+    to: owner.email,
     subject: texts.summarySubject(errors.length),
     text: texts.summaryText(errors.map(describe).join("\n")),
   });

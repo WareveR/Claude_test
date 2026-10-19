@@ -11,9 +11,9 @@
     "title": "Criar o calendário da família",
     "setupCode": "Código de configuração",
     "familyName": "Nome da família",
-    "password": "Palavra-passe da família",
+    "password": "A tua palavra-passe",
     "passwordHint": "Pelo menos 10 caracteres. Uma frase fácil de lembrar serve.",
-    "recoveryEmail": "Email de recuperação",
+    "email": "O teu email",
     "language": "Idioma da família",
     "timeZone": "Fuso horário da família",
     "submit": "Criar",
@@ -21,42 +21,44 @@
     "invalid": {
       "name": "Escreve o nome da família.",
       "password": "A palavra-passe precisa de pelo menos 10 caracteres.",
-      "recoveryEmail": "Este email não parece válido.",
+      "email": "Este email não parece válido.",
       "language": "Escolhe um idioma.",
       "timeZone": "Escolhe um fuso horário."
     }
   },
   "signIn": {
     "title": "Entrar",
-    "password": "Palavra-passe da família",
+    "email": "Email",
+    "password": "Palavra-passe",
     "submit": "Entrar",
-    "wrong": "Palavra-passe errada.",
+    "wrong": "Email ou palavra-passe errados.",
     "tooMany": "Demasiadas tentativas. Tenta de novo daqui a {{seconds}} s.",
     "signOut": "Sair neste dispositivo"
   },
   "recovery": {
     "forgot": "Esqueceste a palavra-passe?",
     "title": "Esqueceste a palavra-passe?",
-    "email": "Email de recuperação",
+    "email": "O teu email",
     "send": "Enviar ligação de recuperação",
     "sent": "Se esse endereço estiver registado, uma ligação de recuperação está a caminho. Verifica a caixa de entrada.",
     "back": "Voltar a entrar",
     "newPasswordTitle": "Escolhe uma nova palavra-passe",
     "newPassword": "Nova palavra-passe",
     "choose": "Escolher palavra-passe",
-    "done": "A palavra-passe foi alterada e todos os dispositivos terminaram a sessão. Entra com a nova.",
+    "done": "A palavra-passe foi alterada e todos os teus dispositivos terminaram a sessão. Entra com a nova.",
     "invalidLink": "Esta ligação já não é válida. Pede uma nova.",
-    "confirmTitle": "Email de recuperação",
+    "confirmTitle": "Novo email",
     "confirming": "A confirmar…",
-    "confirmed": "Email de recuperação confirmado.",
+    "confirmed": "Email confirmado. Passas a entrar com ele.",
     "continue": "Continuar",
     "newSetupCodeTitle": "Define uma nova palavra-passe",
-    "newSetupCodeHint": "O email de recuperação foi usado, por isso este calendário precisa de uma nova palavra-passe. Escreve o código de configuração do servidor e escolhe uma nova Palavra-passe da Família.",
-    "emailTitle": "Email de recuperação",
-    "emailHint": "Para onde enviamos a ligação se a Palavra-passe da Família for esquecida. O novo endereço tem de ser confirmado na sua caixa de entrada.",
-    "emailNew": "Novo email de recuperação",
-    "emailChange": "Alterar email de recuperação",
-    "emailSent": "Enviámos uma ligação de confirmação para {{email}}. A alteração aplica-se depois de a abrires."
+    "newSetupCodeHint": "Foi definido um novo código de configuração, por isso a conta do Dono precisa de uma nova palavra-passe. Escreve o código de configuração do servidor e escolhe-a.",
+    "emailTitle": "O teu email",
+    "emailHint": "Entras com este email e é para ele que vai a ligação se te esqueceres da palavra-passe. O novo endereço tem de ser confirmado na sua caixa de entrada.",
+    "emailNew": "Novo email",
+    "emailChange": "Mudar email",
+    "emailSent": "Enviámos uma ligação de confirmação para {{email}}. A alteração aplica-se depois de a abrires.",
+    "emailTaken": "Esse email já é de outra pessoa da Família."
   },
   "errors": {
     "network": "Sem ligação. Verifica a internet e tenta de novo.",
@@ -215,15 +217,17 @@
       "computer": "Computador",
       "watch": "Relógio",
       "tv": "Televisão"
-    }
+    },
+    "of": "de {{name}}"
   },
   "password": {
-    "title": "Mudar a palavra-passe da família",
+    "title": "Mudar a tua palavra-passe",
     "current": "Palavra-passe atual",
     "new": "Nova palavra-passe",
-    "hint": "Todos os dispositivos, incluindo este, vão ter de voltar a entrar.",
-    "confirm": "Todos os dispositivos vão ter de voltar a entrar. Continuar?",
-    "submit": "Mudar palavra-passe"
+    "hint": "Todos os teus dispositivos, incluindo este, vão ter de voltar a entrar.",
+    "confirm": "Todos os teus dispositivos vão ter de voltar a entrar. Continuar?",
+    "submit": "Mudar palavra-passe",
+    "wrong": "Palavra-passe errada."
   },
   "persons": {
     "title": "Pessoas",
@@ -1382,7 +1386,7 @@
   },
   "reset": {
     "title": "Zona de perigo",
-    "hint": "Apaga para sempre o que marcar. A palavra-passe, o email de recuperação e os aparelhos com sessão ficam.",
+    "hint": "Apaga para sempre o que marcar. As contas e os aparelhos com sessão ficam.",
     "choose": "O que apagar",
     "parts": {
       "entries": "Entradas do calendário",
@@ -1409,7 +1413,7 @@
     "all": "Marcar tudo: recomeçar como família nova",
     "none": "Desmarcar tudo",
     "before": "Antes de apagar, este aparelho descarrega a Exportação completa e o servidor guarda uma cópia para se poder repor à mão.",
-    "password": "Palavra-passe da família",
+    "password": "A tua palavra-passe",
     "submit_one": "Apagar {{count}} parte para sempre",
     "submit_other": "Apagar {{count}} partes para sempre",
     "submitAll": "Apagar tudo e recomeçar",
@@ -1622,5 +1626,17 @@
     "save": "Guardar",
     "confirmDelete": "Apagar {{name}} da árvore? Os filhos e companheiros ficam, sem a ligação.",
     "delete": "Apagar da árvore"
+  },
+  "account": {
+    "title": "A tua conta",
+    "person": "Esta conta é de",
+    "noPerson": "Escolhe quem és",
+    "personTaken": "Essa Pessoa já tem outra conta.",
+    "roles": {
+      "owner": "Dono",
+      "admin": "Admin",
+      "member": "Membro"
+    },
+    "isPerson": "Esta conta é de {{name}}."
   }
 }

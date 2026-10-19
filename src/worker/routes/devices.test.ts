@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { PASSWORD, TestBrowser, setUpFamily } from "../test/client";
+import { addAccount, EMAIL, PASSWORD, TestBrowser, setUpFamily } from "../test/client";
 
 async function signIn(ip: string, userAgent?: string) {
   const browser = new TestBrowser(ip, userAgent);
-  await browser.post("/session", { password: PASSWORD });
+  await browser.post("/session", { email: EMAIL, password: PASSWORD });
   return browser;
 }
 
@@ -67,7 +67,7 @@ describe("Signed-in devices", () => {
   });
 });
 
-describe("changing the Family Password", () => {
+describe("changing one's own password", () => {
   it("needs the current password", async () => {
     const laptop = await setUpFamily();
     const res = await laptop.post("/password", {
@@ -95,7 +95,39 @@ describe("changing the Family Password", () => {
     expect((await phone.get("/device")).status).toBe(401);
 
     const fresh = new TestBrowser("203.0.113.3");
-    expect((await fresh.post("/session", { password: PASSWORD })).status).toBe(401);
-    expect((await fresh.post("/session", { password: "a brand new phrase" })).status).toBe(201);
+    expect((await fresh.post("/session", { email: EMAIL, password: PASSWORD })).status).toBe(401);
+    expect(
+      (await fresh.post("/session", { email: EMAIL, password: "a brand new phrase" })).status,
+    ).toBe(201);
+  });
+});
+
+describe("devices of several Accounts", () => {
+  it("shows a member only their own devices; the Owner sees everyone's, with whose they are", async () => {
+    const laptop = await setUpFamily();
+    const ana = await addAccount("ana@example.com");
+    const own = (await (await ana.get("/devices")).json()) as (DeviceRow & { owner: string })[];
+    expect(own).toHaveLength(1);
+    expect(own[0]).toMatchObject({ current: true, owner: "ana@example.com" });
+
+    const all = (await (await laptop.get("/devices")).json()) as (DeviceRow & { owner: string })[];
+    expect(all.map((d) => d.owner).sort()).toEqual(["ana@example.com", EMAIL]);
+
+    const mine = all.find((d) => d.owner === EMAIL)!;
+    expect((await ana.delete(`/devices/${mine.id}`)).status).toBe(404);
+    expect((await ana.request("PATCH", `/devices/${mine.id}`, { name: "x" })).status).toBe(404);
+    expect((await laptop.delete(`/devices/${own[0].id}`)).status).toBe(204);
+    expect((await ana.get("/device")).status).toBe(401);
+  });
+
+  it("changing a password signs out only that Account's devices", async () => {
+    const laptop = await setUpFamily();
+    const ana = await addAccount("ana@example.com");
+    expect(
+      (await ana.post("/password", { currentPassword: PASSWORD, newPassword: "ana's new phrase" }))
+        .status,
+    ).toBe(204);
+    expect((await ana.get("/device")).status).toBe(401);
+    expect((await laptop.get("/device")).status).toBe(200);
   });
 });

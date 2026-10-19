@@ -10,7 +10,7 @@ import {
   vapidKeys,
 } from "../push";
 import type { PushMessage } from "../push";
-import { PASSWORD, setUpFamily, TestBrowser } from "../test/client";
+import { PASSWORD, setUpFamily, TestBrowser, EMAIL } from "../test/client";
 
 type Sent = { endpoint: string; message: PushMessage };
 let sent: Sent[] = [];
@@ -124,7 +124,7 @@ describe("Reminders", () => {
 
     const phoneEndpoint = await subscribe(phone, "phone");
     const tablet = new TestBrowser("192.0.2.30");
-    await tablet.post("/session", { password: PASSWORD });
+    await tablet.post("/session", { email: EMAIL, password: PASSWORD });
     await tablet.request("PATCH", "/device", { language: "en" });
     await tablet.request("PUT", "/device/reminders", {
       remindersOn: true,
@@ -132,7 +132,7 @@ describe("Reminders", () => {
     });
     const tabletEndpoint = await subscribe(tablet, "tablet");
     const off = new TestBrowser("192.0.2.31");
-    await off.post("/session", { password: PASSWORD });
+    await off.post("/session", { email: EMAIL, password: PASSWORD });
     await off.request("PUT", "/device/reminders", { remindersOn: false, reminderPersonIds: null });
     await subscribe(off, "off");
 
@@ -261,7 +261,7 @@ describe("New Entries and Tasks", () => {
     const { phone, ana, rui, add } = await family();
     const phoneEndpoint = await subscribe(phone, "phone");
     const tablet = new TestBrowser("192.0.2.40");
-    await tablet.post("/session", { password: PASSWORD });
+    await tablet.post("/session", { email: EMAIL, password: PASSWORD });
     await tablet.request("PATCH", "/device", { language: "en" });
     await tablet.request("PUT", "/device/reminders", {
       remindersOn: true,

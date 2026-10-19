@@ -10,10 +10,11 @@ import { BUTTON } from "../ui/button";
 export function SignInScreen() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [forgot, setForgot] = useState(false);
   const signIn = useMutation({
-    mutationFn: () => api("/session", { method: "POST", body: { password } }),
+    mutationFn: () => api("/session", { method: "POST", body: { email, password } }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["status"] }),
   });
 
@@ -27,6 +28,15 @@ export function SignInScreen() {
   return (
     <FormCard title={t("signIn.title")}>
       <form onSubmit={submit} className="flex flex-col gap-4">
+        <Field label={t("signIn.email")}>
+          <TextInput
+            required
+            type="email"
+            autoComplete="username"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </Field>
         <Field label={t("signIn.password")}>
           <TextInput
             required

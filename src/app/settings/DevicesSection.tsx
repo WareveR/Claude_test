@@ -24,6 +24,9 @@ type DeviceRow = {
   createdAt: string;
   lastUsedAt: string;
   current: boolean;
+  accountId: string;
+  /** Whose device it is: their Person's name, or their email. */
+  owner: string;
 };
 
 const KIND_ICONS: Record<DeviceKind, LucideIcon> = {
@@ -37,7 +40,7 @@ const KIND_ICONS: Record<DeviceKind, LucideIcon> = {
 
 export function DevicesSection() {
   const { t } = useTranslation();
-  const { family, language } = useSignedIn();
+  const { family, account, language } = useSignedIn();
   const queryClient = useQueryClient();
   const devices = useQuery({ queryKey: ["devices"], queryFn: () => api<DeviceRow[]>("/devices") });
   const refresh = () =>
@@ -76,6 +79,11 @@ export function DevicesSection() {
                 {device.name}
                 {device.current && (
                   <span className="ml-2 text-xs text-accent">{t("devices.thisDevice")}</span>
+                )}
+                {device.accountId !== account.id && (
+                  <span className="ml-2 text-xs text-muted">
+                    {t("devices.of", { name: device.owner })}
+                  </span>
                 )}
               </span>
               <span className="flex flex-wrap items-center gap-x-2 text-xs text-muted">

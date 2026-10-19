@@ -23,6 +23,7 @@ import { convertRoutes } from "./routes/convert";
 import { shoppingRoutes } from "./routes/shopping";
 import { relativeRoutes } from "./routes/relatives";
 import { resetRoutes } from "./routes/reset";
+import { accountRoutes } from "./routes/account";
 import { apiSecureHeaders, sameOriginOnly } from "./security";
 import type { AppEnv } from "./types";
 
@@ -53,6 +54,7 @@ app.route("/", publicFeedRoutes);
 app.route("/", recoveryEmailRoutes);
 app.route("/", deviceRoutes);
 app.route("/", devicesRoutes);
+app.route("/", accountRoutes);
 app.route("/", imageRoutes);
 app.route("/", familyRoutes);
 app.route("/", personRoutes);
