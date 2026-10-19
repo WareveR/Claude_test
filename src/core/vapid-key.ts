@@ -15,3 +15,21 @@ export function base64UrlBytes(value: string): Uint8Array<ArrayBuffer> {
   const binary = atob(base64 + "=".repeat((4 - (base64.length % 4)) % 4));
   return Uint8Array.from(binary, (c) => c.charCodeAt(0));
 }
+
+function decodes(value: string, length: number) {
+  try {
+    return base64UrlBytes(value).length === length;
+  } catch {
+    return false;
+  }
+}
+
+/** True when a cleaned VAPID_PUBLIC_KEY is an uncompressed P-256 point (65 bytes, 0x04 first). */
+export function isVapidPublicKey(value: string): boolean {
+  return decodes(value, 65) && base64UrlBytes(value)[0] === 4;
+}
+
+/** True when a cleaned VAPID_PRIVATE_KEY is a P-256 "d" (32 bytes). */
+export function isVapidPrivateKey(value: string): boolean {
+  return decodes(value, 32);
+}

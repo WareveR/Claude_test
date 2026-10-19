@@ -347,4 +347,11 @@ describe("VAPID secrets pasted with extras", () => {
     expect(keys?.publicKey).toBe(env.VAPID_PUBLIC_KEY);
     expect(keys?.privateKey).toBe(env.VAPID_PRIVATE_KEY);
   });
+
+  it("treats a key that is not a P-256 point as not set up, so the browser never decodes it", () => {
+    for (const VAPID_PUBLIC_KEY of [`${env.VAPID_PUBLIC_KEY}A`, "-----BEGIN PUBLIC KEY-----"]) {
+      expect(vapidKeys({ ...env, VAPID_PUBLIC_KEY } as Env)).toBeNull();
+    }
+    expect(vapidKeys({ ...env, VAPID_PRIVATE_KEY: env.VAPID_PUBLIC_KEY } as Env)).toBeNull();
+  });
 });

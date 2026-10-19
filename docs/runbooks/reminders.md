@@ -22,6 +22,10 @@ The key pair in `.dev.vars.example` is for local development only.
 
 ## Changing the keys
 
+The easiest way is Actions › **New VAPID keys** › Run workflow: it makes a pair and stores both
+secrets, never printing them. A malformed key makes the Worker log "VAPID keys are malformed"
+and Settings say Reminders aren't set up.
+
 Every device's subscription is tied to the public key. After changing it, each device must
 open Settings › Reminders and allow notifications again.
 
