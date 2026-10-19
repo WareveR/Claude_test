@@ -1,5 +1,5 @@
 import { env } from "cloudflare:test";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import worker from "../index";
 import {
   encryptPayload,
@@ -253,6 +253,36 @@ describe("Test notification", () => {
     expect(sent).toEqual([{ endpoint, message: expect.objectContaining({ tag: "test" }) }]);
     goneEndpoints.add(endpoint);
     expect((await browser.post("/device/push/test", {})).status).toBe(502);
+  });
+});
+
+describe("New Entries and Tasks", () => {
+  it("are announced to the Family's other devices that follow their Persons", async () => {
+    const { phone, ana, rui, add } = await family();
+    const phoneEndpoint = await subscribe(phone, "phone");
+    const tablet = new TestBrowser("192.0.2.40");
+    await tablet.post("/session", { password: PASSWORD });
+    await tablet.request("PATCH", "/device", { language: "en" });
+    await tablet.request("PUT", "/device/reminders", {
+      remindersOn: true,
+      reminderPersonIds: [ana],
+    });
+    const tabletEndpoint = await subscribe(tablet, "tablet");
+    const time = { allDay: true, startDate: "2026-10-20", endDate: "2026-10-20" };
+
+    const dentist = await add("Dentist", { time, personIds: [ana] });
+    await add("Football", { time, personIds: [rui] });
+    await add("Therapy", { time, personIds: [ana], private: true });
+    await phone.post("/tasks", { title: "Bins" });
+    await vi.waitFor(() => expect(sent).toHaveLength(3));
+    expect(sent.map((s) => s.message.title)).toEqual([
+      "New event: Dentist",
+      "New private event",
+      "New task: Bins",
+    ]);
+    expect(sent.every((s) => s.endpoint === tabletEndpoint)).toBe(true);
+    expect(sent[0].message.url).toBe(`/entries/${dentist}`);
+    expect(sent.some((s) => s.endpoint === phoneEndpoint)).toBe(false);
   });
 });
 

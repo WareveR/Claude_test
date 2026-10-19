@@ -9,6 +9,7 @@ import { wouldNestInItself } from "../../core/task-tree";
 import { randomId } from "../auth/crypto";
 import type { Db } from "../db";
 import { inParts, schema } from "../db";
+import { announceLater } from "../announce";
 import { requireDevice } from "../require-device";
 import { settleChecklist } from "../task-tree";
 import type { AppEnv } from "../types";
@@ -180,6 +181,10 @@ taskRoutes.post("/tasks", async (c) => {
   ]);
   // A new undone item unticks the items holding it.
   if (fields.checklistId) await settleChecklist(db, fields.checklistId, now);
+  // Items inside a task aren't announced, only the task itself.
+  if (!fields.parentId) {
+    announceLater(c, { kind: "task", id, title: fields.title, private: fields.private, personIds });
+  }
   return c.json(await presentOne(db, id), 201);
 });
 

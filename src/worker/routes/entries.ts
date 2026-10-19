@@ -8,6 +8,7 @@ import { randomId } from "../auth/crypto";
 import type { Db } from "../db";
 import { inParts, schema } from "../db";
 import { dropUntouchedPreparation, prepareEntry } from "../preparation";
+import { announceLater } from "../announce";
 import { requireDevice } from "../require-device";
 import type { AppEnv } from "../types";
 import { entryTypeDeleteSteps } from "./entry-types";
@@ -324,6 +325,8 @@ entryRoutes.post("/entries", async (c) => {
     const v = parsed.values;
     await prepareEntry(db, { id, ...v, startDate: v.time.startDate }, c.get("now"));
   }
+  const { title, personIds } = parsed.values;
+  announceLater(c, { kind: "entry", id, title, private: parsed.values.private, personIds });
   const rows = await db.select().from(schema.entry).where(eq(schema.entry.id, id));
   return c.json((await withPersons(db, rows))[0], 201);
 });
