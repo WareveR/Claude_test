@@ -47,8 +47,8 @@ jobs:
       - run: npm run build
         env:
           CLOUDFLARE_ENV: testes
-      # The build points wrangler at the test Worker's config, so these never reach production.
-      - run: npx wrangler d1 migrations apply family-calendar-testes --remote
+      # Both go by the test Worker's built config, so they never reach production.
+      - run: npx wrangler d1 migrations apply family-calendar-testes --remote -c dist/family_calendar/wrangler.json
       - run: npx wrangler deploy
       # Only the missing ones are added, so keys and the setup code stay the same between deploys.
       # The values go straight to wrangler on stdin and are never printed.
@@ -56,19 +56,19 @@ jobs:
         env:
           TESTES_SETUP_CODE: ${{ secrets.TESTES_SETUP_CODE }}
         run: |
-          have=$(npx wrangler secret list --format json | jq -r '.[].name')
+          have=$(npx wrangler secret list --name family-calendar-testes --format json | jq -r '.[].name')
           missing() { ! grep -qx "$1" <<< "$have"; }
           if missing VAPID_PUBLIC_KEY || missing VAPID_PRIVATE_KEY; then
             node scripts/vapid-keys.mjs > keys.env
-            grep '^VAPID_PUBLIC_KEY=' keys.env | cut -d= -f2- | tr -d '\n' | npx wrangler secret put VAPID_PUBLIC_KEY
-            grep '^VAPID_PRIVATE_KEY=' keys.env | cut -d= -f2- | tr -d '\n' | npx wrangler secret put VAPID_PRIVATE_KEY
+            grep '^VAPID_PUBLIC_KEY=' keys.env | cut -d= -f2- | tr -d '\n' | npx wrangler secret put --name family-calendar-testes VAPID_PUBLIC_KEY
+            grep '^VAPID_PRIVATE_KEY=' keys.env | cut -d= -f2- | tr -d '\n' | npx wrangler secret put --name family-calendar-testes VAPID_PRIVATE_KEY
             rm keys.env
           fi
           if missing VAPID_SUBJECT; then
-            printf 'mailto:calendario@phinest.org' | npx wrangler secret put VAPID_SUBJECT
+            printf 'mailto:calendario@phinest.org' | npx wrangler secret put --name family-calendar-testes VAPID_SUBJECT
           fi
           if [ -n "$TESTES_SETUP_CODE" ]; then
-            if missing SETUP_CODE; then printf '%s' "$TESTES_SETUP_CODE" | npx wrangler secret put SETUP_CODE; fi
+            if missing SETUP_CODE; then printf '%s' "$TESTES_SETUP_CODE" | npx wrangler secret put --name family-calendar-testes SETUP_CODE; fi
           else
             echo "::warning::No TESTES_SETUP_CODE repository secret yet, so the test copy can't be set up (docs/runbooks/testes.md)."
           fi
