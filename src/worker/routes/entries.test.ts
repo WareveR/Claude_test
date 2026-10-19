@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setUpFamily, type TestBrowser } from "../test/client";
 
 type Entry = {
@@ -328,6 +328,15 @@ describe("changing one Occurrence or the following", () => {
 });
 
 describe("Preparation", () => {
+  // A repeating Entry's list starts on its next Occurrence from today, so today is fixed.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-12T10:00:00Z"));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("gives a new Entry the list its title calls for, repeating with it", async () => {
     const { browser, ana } = await family();
     const activity = await typeId(browser, "activity");
