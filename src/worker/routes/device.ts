@@ -5,7 +5,7 @@ import { isLanguage } from "../../core/languages";
 import type { Device } from "../auth/session";
 import { schema } from "../db";
 import type { PushSubscriptionJson } from "../db/schema";
-import { vapidKeys } from "../push";
+import { pusher, vapidKeys } from "../push";
 import { requireDevice } from "../require-device";
 import type { AppEnv } from "../types";
 
@@ -113,6 +113,25 @@ deviceRoutes.delete("/device/push", async (c) => {
     .set({ pushSubscription: null })
     .where(eq(schema.signedInDevice.id, device.id));
   return c.json(present({ ...device, pushSubscription: null }));
+});
+
+/** Settings › App version › Tests: sends one notification to this device, to check pushes arrive. */
+deviceRoutes.post("/device/push/test", async (c) => {
+  const device = c.get("device");
+  if (!device.pushSubscription) return c.json({ error: "noPush" }, 409);
+  if (!vapidKeys(c.env)) return c.json({ error: "notSetUp" }, 409);
+  const title =
+    device.language === "en"
+      ? "Test notification from the Family Calendar"
+      : "Notificação de teste do Calendário da Família";
+  const result = await pusher.send(
+    c.env,
+    device.pushSubscription,
+    { title, url: "/settings/device", tag: "test" },
+    new Date(),
+  );
+  if (!result.ok) return c.json({ error: "pushFailed" }, 502);
+  return c.json({ ok: true });
 });
 
 /** This device's Reminder settings: on or off, and which Persons (null is everyone). */
