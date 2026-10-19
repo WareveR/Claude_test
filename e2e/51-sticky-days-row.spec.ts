@@ -74,3 +74,22 @@ test("on a phone the year's months and Persons stay at the left while the days s
   const each = page.getByRole("button", { name: "A line for each person" });
   expect((await each.boundingBox())?.x ?? 0).toBeLessThan(left + 64);
 });
+
+test("on a phone the year's names column keeps its width and the switch its place in both modes", async ({
+  page,
+}) => {
+  await signIn(page);
+  const measure = async () => {
+    const each = page.getByRole("button", { name: "A line for each person" });
+    const day = page.getByTestId("days-row").locator("th").nth(1);
+    return [(await each.boundingBox())?.x ?? 0, (await day.boundingBox())?.x ?? 0];
+  };
+  await page.goto("/year/2026");
+  await expect(page.getByTestId("year-detail")).toBeVisible();
+  const detail = await measure();
+  await page.getByRole("button", { name: "A line for each person" }).click();
+  await expect(page.getByTestId("year-detail")).toHaveCount(0);
+  expect(await measure()).toEqual(detail);
+  // The same month names in both.
+  await expect(page.getByTestId("year-month-2")).toHaveText("February");
+});

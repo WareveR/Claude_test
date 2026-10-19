@@ -8,7 +8,7 @@ import { PersonAvatar } from "../persons/PersonAvatar";
 import { EntryIcon } from "./EntryBlock";
 import { entriesOn } from "./MonthGrid";
 import { TODAY_PILL, TODAY_TINT } from "./today";
-import { isWeekendColumn, monthColumns, NAMES_COLUMN, YearSheet } from "./YearGrid";
+import { isWeekendColumn, MONTH_NAME, monthColumns, NAMES_COLUMN, YearSheet } from "./YearGrid";
 
 /**
  * The year in detail, in the same 37 Saturday-to-Sunday columns as the year grid: each month
@@ -60,13 +60,13 @@ export function YearDetail({
     day && holidays.has(day) ? "bg-holiday" : isWeekendColumn(c) ? "bg-weekend" : "";
 
   return (
-    <YearSheet corner={corner} cornerWidth="w-28" locale={locale} testId="year-detail">
+    <YearSheet corner={corner} locale={locale} testId="year-detail">
       {Array.from({ length: 12 }, (_, m) => {
         const columns = monthColumns(year, m + 1);
         return (
           <tbody key={m} className="border-t-2 border-line">
             <tr>
-              <th className={`${NAMES_COLUMN} pt-1 pr-1 text-left text-sm font-semibold`}>
+              <th className={`${NAMES_COLUMN} ${MONTH_NAME} pt-1`}>
                 <Link
                   to={monthLink(`${year}-${String(m + 1).padStart(2, "0")}-01`)}
                   data-testid={`year-month-${m + 1}`}
@@ -102,8 +102,12 @@ export function YearDetail({
             </tr>
             {lines.map((line) => (
               <tr key={line.id} data-testid={`year-line-${m + 1}-${line.id}`}>
-                <th className={`${NAMES_COLUMN} truncate py-px pr-1 text-left font-normal`}>
-                  <span className="flex items-center gap-1">
+                <th
+                  title={line.person?.name}
+                  className={`${NAMES_COLUMN} overflow-hidden py-px pr-1 text-left font-normal`}
+                >
+                  {/* The column is narrow: a long name ends in "…", and shows whole on hover. */}
+                  <span className="flex min-w-0 items-center gap-1">
                     {line.person && (
                       <PersonAvatar person={{ ...line.person, photoKey: null }} size={16} />
                     )}
