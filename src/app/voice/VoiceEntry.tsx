@@ -25,7 +25,9 @@ import {
 } from "./speech";
 import { BUTTON } from "../ui/button";
 
-type Create = { outcome: "create"; kind: "entry" | "task"; values: object; summary: string };
+type Proposal = { kind: "entry" | "task"; values: object; summary: string };
+/** A new Entry or Task, and any more the same sentence named ("me at 10, my wife at 11"). */
+type Create = Proposal & { outcome: "create"; more?: Proposal[] };
 type Req = { method: "PUT" | "POST" | "DELETE"; path: string; body?: unknown };
 type Plan = {
   kind: "entry" | "task";
@@ -56,6 +58,7 @@ type Scope = "this" | "following" | "all";
 type Toast = { undo: (() => Promise<void>) | null; shopping?: boolean };
 
 const route = (kind: "entry" | "task") => (kind === "entry" ? "entries" : "tasks");
+const proposalsOf = (create: Create): Proposal[] => [create, ...(create.more ?? [])];
 
 /** The header's microphone: opens the Voice Entry sheet, and shows the "Saved · Undo" toast. */
 export function VoiceEntry() {
@@ -133,33 +136,50 @@ export function VoiceEntry() {
     void navigate(kind === "entry" ? "/entries/new" : "/tasks/new", { state: { values } });
   };
 
+  /** Undoes the Entries and Tasks saved so far. */
+  const unsave = async (saved: { kind: "entry" | "task"; id: string }[]) => {
+    try {
+      for (const s of saved) await api(`/${route(s.kind)}/${s.id}`, { method: "DELETE" });
+    } finally {
+      await invalidate();
+    }
+  };
+
   async function save(create: Create) {
     if (saving.current) return;
     saving.current = true;
     stopAll();
     setError(false);
+    const saved: { kind: "entry" | "task"; id: string }[] = [];
     try {
-      const saved = await api<{ id: string }>(`/${route(create.kind)}`, {
-        method: "POST",
-        body: create.values,
-      });
+      for (const p of proposalsOf(create)) {
+        const { id } = await api<{ id: string }>(`/${route(p.kind)}`, {
+          method: "POST",
+          body: p.values,
+        });
+        saved.push({ kind: p.kind, id });
+      }
       await invalidate();
       close();
-      const undo = async () => {
-        try {
-          await api(`/${route(create.kind)}/${saved.id}`, { method: "DELETE" });
-        } finally {
-          await invalidate();
-        }
-      };
-      setToast({ undo });
+      setToast({ undo: () => unsave(saved) });
     } catch {
+      // All or nothing: those saved before the failure are taken back.
+      if (saved.length > 0) await unsave(saved).catch(() => {});
       setError(true);
       setPhase("readback");
     } finally {
       saving.current = false;
     }
   }
+
+  /** Edit opens the form for one; for several it goes back to the sentence. */
+  const edit = (create: Create) => {
+    if (!create.more?.length) return openForm(create.kind, create.values);
+    stopAll();
+    setPending(null);
+    setError(false);
+    setPhase("idle");
+  };
 
   const shoppingSummary = (answer: Shopping) =>
     t("shopping.addFromText", { names: answer.items.map((i) => i.name).join(", ") });
@@ -300,12 +320,12 @@ export function VoiceEntry() {
 
   async function readBack(create: Create) {
     const mine = ++run.current;
-    await speak([create.summary, t("voice.saveQuestion")], lang);
+    await speak([...proposalsOf(create).map((p) => p.summary), t("voice.saveQuestion")], lang);
     if (run.current !== mine || !canListen()) return;
     const answer = await listenOnce(lang);
     if (run.current !== mine) return;
     if (isYes(answer)) void save(create);
-    else if (wantsEdit(answer)) openForm(create.kind, create.values);
+    else if (wantsEdit(answer)) edit(create);
     // Silence or an unclear answer leaves the summary up, with Save and Edit.
   }
 
@@ -521,7 +541,11 @@ export function VoiceEntry() {
                 </>
               ) : phase === "readback" && pending ? (
                 <>
-                  <p data-testid="voice-summary">{pending.summary}</p>
+                  {proposalsOf(pending).map((p, i) => (
+                    <p key={i} data-testid="voice-summary">
+                      {p.summary}
+                    </p>
+                  ))}
                   <p className="text-sm text-muted">{t("voice.saveQuestion")}</p>
                   {error && (
                     <p role="alert" className="text-sm text-overdue">
@@ -539,7 +563,7 @@ export function VoiceEntry() {
                     <button
                       type="button"
                       className="rounded-md border border-line px-4 py-2"
-                      onClick={() => openForm(pending.kind, pending.values)}
+                      onClick={() => edit(pending)}
                     >
                       {t("voice.edit")}
                     </button>

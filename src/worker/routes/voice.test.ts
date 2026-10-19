@@ -142,6 +142,70 @@ describe("Voice Entry: create", () => {
     expect((await browser.post("/tasks", created.values)).status).toBe(201);
   });
 
+  it("makes one Entry for each person when the sentence names several appointments", async () => {
+    const { browser, ana, types } = await family();
+    const rui = (
+      (await (await browser.post("/persons", { name: "Rui", color: "#3d405b" })).json()) as {
+        id: string;
+      }
+    ).id;
+    const massage = (p: Prompt, who: string, time: string) => ({
+      kind: "entry",
+      title: "Massagem",
+      type: numberOf(p, "appointment"),
+      persons: [numberOf(p, who)],
+      date: "2026-10-23",
+      time,
+      endDate: null,
+      endTime: null,
+      allDay: null,
+      location: null,
+      importance: null,
+      repeat: null,
+    });
+    answer = (p) => ({
+      action: "create",
+      ...massage(p, "Rui", "10:00"),
+      others: [massage(p, "Ana", "11:00"), { kind: "entry", title: "" }],
+    });
+    const created = (await (
+      await browser.post("/voice", {
+        sentence: "tenho uma massagem na sexta às 10h e a minha mulher tem outra às 11h",
+      })
+    ).json()) as Created & { more: Created[] };
+    const appointment = types.find((t) => t.builtinKey === "appointment")!.id;
+    expect(created).toMatchObject({
+      outcome: "create",
+      kind: "entry",
+      values: {
+        entryTypeId: appointment,
+        personIds: [rui],
+        time: { startTime: "10:00", endTime: "11:00" },
+      },
+    });
+    // The one without a title is dropped.
+    expect(created.more).toHaveLength(1);
+    expect(created.more[0]).toMatchObject({
+      kind: "entry",
+      values: {
+        title: "Massagem",
+        entryTypeId: appointment,
+        personIds: [ana],
+        time: { startDate: "2026-10-23", startTime: "11:00", endTime: "12:00" },
+      },
+      summary: "Nova entrada: Massagem, para Ana, sexta-feira, 23 de outubro, 11:00",
+    });
+    expect(JSON.stringify(prompts[0])).toContain('"others"');
+    expect((await browser.post("/entries", created.more[0].values)).status).toBe(201);
+
+    answer = (p) => massage(p, "Ana", "11:00");
+    expect(
+      (await (await browser.post("/voice", { sentence: "massagem da Ana" })).json()) as {
+        more: unknown[];
+      },
+    ).toMatchObject({ outcome: "create", more: [] });
+  });
+
   it("drops what makes no sense and fails without a title, so the plain form opens", async () => {
     const { browser } = await family();
     answer = () => ({

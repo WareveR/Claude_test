@@ -9,6 +9,7 @@ import {
   parseVoiceFields,
   taskValues,
   voiceSummary,
+  type VoiceCreate,
 } from "../../core/voice";
 import {
   changedRepetition,
@@ -138,6 +139,9 @@ async function shoppingAnswer(db: Db, names: string[]) {
   };
 }
 
+/** At most this many further Entries or Tasks come from one sentence, after the first. */
+const MAX_MORE = 4;
+
 /** About a minute of compressed speech; a dictated sentence is far shorter. */
 export const MAX_RECORDING = 2 * 1024 * 1024;
 
@@ -241,41 +245,49 @@ voiceRoutes.post("/voice", async (c) => {
 
   const create = parseVoiceCreate(answer, active.length, types.length);
   if (!create) return failed;
-  const personIds = create.persons.map((i) => active[i].id);
-  if (create.kind === "task") {
-    const values = taskValues(create, personIds);
-    return c.json({
-      outcome: "create",
-      kind: "task",
+  const general = types.find((t) => t.builtinKey === "general") ?? types[0];
+  /** One new Entry or Task, as the browser sends it, and how it reads back. */
+  const proposal = (create: VoiceCreate) => {
+    const personIds = create.persons.map((i) => active[i].id);
+    if (create.kind === "task") {
+      const values = taskValues(create, personIds);
+      return {
+        kind: "task" as const,
+        values,
+        summary: voiceSummary(
+          "task",
+          { ...values, date: values.dueDate, time: values.dueTime, allDay: false },
+          names(values.personIds),
+          language,
+        ),
+      };
+    }
+    const type = create.type === null ? general : types[create.type];
+    const values = entryValues(create, type, personIds, today);
+    return {
+      kind: "entry" as const,
       values,
       summary: voiceSummary(
-        "task",
-        { ...values, date: values.dueDate, time: values.dueTime, allDay: false },
+        "entry",
+        {
+          title: values.title,
+          date: values.time.startDate,
+          time: values.time.allDay ? null : values.time.startTime,
+          allDay: values.time.allDay,
+          repetition: values.repetition,
+        },
         names(values.personIds),
         language,
       ),
-    });
-  }
-  const general = types.find((t) => t.builtinKey === "general") ?? types[0];
-  const type = create.type === null ? general : types[create.type];
-  const values = entryValues(create, type, personIds, today);
-  return c.json({
-    outcome: "create",
-    kind: "entry",
-    values,
-    summary: voiceSummary(
-      "entry",
-      {
-        title: values.title,
-        date: values.time.startDate,
-        time: values.time.allDay ? null : values.time.startTime,
-        allDay: values.time.allDay,
-        repetition: values.repetition,
-      },
-      names(values.personIds),
-      language,
-    ),
-  });
+    };
+  };
+  // "I have a massage on Friday at 10 and my wife has one at 11" is two Entries.
+  const more = (Array.isArray(answer.others) ? answer.others : [])
+    .map((o) => parseVoiceCreate(o, active.length, types.length))
+    .filter((o): o is VoiceCreate => o !== null)
+    .slice(0, MAX_MORE)
+    .map(proposal);
+  return c.json({ outcome: "create", ...proposal(create), more });
 });
 
 type Context = {
