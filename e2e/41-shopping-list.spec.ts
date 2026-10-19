@@ -24,7 +24,12 @@ function itemRow(page: Page, name: string) {
 async function addItem(page: Page, name: string) {
   const box = page.getByRole("combobox", { name: "Add to the list" });
   await box.fill(name);
+  // The item shows at once; wait for the server to have it too, so a change to it can't arrive first.
+  const added = page.waitForResponse(
+    (r) => r.url().endsWith("/api/shopping/items") && r.request().method() === "POST",
+  );
   await box.press("Enter");
+  expect((await added).ok()).toBe(true);
   await expect(itemRow(page, name)).toBeVisible();
   await expect(box).toHaveValue("");
 }
