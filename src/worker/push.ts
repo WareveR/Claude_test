@@ -1,4 +1,4 @@
-import { cleanVapidKey } from "../core/vapid-key";
+import { cleanVapidKey, isVapidPrivateKey, isVapidPublicKey } from "../core/vapid-key";
 import type { PushSubscriptionJson } from "./db/schema";
 
 /**
@@ -46,7 +46,16 @@ export function vapidKeys(env: Env): VapidKeys | null {
   const publicKey = cleanVapidKey(vars.VAPID_PUBLIC_KEY ?? "");
   const privateKey = cleanVapidKey(vars.VAPID_PRIVATE_KEY ?? "");
   const subject = vars.VAPID_SUBJECT?.trim();
-  return publicKey && privateKey && subject ? { publicKey, privateKey, subject } : null;
+  if (!publicKey || !privateKey || !subject) return null;
+  // A malformed key would only fail later, in the browser's atob; treat it as not set up.
+  if (!isVapidPublicKey(publicKey) || !isVapidPrivateKey(privateKey)) {
+    console.error(
+      `VAPID keys are malformed (public ${publicKey.length} chars, private ${privateKey.length}); ` +
+        "regenerate them (docs/runbooks/reminders.md)",
+    );
+    return null;
+  }
+  return { publicKey, privateKey, subject };
 }
 
 /** The `Authorization: vapid t=…, k=…` header for one push service, valid 12 hours. */

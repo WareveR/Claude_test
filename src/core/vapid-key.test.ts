@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { base64UrlBytes, cleanVapidKey } from "./vapid-key";
+import { base64UrlBytes, cleanVapidKey, isVapidPrivateKey, isVapidPublicKey } from "./vapid-key";
 
 const key =
   "BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM";
@@ -22,4 +22,17 @@ describe("base64UrlBytes", () => {
     expect(bytes[0]).toBe(4);
   });
   it("accepts padded input", () => expect([...base64UrlBytes("YQ==")]).toEqual([97]));
+});
+
+describe("isVapidPublicKey / isVapidPrivateKey", () => {
+  it("accepts a real pair", () => {
+    expect(isVapidPublicKey(key)).toBe(true);
+    expect(isVapidPrivateKey("gdWrDjYbXXjpht4mfRPqOJgErQkmORrr6iubA6JcNz0")).toBe(true);
+  });
+  it("rejects what atob cannot decode or the wrong length", () => {
+    expect(isVapidPublicKey(key + "A")).toBe(false);
+    expect(isVapidPublicKey("not a key!")).toBe(false);
+    expect(isVapidPublicKey("gdWrDjYbXXjpht4mfRPqOJgErQkmORrr6iubA6JcNz0")).toBe(false);
+    expect(isVapidPrivateKey(key)).toBe(false);
+  });
 });
