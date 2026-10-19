@@ -1,6 +1,7 @@
 {
   "app": {
-    "name": "Family Calendar"
+    "name": "Family Calendar",
+    "testSite": "Test copy"
   },
   "languages": {
     "pt-PT": "Português",
