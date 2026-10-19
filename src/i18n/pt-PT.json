@@ -1,6 +1,7 @@
 {
   "app": {
-    "name": "Calendário da Família"
+    "name": "Calendário da Família",
+    "testSite": "Testes"
   },
   "languages": {
     "pt-PT": "Português",

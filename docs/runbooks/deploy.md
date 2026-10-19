@@ -6,6 +6,8 @@ database `family-calendar` (EU jurisdiction) and the R2 buckets `family-calendar
 `family-calendar-backups`. Secrets: `SETUP_CODE`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`,
 `VAPID_SUBJECT` and, for email, `RESEND_API_KEY` (see [email.md](email.md)).
 
+Pull requests go to a separate test copy first, see [testes.md](testes.md).
+
 ## Deploy
 
 Every push to `main` whose `check` job passes is deployed by the `deploy` job in

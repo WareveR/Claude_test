@@ -17,8 +17,9 @@ export default defineConfig({
     },
     {
       // A fresh local database and the production build, so each run starts at first-run setup.
+      // DEV_TOOLS=1 keeps the test tools in it, as on the test copy (src/app/environment.ts).
       command:
-        "rm -rf .wrangler/state && npm run db:migrate:local && npm run build && npx vite preview --port 4173 --strictPort",
+        "rm -rf .wrangler/state && npm run db:migrate:local && DEV_TOOLS=1 npm run build && npx vite preview --port 4173 --strictPort",
       url: "http://localhost:4173/api/health",
       reuseExistingServer: false,
       timeout: 180_000,

@@ -7,6 +7,7 @@ import { APP_VERSION } from "../../core/version";
 import { formatLocale } from "../../core/languages";
 import { formatPlainDate } from "../../core/plain-date";
 import { api, ApiError } from "../api";
+import { DEV_TOOLS } from "../environment";
 import { useSignedIn } from "../family";
 import { updateNow } from "../offline/service-worker";
 import { BUTTON } from "../ui/button";
@@ -118,7 +119,7 @@ function VersionHistory() {
 
 type TestState = "idle" | "sending" | "sent" | "noPush" | "notSetUp" | "failed";
 
-/** Tests and diagnostics, closed by default: the screen this device draws on and a test notification. */
+/** Tests and diagnostics, on the test copy only and closed by default: the screen this device draws on and a test notification. */
 function Diagnostics() {
   const { t } = useTranslation();
   const screenSize = useSyncExternalStore(onResize, screenLine, () => "");
@@ -196,7 +197,7 @@ export function AppVersionSection() {
         </p>
       )}
       <VersionHistory />
-      <Diagnostics />
+      {DEV_TOOLS && <Diagnostics />}
     </section>
   );
 }
