@@ -80,6 +80,10 @@ _Avoid_: Anniversary, birthdate entry
 How one adult signs in: their own email and password (at least 10 characters, no complexity rules), belonging to one Person. A Person without one, like a child, never signs in. Each Account has a role: the **Owner** (whoever set up the Family; exactly one, the only one who can use the Danger zone), an **Admin** or a **Member**; and a **Dev** switch that shows the tools for testing and diagnosing the app. A forgotten password is recovered by a link sent to the Account's email; the Owner's last resort is a new setup code in the hosting settings. It replaced the Family Password (ADR-0009).
 _Avoid_: User, login, profile, Family Password
 
+**Invite**:
+How a new adult gets an Account: the Owner or an Admin types their email, and optionally their Person, role and Dev, in Settings › Family › Members; a single-use link valid for 7 days goes to that email, where they choose their password and are signed in. Until then the Account is pending and cannot sign in. The Owner and Admins also send a member a new-password link, change roles, Dev and Persons, and remove Accounts (whose devices are signed out; what they made stays), but never change the Owner's Account or another adult's email. Only the Owner hands the Family to another adult, becoming an Admin. Family-wide settings (Public Holidays, bins, Sleeping Hours) and the Error Log are for the Owner and Admins; the Error Log also for anyone with Dev.
+_Avoid_: Sign-up, registration
+
 **Signed-in Device**:
 A browser or device signed in to one Account, holding a session that lasts a year from its last use. Each one is listed and can be signed out on its own: a Member sees their own devices, the Owner and Admins see everyone's. Changing an Account's password signs out all of that Account's devices. A device that is signed out, or finds it has been, deletes its offline copy of the calendar at once.
 _Avoid_: Session, user, client

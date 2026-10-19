@@ -21,6 +21,7 @@ import { RemindersSection } from "./RemindersSection";
 import { FeedsSection } from "./FeedsSection";
 import { PersonsSection } from "../persons/PersonsSection";
 import { AccountSection } from "./AccountSection";
+import { MembersSection } from "./MembersSection";
 import { DevicesSection } from "./DevicesSection";
 import { PasswordSection } from "./PasswordSection";
 import { RecoveryEmailSection } from "./RecoveryEmailSection";
@@ -98,12 +99,15 @@ export function SettingsPage() {
 function AreaContent({ area }: { area: Area }) {
   const { t } = useTranslation();
   const { account } = useSignedIn();
+  // Family-wide settings are for the Owner and Admins.
+  const admin = account.role !== "member";
   switch (area) {
     case "family":
       return (
         <>
           <PersonsSection />
-          <SleepSection />
+          <MembersSection />
+          {admin && <SleepSection />}
           <EntryTypesSection />
           <TemplatesSection />
         </>
@@ -111,9 +115,9 @@ function AreaContent({ area }: { area: Area }) {
     case "calendar":
       return (
         <>
-          <HolidaysSection />
+          {admin && <HolidaysSection />}
           <WeatherSection />
-          <WasteSection />
+          {admin && <WasteSection />}
           <RemindersSection />
           <FeedsSection />
         </>
@@ -135,9 +139,11 @@ function AreaContent({ area }: { area: Area }) {
           <RecoveryEmailSection />
           <DevicesSection />
           <ExportSection />
-          <Link to={paths.errorLog()} className={`${BUTTON} self-start`}>
-            {t("errors.log.open")}
-          </Link>
+          {(admin || account.dev) && (
+            <Link to={paths.errorLog()} className={`${BUTTON} self-start`}>
+              {t("errors.log.open")}
+            </Link>
+          )}
           {account.role === "owner" && <DangerZoneSection />}
         </>
       );

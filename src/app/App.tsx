@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { api, type Status } from "./api";
 import { wipeOfflineCopy } from "./offline/persist";
 import { ConfirmEmailScreen } from "./screens/ConfirmEmailScreen";
+import { InviteScreen } from "./screens/InviteScreen";
 import { NewSetupCodeScreen } from "./screens/NewSetupCodeScreen";
 import { RecoverScreen } from "./screens/RecoverScreen";
 import { SetupScreen } from "./screens/SetupScreen";
@@ -23,6 +24,7 @@ export function App() {
   const path = window.location.pathname;
   if (path === "/recover" && token) return <RecoverScreen token={token} />;
   if (path === "/confirm-email" && token) return <ConfirmEmailScreen token={token} />;
+  if (path === "/invite" && token) return <InviteScreen token={token} />;
 
   if (!status.data) return null;
   if (status.data.familyExists && status.data.newSetupCode) return <NewSetupCodeScreen />;

@@ -75,7 +75,7 @@ export async function setUpFamily(): Promise<TestBrowser> {
 }
 
 /**
- * Adds another Account straight to the database (inviting members comes later) and returns a
+ * Adds another Account straight to the database, skipping the invite, and returns a
  * browser signed in with it.
  */
 export async function addAccount(

@@ -320,14 +320,17 @@ export const checklistTemplate = sqliteTable("checklist_template", {
   changedAt: text("changed_at").notNull(),
 });
 
+export type TokenPurpose = "password" | "email" | "invite";
+
 /**
- * A single-use link sent by email to one Account: choosing a new password (valid 1 hour) or confirming
- * a new recovery email (valid 24 hours). Only the token's hash is kept.
+ * A single-use link sent by email to one Account: choosing a new password (valid 1 hour), confirming
+ * a new recovery email (valid 24 hours) or accepting an invite (valid 7 days). Only the token's hash
+ * is kept.
  */
 export const recoveryToken = sqliteTable("recovery_token", {
   id: text("id").primaryKey(),
   tokenHash: text("token_hash").notNull().unique(),
-  purpose: text("purpose").$type<"password" | "email">().notNull(),
+  purpose: text("purpose").$type<TokenPurpose>().notNull(),
   /** The Account whose password or email it changes. */
   accountId: text("account_id").references(() => account.id, { onDelete: "cascade" }),
   /** The recovery email waiting to be confirmed. */

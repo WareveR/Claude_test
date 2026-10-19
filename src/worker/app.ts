@@ -24,6 +24,7 @@ import { shoppingRoutes } from "./routes/shopping";
 import { relativeRoutes } from "./routes/relatives";
 import { resetRoutes } from "./routes/reset";
 import { accountRoutes } from "./routes/account";
+import { inviteRoutes, memberRoutes } from "./routes/members";
 import { apiSecureHeaders, sameOriginOnly } from "./security";
 import type { AppEnv } from "./types";
 
@@ -50,11 +51,13 @@ for (const path of ["/entries/*", "/tasks/*", "/checklists/*"]) app.use(path, ma
 app.route("/", authRoutes);
 // Before any route group that requires a signed-in device.
 app.route("/", recoveryRoutes);
+app.route("/", inviteRoutes);
 app.route("/", publicFeedRoutes);
 app.route("/", recoveryEmailRoutes);
 app.route("/", deviceRoutes);
 app.route("/", devicesRoutes);
 app.route("/", accountRoutes);
+app.route("/", memberRoutes);
 app.route("/", imageRoutes);
 app.route("/", familyRoutes);
 app.route("/", personRoutes);

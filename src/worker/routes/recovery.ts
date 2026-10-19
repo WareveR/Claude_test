@@ -8,6 +8,7 @@ import { startSession } from "../auth/session";
 import { clearFailures, clientIp, recordFailure, retryAfter } from "../auth/throttle";
 import type { Db } from "../db";
 import { schema } from "../db";
+import type { TokenPurpose } from "../db/schema";
 import { EMAIL_TEXTS, sendEmail } from "../email";
 import { requireDevice } from "../require-device";
 import type { AppEnv } from "../types";
@@ -16,23 +17,23 @@ const HOUR = 60 * 60 * 1000;
 /** At most this many recovery emails an hour, so the form can't flood the inbox. */
 const RECOVERY_EMAILS_PER_HOUR = 3;
 
-async function theFamily(db: Db) {
+export async function theFamily(db: Db) {
   const [family] = await db.select().from(schema.family).limit(1);
   return family;
 }
 
-function textsFor(family: { language: string }) {
+export function textsFor(family: { language: string }) {
   return EMAIL_TEXTS[isLanguage(family.language) ? family.language : "en"];
 }
 
-function link(c: Context<AppEnv>, path: string, token: string) {
+export function link(c: Context<AppEnv>, path: string, token: string) {
   return `${new URL(c.req.url).origin}${path}?token=${token}`;
 }
 
-async function issueToken(
+export async function issueToken(
   db: Db,
   accountId: string,
-  purpose: "password" | "email",
+  purpose: TokenPurpose,
   now: Date,
   lifetime: number,
   newEmail: string | null = null,
@@ -51,7 +52,7 @@ async function issueToken(
 }
 
 /** Uses up a token once; null when unknown, used, expired or for another purpose. */
-async function redeemToken(db: Db, token: unknown, purpose: "password" | "email", now: Date) {
+export async function redeemToken(db: Db, token: unknown, purpose: TokenPurpose, now: Date) {
   if (typeof token !== "string" || !token) return null;
   const [row] = await db
     .select()
@@ -92,7 +93,7 @@ export async function sendPasswordNotice(env: Env, db: Db, account: { email: str
   });
 }
 
-async function accountById(db: Db, id: string): Promise<Account | undefined> {
+export async function accountById(db: Db, id: string): Promise<Account | undefined> {
   const [account] = await db.select().from(schema.account).where(eq(schema.account.id, id));
   return account;
 }

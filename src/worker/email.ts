@@ -53,6 +53,8 @@ type Texts = {
   reportText: (details: string, comment: string) => string;
   summarySubject: (count: number) => string;
   summaryText: (lines: string) => string;
+  inviteSubject: (family: string) => string;
+  inviteText: (family: string, link: string) => string;
 };
 
 /** Emails are written in the Family Language. */
@@ -77,6 +79,9 @@ export const EMAIL_TEXTS: Record<Language, Texts> = {
       count === 1 ? "Houve 1 erro no calendário" : `Houve ${count} erros no calendário`,
     summaryText: (lines) =>
       `Resumo dos erros desde o último resumo:\n\n${lines}\n\nOs detalhes estão em Definições › Registo de erros.`,
+    inviteSubject: (family) => `Convite para o calendário da família ${family}`,
+    inviteText: (family, link) =>
+      `Foste convidado para o calendário da família ${family}.\n\nAbre esta ligação nos próximos 7 dias para escolheres a tua palavra-passe e entrares (só funciona uma vez):\n${link}\n\nDepois entras sempre com este email.`,
   },
   en: {
     recoverySubject: "Choose a new calendar password",
@@ -100,5 +105,8 @@ export const EMAIL_TEXTS: Record<Language, Texts> = {
         : `There were ${count} errors in the calendar`,
     summaryText: (lines) =>
       `Errors since the last summary:\n\n${lines}\n\nThe details are in Settings › Error log.`,
+    inviteSubject: (family) => `Invitation to the ${family} family calendar`,
+    inviteText: (family, link) =>
+      `You were invited to the ${family} family calendar.\n\nOpen this link within 7 days to choose your password and sign in (it works only once):\n${link}\n\nAfterwards you always sign in with this email.`,
   },
 };

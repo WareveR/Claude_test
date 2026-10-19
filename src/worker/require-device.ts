@@ -27,3 +27,9 @@ export const requireOwner = createMiddleware<AppEnv>(async (c, next) => {
   if (c.get("account").role !== "owner") return c.json({ error: "forbidden" }, 403);
   await next();
 });
+
+/** For routes only the Owner and Admins may use; after requireDevice. */
+export const requireAdmin = createMiddleware<AppEnv>(async (c, next) => {
+  if (c.get("account").role === "member") return c.json({ error: "forbidden" }, 403);
+  await next();
+});

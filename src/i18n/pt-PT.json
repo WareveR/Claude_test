@@ -1638,5 +1638,32 @@
       "member": "Membro"
     },
     "isPerson": "Esta conta é de {{name}}."
+  },
+  "invite": {
+    "title": "Junta-te ao calendário da família",
+    "hint": "Escolhe a tua palavra-passe. Depois entras sempre com o email para onde veio o convite.",
+    "password": "A tua palavra-passe",
+    "accept": "Entrar",
+    "invalidLink": "Este convite já não é válido. Pede um novo a quem te convidou."
+  },
+  "members": {
+    "title": "Membros",
+    "hint": "Os adultos que entram no calendário, cada um com o seu email e palavra-passe. As crianças não precisam de conta.",
+    "pending": "Convite pendente",
+    "noPerson": "Nenhuma Pessoa",
+    "role": "Papel",
+    "dev": "Dev: mostra Testes e diagnóstico",
+    "sendReset": "Enviar ligação para nova palavra-passe",
+    "resendInvite": "Reenviar convite",
+    "sent": "Enviámos uma ligação para {{email}}.",
+    "makeOwner": "Passar a Dono",
+    "confirmOwner": "Passar a família para {{email}}? Passas a ser Admin.",
+    "remove": "Remover",
+    "confirmRemove": "Remover {{email}}? Termina a sessão nos seus dispositivos; o que criou fica.",
+    "invite": "Convidar um adulto",
+    "email": "Email",
+    "sendInvite": "Enviar convite",
+    "invited": "Convite enviado para {{email}}. É válido durante 7 dias.",
+    "emailFailed": "O email não foi enviado. Tenta reenviar o convite."
   }
 }

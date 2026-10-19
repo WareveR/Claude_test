@@ -1638,5 +1638,32 @@
       "member": "Member"
     },
     "isPerson": "This account belongs to {{name}}."
+  },
+  "invite": {
+    "title": "Join the family calendar",
+    "hint": "Choose your password. Afterwards you always sign in with the email the invite came to.",
+    "password": "Your password",
+    "accept": "Sign in",
+    "invalidLink": "This invite is no longer valid. Ask whoever invited you for a new one."
+  },
+  "members": {
+    "title": "Members",
+    "hint": "The adults who sign in to the calendar, each with their own email and password. Children don't need an account.",
+    "pending": "Invite pending",
+    "noPerson": "No Person",
+    "role": "Role",
+    "dev": "Dev: shows Tests and diagnostics",
+    "sendReset": "Send a new-password link",
+    "resendInvite": "Send the invite again",
+    "sent": "We sent a link to {{email}}.",
+    "makeOwner": "Make Owner",
+    "confirmOwner": "Hand the family to {{email}}? You become an Admin.",
+    "remove": "Remove",
+    "confirmRemove": "Remove {{email}}? Their devices are signed out; what they made stays.",
+    "invite": "Invite an adult",
+    "email": "Email",
+    "sendInvite": "Send invite",
+    "invited": "Invite sent to {{email}}. It is valid for 7 days.",
+    "emailFailed": "The email was not sent. Try sending the invite again."
   }
 }

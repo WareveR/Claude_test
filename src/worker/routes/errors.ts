@@ -112,7 +112,10 @@ errorRoutes.post("/errors", async (c) => {
   return c.body(null, 204);
 });
 
+/** The list is for the Owner, Admins and anyone with Dev on. */
 errorRoutes.get("/errors", async (c) => {
+  const account = c.get("account");
+  if (account.role === "member" && !account.dev) return c.json({ error: "forbidden" }, 403);
   const since = new Date(c.get("now").getTime() - ERROR_LOG_DAYS * DAY).toISOString();
   const rows = await c
     .get("db")

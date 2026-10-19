@@ -130,7 +130,7 @@ authRoutes.post("/session", async (c) => {
   const account = await accountByEmail(db, normalEmail(body.email));
   // An unknown email and a wrong password look the same, so neither leaks who has an Account.
   const password = String(body.password ?? "");
-  const matches = await verifyPassword(password, account?.passwordHash ?? NO_ACCOUNT_HASH);
+  const matches = await verifyPassword(password, account?.passwordHash || NO_ACCOUNT_HASH);
   if (!account || !matches) {
     await recordFailure(db, ip, now);
     return c.json({ error: "wrong_password" }, 401);
