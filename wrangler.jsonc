@@ -37,33 +37,4 @@
   },
   "triggers": { "crons": ["*/5 * * * *"] },
   "observability": { "enabled": true },
-  // The test copy (docs/runbooks/testes.md): every pull request deploys here first, with its own
-  // database, buckets and keys, so nothing in it ever touches the Family's data. Build it with
-  // CLOUDFLARE_ENV=testes. Bindings aren't inherited, so each one is repeated.
-  "env": {
-    "testes": {
-      "name": "family-calendar-testes",
-      "routes": [{ "pattern": "calendario-testes.phinest.org", "custom_domain": true }],
-      "d1_databases": [
-        {
-          "binding": "DB",
-          "database_name": "family-calendar-testes",
-          // Filled in by scripts/testes-resources.sh, which creates the database the first time.
-          "database_id": "TESTES_DATABASE_ID",
-          "migrations_dir": "migrations",
-        },
-      ],
-      "r2_buckets": [
-        { "binding": "IMAGES", "bucket_name": "family-calendar-testes-images" },
-        { "binding": "BACKUPS", "bucket_name": "family-calendar-testes-backups" },
-      ],
-      "ai": { "binding": "AI" },
-      "send_email": [{ "name": "EMAIL" }],
-      "vars": {
-        "EMAIL_FROM": "calendario@phinest.org",
-        "OPEN_METEO_FORECAST_URL": "https://api.open-meteo.com",
-        "OPEN_METEO_GEOCODING_URL": "https://geocoding-api.open-meteo.com",
-      },
-    },
-  },
 }
