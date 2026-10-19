@@ -11,7 +11,7 @@ import { allEntries } from "./entries";
 import { personMentionChecks } from "./persons";
 
 /** What a Private Entry is called in a Feed, in the Family Language. */
-const BUSY: Record<string, string> = { "pt-PT": "Ocupado", en: "Busy" };
+export const BUSY: Record<string, string> = { "pt-PT": "Ocupado", en: "Busy" };
 
 function feedUrl(c: Context<AppEnv>, secret: string) {
   return `${new URL(c.req.url).origin}/api/feed/${secret}.ics`;

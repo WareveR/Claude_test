@@ -119,7 +119,8 @@ function TaskPopup({ id, onClose }: { id: string; onClose: () => void }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
   const data = task.data;
-  const hidden = wall && data?.private;
+  // On the wall a Private Task shows only "Private"; one hidden from this Account, also its Persons.
+  const hidden = (wall && data?.private) || data?.hidden;
   const people = (data?.personIds ?? [])
     .map((pid) => persons.data?.find((p) => p.id === pid))
     .filter((p) => p !== undefined);
@@ -177,7 +178,7 @@ function TaskPopup({ id, onClose }: { id: string; onClose: () => void }) {
                 })}
               </p>
             )}
-            {!hidden && people.length > 0 && (
+            {(!hidden || (data.hidden && !wall)) && people.length > 0 && (
               <p className="flex flex-wrap items-center gap-2 text-sm">
                 {people.map((p) => (
                   <span key={p.id} className="flex items-center gap-1">
@@ -198,7 +199,7 @@ function TaskPopup({ id, onClose }: { id: string; onClose: () => void }) {
           </div>
         )}
         <div className="flex justify-end gap-2">
-          {!wall && (
+          {!wall && !data?.hidden && (
             <Link to={`/tasks/${id}`} className={BUTTON_PRIMARY} data-help="edit">
               {t("entries.edit")}
             </Link>

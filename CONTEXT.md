@@ -33,7 +33,7 @@ How prominent an Entry is in the views: Low, Normal or High.
 _Avoid_: Priority, urgency
 
 **Private**:
-A switch on an Entry or Task for things not everyone should see, such as a medical appointment. On a Signed-in Device it shows as usual, except in Display Mode, where only "Private" and its time show; the Calendar Feed shows it as "Busy", its Reminders say only the time ("Reminder at 10:00"), and it is left out of the Briefing.
+A switch on an Entry or Task for things not everyone should see, such as a medical appointment. It is seen in full by whoever made it and by the Accounts of the Persons it is for; every other Account sees only "Private", its time and its Persons, and can't open, change, tick or delete it, nor find it by voice, and its Export blanks it. Even those who may see it get only "Private" and its time in Display Mode; the Calendar Feed shows it as "Busy", its Reminders say only the time ("Reminder at 10:00"), and it is left out of the Briefing.
 _Avoid_: Hidden, secret, confidential
 
 **Timed Entry**:

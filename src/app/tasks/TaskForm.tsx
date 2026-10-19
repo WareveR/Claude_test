@@ -36,6 +36,8 @@ export function TaskPage() {
   // A Checklist's items are simple and live on their Checklist's page.
   if (checklistId) return <Navigate to={`/checklists/${checklistId}`} replace />;
   if (!isNew && !readyToEdit(task)) return null;
+  // A Private Task hidden from this Account isn't for editing.
+  if (task.data?.hidden) return <Navigate to="/tasks" replace />;
   return <TaskForm key={isNew ? `new:${location.key}` : id} task={isNew ? undefined : task.data} />;
 }
 

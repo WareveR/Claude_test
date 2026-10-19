@@ -42,7 +42,7 @@ export function spotAt(x: number, y: number): Spot | null {
 
 /** Whether an Occurrence can be dragged: Checklist bars and synced Birthdays can't. */
 export function isMovable(entry: Shown): boolean {
-  return !entry.href && !entry.birthdayPersonId;
+  return !entry.href && !entry.birthdayPersonId && !entry.hidden;
 }
 
 /** The new time of an Occurrence picked up at one spot and held over another. */

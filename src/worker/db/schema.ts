@@ -169,6 +169,8 @@ export const entry = sqliteTable("entry", {
   /** Overrides the Entry Type's icon; from the app's fixed set. */
   icon: text("icon"),
   private: integer("private", { mode: "boolean" }).notNull().default(false),
+  /** Who made it; a Private one is seen in full only by them and its Persons' Accounts. */
+  createdBy: text("created_by").references(() => account.id, { onDelete: "set null" }),
   reminders: text("reminders", { mode: "json" }).$type<ReminderOffset[]>().notNull(),
   repetition: text("repetition", { mode: "json" }).$type<Repetition | null>(),
   /** Links the Entries a "this and the following" change split one series into. */
@@ -223,6 +225,8 @@ export const task = sqliteTable("task", {
   dueDate: text("due_date"),
   dueTime: text("due_time"),
   private: integer("private", { mode: "boolean" }).notNull().default(false),
+  /** Who made it; a Private one is seen in full only by them and its Persons' Accounts. */
+  createdBy: text("created_by").references(() => account.id, { onDelete: "set null" }),
   doneAt: text("done_at"),
   /** A repeating Task brings up the next one when ticked; needs a due date. */
   repetition: text("repetition", { mode: "json" }).$type<Repetition | null>(),

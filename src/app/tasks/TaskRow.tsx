@@ -51,7 +51,7 @@ export function TaskRow({
         className="-my-2 -ml-2"
         aria-label={t("tasks.tick", { title: task.title })}
         checked={done}
-        disabled={tick.isPending || !online}
+        disabled={tick.isPending || !online || task.hidden}
         onChange={(e) => {
           setTicking(e.target.checked);
           tick.mutate({ task, done: e.target.checked }, { onSettled: () => setTicking(null) });

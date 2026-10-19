@@ -50,7 +50,8 @@ export function EntrySummary({
     entry.data.repetition && occurrence && isPlainDate(occurrence)
       ? (occurrenceValues(entry.data, occurrence) ?? entry.data)
       : entry.data;
-  const hidden = discreet && shown.private;
+  // On the wall a Private Entry shows only its time; one hidden from this Account, also its Persons.
+  const hidden = (discreet && shown.private) || Boolean(shown.hidden);
   const day = { weekday: "long", day: "numeric", month: "long", year: "numeric" } as const;
   const when = [
     formatPlainDate(shown.time.startDate, locale, day),
@@ -75,6 +76,16 @@ export function EntrySummary({
   const people = shown.personIds
     .map((pid) => persons.data?.find((p) => p.id === pid))
     .filter((p) => p !== undefined);
+  const personList = people.length > 0 && (
+    <ul className="flex flex-wrap gap-3">
+      {people.map((p) => (
+        <li key={p.id} className="flex items-center gap-2">
+          <PersonAvatar person={p} size={28} />
+          {p.name}
+        </li>
+      ))}
+    </ul>
+  );
   return (
     <div className="flex flex-col gap-3" data-testid="entry-summary">
       <div className="flex items-center gap-3">
@@ -122,16 +133,7 @@ export function EntrySummary({
               {t("entries.importantHigh")}
             </p>
           )}
-          {people.length > 0 && (
-            <ul className="flex flex-wrap gap-3">
-              {people.map((p) => (
-                <li key={p.id} className="flex items-center gap-2">
-                  <PersonAvatar person={p} size={28} />
-                  {p.name}
-                </li>
-              ))}
-            </ul>
-          )}
+          {personList}
           {shown.location && (
             <p className="flex items-start gap-1.5">
               <MapPin
@@ -147,8 +149,11 @@ export function EntrySummary({
           {shown.notes && <p className="whitespace-pre-wrap">{shown.notes}</p>}
         </>
       )}
-      {!discreet && <EntryPreparation entryId={id} readOnly />}
-      {!discreet && <EntryShopping title={shown.title} type={type?.builtinKey ?? null} />}
+      {hidden && shown.hidden && !discreet && personList}
+      {!discreet && !shown.hidden && <EntryPreparation entryId={id} readOnly />}
+      {!discreet && !shown.hidden && (
+        <EntryShopping title={shown.title} type={type?.builtinKey ?? null} />
+      )}
     </div>
   );
 }

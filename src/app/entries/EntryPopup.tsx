@@ -5,6 +5,7 @@ import { Link } from "react-router";
 import { useDisplayMode } from "../display/mode";
 import { BUTTON, BUTTON_PRIMARY } from "../ui/button";
 import { EntrySummary } from "./EntrySummary";
+import { useEntry } from "./model";
 
 /** An Entry shown over the page, with Edit (not on the wall) and Back; Esc closes too. */
 export function EntryPopup({
@@ -18,6 +19,8 @@ export function EntryPopup({
 }) {
   const { t } = useTranslation();
   const wall = useDisplayMode();
+  // A Private Entry hidden from this Account can't be edited.
+  const hidden = Boolean(useEntry(id).data?.hidden);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
@@ -37,7 +40,7 @@ export function EntryPopup({
       >
         <EntrySummary id={id} occurrence={occurrence} discreet={wall} titleId="entry-popup-title" />
         <div className="flex justify-end gap-2">
-          {!wall && (
+          {!wall && !hidden && (
             <Link
               to={`/entries/${id}?occurrence=${occurrence}`}
               className={BUTTON_PRIMARY}

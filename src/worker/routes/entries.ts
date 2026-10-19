@@ -9,6 +9,8 @@ import type { Db } from "../db";
 import { inParts, schema } from "../db";
 import { dropUntouchedPreparation, prepareEntry } from "../preparation";
 import { announceLater } from "../announce";
+import type { Account } from "../auth/account";
+import { seesInFull } from "../private";
 import { requireDevice } from "../require-device";
 import type { AppEnv } from "../types";
 import { entryTypeDeleteSteps } from "./entry-types";
@@ -142,6 +144,7 @@ export function present(row: EntryRow, personIds: string[], exceptions: Exceptio
     notes: row.notes,
     icon: row.icon,
     private: row.private,
+    createdBy: row.createdBy,
     reminders: row.reminders,
     repetition: row.repetition ?? null,
     seriesId: row.seriesId,
@@ -157,6 +160,36 @@ export function present(row: EntryRow, personIds: string[], exceptions: Exceptio
   };
 }
 
+export type PresentedEntry = ReturnType<typeof present>;
+
+const BLANK = { title: "", location: "", notes: "" };
+
+/**
+ * An Entry as this Account may see it. A Private one it may not see in full keeps only its
+ * time, Persons and Repetition, marked hidden; so does an Occurrence edited alone to be Private.
+ */
+export function forViewer(viewer: Account, entry: PresentedEntry) {
+  const hidden = !seesInFull(viewer, entry, entry.personIds);
+  const shown = hidden ? { ...entry, ...BLANK, icon: null, reminders: [] } : entry;
+  return {
+    ...shown,
+    hidden,
+    exceptions: entry.exceptions.map((e) => {
+      const override = e.override as { private?: boolean; personIds?: string[] } | null;
+      const hideOverride =
+        override &&
+        (hidden ||
+          (override.private &&
+            !seesInFull(
+              viewer,
+              { private: true, createdBy: entry.createdBy },
+              override.personIds ?? entry.personIds,
+            )));
+      return hideOverride ? { ...e, override: { ...override, ...BLANK, hidden: true } } : e;
+    }),
+  };
+}
+
 function groupBy<T>(items: T[], key: (item: T) => string): Map<string, T[]> {
   const groups = new Map<string, T[]>();
   for (const item of items) {
@@ -167,7 +200,7 @@ function groupBy<T>(items: T[], key: (item: T) => string): Map<string, T[]> {
   return groups;
 }
 
-async function withPersons(db: Db, rows: EntryRow[]) {
+async function withPersons(db: Db, rows: EntryRow[], viewer: Account) {
   if (rows.length === 0) return [];
   const repeating = rows.filter((r) => r.repetition).map((r) => r.id);
   // Both reads at once, then grouped by Entry: a year's window holds hundreds of Entries.
@@ -186,10 +219,13 @@ async function withPersons(db: Db, rows: EntryRow[]) {
   const personsOf = groupBy(links, (l) => l.entryId);
   const exceptionsOf = groupBy(exceptions, (e) => e.entryId);
   return rows.map((row) =>
-    present(
-      row,
-      (personsOf.get(row.id) ?? []).map((l) => l.personId),
-      exceptionsOf.get(row.id) ?? [],
+    forViewer(
+      viewer,
+      present(
+        row,
+        (personsOf.get(row.id) ?? []).map((l) => l.personId),
+        exceptionsOf.get(row.id) ?? [],
+      ),
     ),
   );
 }
@@ -277,7 +313,7 @@ entryRoutes.get("/entries", async (c) => {
   const db = c.get("db");
   if (typeId) {
     const rows = await db.select().from(schema.entry).where(eq(schema.entry.entryTypeId, typeId));
-    return c.json(await withPersons(db, rows));
+    return c.json(await withPersons(db, rows, c.get("account")));
   }
   if (!isPlainDate(from) || !isPlainDate(to) || to < from) {
     return c.json({ error: "invalid", field: "window" }, 400);
@@ -294,7 +330,7 @@ entryRoutes.get("/entries", async (c) => {
         ),
       ),
     );
-  return c.json(await withPersons(db, rows));
+  return c.json(await withPersons(db, rows, c.get("account")));
 });
 
 entryRoutes.get("/entries/:id", async (c) => {
@@ -304,7 +340,7 @@ entryRoutes.get("/entries/:id", async (c) => {
     .from(schema.entry)
     .where(eq(schema.entry.id, c.req.param("id")));
   if (rows.length === 0) return c.json({ error: "not_found" }, 404);
-  return c.json((await withPersons(db, rows))[0]);
+  return c.json((await withPersons(db, rows, c.get("account")))[0]);
 });
 
 entryRoutes.post("/entries", async (c) => {
@@ -315,9 +351,13 @@ entryRoutes.post("/entries", async (c) => {
   const id = randomId();
   const now = c.get("now").toISOString();
   await db.batch([
-    db
-      .insert(schema.entry)
-      .values({ id, ...columns(parsed.values), createdAt: now, changedAt: now }),
+    db.insert(schema.entry).values({
+      id,
+      ...columns(parsed.values),
+      createdBy: c.get("account").id,
+      createdAt: now,
+      changedAt: now,
+    }),
     ...personLinks(db, id, parsed.values.personIds),
   ]);
   // A new Entry gets the predefined list its title or type calls for, unless the caller says not.
@@ -328,7 +368,7 @@ entryRoutes.post("/entries", async (c) => {
   const { title, personIds } = parsed.values;
   announceLater(c, { kind: "entry", id, title, private: parsed.values.private, personIds });
   const rows = await db.select().from(schema.entry).where(eq(schema.entry.id, id));
-  return c.json((await withPersons(db, rows))[0], 201);
+  return c.json((await withPersons(db, rows, c.get("account")))[0], 201);
 });
 
 entryRoutes.put("/entries/:id", async (c) => {
@@ -336,6 +376,8 @@ entryRoutes.put("/entries/:id", async (c) => {
   const id = c.req.param("id");
   const [existing] = await db.select().from(schema.entry).where(eq(schema.entry.id, id));
   if (!existing) return c.json({ error: "not_found" }, 404);
+  if (!(await mayChangeEntry(db, c.get("account"), existing)))
+    return c.json({ error: "private" }, 403);
   const parsed = await parseEntry(db, await c.req.json().catch(() => ({})));
   if (!parsed.values) return c.json({ error: "invalid", ...parsed }, 400);
   const field = existing.birthdayPersonId && lockedChange(existing, parsed.values);
@@ -349,7 +391,7 @@ entryRoutes.put("/entries/:id", async (c) => {
     ...personLinks(db, id, parsed.values.personIds),
   ]);
   const rows = await db.select().from(schema.entry).where(eq(schema.entry.id, id));
-  return c.json((await withPersons(db, rows))[0]);
+  return c.json((await withPersons(db, rows, c.get("account")))[0]);
 });
 
 /**
@@ -359,6 +401,8 @@ entryRoutes.put("/entries/:id", async (c) => {
 entryRoutes.delete("/entries/:id", async (c) => {
   const db = c.get("db");
   const row = await loadEntry(db, c.req.param("id"));
+  if (row && !(await mayChangeEntry(db, c.get("account"), row)))
+    return c.json({ error: "private" }, 403);
   if (row?.birthdayPersonId) return c.json({ error: "birthday_locked" }, 409);
   if (row) await dropUntouchedPreparation(db, row.id, row.createdAt);
   const deleted = await db
@@ -374,9 +418,23 @@ async function loadEntry(db: Db, id: string) {
   return row;
 }
 
-async function presentOne(db: Db, id: string) {
+async function presentOne(db: Db, id: string, viewer: Account) {
   const rows = await db.select().from(schema.entry).where(eq(schema.entry.id, id));
-  return (await withPersons(db, rows))[0];
+  return (await withPersons(db, rows, viewer))[0];
+}
+
+/** Whether this Account may change or delete the Entry: not when it is Private and hidden from it. */
+export async function mayChangeEntry(db: Db, viewer: Account, row: EntryRow) {
+  if (!row.private) return true;
+  const links = await db
+    .select({ personId: schema.entryPerson.personId })
+    .from(schema.entryPerson)
+    .where(eq(schema.entryPerson.entryId, row.id));
+  return seesInFull(
+    viewer,
+    row,
+    links.map((l) => l.personId),
+  );
 }
 
 /** Whether `date` is one of the series' Occurrences. */
@@ -401,6 +459,7 @@ entryRoutes.put("/entries/:id/occurrences/:date", async (c) => {
   const { id, date } = c.req.param();
   const row = await loadEntry(db, id);
   if (!row || !isOccurrence(row, date)) return c.json({ error: "not_found" }, 404);
+  if (!(await mayChangeEntry(db, c.get("account"), row))) return c.json({ error: "private" }, 403);
   if (row.birthdayPersonId) return c.json({ error: "birthday_locked" }, 409);
   const parsed = await parseEntry(db, await c.req.json().catch(() => ({})));
   if (!parsed.values) return c.json({ error: "invalid", ...parsed }, 400);
@@ -419,7 +478,7 @@ entryRoutes.put("/entries/:id/occurrences/:date", async (c) => {
     .update(schema.entry)
     .set({ changedAt: c.get("now").toISOString() })
     .where(eq(schema.entry.id, id));
-  return c.json(await presentOne(db, id));
+  return c.json(await presentOne(db, id, c.get("account")));
 });
 
 /** "This Occurrence": skip one Occurrence. */
@@ -428,6 +487,7 @@ entryRoutes.delete("/entries/:id/occurrences/:date", async (c) => {
   const { id, date } = c.req.param();
   const row = await loadEntry(db, id);
   if (!row || !isOccurrence(row, date)) return c.json({ error: "not_found" }, 404);
+  if (!(await mayChangeEntry(db, c.get("account"), row))) return c.json({ error: "private" }, 403);
   if (row.birthdayPersonId) return c.json({ error: "birthday_locked" }, 409);
   await db
     .insert(schema.occurrenceException)
@@ -448,6 +508,7 @@ entryRoutes.post("/entries/:id/following/:date", async (c) => {
   const { id, date } = c.req.param();
   const row = await loadEntry(db, id);
   if (!row || !isOccurrence(row, date)) return c.json({ error: "not_found" }, 404);
+  if (!(await mayChangeEntry(db, c.get("account"), row))) return c.json({ error: "private" }, 403);
   if (row.birthdayPersonId) return c.json({ error: "birthday_locked" }, 409);
   const parsed = await parseEntry(db, await c.req.json().catch(() => ({})));
   if (!parsed.values) return c.json({ error: "invalid", ...parsed }, 400);
@@ -468,9 +529,14 @@ entryRoutes.post("/entries/:id/following/:date", async (c) => {
   const nothingLeft =
     date === row.startDate || (oldEnd.end.type === "count" && oldEnd.end.count === 0);
   await db.batch([
-    db
-      .insert(schema.entry)
-      .values({ id: newId, ...columns(values), seriesId, createdAt: now, changedAt: now }),
+    db.insert(schema.entry).values({
+      id: newId,
+      ...columns(values),
+      seriesId,
+      createdBy: row.createdBy,
+      createdAt: now,
+      changedAt: now,
+    }),
     ...personLinks(db, newId, values.personIds),
     db
       .update(schema.occurrenceException)
@@ -488,7 +554,7 @@ entryRoutes.post("/entries/:id/following/:date", async (c) => {
           .set({ repetition: oldEnd, seriesId, changedAt: now })
           .where(eq(schema.entry.id, id)),
   ]);
-  return c.json(await presentOne(db, newId), 201);
+  return c.json(await presentOne(db, newId, c.get("account")), 201);
 });
 
 /** "This and the following" for deleting: the series ends the day before. */
@@ -497,6 +563,7 @@ entryRoutes.delete("/entries/:id/following/:date", async (c) => {
   const { id, date } = c.req.param();
   const row = await loadEntry(db, id);
   if (!row || !isOccurrence(row, date)) return c.json({ error: "not_found" }, 404);
+  if (!(await mayChangeEntry(db, c.get("account"), row))) return c.json({ error: "private" }, 403);
   if (row.birthdayPersonId) return c.json({ error: "birthday_locked" }, 409);
   const oldEnd = endBefore(row, date);
   if (date === row.startDate || (oldEnd.end.type === "count" && oldEnd.end.count === 0)) {
