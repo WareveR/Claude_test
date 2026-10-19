@@ -188,6 +188,15 @@ export async function writeBriefing(
   }
 }
 
+const REPEAT_SCHEMA = {
+  type: ["object", "null"],
+  properties: {
+    frequency: { type: "string", enum: ["daily", "weekly", "monthly", "yearly"] },
+    interval: { type: "integer" },
+    weekdays: { type: ["array", "null"], items: { type: "integer" } },
+  },
+};
+
 const VOICE_SCHEMA = {
   type: "object",
   properties: {
@@ -203,20 +212,34 @@ const VOICE_SCHEMA = {
     allDay: { type: ["boolean", "null"] },
     location: { type: ["string", "null"] },
     importance: { type: ["string", "null"], enum: ["low", "normal", "high", null] },
-    repeat: {
-      type: ["object", "null"],
-      properties: {
-        frequency: { type: "string", enum: ["daily", "weekly", "monthly", "yearly"] },
-        interval: { type: "integer" },
-        weekdays: { type: ["array", "null"], items: { type: "integer" } },
-      },
-    },
+    repeat: REPEAT_SCHEMA,
     done: { type: ["boolean", "null"] },
     targets: { type: "array", items: { type: "integer" } },
     several: { type: "boolean" },
     on: { type: ["string", "null"] },
     scope: { type: ["string", "null"], enum: ["this", "following", null] },
     items: { type: "array", items: { type: "string" } },
+    others: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          kind: { type: "string", enum: ["entry", "task"] },
+          title: { type: "string" },
+          type: { type: ["integer", "null"] },
+          persons: { type: "array", items: { type: "integer" } },
+          date: { type: ["string", "null"] },
+          time: { type: ["string", "null"] },
+          endDate: { type: ["string", "null"] },
+          endTime: { type: ["string", "null"] },
+          allDay: { type: ["boolean", "null"] },
+          location: { type: ["string", "null"] },
+          importance: { type: ["string", "null"], enum: ["low", "normal", "high", null] },
+          repeat: REPEAT_SCHEMA,
+        },
+        required: ["kind", "title", "type", "persons", "date", "time", "allDay"],
+      },
+    },
   },
   required: ["action", "kind", "title", "type", "persons", "date", "time", "allDay", "targets"],
 };
@@ -252,6 +275,7 @@ export function voicePrompt(context: VoiceContext) {
         "Give dates as YYYY-MM-DD and times as HH:mm (24-hour), worked out from today's date; null when the sentence doesn't say.",
         '"persons" lists the numbers of the people it is for; "type" is the number of the best entry type, or null.',
         '"repeat" only when the sentence says it repeats; weekdays are 0 = Monday … 6 = Sunday.',
+        'For "create", when the sentence names two or more separate things, at different times or for different people each with their own ("I have a massage on Friday at 10 and my wife has one at 11"), the main fields hold the first and "others" holds each of the rest, every one complete with its own kind, title, type, persons, date and time; one thing the people do together stays one item and "others" is empty.',
         '"shopping" is for buying things or adding them to the shopping list when no day or time is said ("buy milk and eggs", "we\'re out of bread"): "items" lists each thing, short, in the sentence\'s language, without verbs.',
         'For "change": "targets" lists the numbers of the existing items the sentence may mean (all that fit, best first; empty if none); "several" is true when the sentence asks to change two or more different items; "on" is the date of the one occurrence meant for a repeating item, if said; "scope" is "this" for only this time, "following" for from now on, null if not said. Fill only the fields that change and leave the rest null (title only when renamed, persons empty unless they change); "done": true when a task is done.',
         "Answer only with JSON matching the schema.",

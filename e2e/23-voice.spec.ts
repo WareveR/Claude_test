@@ -68,6 +68,52 @@ test("readback shows the summary, Save saves and Undo removes it", async ({ page
   await expect(page.getByText("Voice buy stamps")).toHaveCount(0);
 });
 
+test("one sentence naming two things saves both, and Undo removes both", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/tasks");
+  const task = (title: string) => ({
+    kind: "task",
+    values: {
+      title,
+      notes: "",
+      dueDate: "2026-10-20",
+      dueTime: null,
+      personIds: [],
+      private: false,
+      repetition: null,
+      checklistId: null,
+    },
+    summary: `New task: ${title}, 20 October`,
+  });
+  await page.route("**/api/voice", (route) =>
+    route.fulfill({
+      json: { outcome: "create", ...task("Voice call bank"), more: [task("Voice call school")] },
+    }),
+  );
+  let dialog = await say(page, "call the bank and the school");
+  await expect(dialog.getByText("New task: Voice call bank, 20 October")).toBeVisible();
+  await expect(dialog.getByText("New task: Voice call school, 20 October")).toBeVisible();
+  // Edit goes back to the sentence, since the form holds only one.
+  await dialog.getByRole("button", { name: "Edit" }).click();
+  await expect(dialog.getByLabel("Say or type one sentence")).toHaveValue(
+    "call the bank and the school",
+  );
+  await page.keyboard.press("Escape");
+
+  dialog = await say(page, "call the bank and the school");
+  await dialog.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.getByText("Voice call bank")).toBeVisible();
+  await expect(page.getByText("Voice call school")).toBeVisible();
+  await page
+    .getByRole("status")
+    .filter({ hasText: "Saved" })
+    .getByRole("button", { name: "Undo" })
+    .click();
+  await expect(page.getByText("Voice call bank")).toHaveCount(0);
+  await expect(page.getByText("Voice call school")).toHaveCount(0);
+});
+
 test("readback speaks the summary and the question as two sentences", async ({ page }) => {
   // A stand-in voice that records each sentence and finishes it at once.
   await page.addInitScript(`
