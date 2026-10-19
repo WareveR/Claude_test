@@ -71,16 +71,10 @@ function releases(): string {
   }
 }
 
-/** A build for the test copy of the app (wrangler.jsonc's "testes" environment). */
-const testSite = process.env.CLOUDFLARE_ENV === "testes";
-
 export default defineConfig({
   define: {
     // Shown in Settings, error details and the Error Log.
     __APP_VERSION__: JSON.stringify(appVersion()),
-    // src/app/environment.ts: the test tools show on the test copy and in the e2e build only.
-    __TEST_SITE__: JSON.stringify(testSite),
-    __DEV_TOOLS__: JSON.stringify(testSite || process.env.DEV_TOOLS === "1"),
   },
   plugins: [
     {
@@ -103,9 +97,8 @@ export default defineConfig({
       injectRegister: false,
       includeAssets: ["icon.svg", "apple-touch-icon.png"],
       manifest: {
-        // The test copy installs under its own name, so the two can't be mixed up on a phone.
-        name: testSite ? "Family Calendar (testes)" : "Family Calendar",
-        short_name: testSite ? "Testes" : "Calendar",
+        name: "Family Calendar",
+        short_name: "Calendar",
         lang: "pt-PT",
         start_url: "/",
         scope: "/",

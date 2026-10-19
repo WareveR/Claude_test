@@ -14,7 +14,6 @@ import { VoiceEntry } from "../voice/VoiceEntry";
 import { paths } from "../paths";
 import { useNow } from "./useNow";
 import { MonthMotif } from "../month-theme";
-import { TEST_SITE } from "../environment";
 
 /** The last page outside Settings and Suggestions, where their buttons return to. */
 let outsideSettings: string = paths.today();
@@ -127,15 +126,6 @@ export function Header({
         <span className="max-sm:hidden">{date}</span>
         <span className="whitespace-nowrap sm:hidden">{shortDate}</span>
       </span>
-      {/* The test copy says so on every page, so it is never taken for the Family's calendar. */}
-      {TEST_SITE && (
-        <span
-          data-testid="test-site"
-          className="shrink-0 rounded bg-amber-400 px-1.5 py-0.5 text-xs font-bold text-black uppercase"
-        >
-          {t("app.testSite")}
-        </span>
-      )}
       {today && (
         <ForecastButton
           testId="header-weather"

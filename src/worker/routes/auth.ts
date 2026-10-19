@@ -105,6 +105,8 @@ authRoutes.post("/setup", async (c) => {
       email,
       passwordHash: await hashPassword(body.password),
       role: "owner",
+      // Whoever installs the app sees its testing tools; they can switch Dev off.
+      dev: true,
       createdAt: now.toISOString(),
       changedAt: now.toISOString(),
     }),

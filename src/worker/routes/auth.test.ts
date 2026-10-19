@@ -162,7 +162,7 @@ describe("Accounts", () => {
   it("makes whoever sets up the Family its Owner, and says so in the status", async () => {
     const browser = await setUpFamily();
     expect(await (await browser.get("/status")).json()).toMatchObject({
-      account: { email: EMAIL, role: "owner", dev: false, personId: null },
+      account: { email: EMAIL, role: "owner", dev: true, personId: null },
     });
   });
 

@@ -7,7 +7,7 @@ import { APP_VERSION } from "../../core/version";
 import { formatLocale } from "../../core/languages";
 import { formatPlainDate } from "../../core/plain-date";
 import { api, ApiError } from "../api";
-import { DEV_TOOLS } from "../environment";
+import { useDevTools } from "../dev-tools";
 import { useSignedIn } from "../family";
 import { updateNow } from "../offline/service-worker";
 import { BUTTON } from "../ui/button";
@@ -119,10 +119,7 @@ function VersionHistory() {
 
 type TestState = "idle" | "sending" | "sent" | "noPush" | "notSetUp" | "failed";
 
-/**
- * Tests and diagnostics, for Accounts with Dev on (and on the test copy), closed by default: the
- * screen this device draws on and a test notification.
- */
+/** Tests and diagnostics, for Accounts with Dev on (useDevTools), closed by default: the screen this device draws on and a test notification. */
 function Diagnostics() {
   const { t } = useTranslation();
   const screenSize = useSyncExternalStore(onResize, screenLine, () => "");
@@ -173,8 +170,8 @@ function Diagnostics() {
 /** Settings › App version: which version this device runs, a button to update it now, and the list of versions. */
 export function AppVersionSection() {
   const { t } = useTranslation();
-  const { account } = useSignedIn();
   const [state, setState] = useState<"idle" | "checking" | "updating" | "latest">("idle");
+  const devTools = useDevTools();
   return (
     <section className="flex flex-col gap-2">
       <h2 className="font-semibold">{t("settings.app.title")}</h2>
@@ -201,7 +198,7 @@ export function AppVersionSection() {
         </p>
       )}
       <VersionHistory />
-      {(DEV_TOOLS || account.dev) && <Diagnostics />}
+      {devTools && <Diagnostics />}
     </section>
   );
 }

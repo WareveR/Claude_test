@@ -27,24 +27,27 @@ export const isWeekendColumn = (column: number) => column % 7 < 2;
  * under them, as the weekday letters stay at the top.
  */
 export const NAMES_COLUMN = "sticky left-0 z-10 bg-surface";
+/** One width for the names column whether the year shows the Family or each Person, so the corner
+ * and the days stay put when switching; a long name is cut short instead. */
+export const NAMES_WIDTH = "w-20";
+/** A month's name in the names column, the same in both. */
+export const MONTH_NAME = "pr-1 text-left text-xs font-semibold lg:text-sm";
 
 const TABLE = "w-full min-w-[56rem] table-fixed border-collapse text-[10px] lg:text-xs";
 
 /**
  * The year's sheet, which scrolls sideways on a narrow screen. Its weekday letters are a table of
  * their own: a row inside a sideways scroller cannot stick under the bar, so the letters stick
- * outside it and follow its sideways scroll (and it theirs). `corner` sits over the first column,
- * `cornerWidth` wide; `children` are the year's table bodies.
+ * outside it and follow its sideways scroll (and it theirs). `corner` sits over the names column;
+ * `children` are the year's table bodies.
  */
 export function YearSheet({
   corner,
-  cornerWidth,
   locale,
   testId,
   children,
 }: {
   corner?: ReactNode;
-  cornerWidth: string;
   locale: string;
   testId?: string;
   children: ReactNode;
@@ -58,7 +61,7 @@ export function YearSheet({
   // Both tables share their columns' widths.
   const columns = (
     <colgroup>
-      <col className={cornerWidth} />
+      <col className={NAMES_WIDTH} />
       {Array.from({ length: YEAR_COLUMNS }, (_, c) => (
         <col key={c} />
       ))}
@@ -154,18 +157,18 @@ export function YearGrid({
   const colorOf = (e: Entry) => typeOf(e)?.color ?? "#607d8b";
 
   return (
-    <YearSheet corner={corner} cornerWidth="w-16" locale={locale}>
+    <YearSheet corner={corner} locale={locale}>
       <tbody>
         {Array.from({ length: 12 }, (_, m) => (
           <tr key={m}>
-            <th className={`${NAMES_COLUMN} pr-1 text-left font-semibold`}>
+            <th className={`${NAMES_COLUMN} ${MONTH_NAME}`}>
               <Link
                 to={monthLink(`${year}-${String(m + 1).padStart(2, "0")}-01`)}
                 data-testid={`year-month-${m + 1}`}
                 className="block first-letter:uppercase hover:underline"
               >
                 {formatPlainDate(`${year}-${String(m + 1).padStart(2, "0")}-01`, locale, {
-                  month: "short",
+                  month: "long",
                 })}
               </Link>
             </th>
