@@ -47,7 +47,12 @@ test("This device shows its app version and updates it on demand", async ({ page
   await page.goto("/settings/device");
   await expect(page.getByRole("heading", { name: "App version" })).toBeVisible();
   await expect(page.getByText(/This device runs version /)).toBeVisible();
-  // The size the app draws on, to explain a page that looks too big or too small.
+  // Tests and diagnostics stay closed until asked for: the size the app draws on, to explain a
+  // page that looks too big or too small, and a test notification.
+  await expect(page.getByTestId("screen-size")).toBeHidden();
+  await page.getByText("Tests and diagnostics").click();
+  await page.getByRole("button", { name: "Send a test notification" }).click();
+  await expect(page.getByText("Allow notifications under Reminders first.")).toBeVisible();
   await expect(page.getByTestId("screen-size")).toContainText(
     /\d+×\d+ · \d+×\d+ · [\d.]+ · browser/,
   );

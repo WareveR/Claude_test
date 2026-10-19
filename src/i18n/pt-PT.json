@@ -148,6 +148,14 @@
       "updating": "A atualizar…",
       "latest": "Este dispositivo já tem a versão mais recente.",
       "screen": "Ecrã (janela · ecrã · densidade · como está aberta): {{screen}}",
+      "diagnostics": "Testes e diagnóstico",
+      "testPush": "Enviar notificação de teste",
+      "testPushResult": {
+        "sent": "Enviada. Deve aparecer neste dispositivo dentro de segundos.",
+        "noPush": "Primeiro permita as notificações em Lembretes.",
+        "notSetUp": "Os Lembretes não estão configurados neste servidor.",
+        "failed": "O serviço de notificações recusou o envio. Tente de novo."
+      },
       "history": "Histórico de versões",
       "historyNone": "A lista de versões não está disponível nesta cópia da aplicação.",
       "columns": {

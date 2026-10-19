@@ -1,11 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, RefreshCw } from "lucide-react";
+import { BellRing, ChevronDown, RefreshCw } from "lucide-react";
 import { useState, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 import type { Release } from "../../core/release-number";
 import { APP_VERSION } from "../../core/version";
 import { formatLocale } from "../../core/languages";
 import { formatPlainDate } from "../../core/plain-date";
+import { api, ApiError } from "../api";
 import { useSignedIn } from "../family";
 import { updateNow } from "../offline/service-worker";
 import { BUTTON } from "../ui/button";
@@ -115,18 +116,64 @@ function VersionHistory() {
   );
 }
 
+type TestState = "idle" | "sending" | "sent" | "noPush" | "notSetUp" | "failed";
+
+/** Tests and diagnostics, closed by default: the screen this device draws on and a test notification. */
+function Diagnostics() {
+  const { t } = useTranslation();
+  const screenSize = useSyncExternalStore(onResize, screenLine, () => "");
+  const [test, setTest] = useState<TestState>("idle");
+  const sendTest = async () => {
+    setTest("sending");
+    try {
+      await api("/device/push/test", { method: "POST", body: {} });
+      setTest("sent");
+    } catch (error) {
+      const code = error instanceof ApiError ? error.body.error : undefined;
+      setTest(code === "noPush" || code === "notSetUp" ? code : "failed");
+    }
+  };
+  return (
+    <details className="group rounded-md border border-line" data-testid="diagnostics">
+      <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2 text-sm font-medium">
+        <ChevronDown
+          aria-hidden
+          size={16}
+          className="-rotate-90 transition-transform group-open:rotate-0"
+        />
+        {t("settings.app.diagnostics")}
+      </summary>
+      <div className="flex flex-col gap-2 border-t border-line px-3 py-2">
+        <p data-testid="screen-size" className="text-sm text-muted">
+          {t("settings.app.screen", { screen: screenSize })}
+        </p>
+        <button
+          type="button"
+          className={`${BUTTON} self-start`}
+          disabled={test === "sending"}
+          onClick={sendTest}
+        >
+          <BellRing aria-hidden size={16} />
+          {t("settings.app.testPush")}
+        </button>
+        {test !== "idle" && test !== "sending" && (
+          <p role="status" className="text-sm text-muted">
+            {t(`settings.app.testPushResult.${test}`)}
+          </p>
+        )}
+      </div>
+    </details>
+  );
+}
+
 /** Settings › App version: which version this device runs, a button to update it now, and the list of versions. */
 export function AppVersionSection() {
   const { t } = useTranslation();
   const [state, setState] = useState<"idle" | "checking" | "updating" | "latest">("idle");
-  const screenSize = useSyncExternalStore(onResize, screenLine, () => "");
   return (
     <section className="flex flex-col gap-2">
       <h2 className="font-semibold">{t("settings.app.title")}</h2>
       <p className="text-sm text-muted">{t("settings.app.version", { version: APP_VERSION })}</p>
-      <p data-testid="screen-size" className="text-sm text-muted">
-        {t("settings.app.screen", { screen: screenSize })}
-      </p>
       <button
         type="button"
         className={`${BUTTON} self-start`}
@@ -149,6 +196,7 @@ export function AppVersionSection() {
         </p>
       )}
       <VersionHistory />
+      <Diagnostics />
     </section>
   );
 }

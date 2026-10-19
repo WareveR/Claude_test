@@ -148,6 +148,14 @@
       "updating": "Updating…",
       "latest": "This device already has the latest version.",
       "screen": "Screen (window · screen · density · how it's open): {{screen}}",
+      "diagnostics": "Tests and diagnostics",
+      "testPush": "Send a test notification",
+      "testPushResult": {
+        "sent": "Sent. It should show on this device within seconds.",
+        "noPush": "Allow notifications under Reminders first.",
+        "notSetUp": "Reminders aren't set up on this server.",
+        "failed": "The push service refused it. Try again."
+      },
       "history": "Version history",
       "historyNone": "The version list isn't available on this copy of the app.",
       "columns": {

@@ -243,6 +243,19 @@ describe("Reminders", () => {
   });
 });
 
+describe("Test notification", () => {
+  it("sends one to this device only once it allowed notifications", async () => {
+    const browser = await setUpFamily();
+    expect((await browser.post("/device/push/test", {})).status).toBe(409);
+    const endpoint = await subscribe(browser, "test-phone");
+    const res = await browser.post("/device/push/test", {});
+    expect(res.status).toBe(200);
+    expect(sent).toEqual([{ endpoint, message: expect.objectContaining({ tag: "test" }) }]);
+    goneEndpoints.add(endpoint);
+    expect((await browser.post("/device/push/test", {})).status).toBe(502);
+  });
+});
+
 describe("Web Push", () => {
   it("encrypts so the browser can read it (RFC 8291)", async () => {
     const { pair, p256dh, auth } = await browserKeys();
