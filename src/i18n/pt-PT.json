@@ -1668,5 +1668,23 @@
     "sendInvite": "Enviar convite",
     "invited": "Convite enviado para {{email}}. É válido durante 7 dias.",
     "emailFailed": "O email não foi enviado. Tenta reenviar o convite."
+  },
+  "relations": {
+    "title": "Relação na família",
+    "hint": "Liga as duas Pessoas na árvore genealógica.",
+    "is": "{{name}} é",
+    "of": "de",
+    "pick": "Escolhe uma Pessoa",
+    "save": "Guardar relação",
+    "saved": "Ficaram ligadas na árvore.",
+    "savedOther": "Esta relação não aparece na árvore.",
+    "conflict": "A árvore já diz outra coisa sobre estas Pessoas. Muda-a na árvore.",
+    "kinds": {
+      "partner": "companheiro(a) ou cônjuge",
+      "parent": "pai ou mãe",
+      "child": "filho(a)",
+      "sibling": "irmão ou irmã",
+      "other": "outra relação"
+    }
   }
 }

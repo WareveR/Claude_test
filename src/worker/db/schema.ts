@@ -503,6 +503,10 @@ export const relative = sqliteTable("relative", {
   photoKey: text("photo_key"),
   /** Free text: stories, what they liked, where they lived. */
   notes: text("notes").notNull().default(""),
+  /** The calendar Person this Relative is, linked by a relation between two Persons. */
+  personId: text("person_id")
+    .unique()
+    .references(() => person.id, { onDelete: "set null" }),
   createdAt: text("created_at").notNull(),
   changedAt: text("changed_at").notNull(),
 });

@@ -9,7 +9,7 @@ The single account that signs in and owns every piece of data in the calendar; e
 _Avoid_: User, account, household, tenant
 
 **Person**:
-A member of a Family who can be attached to calendar entries and used as a filter; a Person never signs in. A Person has a name, a colour, an optional photo, optional Nicknames and an optional date of birth, which keeps a Birthday Entry in sync. Removing a Person archives them (gone from pickers and filters, kept on past Entries); only a Person no Entry mentions can be deleted.
+A member of a Family who can be attached to calendar entries and used as a filter; a Person never signs in. A Person has a name, a colour, an optional photo, optional Nicknames and an optional date of birth, which keeps a Birthday Entry in sync. Removing a Person archives them (gone from pickers and filters, kept on past Entries); only a Person no Entry mentions can be deleted. A relation from a Person's page ("Carla is the sister of Sara") links two Persons in the family tree: each becomes a tree Relative (one of the same name is reused), partners are linked, a child also becomes the child of its parent's only partner, and siblings share their parents, or an unknown parent when neither has any; "another relation" adds no link.
 _Avoid_: User, member, participant
 
 **Nickname**:

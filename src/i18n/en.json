@@ -1668,5 +1668,23 @@
     "sendInvite": "Send invite",
     "invited": "Invite sent to {{email}}. It is valid for 7 days.",
     "emailFailed": "The email was not sent. Try sending the invite again."
+  },
+  "relations": {
+    "title": "Family relation",
+    "hint": "Links both Persons in the family tree.",
+    "is": "{{name}} is",
+    "of": "of",
+    "pick": "Pick a Person",
+    "save": "Save relation",
+    "saved": "They are now linked in the tree.",
+    "savedOther": "This relation doesn't show in the tree.",
+    "conflict": "The tree already says something else about these Persons. Change it in the tree.",
+    "kinds": {
+      "partner": "partner or spouse",
+      "parent": "parent",
+      "child": "child",
+      "sibling": "brother or sister",
+      "other": "another relation"
+    }
   }
 }
