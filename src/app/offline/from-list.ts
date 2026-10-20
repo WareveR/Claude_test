@@ -13,8 +13,10 @@ export function fromList<T extends { id: string }>(
   let found: { data: T; updatedAt: number } | undefined;
   for (const [key, list] of queryClient.getQueriesData<T[]>({ queryKey: listKey })) {
     const state = queryClient.getQueryState(key);
-    // A list marked out of date by an edit may still hold the item as it was before.
-    if (!state || state.isInvalidated || !Array.isArray(list)) continue;
+    // A list marked out of date by an edit, or being fetched again (as a copy restored on
+    // opening the app is), may still hold the item as it was before.
+    if (!state || state.isInvalidated || state.fetchStatus === "fetching" || !Array.isArray(list))
+      continue;
     const item = list.find((i) => i.id === id);
     if (item && (!found || state.dataUpdatedAt > found.updatedAt)) {
       found = { data: item, updatedAt: state.dataUpdatedAt };
