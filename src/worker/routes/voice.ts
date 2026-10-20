@@ -161,6 +161,9 @@ async function shoppingAnswer(db: Db, names: string[]) {
   };
 }
 
+/** At most this many corrections follow one sentence. */
+export const MAX_CORRECTIONS = 5;
+
 /** At most this many further Entries or Tasks come from one sentence, after the first. */
 const MAX_MORE = 4;
 
@@ -193,9 +196,17 @@ voiceRoutes.post("/voice", async (c) => {
   if (!sentence || sentence.length > MAX_SENTENCE) {
     return c.json({ error: "invalid", field: "sentence" }, 400);
   }
+  // Said after the readback ("no, at eleven"); the model applies them to the sentence.
+  const corrections = Array.isArray(body.corrections) ? body.corrections : [];
+  if (
+    corrections.length > MAX_CORRECTIONS ||
+    corrections.some((c: unknown) => typeof c !== "string" || !c.trim() || c.length > MAX_SENTENCE)
+  ) {
+    return c.json({ error: "invalid", field: "corrections" }, 400);
+  }
   const db = c.get("db");
   // "comprar leite e ovos" needs no model.
-  const shopping = readShoppingPhrase(sentence);
+  const shopping = corrections.length === 0 && readShoppingPhrase(sentence);
   if (shopping) return c.json(await shoppingAnswer(db, shopping));
   const { family, persons, nicknames, types, templates, entries, tasks } = await loadAll(
     db,
@@ -215,6 +226,7 @@ voiceRoutes.post("/voice", async (c) => {
 
   const raw = await readVoice(c.env, {
     sentence,
+    corrections: corrections.map((c: string) => c.trim()),
     today,
     timeZone: family.timeZone,
     language,

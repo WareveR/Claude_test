@@ -242,7 +242,10 @@ test("readback speaks the summary and the question as two sentences", async ({ p
     .click();
   await expect
     .poll(() => page.evaluate("window.spoken"))
-    .toEqual(["New task: Voice post letters, 20 October.", "Save?"]);
+    .toEqual([
+      "New task: Voice post letters, 20 October.",
+      "Shall I save it, or change something?",
+    ]);
 });
 
 test("an Entry created by voice saves with its values and can be undone", async ({ page }) => {
@@ -320,17 +323,19 @@ test("Edit opens the form filled in, and readback can be switched off", async ({
 
 /**
  * A stand-in microphone: a short burst of sound, then quiet, so the recording ends on its own;
- * Workers AI's reading of it is faked as `words`. `error` is the name getUserMedia rejects with.
+ * Workers AI's reading of each recording is faked as the next of `words`. `error` is the name getUserMedia rejects with.
  */
 async function fakeMicrophone(
   page: Page,
-  words: string | null,
+  words: string | null | (string | null)[],
   error?: string,
   quiet = true,
   permission: "prompt" | "denied" = "denied",
 ) {
+  // Each recording is read as the next of `words`; once they run out, nothing was heard.
+  const heard = Array.isArray(words) ? [...words] : [words];
   await page.route("**/api/voice/transcribe**", (route) =>
-    route.fulfill({ json: { text: words } }),
+    route.fulfill({ json: { text: heard.shift() ?? null } }),
   );
   await page.addInitScript(
     ({ words, error, quiet, permission }) => {
@@ -379,7 +384,6 @@ async function fakeMicrophone(
       const w = globalThis as unknown as {
         MediaRecorder: unknown;
         AudioContext: unknown;
-        speechSynthesis: { speak: (u: { onend?: (() => void) | null }) => void };
       };
       w.MediaRecorder = FakeRecorder;
       w.AudioContext = FakeAudioContext;
@@ -398,11 +402,17 @@ async function fakeMicrophone(
       });
       // The readback speaks; keep it instant and silent.
       if (quiet)
-        w.speechSynthesis.speak = (u) => {
-          setTimeout(() => u.onend?.(), 0);
-        };
+        Object.defineProperty(globalThis, "speechSynthesis", {
+          configurable: true,
+          value: {
+            cancel() {},
+            speak(u: { onend?: (() => void) | null }) {
+              setTimeout(() => u.onend?.(), 0);
+            },
+          },
+        });
     },
-    { words, error, quiet, permission },
+    { words: Array.isArray(words) ? words[0] : words, error, quiet, permission },
   );
 }
 
@@ -458,4 +468,74 @@ test("a microphone question closed without an answer asks to try again", async (
   await expect(dialog.getByRole("alert")).toContainText(
     "Press the microphone again and choose Allow",
   );
+});
+
+test("an answer after the readback corrects the sentence, and a yes then saves it", async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  // Spoken: the sentence, then a correction, then yes.
+  await fakeMicrophone(page, ["task post letters", "no, on Wednesday", "yes"]);
+  await signIn(page);
+  await page.goto("/tasks");
+  const sent: { sentence: string; corrections?: string[] }[] = [];
+  await page.route("**/api/voice", (route) => {
+    const body = route.request().postDataJSON() as { sentence: string; corrections?: string[] };
+    sent.push(body);
+    const title = body.corrections ? "Voice post letters Wednesday" : "Voice post letters";
+    return route.fulfill({
+      json: {
+        outcome: "create",
+        kind: "task",
+        values: {
+          title,
+          notes: "",
+          dueDate: body.corrections ? "2026-10-21" : "2026-10-20",
+          dueTime: null,
+          personIds: [],
+          private: false,
+          repetition: null,
+          checklistId: null,
+        },
+        summary: `New task: ${title}`,
+      },
+    });
+  });
+  // Every state the sheet goes through, as it shows them.
+  await page.addInitScript(`
+    window.activities = [];
+    new MutationObserver(() => {
+      const a = document.querySelector("[data-testid=voice-status]")?.dataset.activity;
+      if (a && window.activities.at(-1) !== a) window.activities.push(a);
+    }).observe(document, { subtree: true, childList: true, attributes: true });
+  `);
+  await page.reload();
+  await page.getByRole("button", { name: "Voice Entry" }).click();
+  const dialog = page.getByRole("dialog", { name: "Voice Entry" });
+  await dialog.getByRole("button", { name: "Speak" }).click();
+  // Three turns of speech, each ending after a pause, and two readbacks.
+  await expect(
+    page.getByTestId("task").filter({ hasText: "Voice post letters Wednesday" }),
+  ).toBeVisible({ timeout: 30_000 });
+  expect(sent).toEqual([
+    { sentence: "task post letters" },
+    { sentence: "task post letters", corrections: ["no, on Wednesday"] },
+  ]);
+  const seen = (await page.evaluate("window.activities")) as string[];
+  for (const activity of ["waiting", "hearing", "processing", "speaking"])
+    expect(seen).toContain(activity);
+  await page.getByRole("status").getByRole("button", { name: "Undo" }).click();
+});
+
+test("silence after the readback leaves a button to answer by voice", async ({ page }) => {
+  await fakeMicrophone(page, ["task buy stamps", null, "cancel"]);
+  await signIn(page);
+  await page.goto("/tasks");
+  await fakeTask(page, "Voice quiet stamps");
+  await page.getByRole("button", { name: "Voice Entry" }).click();
+  const dialog = page.getByRole("dialog", { name: "Voice Entry" });
+  await dialog.getByRole("button", { name: "Speak" }).click();
+  await expect(dialog.getByText("New task: Voice quiet stamps, 20 October")).toBeVisible();
+  await dialog.getByRole("button", { name: "Answer by voice" }).click();
+  await expect(dialog).toHaveCount(0);
 });

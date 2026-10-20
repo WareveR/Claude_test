@@ -251,6 +251,8 @@ const VOICE_SCHEMA = {
 
 export type VoiceContext = {
   sentence: string;
+  /** What the family member said after hearing the sentence read back, to apply to it. */
+  corrections?: string[];
   today: PlainDate;
   timeZone: string;
   language: Language;
@@ -300,6 +302,11 @@ export function voicePrompt(context: VoiceContext) {
         `Predefined lists:\n${context.lists.map((l, i) => `${i}. ${l}`).join("\n") || "(none)"}`,
         `Existing items:\n${context.targets.map((t, i) => `${i}. ${t}`).join("\n") || "(none)"}`,
         `Sentence: ${JSON.stringify(context.sentence)}`,
+        ...(context.corrections?.length
+          ? [
+              `After hearing it read back, they corrected it, in this order:\n${context.corrections.map((c) => `- ${JSON.stringify(c)}`).join("\n")}\nAnswer for the sentence with every correction applied: the same request, with what they changed.`,
+            ]
+          : []),
       ].join("\n\n"),
     },
   ];

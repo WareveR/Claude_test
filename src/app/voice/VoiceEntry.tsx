@@ -9,11 +9,11 @@ import { reportFailure } from "../errors/store";
 import { paths } from "../paths";
 import { addShoppingItems, refreshShopping, removeShoppingItems } from "../shopping/model";
 import { Field, TextInput } from "../screens/form";
+import { readAnswer } from "../../core/voice-answer";
 import {
   canListen,
   finishListening,
   getReadback,
-  isYes,
   listen,
   listenOnce,
   matchOption,
@@ -21,9 +21,10 @@ import {
   speak,
   stopListening,
   stopSpeaking,
-  wantsEdit,
+  type OnLevel,
 } from "./speech";
 import { BUTTON } from "../ui/button";
+import { VoiceStatus, type Activity } from "./VoiceStatus";
 
 type Kind = "entry" | "task" | "checklist" | "person" | "template";
 /** A Task with items comes as a Checklist, with what the Task form opens on Edit. */
@@ -74,6 +75,8 @@ const FORMS: Partial<Record<Kind, string>> = {
 };
 const route = (kind: Kind) => ROUTES[kind];
 const proposalsOf = (create: Create): Proposal[] => [create, ...(create.more ?? [])];
+/** As many corrections as the Worker takes after one sentence. */
+const MAX_CORRECTIONS = 5;
 
 /** The header's microphone: opens the Voice Entry sheet, and shows the "Saved · Undo" toast. */
 export function VoiceEntry() {
@@ -94,6 +97,11 @@ export function VoiceEntry() {
   const [notice, setNotice] = useState<Notice | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
   const [unheard, setUnheard] = useState<string | null>(null);
+  const [activity, setActivity] = useState<Activity | null>(null);
+  const [level, setLevel] = useState(0);
+  /** What was said after the readback, applied to the first sentence. */
+  const [corrections, setCorrections] = useState<string[]>([]);
+  const sentence = useRef({ text: "", corrections: [] as string[] });
   const run = useRef(0);
   /** Whether the sentence was spoken; only then does the sheet talk back and listen. */
   const voiced = useRef(false);
@@ -110,7 +118,61 @@ export function VoiceEntry() {
     run.current += 1;
     stopListening();
     stopSpeaking();
+    setActivity(null);
   };
+  const alive = (mine: number) => run.current === mine;
+
+  /** Speaks, showing that the app is talking. */
+  async function say(mine: number, parts: string | string[]) {
+    setActivity("speaking");
+    await speak(parts, lang);
+    if (alive(mine)) setActivity(null);
+  }
+
+  /** Follows the voice while listening: waiting for it, then hearing it. */
+  const follow =
+    (mine: number): OnLevel =>
+    (loud, spoke) => {
+      if (!alive(mine)) return;
+      setLevel(loud);
+      setActivity(spoke ? "hearing" : "waiting");
+    };
+
+  /** Listens for an answer, showing that the app waits, hears and then reads it. */
+  async function hear(mine: number) {
+    setActivity("waiting");
+    const heard = await listenOnce(
+      lang,
+      () => alive(mine) && setActivity("processing"),
+      follow(mine),
+    );
+    if (alive(mine)) setActivity(null);
+    return heard;
+  }
+
+  /**
+   * After the readback: a yes saves, anything else said is a correction applied to the sentence
+   * and read back again, "edit" opens the form and "cancel" closes; a plain no asks what to change.
+   */
+  async function converse(mine: number, onYes: () => void, onForm: () => void) {
+    for (let asked = 0; asked < 2; asked++) {
+      if (!alive(mine) || !canListen()) return;
+      const answer = readAnswer(await hear(mine));
+      if (!alive(mine) || answer === "silence") return;
+      if (answer === "yes") return onYes();
+      if (answer === "cancel") return close();
+      if (answer === "form") return onForm();
+      if (typeof answer === "object") return adjust(answer.correction, onForm);
+      await say(mine, t("voice.whatToChange"));
+    }
+  }
+
+  /** Reads the sentence again with one more correction; past the limit, the form takes over. */
+  function adjust(correction: string, onForm: () => void) {
+    const { text, corrections } = sentence.current;
+    if (corrections.length >= MAX_CORRECTIONS) return onForm();
+    void send(text, true, [...corrections, correction]);
+  }
   const close = () => {
     stopAll();
     setOpen(false);
@@ -124,6 +186,7 @@ export function VoiceEntry() {
     setError(false);
     setUnheard(null);
     setText("");
+    setCorrections([]);
   };
   useEffect(() => {
     if (!open) return;
@@ -251,18 +314,15 @@ export function VoiceEntry() {
         ? t("shopping.alreadyOnList", { names: answer.already.join(", ") })
         : null;
     if (answer.items.length === 0) {
-      if (already) await speak(already, lang);
+      if (already) await say(mine, already);
       return;
     }
-    await speak(
-      [shoppingSummary(answer), ...(already ? [already] : []), t("voice.saveQuestion")],
-      lang,
-    );
-    if (run.current !== mine || !canListen()) return;
-    const heard = await listenOnce(lang);
-    if (run.current !== mine) return;
-    if (isYes(heard)) void saveShopping(answer);
-    else if (wantsEdit(heard)) editSentence();
+    await say(mine, [
+      shoppingSummary(answer),
+      ...(already ? [already] : []),
+      t("voice.saveOrChange"),
+    ]);
+    await converse(mine, () => void saveShopping(answer), editSentence);
   }
 
   async function sendAll(requests: Req[]) {
@@ -307,11 +367,8 @@ export function VoiceEntry() {
     setPhase("readback");
     if (!talk()) return;
     const mine = ++run.current;
-    await speak([chosen.summary, t("voice.saveQuestion")], lang);
-    if (run.current !== mine || !canListen()) return;
-    const answer = await listenOnce(lang);
-    if (run.current !== mine) return;
-    if (isYes(answer)) void saveChange(chosen, how);
+    await say(mine, [chosen.summary, t("voice.saveOrChange")]);
+    await converse(mine, () => void saveChange(chosen, how), editSentence);
   }
 
   async function startPlan(chosen: Plan) {
@@ -322,9 +379,9 @@ export function VoiceEntry() {
     setPhase("readback");
     if (!talk()) return;
     const mine = ++run.current;
-    await speak(t("voice.scopeQuestion"), lang);
-    if (run.current !== mine || !canListen()) return;
-    const how = matchScope(await listenOnce(lang));
+    await say(mine, t("voice.scopeQuestion"));
+    if (!alive(mine) || !canListen()) return;
+    const how = matchScope(await hear(mine));
     if (run.current !== mine) return;
     if (how) void confirmPlan(chosen, how);
   }
@@ -336,9 +393,9 @@ export function VoiceEntry() {
     if (!talk()) return;
     const mine = ++run.current;
     const labels = options.map((o) => o.label);
-    await speak([t("voice.which"), ...labels.map((l, i) => `${i + 1}. ${l}`)], lang);
-    if (run.current !== mine || !canListen()) return;
-    const index = matchOption(await listenOnce(lang), labels);
+    await say(mine, [t("voice.which"), ...labels.map((l, i) => `${i + 1}. ${l}`)]);
+    if (!alive(mine) || !canListen()) return;
+    const index = matchOption(await hear(mine), labels);
     const picked = index === null ? undefined : options[index];
     if (run.current !== mine || !picked) return;
     void startPlan(picked);
@@ -346,36 +403,65 @@ export function VoiceEntry() {
 
   async function readBack(create: Create) {
     const mine = ++run.current;
-    await speak([...proposalsOf(create).map((p) => p.summary), t("voice.saveQuestion")], lang);
-    if (run.current !== mine || !canListen()) return;
-    const answer = await listenOnce(lang);
-    if (run.current !== mine) return;
-    if (isYes(answer)) void save(create);
-    else if (wantsEdit(answer)) edit(create);
-    // Silence or an unclear answer leaves the summary up, with Save and Edit.
+    await say(mine, [...proposalsOf(create).map((p) => p.summary), t("voice.saveOrChange")]);
+    // Silence leaves the summary up, with Save and Edit.
+    await converse(
+      mine,
+      () => void save(create),
+      () => edit(create),
+    );
   }
 
-  async function send(sentence: string, spoken = false) {
-    const trimmed = sentence.trim().slice(0, 300);
+  /** Listens again for the answer to the summary on screen. */
+  function answerAgain() {
+    const mine = ++run.current;
+    if (pending)
+      void converse(
+        mine,
+        () => void save(pending),
+        () => edit(pending),
+      );
+    else if (shopping) void converse(mine, () => void saveShopping(shopping), editSentence);
+    else if (plan && scope) void converse(mine, () => void saveChange(plan, scope), editSentence);
+  }
+
+  async function send(said: string, spoken = false, adjusted: string[] = []) {
+    const trimmed = said.trim().slice(0, 300);
     if (!trimmed) return;
     stopAll();
     voiced.current = spoken;
+    sentence.current = { text: trimmed, corrections: adjusted };
+    setCorrections(adjusted);
     setUnheard(null);
     setText(trimmed);
     setNotice(null);
     setError(false);
     setPhase("sending");
     const mine = run.current;
+    setActivity("processing");
     let answer: Answer;
     try {
-      answer = await api<Answer>("/voice", { method: "POST", body: { sentence: trimmed } });
+      answer = await api<Answer>("/voice", {
+        method: "POST",
+        body: adjusted.length
+          ? { sentence: trimmed, corrections: adjusted }
+          : { sentence: trimmed },
+      });
     } catch {
       if (run.current !== mine) return;
+      setActivity(null);
       setError(true);
       setPhase("idle");
       return;
     }
     if (run.current !== mine) return;
+    setActivity(null);
+    // A new answer replaces the one on screen.
+    setPending(null);
+    setShopping(null);
+    setChoices(null);
+    setPlan(null);
+    setScope(null);
     if (answer.outcome === "failed") return openForm("entry", { title: answer.sentence });
     if (answer.outcome === "change") return void startPlan(answer.plan);
     if (answer.outcome === "choose") return void startChoice(answer.options);
@@ -388,7 +474,7 @@ export function VoiceEntry() {
     if (answer.outcome !== "create") {
       setNotice(answer.outcome);
       setPhase("idle");
-      if (talk()) void speak(t(`voice.${answer.outcome}`), lang);
+      if (talk()) void say(++run.current, t(`voice.${answer.outcome}`));
       return;
     }
     setPending(answer);
@@ -406,16 +492,21 @@ export function VoiceEntry() {
     setUnheard(null);
     setText("");
     setPhase("listening");
+    setActivity("waiting");
     const heard = await listen(
       lang,
       (words) => {
         if (run.current === mine) setText(words);
       },
       () => {
-        if (run.current === mine) setPhase("reading");
+        if (run.current !== mine) return;
+        setPhase("reading");
+        setActivity("processing");
       },
+      follow(mine),
     );
     if (run.current !== mine) return;
+    setActivity(null);
     setPhase("idle");
     if (heard.text) return void send(heard.text, true);
     setUnheard(heard.error ?? "silence");
@@ -457,6 +548,7 @@ export function VoiceEntry() {
               <h2 id="voice-title" className="font-semibold">
                 {t("voice.title")}
               </h2>
+              {activity && <VoiceStatus activity={activity} level={level} />}
               {phase === "readback" && (choices || plan) ? (
                 <>
                   {choices ? (
@@ -605,11 +697,6 @@ export function VoiceEntry() {
                       onChange={(e) => setText(e.target.value)}
                     />
                   </Field>
-                  {(phase === "listening" || phase === "reading") && (
-                    <p role="status" className="text-sm text-muted">
-                      {t(phase === "listening" ? "voice.listening" : "voice.reading")}
-                    </p>
-                  )}
                   {unheard && (
                     <p role="alert" className="text-sm text-overdue">
                       {unheard === "denied"
@@ -660,9 +747,25 @@ export function VoiceEntry() {
                   </div>
                 </form>
               )}
-              <button type="button" className={`${BUTTON} self-end`} onClick={close}>
-                {t("voice.cancel")}
-              </button>
+              {phase === "readback" && corrections.length > 0 && (
+                <p data-testid="voice-corrections" className="text-xs text-muted">
+                  {t("voice.corrections", { list: corrections.join(" · ") })}
+                </p>
+              )}
+              <div className="flex items-center justify-between gap-2">
+                {phase === "readback" &&
+                  !activity &&
+                  canListen() &&
+                  (pending || shopping?.items.length || (plan && scope)) && (
+                    <button type="button" className={BUTTON} onClick={answerAgain}>
+                      <Mic aria-hidden size={16} strokeWidth={1.75} />
+                      {t("voice.answer")}
+                    </button>
+                  )}
+                <button type="button" className={`${BUTTON} ml-auto`} onClick={close}>
+                  {t("voice.cancel")}
+                </button>
+              </div>
             </div>
           </div>,
           document.body,

@@ -91,14 +91,22 @@ async function wouldAsk(): Promise<boolean> {
 }
 
 /**
+ * How loud the speaker is against what counts as speech (0 … 1, 1 at speech), and whether they
+ * have spoken yet; reported about ten times a second while recording.
+ */
+export type OnLevel = (level: number, spoke: boolean) => void;
+
+/**
  * Listens once: records until the speaker falls quiet (or the button is pressed again), then has
  * Workers AI read the recording. Resolves with what it heard (or null) and why not; `onReading`
- * runs when the recording ends and is sent, and `onWords` gets the sentence once it is read.
+ * runs when the recording ends and is sent, `onWords` gets the sentence once it is read, and
+ * `onLevel` follows the voice while recording.
  */
 export async function listen(
   lang: string,
   onWords?: (words: string) => void,
   onReading?: () => void,
+  onLevel?: OnLevel,
 ): Promise<Heard> {
   if (!canListen()) return { text: null, error: "unsupported" };
   stopListening();
@@ -124,7 +132,7 @@ export async function listen(
   }
   let recording: { audio: Blob; kept: boolean };
   try {
-    recording = await record(stream, audio);
+    recording = await record(stream, audio, onLevel);
   } catch (error) {
     reportFailure(error, "app", "recording");
     return { text: null, error: "error" };
@@ -161,6 +169,7 @@ export async function listen(
 function record(
   stream: MediaStream,
   audio: AudioContext | null,
+  onLevel?: OnLevel,
 ): Promise<{ audio: Blob; kept: boolean }> {
   return new Promise((resolve, reject) => {
     const recorder = new MediaRecorder(stream);
@@ -184,10 +193,12 @@ function record(
       noise = loud < noise ? loud : noise + (loud - noise) * 0.02;
       // The first moments, before anyone speaks, only measure the room.
       if (now - started < CALIBRATE_MS) return;
-      if (loud > Math.max(SPEECH_LEVEL, noise * SPEECH_OVER_NOISE)) {
+      const speech = Math.max(SPEECH_LEVEL, noise * SPEECH_OVER_NOISE);
+      if (loud > speech) {
         spoke = true;
         lastSound = now;
       }
+      onLevel?.(Math.min(1, loud / speech), spoke);
       const done = spoke ? now - lastSound > QUIET_MS : now - started > WAIT_MS;
       if (done || now - started > MAX_MS) finishListening();
     }, 100);
@@ -252,8 +263,12 @@ function meter(
 }
 
 /** Listens once; resolves to the transcript, or null on silence, error or no support. */
-export function listenOnce(lang: string): Promise<string | null> {
-  return listen(lang).then((r) => r.text);
+export function listenOnce(
+  lang: string,
+  onReading?: () => void,
+  onLevel?: OnLevel,
+): Promise<string | null> {
+  return listen(lang, undefined, onReading, onLevel).then((r) => r.text);
 }
 
 /** Bumped by every new readback and by stopSpeaking, so an older one stops between sentences. */
@@ -308,21 +323,6 @@ const plain = (s: string) =>
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
     .toLowerCase();
-
-/** Reads a spoken answer to "Save?": true only for a clear yes. */
-export function isYes(answer: string | null): boolean {
-  if (!answer) return false;
-  const s = plain(answer);
-  if (/\b(no|nao|not|nope)\b/.test(s)) return false;
-  return /\b(yes|sim|guarda|guardar|save)\b/.test(s);
-}
-
-/** Reads a spoken answer to "Save?": true for a clear no or a wish to edit. */
-export function wantsEdit(answer: string | null): boolean {
-  if (!answer) return false;
-  const s = plain(answer);
-  return /\b(no|nao|nope|edit|editar|edita|change|mudar|muda|alterar|altera)\b/.test(s);
-}
 
 const NUMBERS: [number, RegExp][] = [
   [0, /\b(1|one|first|um|uma|primeiro|primeira)\b/],

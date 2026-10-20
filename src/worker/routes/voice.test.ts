@@ -674,6 +674,30 @@ describe("Voice Entry: Shopping List", () => {
   });
 });
 
+describe("Voice Entry: corrections", () => {
+  it("gives the model what was said after the readback, and skips the shopping shortcut", async () => {
+    const { browser } = await family();
+    answer = () => ({ ...change({ action: "shopping" }), items: ["leite magro"] });
+    const res = await browser.post("/voice", {
+      sentence: "comprar leite",
+      corrections: ["não, leite magro"],
+    });
+    expect(await res.json()).toMatchObject({ outcome: "shopping" });
+    expect(prompts).toHaveLength(1);
+    expect(prompts[0].messages[1].content).toContain('Sentence: "comprar leite"');
+    expect(prompts[0].messages[1].content).toContain('- "não, leite magro"');
+  });
+
+  it("refuses corrections that aren't short text", async () => {
+    const { browser } = await family();
+    for (const corrections of [[""], [1], Array(6).fill("às 11"), ["x".repeat(301)]]) {
+      const res = await browser.post("/voice", { sentence: "dentista", corrections });
+      expect(res.status).toBe(400);
+    }
+    expect(prompts).toHaveLength(0);
+  });
+});
+
 describe("Voice Entry: dictation", () => {
   const realSpeech = speech.run;
   let heard: { audio: string; language: string }[] = [];

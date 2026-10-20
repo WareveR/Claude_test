@@ -59,7 +59,11 @@ test("a real recording ends when the speaker falls quiet and is sent to be read"
   await page.getByRole("button", { name: "Voice Entry" }).click();
   const dialog = page.getByRole("dialog", { name: "Voice Entry" });
   await dialog.getByRole("button", { name: "Speak" }).click();
-  await expect(dialog.getByRole("status")).toHaveText("Listening…");
+  // The sheet shows it waits for the voice, then that it hears it.
+  const status = dialog.getByTestId("voice-status");
+  await expect(status).toHaveAttribute("data-activity", /waiting|hearing/);
+  await expect(status).toHaveAttribute("data-activity", "hearing", { timeout: 4000 });
+  await expect(status).toHaveText("Listening…");
   // The tone ends at two seconds; well before the 20-second limit the recording goes off.
   await expect(page).toHaveURL(/\/entries\/new$/, { timeout: 8000 });
   expect(sent).toBeGreaterThan(0);
