@@ -478,3 +478,8 @@ html[data-help-level="high"] [data-help-field]::after {
   color: var(--muted);
   font-weight: normal;
 }
+
+/* Swiped away at the end of a view (useDaysRowAtEnd): the days' row gives its room to the view. */
+html[data-days-row-hidden] .days-row {
+  display: none;
+}

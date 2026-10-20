@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { ComingUp } from "../briefing/ComingUp";
 import { HourlyStrip } from "../weather/HourlyStrip";
 import { SunBand } from "../weather/SunBand";
+import { useDaysRowAtEnd } from "../calendar/useDaysRowAtEnd";
 import { useViewNavHeight } from "./viewNavHeight";
 
 /** Today at a glance: its hourly weather, sunrise and sunset, and "Coming up". The Summary screen. */
@@ -21,6 +22,7 @@ export function TodayPanel({ readOnly }: { readOnly?: boolean }) {
  */
 export function ViewBody({ children, fill }: { children: ReactNode; fill?: boolean }) {
   useViewNavHeight();
+  useDaysRowAtEnd();
   return (
     <div className={`flex min-w-0 flex-col lg:min-h-0 lg:flex-1 ${fill ? "flex-1" : ""}`}>
       {children}

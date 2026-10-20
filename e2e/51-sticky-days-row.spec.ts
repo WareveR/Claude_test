@@ -93,3 +93,45 @@ test("on a phone the year's names column keeps its width and the switch its plac
   // The same month names in both.
   await expect(page.getByTestId("year-month-2")).toHaveText("February");
 });
+
+test("at the end of a view one more scroll down hides the days row, and the first one up shows it", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 762, height: 346 });
+  await signIn(page);
+  for (const path of ["/month/2026-10", "/year/2026"]) {
+    await page.goto(path);
+    const row = page.getByTestId("days-row");
+    await expect(row).toBeVisible();
+    await page.mouse.move(380, 250);
+    // Down to the end (the year grows as its Entries arrive): the row stays while there is still
+    // somewhere to go.
+    await page.waitForLoadState("networkidle");
+    const atBottom = `(() => { const el = document.querySelector("nav[data-view-nav]").parentElement;
+      return el.scrollTop + el.clientHeight >= el.scrollHeight - 1; })()`;
+    await expect
+      .poll(async () => {
+        await scrollPage(page, 5000);
+        return page.evaluate(atBottom);
+      })
+      .toBe(true);
+    await expect(row).toBeVisible();
+    // The view may still be settling (the year draws its Entries late), so the swipe is tried again.
+    await expect(async () => {
+      await page.mouse.wheel(0, 200);
+      await expect(row).toBeHidden({ timeout: 1000 });
+    }).toPass();
+    // Back up: the row comes back first, and the view's last line stays where it was.
+    const last = row.locator("xpath=following::*[last()]").first();
+    const scrolled = () =>
+      page.evaluate(`document.querySelector("nav[data-view-nav]").parentElement.scrollTop`);
+    const before = await scrolled();
+    const bottom = (await last.boundingBox())?.y;
+    await page.mouse.wheel(0, -200);
+    await expect(row).toBeVisible();
+    expect((await last.boundingBox())?.y).toBe(bottom);
+    // Then the view scrolls back as usual.
+    await page.mouse.wheel(0, -200);
+    await expect.poll(scrolled).toBeLessThan((before as number) - 1);
+  }
+});
