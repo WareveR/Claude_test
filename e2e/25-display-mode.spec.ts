@@ -246,10 +246,11 @@ test("the Summary is the Wall's own, and the Wall switched off returns to the pa
   const briefingBox = await page.getByTestId("coming-up").boundingBox();
   const tasksBox = await page.getByTestId("coming-up-tasks").boundingBox();
   expect(tasksBox!.x).toBeGreaterThan(briefingBox!.x + briefingBox!.width - 1);
-  // A Task can be ticked there.
-  const box = page.getByRole("checkbox", { name: "Done: Water the plants" });
-  await box.check();
-  await expect(box).toBeChecked();
+  // A Task can be ticked there (its next round, a few days on, then shows beside it).
+  await page.getByRole("checkbox", { name: "Done: Water the plants" }).first().click();
+  await expect(
+    page.getByRole("checkbox", { name: "Done: Water the plants", checked: true }),
+  ).toHaveCount(1);
 
   await boardSummary.click();
   await expect(page.getByTestId("time-scroller")).toBeVisible();

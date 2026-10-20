@@ -35,3 +35,30 @@ test("Coming up holds today's and overdue Tasks, other days' accordions only the
   await page.getByRole("button", { name: "Show the calendar" }).click();
   await expect(page.getByTestId("time-scroller")).toBeVisible();
 });
+
+test("an overdue Task in Still to do moves to today or tomorrow in one tap", async ({ page }) => {
+  await signIn(page);
+  const day = (offset: number) =>
+    new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Lisbon" }).format(
+      new Date(Date.now() + offset * 86_400_000),
+    );
+  // From the page, so the request carries the app's own origin.
+  const id = (await page.evaluate(
+    `fetch("/api/tasks", { method: "POST", headers: { "Content-Type": "application/json" },
+       body: JSON.stringify({ title: "Return the library books", notes: "", dueDate: "${day(-3)}",
+         dueTime: null, personIds: [], private: false, repetition: null }) })
+     .then((r) => r.json()).then((t) => t.id)`,
+  )) as string;
+  await page.goto("/summary");
+  const left = page.getByTestId("coming-up-tasks");
+  const row = left.getByTestId("task").filter({ hasText: "Return the library books" });
+  await expect(
+    row.getByRole("button", { name: "Move Return the library books to today" }),
+  ).toBeVisible();
+  await row.getByRole("button", { name: "Move Return the library books to tomorrow" }).click();
+  // Now due tomorrow: still in the next seven days, no longer overdue.
+  await expect(row.getByRole("button", { name: /Move .* to today/ })).toHaveCount(0);
+  const task = (await (await page.request.get(`/api/tasks/${id}`)).json()) as { dueDate: string };
+  expect(task.dueDate).toBe(day(1));
+  await page.evaluate(`fetch("/api/tasks/${id}", { method: "DELETE" })`);
+});

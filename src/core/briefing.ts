@@ -14,7 +14,7 @@ export const BRIEFING_DAYS = 60;
 export const MAX_CANDIDATES = 40;
 /** A change this close makes the Briefing out of date. */
 export const REWRITE_DAYS = 7;
-const FALLBACK_ITEMS = 5;
+const FALLBACK_ITEMS = 8;
 
 /** Something the Briefing may mention: only titles, dates, Persons' names and Importance. */
 export type Candidate = {
@@ -30,6 +30,8 @@ export type Candidate = {
   importance: Importance;
   /** A Task past its due date, or a Checklist's "3/8". */
   detail?: "overdue" | `${number}/${number}`;
+  /** The title of the Entry a Task or Checklist prepares for, when that Entry is coming up. */
+  prepares?: string;
 };
 
 /** A piece of Briefing text; one with `link` opens that Entry Occurrence, Task or Checklist. */
@@ -60,6 +62,8 @@ type BriefingTask = {
   private: boolean;
   personIds: string[];
   checklistId: string | null;
+  /** The Entry a loose Task prepares for. */
+  entryId?: string | null;
 };
 
 type BriefingChecklist = {
@@ -68,6 +72,8 @@ type BriefingChecklist = {
   startDate: PlainDate | null;
   endDate: PlainDate | null;
   repetition?: Repetition | null;
+  /** The Entry the Checklist prepares for, such as a trip. */
+  entryId?: string | null;
 };
 
 export type BriefingInput = {
@@ -84,8 +90,9 @@ const RANK: Record<Importance, number> = { high: 0, normal: 1, low: 2 };
 /**
  * What is coming up in the next 60 days, never notes and never Private items: Entry
  * Occurrences (Birthdays with their age), Tasks overdue or due, Checklists still open with
- * their progress, and Public Holidays. The most pressing first: overdue, then by date, then
- * High Importance.
+ * their progress, and Public Holidays. A Task or Checklist that prepares for a coming Entry says
+ * which; a Checklist without a period counts on that Entry's date. The most pressing first:
+ * overdue, then by date, then High Importance.
  */
 export function briefingCandidates(input: BriefingInput, max = MAX_CANDIDATES): Candidate[] {
   const { today } = input;
@@ -93,6 +100,8 @@ export function briefingCandidates(input: BriefingInput, max = MAX_CANDIDATES): 
   const names = (ids: string[]) =>
     ids.map((id) => input.personNames.get(id)).filter((n): n is string => Boolean(n));
   const out: Candidate[] = [];
+  /** Each coming, non-Private Entry's next date and title, for what prepares for it. */
+  const coming = new Map<string, { date: PlainDate; title: string }>();
 
   for (const entry of input.entries) {
     for (const o of occurrencesOf(entry, today, last)) {
@@ -102,6 +111,7 @@ export function briefingCandidates(input: BriefingInput, max = MAX_CANDIDATES): 
         ? birthdayAge(entry.time.startDate, o.date, Boolean(entry.birthYearKnown))
         : null;
       const date = o.time.startDate < today ? today : o.time.startDate;
+      if (!coming.has(entry.id)) coming.set(entry.id, { date, title: fields.title });
       out.push({
         kind: "entry",
         id: entry.id,
@@ -129,11 +139,12 @@ export function briefingCandidates(input: BriefingInput, max = MAX_CANDIDATES): 
       personIds: task.personIds,
       importance: overdue ? "high" : "normal",
       ...(overdue ? { detail: "overdue" as const } : {}),
+      ...prepares(task.entryId),
     });
   }
 
   for (const checklist of input.checklists) {
-    const end = roundEnd(checklist);
+    const end = roundEnd(checklist) ?? (checklist.entryId && coming.get(checklist.entryId)?.date);
     if (!end || end < today || end > last) continue;
     if (checklist.startDate && checklist.startDate > today) continue;
     const tasks = input.tasks.filter((t) => t.checklistId === checklist.id);
@@ -152,7 +163,13 @@ export function briefingCandidates(input: BriefingInput, max = MAX_CANDIDATES): 
         : [...new Set(tasks.flatMap((t) => t.personIds))],
       importance: "normal",
       detail: `${done}/${total}`,
+      ...prepares(checklist.entryId),
     });
+  }
+
+  function prepares(entryId: string | null | undefined) {
+    const title = entryId && coming.get(entryId)?.title;
+    return title ? { prepares: title } : {};
   }
 
   for (const [date, holidayNames] of input.holidays) {
@@ -212,6 +229,7 @@ const TEXTS: Record<
     tomorrow: string;
     inDays: (n: number) => string;
     overdue: (n: number) => string;
+    prepares: (title: string) => string;
     nothing: string;
   }
 > = {
@@ -220,6 +238,7 @@ const TEXTS: Record<
     tomorrow: "amanhã",
     inDays: (n) => `daqui a ${n} dias`,
     overdue: (n) => (n === 1 ? "atrasada 1 dia" : `atrasada ${n} dias`),
+    prepares: (title) => `para «${title}»`,
     nothing: "Nada marcado para os próximos dias.",
   },
   en: {
@@ -227,6 +246,7 @@ const TEXTS: Record<
     tomorrow: "tomorrow",
     inDays: (n) => `in ${n} days`,
     overdue: (n) => (n === 1 ? "1 day overdue" : `${n} days overdue`),
+    prepares: (title) => `for "${title}"`,
     nothing: "Nothing planned for the coming days.",
   },
 };
@@ -261,6 +281,7 @@ export function countdown(
       month: "short",
     });
     const progress = c.detail && c.detail !== "overdue" ? ` (${c.detail})` : "";
-    return { text: `${c.title}${progress} · ${when} (${date})`, link: candidateLink(c) };
+    const prep = c.prepares ? ` ${texts.prepares(c.prepares)}` : "";
+    return { text: `${c.title}${progress}${prep} · ${when} (${date})`, link: candidateLink(c) };
   });
 }

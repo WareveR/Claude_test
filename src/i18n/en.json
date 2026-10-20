@@ -571,8 +571,12 @@
   },
   "comingUp": {
     "title": "Coming up",
-    "toDo_one": "Still to do · {{count}}",
-    "toDo_other": "Still to do · {{count}}"
+    "toDo_one": "Still to do, next 7 days · {{count}}",
+    "toDo_other": "Still to do, next 7 days · {{count}}",
+    "moveToday": "Today",
+    "moveTomorrow": "Tomorrow",
+    "moveTodayFor": "Move {{title}} to today",
+    "moveTomorrowFor": "Move {{title}} to tomorrow"
   },
   "weather": {
     "title": "Weather",

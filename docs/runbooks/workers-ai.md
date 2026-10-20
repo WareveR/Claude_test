@@ -10,13 +10,13 @@ input tokens and 204,805 per million output tokens.
 | Per Briefing write | Tokens | Neurons |
 | ------------------ | ------ | ------- |
 | Prompt (instructions + up to 40 candidates) | about 1,300 | about 35 |
-| Answer (2 to 4 sentences as JSON segments) | about 250 | about 51 |
-| **Total** | | **about 86** |
+| Answer (up to five paragraphs as JSON segments, capped at 1,024) | about 700 | about 143 |
+| **Total** | | **about 180** |
 
 The daily run writes (1 + non-archived Persons) × languages in use. A Family of four Persons in
-two languages writes 10, about 860 neurons. Rewrites only touch the Briefings whose next 7 days
-changed, and Refresh is limited to once a minute per Briefing. About 100 writes a day fit, so
-the allowance holds for one Family with room for Voice Entry.
+two languages writes 10, about 1,800 neurons. Rewrites only touch the Briefings whose next 7 days
+changed, and Refresh is limited to once a minute per Briefing. About 50 writes a day fit, so
+the allowance holds for one Family with room for Voice Entry; past it, the countdown list shows.
 
 Dictation uses `@cf/openai/whisper-large-v3-turbo`, priced per minute of audio (about 47 neurons a
 minute on the price list); a spoken sentence of five seconds costs about 4.

@@ -11,7 +11,12 @@ export const MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 export const model = {
   run: (
     env: Env,
-    input: { messages: { role: string; content: string }[]; response_format: object },
+    input: {
+      messages: { role: string; content: string }[];
+      response_format: object;
+      /** The model stops after this many tokens; 256 when not given. */
+      max_tokens?: number;
+    },
   ) => env.AI.run(MODEL, input as never) as Promise<{ response?: unknown }>,
 };
 
@@ -96,10 +101,17 @@ function describe(c: Candidate, i: number, language: Language) {
     c.detail === "overdue" ? `overdue since ${date}` : `${date}${c.time ? ` ${c.time}` : ""}`,
     c.persons.length > 0 ? `for ${c.persons.join(", ")}` : "",
     c.detail && c.detail !== "overdue" ? `progress ${c.detail}` : "",
+    c.prepares ? `prepares for "${c.prepares}"` : "",
     c.importance === "high" ? "HIGH importance" : "",
   ];
   return parts.filter(Boolean).join(" ");
 }
+
+/** The most the model may write for one Briefing (docs/runbooks/workers-ai.md). */
+const BRIEFING_TOKENS = 1024;
+/** The longest Briefing kept, in pieces and in characters; a longer answer is a bad one. */
+const MAX_SEGMENTS = 60;
+const MAX_BRIEFING_LENGTH = 2400;
 
 /** The prompt for one Briefing; candidates are already free of notes and Private items. */
 export function briefingPrompt(
@@ -119,14 +131,18 @@ export function briefingPrompt(
     {
       role: "system",
       content: [
-        `You write the short morning briefing of a family calendar, in ${LANGUAGE_NAMES[language]}.`,
+        `You write the morning briefing of a family calendar, in ${LANGUAGE_NAMES[language]}.`,
         personName
           ? `This briefing is for ${personName}: speak to them, about what is theirs and what the whole family does.`
           : "This briefing is for the whole family.",
-        "Pick 3 to 5 items from the numbered list, favouring HIGH importance, overdue items and the nearest dates.",
-        "Write 2 to 4 short, warm, plain sentences saying what is coming up and what deserves attention. Say dates relative to today (today, tomorrow, on Friday, in 10 days).",
-        "You may end with one practical suggestion or question. Use only facts from the list; never invent events.",
-        'Answer as JSON {"segments":[{"text":"...","item":n}]}: split the sentences into pieces so that each piece names at most one item, give that item\'s number in "item", and null for pieces that name none. Joined in order, the pieces must read as the whole text.',
+        "Write it in up to five short paragraphs, in this order, leaving out a paragraph that has nothing to say:",
+        "1. Today: everything on today, with its time.",
+        "2. The next six days: what is on each day that has something, the HIGH importance ones first; group many small ones.",
+        "3. What to prepare: the tasks and lists that prepare for what is coming up, with their progress; also say when something important coming up within the week has nothing to prepare it, only if preparing is clearly needed (a trip, a party).",
+        "4. Tasks: those planned for the next days, and every overdue one, saying how late it is.",
+        "5. When there are overdue tasks, end by asking whether to do them today, move them to another day, or drop them.",
+        "Later dates are only worth a word when HIGH importance. Say dates relative to today (today, tomorrow, on Friday, in 10 days). Plain, warm, short sentences; use only facts from the list and never invent events.",
+        'Answer as JSON {"segments":[{"text":"...","item":n}]}: split the sentences into pieces so that each piece names at most one item, give that item\'s number in "item", and null for pieces that name none. Joined in order, the pieces must read as the whole text. A new paragraph starts with a piece whose text begins with "\\n\\n".',
       ].join(" "),
     },
     {
@@ -147,7 +163,9 @@ export function parseBriefing(response: unknown, candidates: Candidate[]): Segme
     }
   }
   const segments = (value as { segments?: unknown } | null)?.segments;
-  if (!Array.isArray(segments) || segments.length === 0 || segments.length > 20) return null;
+  if (!Array.isArray(segments) || segments.length === 0 || segments.length > MAX_SEGMENTS) {
+    return null;
+  }
   const out: Segment[] = [];
   let length = 0;
   for (const s of segments as { text?: unknown; item?: unknown }[]) {
@@ -161,7 +179,7 @@ export function parseBriefing(response: unknown, candidates: Candidate[]): Segme
       out.push({ text: s.text });
     }
   }
-  if (length > 1200) return null;
+  if (length > MAX_BRIEFING_LENGTH) return null;
   return out.map((s) => (s.link ? s : { text: s.text }));
 }
 
@@ -178,6 +196,8 @@ export async function writeBriefing(
     const result = await model.run(env, {
       messages: briefingPrompt(candidates, today, language, personName),
       response_format: { type: "json_schema", json_schema: BRIEFING_SCHEMA },
+      // Five paragraphs as JSON pieces run well past the default 256 tokens.
+      max_tokens: BRIEFING_TOKENS,
     });
     // Token counts, to check real use against the free daily allowance (docs/runbooks/workers-ai.md).
     if (result && "usage" in result) console.log("briefing usage", JSON.stringify(result.usage));
