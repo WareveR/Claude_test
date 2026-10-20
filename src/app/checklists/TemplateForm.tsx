@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { Navigate, useNavigate, useParams } from "react-router";
+import { Navigate, useLocation, useNavigate, useParams } from "react-router";
 import { templateText } from "../../core/checklist-template";
 import { api } from "../api";
 import { useSignedIn } from "../family";
@@ -30,7 +30,12 @@ function TemplateForm({ template }: { template?: ChecklistTemplate }) {
   const { language } = useSignedIn();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const shown = template ? templateText(template, language) : { name: "", items: [] };
+  // Voice Entry opens a new one filled in.
+  const given = (useLocation().state as { values?: { name: string; items: string[] } } | null)
+    ?.values;
+  const shown = template
+    ? templateText(template, language)
+    : { name: given?.name ?? "", items: given?.items ?? [] };
   const [name, setName] = useState(shown.name);
   // Each row keeps a stable key while items move.
   const [items, setItems] = useState(() => shown.items.map((text, i) => ({ key: i, text })));

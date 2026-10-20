@@ -542,6 +542,70 @@ describe("Voice Entry: change", () => {
   });
 });
 
+describe("Voice Entry: Persons and predefined lists", () => {
+  const blank = {
+    kind: null,
+    type: null,
+    persons: [],
+    time: null,
+    allDay: null,
+    targets: [],
+  };
+
+  it("proposes a new Person with a free colour, and says when the name is taken", async () => {
+    const { browser } = await family();
+    answer = () => ({
+      ...blank,
+      action: "person",
+      title: "Maria",
+      date: "2015-05-03",
+      nicknames: ["Mimi", "maria", ""],
+    });
+    const created = (await (
+      await browser.post("/voice", { sentence: "add Maria, born 3 May 2015, we call her Mimi" })
+    ).json()) as Created;
+    expect(created).toMatchObject({
+      outcome: "create",
+      kind: "person",
+      values: { name: "Maria", dateOfBirth: "2015-05-03", nicknames: ["Mimi"], photoKey: null },
+    });
+    expect(created.values.color).not.toBe("#e07a5f");
+    expect(created.summary).toMatch(/Maria.*Mimi.*2015/);
+    expect((await browser.post("/persons", created.values)).status).toBe(201);
+
+    answer = () => ({ ...blank, action: "person", title: "aninhas", date: null });
+    expect(await (await browser.post("/voice", { sentence: "add Aninhas" })).json()).toEqual({
+      outcome: "personExists",
+    });
+  });
+
+  it("proposes a new predefined list with its items, and says when the name is taken", async () => {
+    const { browser } = await family();
+    answer = () => ({
+      ...blank,
+      action: "list",
+      title: "Picnic",
+      date: null,
+      items: ["Blanket", " Sandwiches ", "Blanket", ""],
+    });
+    const created = (await (
+      await browser.post("/voice", {
+        sentence: "create the predefined list Picnic with a blanket and sandwiches",
+      })
+    ).json()) as Created;
+    expect(created).toMatchObject({
+      outcome: "create",
+      kind: "template",
+      values: { name: "Picnic", items: ["Blanket", "Sandwiches"] },
+    });
+    expect(created.summary).toMatch(/Picnic.*2 (items|itens)$/);
+    expect((await browser.post("/checklist-templates", created.values)).status).toBe(201);
+    expect(await (await browser.post("/voice", { sentence: "the list Picnic" })).json()).toEqual({
+      outcome: "listExists",
+    });
+  });
+});
+
 describe("Voice Entry: Shopping List", () => {
   it("reads things to buy without the model, leaving out those already open on the list", async () => {
     const { browser } = await family();

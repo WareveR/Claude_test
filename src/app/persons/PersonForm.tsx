@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate, useParams } from "react-router";
+import { useLocation, useNavigate, useParams } from "react-router";
 import { api, ApiError } from "../api";
 import { ErrorText, Field, FormActions, TextInput } from "../screens/form";
 import { PERSON_COLORS, uploadPhoto, usePersons, type Person } from "./model";
@@ -22,12 +22,18 @@ function PersonForm({ person }: { person?: Person }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  // Voice Entry opens a new Person filled in.
+  const given = (
+    useLocation().state as {
+      values?: { name: string; color: string; dateOfBirth: string | null; nicknames: string[] };
+    } | null
+  )?.values;
   const [form, setForm] = useState({
-    name: person?.name ?? "",
-    color: person?.color ?? PERSON_COLORS[0],
+    name: person?.name ?? given?.name ?? "",
+    color: person?.color ?? given?.color ?? PERSON_COLORS[0],
     photoKey: person?.photoKey ?? null,
-    dateOfBirth: person?.dateOfBirth ?? "",
-    nicknames: person?.nicknames.join(", ") ?? "",
+    dateOfBirth: person?.dateOfBirth ?? given?.dateOfBirth ?? "",
+    nicknames: person?.nicknames.join(", ") ?? given?.nicknames.join(", ") ?? "",
   });
   const [uploading, setUploading] = useState(false);
   const done = async () => {
