@@ -19,6 +19,7 @@ export function TaskRow({
   persons,
   label,
   lateDays,
+  actions,
 }: {
   task: Task;
   overdue: boolean;
@@ -27,6 +28,8 @@ export function TaskRow({
   persons: Person[];
   /** The Checklist a Task shown on its own belongs to. */
   label?: string;
+  /** Buttons on a line of their own under the Task, such as moving it to today. */
+  actions?: ReactNode;
 }) {
   const { t } = useTranslation();
   const locale = formatLocale(useSignedIn().language);
@@ -46,7 +49,7 @@ export function TaskRow({
         .join(" · ")
     : null;
   return (
-    <li className="flex items-center gap-3 py-2" data-testid="task">
+    <li className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2" data-testid="task">
       <Tick
         className="-my-2 -ml-2"
         aria-label={t("tasks.tick", { title: task.title })}
@@ -89,6 +92,7 @@ export function TaskRow({
           return person ? <PersonAvatar key={id} person={person} size={22} /> : null;
         })}
       </span>
+      {actions && <span className="flex basis-full flex-wrap gap-2 pl-9">{actions}</span>}
     </li>
   );
 }
