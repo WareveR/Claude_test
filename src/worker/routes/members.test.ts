@@ -197,3 +197,16 @@ describe("members", () => {
     expect((await member.get("/errors")).status).toBe(403);
   });
 });
+
+describe("password check", () => {
+  it("answers whether the password is the signed-in Account's own", async () => {
+    await setUpFamily();
+    const ana = await addAccount("ana@example.com", "member");
+    expect(
+      (await ana.post("/account/password-check", { password: "correct horse battery" })).status,
+    ).toBe(204);
+    const wrong = await ana.post("/account/password-check", { password: "nope" });
+    expect(wrong.status).toBe(401);
+    expect(await wrong.json()).toEqual({ error: "wrong_password" });
+  });
+});

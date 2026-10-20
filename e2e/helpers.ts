@@ -25,3 +25,12 @@ export async function openView(page: Page, name: string) {
   // A big view (the year) can take a moment to draw; until then the old bar is still there.
   await page.locator(`nav[data-view-nav][data-view="${view}"]`).waitFor();
 }
+
+/** Leaves the Wall, which asks the signed-in Account's password. */
+export async function leaveWall(page: Page) {
+  await page.getByRole("banner").getByRole("button", { name: "Wall" }).click();
+  const dialog = page.getByRole("dialog", { name: "Leave the Wall" });
+  await dialog.getByLabel("Password").fill(PASSWORD);
+  await dialog.getByRole("button", { name: "Leave" }).click();
+  await expect(page.getByTestId("display-board")).toHaveCount(0);
+}

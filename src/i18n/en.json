@@ -672,7 +672,11 @@
   "display": {
     "today": "Today",
     "backToBoard": "Back to the board",
-    "backToToday": "Back to today"
+    "backToToday": "Back to today",
+    "leaveTitle": "Leave the Wall",
+    "leaveHint": "To leave, type the password of {{email}}.",
+    "leavePassword": "Password",
+    "leave": "Leave"
   },
   "layers": {
     "title": "Show on the calendar",

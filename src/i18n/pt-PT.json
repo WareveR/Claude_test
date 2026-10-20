@@ -672,7 +672,11 @@
   "display": {
     "today": "Hoje",
     "backToBoard": "Voltar ao painel",
-    "backToToday": "Voltar a hoje"
+    "backToToday": "Voltar a hoje",
+    "leaveTitle": "Sair do Mural",
+    "leaveHint": "Para sair, escreve a palavra-passe de {{email}}.",
+    "leavePassword": "Palavra-passe",
+    "leave": "Sair"
   },
   "layers": {
     "title": "Mostrar no calendário",

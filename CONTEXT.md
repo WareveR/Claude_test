@@ -89,7 +89,7 @@ A browser or device signed in to one Account, holding a session that lasts a yea
 _Avoid_: Session, user, client
 
 **Display Mode**:
-A per-device setting for a screen used as a wall display (typically a tablet): the screen stays awake, text is larger, the view returns to today after a few minutes without touch and rolls over at midnight, editing controls are hidden except ticking a Task done, and Private Entries and Tasks show only as "Private". Display Mode is entered from the "Wall" tab of the view switcher and left with a "Leave wall view" button in the header; it is not a separate access level.
+A per-device setting for a screen used as a wall display (typically a tablet): the screen stays awake, text is larger, the view returns to today after a few minutes without touch and rolls over at midnight, editing controls are hidden except ticking a Task done, and Private Entries and Tasks show only as "Private". Display Mode is entered from the "Wall" tab of the view switcher and left with the Wall switch in the header, which asks the password of the Account the device is signed in with, so a child at a wall tablet can't reach everything that Account sees; it is not a separate access level.
 _Avoid_: Kiosk, read-only mode, wall mode
 
 **Task**:

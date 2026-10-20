@@ -1,8 +1,9 @@
 import { Lightbulb, Plus, Search, Settings, Tv, type LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { formatLocale } from "../../core/languages";
+import { LeaveWallDialog } from "../display/LeaveWallDialog";
 import { leaveDisplayMode, setDisplayMode, useDisplayMode } from "../display/mode";
 import { useSignedIn } from "../family";
 import { isPlainDate, todayIn, type PlainDate } from "../../core/plain-date";
@@ -86,8 +87,10 @@ export function Header({
       outsideScreens = location.pathname + location.search;
   }, [inSettings, inSuggestions, inSummary, wall, location.pathname, location.search]);
   // Switched off, the page from before comes back. The Summary is a button of the Wall's own.
+  // Leaving the wall asks for the password first.
+  const [leaving, setLeaving] = useState(false);
   const toggleWall = () => {
-    if (wall) return leaveDisplayMode(outsideScreens);
+    if (wall) return setLeaving(true);
     setDisplayMode(true);
     navigate(paths.display());
   };
@@ -189,6 +192,15 @@ export function Header({
         onToggle={toggleWall}
         className={wall ? "ml-auto" : ""}
       />
+      {leaving && (
+        <LeaveWallDialog
+          onClose={() => setLeaving(false)}
+          onLeave={() => {
+            setLeaving(false);
+            leaveDisplayMode(outsideScreens);
+          }}
+        />
+      )}
       {month !== null && (
         <MonthMotif month={month} opacity={0.16} className="absolute inset-0 text-header-ink" />
       )}
