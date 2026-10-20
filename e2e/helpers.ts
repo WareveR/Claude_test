@@ -34,3 +34,14 @@ export async function leaveWall(page: Page) {
   await dialog.getByRole("button", { name: "Leave" }).click();
   await expect(page.getByTestId("display-board")).toHaveCount(0);
 }
+
+/**
+ * The Lisbon date `days` from today, counted in calendar days so midnight and the clock change
+ * never shift it. `now` is the moment taken as today, such as the page's own clock.
+ */
+export function lisbonDate(days = 0, now = Date.now()) {
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Lisbon" }).format(now);
+  const date = new Date(`${today}T12:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
