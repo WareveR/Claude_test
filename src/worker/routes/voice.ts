@@ -1,4 +1,7 @@
+import { asc } from "drizzle-orm";
 import { Hono } from "hono";
+import { checklistFromTask } from "../../core/checklist";
+import { MAX_TEMPLATE_ITEMS, templateText } from "../../core/checklist-template";
 import { isLanguage, type Language } from "../../core/languages";
 import { formatPlainDate } from "../../core/plain-date";
 import { familyNow } from "../../core/task";
@@ -34,8 +37,9 @@ import type { Account } from "../auth/account";
 import { seesInFull } from "../private";
 
 /**
- * Voice Entry: one spoken or typed sentence becomes a new Entry or Task, a change to one, or
- * things to put on the Shopping List.
+ * Voice Entry: one spoken or typed sentence becomes a new Entry or Task (a Task with items, from
+ * the sentence or a predefined list, is a Checklist), a change to one, or things to put on the
+ * Shopping List.
  * Nothing is saved here: the answer carries the requests the browser sends to the usual routes
  * once the Family member says yes, so every rule of those routes still applies.
  */
@@ -109,11 +113,15 @@ async function allTasks(db: Db) {
 
 /** What a voice change can find: never a Private Entry or Task hidden from this Account. */
 async function loadAll(db: Db, viewer: Account) {
-  const [[family], persons, nicknames, types, entries, tasks] = await Promise.all([
+  const [[family], persons, nicknames, types, templates, entries, tasks] = await Promise.all([
     db.select().from(schema.family).limit(1),
     db.select().from(schema.person),
     db.select().from(schema.personNickname),
     db.select().from(schema.entryType),
+    db
+      .select()
+      .from(schema.checklistTemplate)
+      .orderBy(asc(schema.checklistTemplate.createdAt), asc(schema.checklistTemplate.id)),
     allEntries(db),
     allTasks(db),
   ]);
@@ -122,6 +130,7 @@ async function loadAll(db: Db, viewer: Account) {
     persons,
     nicknames,
     types,
+    templates,
     entries: entries.filter((e) => seesInFull(viewer, e, e.personIds)),
     tasks: tasks.filter((t) => seesInFull(viewer, t, t.personIds)),
   };
@@ -185,7 +194,10 @@ voiceRoutes.post("/voice", async (c) => {
   // "comprar leite e ovos" needs no model.
   const shopping = readShoppingPhrase(sentence);
   if (shopping) return c.json(await shoppingAnswer(db, shopping));
-  const { family, persons, nicknames, types, entries, tasks } = await loadAll(db, c.get("account"));
+  const { family, persons, nicknames, types, templates, entries, tasks } = await loadAll(
+    db,
+    c.get("account"),
+  );
   const deviceLanguage = c.get("device").language;
   const language = isLanguage(deviceLanguage)
     ? deviceLanguage
@@ -208,6 +220,7 @@ voiceRoutes.post("/voice", async (c) => {
       nicknames: nicknames.filter((n) => n.personId === p.id).map((n) => n.nickname),
     })),
     types: types.map((t) => t.name ?? t.builtinKey ?? ""),
+    lists: templates.map((t) => templateText(t, language).name),
     targets: targets.map((t) => describeTarget(t, names, language)),
   });
   const failed = c.json({ outcome: "failed", sentence });
@@ -253,7 +266,7 @@ voiceRoutes.post("/voice", async (c) => {
     );
   }
 
-  const create = parseVoiceCreate(answer, active.length, types.length);
+  const create = parseVoiceCreate(answer, active.length, types.length, templates.length);
   if (!create) return failed;
   const general = types.find((t) => t.builtinKey === "general") ?? types[0];
   /** One new Entry or Task, as the browser sends it, and how it reads back. */
@@ -261,15 +274,30 @@ voiceRoutes.post("/voice", async (c) => {
     const personIds = create.persons.map((i) => active[i].id);
     if (create.kind === "task") {
       const values = taskValues(create, personIds);
+      const template = create.list == null ? null : templates[create.list];
+      const own = create.items ?? [];
+      const list = template ? templateText(template, language) : null;
+      const summary = voiceSummary(
+        "task",
+        {
+          ...values,
+          date: values.dueDate,
+          time: list || own.length > 0 ? null : values.dueTime,
+          allDay: false,
+          list: list?.name,
+          items: own.length,
+        },
+        names(values.personIds),
+        language,
+      );
+      if (!list && own.length === 0) return { kind: "task" as const, values, summary };
+      // A Task with items is kept as a Checklist (ADR 0008); Edit opens the Task form with them.
+      const items = [...new Set([...(list?.items ?? []), ...own])].slice(0, MAX_TEMPLATE_ITEMS);
       return {
-        kind: "task" as const,
-        values,
-        summary: voiceSummary(
-          "task",
-          { ...values, date: values.dueDate, time: values.dueTime, allDay: false },
-          names(values.personIds),
-          language,
-        ),
+        kind: "checklist" as const,
+        values: { ...checklistFromTask({ ...values, entryId: null }), items },
+        summary,
+        form: { values, templateId: template?.id ?? null, items: own },
       };
     }
     const type = create.type === null ? general : types[create.type];
@@ -293,7 +321,7 @@ voiceRoutes.post("/voice", async (c) => {
   };
   // "I have a massage on Friday at 10 and my wife has one at 11" is two Entries.
   const more = (Array.isArray(answer.others) ? answer.others : [])
-    .map((o) => parseVoiceCreate(o, active.length, types.length))
+    .map((o) => parseVoiceCreate(o, active.length, types.length, templates.length))
     .filter((o): o is VoiceCreate => o !== null)
     .slice(0, MAX_MORE)
     .map(proposal);

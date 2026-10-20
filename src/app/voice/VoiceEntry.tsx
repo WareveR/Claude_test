@@ -25,7 +25,10 @@ import {
 } from "./speech";
 import { BUTTON } from "../ui/button";
 
-type Proposal = { kind: "entry" | "task"; values: object; summary: string };
+type Kind = "entry" | "task" | "checklist";
+/** A Task with items comes as a Checklist, with what the Task form opens on Edit. */
+type TaskWithItems = { values: object; templateId: string | null; items: string[] };
+type Proposal = { kind: Kind; values: object; summary: string; form?: TaskWithItems };
 /** A new Entry or Task, and any more the same sentence named ("me at 10, my wife at 11"). */
 type Create = Proposal & { outcome: "create"; more?: Proposal[] };
 type Req = { method: "PUT" | "POST" | "DELETE"; path: string; body?: unknown };
@@ -57,7 +60,8 @@ type Scope = "this" | "following" | "all";
 /** What the toast's Undo does; null when there is nothing to undo. */
 type Toast = { undo: (() => Promise<void>) | null; shopping?: boolean };
 
-const route = (kind: "entry" | "task") => (kind === "entry" ? "entries" : "tasks");
+const ROUTES: Record<Kind, string> = { entry: "entries", task: "tasks", checklist: "checklists" };
+const route = (kind: Kind) => ROUTES[kind];
 const proposalsOf = (create: Create): Proposal[] => [create, ...(create.more ?? [])];
 
 /** The header's microphone: opens the Voice Entry sheet, and shows the "Saved · Undo" toast. */
@@ -137,7 +141,7 @@ export function VoiceEntry() {
   };
 
   /** Undoes the Entries and Tasks saved so far. */
-  const unsave = async (saved: { kind: "entry" | "task"; id: string }[]) => {
+  const unsave = async (saved: { kind: Kind; id: string }[]) => {
     try {
       for (const s of saved) await api(`/${route(s.kind)}/${s.id}`, { method: "DELETE" });
     } finally {
@@ -150,7 +154,7 @@ export function VoiceEntry() {
     saving.current = true;
     stopAll();
     setError(false);
-    const saved: { kind: "entry" | "task"; id: string }[] = [];
+    const saved: { kind: Kind; id: string }[] = [];
     try {
       for (const p of proposalsOf(create)) {
         const { id } = await api<{ id: string }>(`/${route(p.kind)}`, {
@@ -174,7 +178,11 @@ export function VoiceEntry() {
 
   /** Edit opens the form for one; for several it goes back to the sentence. */
   const edit = (create: Create) => {
-    if (!create.more?.length) return openForm(create.kind, create.values);
+    if (!create.more?.length) {
+      if (!create.form) return openForm(create.kind === "entry" ? "entry" : "task", create.values);
+      close();
+      return void navigate("/tasks/new", { state: { ...create.form, withItems: true } });
+    }
     stopAll();
     setPending(null);
     setError(false);

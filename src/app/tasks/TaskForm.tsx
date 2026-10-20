@@ -49,7 +49,14 @@ function TaskForm({ task }: { task?: Task }) {
   const persons = usePersons();
   const date = search.get("date");
   const entry = search.get("entry");
-  const given = (useLocation().state as { values?: Partial<TaskDraft> } | null)?.values;
+  // Voice Entry may open the form on a Task with items: its predefined list and its own items.
+  const state = useLocation().state as {
+    values?: Partial<TaskDraft>;
+    withItems?: boolean;
+    templateId?: string | null;
+    items?: string[];
+  } | null;
+  const given = state?.values;
   const [draft, setDraft] = useState<TaskDraft>(
     () =>
       task ?? {
@@ -81,10 +88,11 @@ function TaskForm({ task }: { task?: Task }) {
     time: draft.dueTime,
   });
   // A Task with items is kept as a Checklist (ADR 0008): saving opens its page to add them.
-  const [withItems, setWithItems] = useState(false);
+  const [withItems, setWithItems] = useState(Boolean(state?.withItems));
   const { language } = useSignedIn();
   const templates = useTemplates();
-  const [templateId, setTemplateId] = useState("");
+  const [templateId, setTemplateId] = useState(state?.templateId ?? "");
+  const [moreItems, setMoreItems] = useState((state?.items ?? []).join("\n"));
   const template = templates.data?.find((tpl) => tpl.id === templateId);
 
   const leave = async () => {
@@ -102,7 +110,15 @@ function TaskForm({ task }: { task?: Task }) {
   });
   const saveWithItems = useMutation({
     mutationFn: async () => {
-      const items = template ? templateText(template, language).items : [];
+      const items = [
+        ...new Set([
+          ...(template ? templateText(template, language).items : []),
+          ...moreItems
+            .split("\n")
+            .map((i) => i.trim())
+            .filter(Boolean),
+        ]),
+      ];
       if (!task) {
         return api<{ id: string }>("/checklists", {
           method: "POST",
@@ -187,6 +203,16 @@ function TaskForm({ task }: { task?: Task }) {
                 </option>
               ))}
             </select>
+          </Field>
+        )}
+        {withItems && (
+          <Field label={t("tasks.moreItems")}>
+            <textarea
+              className={INPUT}
+              rows={3}
+              value={moreItems}
+              onChange={(e) => setMoreItems(e.target.value)}
+            />
           </Field>
         )}
         <div className="flex gap-3">

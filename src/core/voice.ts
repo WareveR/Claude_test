@@ -8,6 +8,7 @@ import {
 import type { Language } from "./languages";
 import { addDays, formatPlainDate, isPlainDate, type PlainDate } from "./plain-date";
 import type { Repetition } from "./repetition";
+import { MAX_TEMPLATE_TEXT } from "./checklist-template";
 
 /** The longest sentence Voice Entry takes. */
 export const MAX_SENTENCE = 300;
@@ -33,20 +34,43 @@ export type VoiceCreate = {
     interval: number;
     weekdays: number[] | null;
   } | null;
+  /** A Task's items, as the sentence names them ("towels, sunscreen"). */
+  items?: string[];
+  /** The predefined list a Task takes its items from. */
+  list?: number | null;
 };
+
+/** The most items one sentence gives a Task. */
+export const MAX_VOICE_ITEMS = 30;
 
 /** The model's answer checked field by field; a bad field is dropped, a missing title fails. */
 export function parseVoiceCreate(
   value: unknown,
   persons: number,
   types: number,
+  lists = 0,
 ): VoiceCreate | null {
   if (typeof value !== "object" || value === null) return null;
   const v = value as Record<string, unknown>;
   if (v.kind !== "entry" && v.kind !== "task") return null;
   const fields = parseVoiceFields(v, persons, types);
   if (!fields.title) return null;
-  return { ...fields, kind: v.kind };
+  if (v.kind === "entry") return { ...fields, kind: v.kind };
+  const items = Array.isArray(v.items)
+    ? [
+        ...new Set(
+          v.items
+            .filter((i): i is string => typeof i === "string")
+            .map((i) => i.trim().slice(0, MAX_TEMPLATE_TEXT))
+            .filter(Boolean),
+        ),
+      ].slice(0, MAX_VOICE_ITEMS)
+    : [];
+  const list =
+    Number.isInteger(v.list) && (v.list as number) >= 0 && (v.list as number) < lists
+      ? (v.list as number)
+      : null;
+  return { ...fields, kind: v.kind, items, list };
 }
 
 /** The fields of the model's answer, each checked on its own; an empty title is "". */
@@ -219,6 +243,8 @@ const TEXTS: Record<
     for: (names: string) => string;
     and: string;
     every: Record<Repetition["frequency"], (n: number) => string>;
+    list: (name: string) => string;
+    items: (n: number) => string;
   }
 > = {
   "pt-PT": {
@@ -234,6 +260,8 @@ const TEXTS: Record<
       monthly: (n) => (n === 1 ? "todos os meses" : `de ${n} em ${n} meses`),
       yearly: (n) => (n === 1 ? "todos os anos" : `de ${n} em ${n} anos`),
     },
+    list: (name) => `com a lista ${name}`,
+    items: (n) => (n === 1 ? "com 1 item" : `com ${n} itens`),
   },
   en: {
     entry: "New entry",
@@ -248,6 +276,8 @@ const TEXTS: Record<
       monthly: (n) => (n === 1 ? "every month" : `every ${n} months`),
       yearly: (n) => (n === 1 ? "every year" : `every ${n} years`),
     },
+    list: (name) => `with the list ${name}`,
+    items: (n) => (n === 1 ? "with 1 item" : `with ${n} items`),
   },
 };
 
@@ -255,7 +285,10 @@ function names(list: string[], and: string) {
   return list.length <= 1 ? list.join("") : `${list.slice(0, -1).join(", ")}${and}${list.at(-1)}`;
 }
 
-/** The short summary read back and shown: "New entry: Dentist, for Ana, Tuesday 6 October, 15:00". */
+/**
+ * The short summary read back and shown: "New entry: Dentist, for Ana, Tuesday 6 October, 15:00";
+ * a Task with items ends "with the list Beach day" or "with 3 items", the list's own not counted.
+ */
 export function voiceSummary(
   kind: "entry" | "task",
   values: {
@@ -264,6 +297,8 @@ export function voiceSummary(
     time: ClockTime | null;
     allDay: boolean;
     repetition: Repetition | null;
+    list?: string | null;
+    items?: number;
   },
   personNames: string[],
   language: Language,
@@ -282,6 +317,8 @@ export function voiceSummary(
     when,
     values.time ?? (values.allDay ? texts.allDay : ""),
     values.repetition ? texts.every[values.repetition.frequency](values.repetition.interval) : "",
+    values.list ? texts.list(values.list) : "",
+    values.items ? texts.items(values.items) : "",
   ];
   return `${kind === "entry" ? texts.entry : texts.task}: ${parts.filter(Boolean).join(", ")}`;
 }

@@ -114,6 +114,62 @@ test("one sentence naming two things saves both, and Undo removes both", async (
   await expect(page.getByText("Voice call school")).toHaveCount(0);
 });
 
+test("a Task with items saves as one with them, and Edit opens the form with them", async ({
+  page,
+}) => {
+  await signIn(page);
+  await page.goto("/tasks");
+  const task = {
+    title: "Voice pack the car",
+    notes: "",
+    dueDate: "2026-10-20",
+    dueTime: null,
+    personIds: [],
+    private: false,
+    repetition: null,
+    checklistId: null,
+  };
+  await page.route("**/api/voice", (route) =>
+    route.fulfill({
+      json: {
+        outcome: "create",
+        kind: "checklist",
+        values: {
+          name: task.title,
+          startDate: null,
+          endDate: "2026-10-20",
+          repetition: null,
+          remindAtStart: true,
+          personIds: [],
+          entryId: null,
+          items: ["Voice tent", "Voice torch"],
+        },
+        summary: "New task: Voice pack the car, 20 October, with 2 items",
+        form: { values: task, templateId: null, items: ["Voice tent", "Voice torch"] },
+      },
+    }),
+  );
+  const dialog = await say(page, "pack the car: tent and torch");
+  await expect(dialog.getByText("with 2 items")).toBeVisible();
+  await dialog.getByRole("button", { name: "Save" }).click();
+  const toast = page.getByRole("status").filter({ hasText: "Saved" });
+  await expect(toast).toBeVisible();
+  await expect(page.getByText("Voice pack the car")).toBeVisible();
+  await toast.getByRole("button", { name: "Undo" }).click();
+  await expect(page.getByText("Voice pack the car")).toHaveCount(0);
+
+  const again = await say(page, "pack the car: tent and torch");
+  await again.getByRole("button", { name: "Edit" }).click();
+  await expect(page).toHaveURL(/\/tasks\/new$/);
+  await expect(page.getByLabel("Title")).toHaveValue("Voice pack the car");
+  await expect(page.getByRole("switch", { name: "With items" })).toBeChecked();
+  await expect(page.getByLabel("Items (one per line)")).toHaveValue("Voice tent\nVoice torch");
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page).toHaveURL(/\/checklists\//);
+  await expect(page.getByRole("checkbox", { name: "Done: Voice tent" })).toBeVisible();
+  await expect(page.getByRole("checkbox", { name: "Done: Voice torch" })).toBeVisible();
+});
+
 test("readback speaks the summary and the question as two sentences", async ({ page }) => {
   // A stand-in voice that records each sentence and finishes it at once.
   await page.addInitScript(`

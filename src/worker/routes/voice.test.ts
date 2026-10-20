@@ -142,6 +142,80 @@ describe("Voice Entry: create", () => {
     expect((await browser.post("/tasks", created.values)).status).toBe(201);
   });
 
+  it("gives a Task the items the sentence names, as a Checklist that Undo deletes", async () => {
+    const { browser, ana } = await family();
+    answer = (p) => ({
+      kind: "task",
+      title: "Prepare the trip",
+      type: null,
+      persons: [numberOf(p, "Ana")],
+      date: "2026-10-09",
+      time: "18:00",
+      allDay: null,
+      repeat: null,
+      items: ["Passports", " Chargers ", "", "Passports", 3],
+      list: null,
+    });
+    const created = (await (
+      await browser.post("/voice", { sentence: "prepare the trip: passports and chargers" })
+    ).json()) as Created & { form: unknown };
+    expect(created).toMatchObject({
+      kind: "checklist",
+      values: {
+        name: "Prepare the trip",
+        endDate: "2026-10-09",
+        personIds: [ana],
+        items: ["Passports", "Chargers"],
+      },
+      form: { templateId: null, items: ["Passports", "Chargers"] },
+    });
+    expect(created.summary).toMatch(/2 (items|itens)$/);
+    const res = await browser.post("/checklists", created.values);
+    expect(res.status).toBe(201);
+    const { id } = (await res.json()) as { id: string };
+    const items = (
+      (await (await browser.get("/tasks")).json()) as { checklistId: string }[]
+    ).filter((t) => t.checklistId === id);
+    expect(items).toHaveLength(2);
+    expect((await browser.delete(`/checklists/${id}`)).status).toBe(204);
+  });
+
+  it("gives a Task the items of the predefined list the sentence names, and its own", async () => {
+    const { browser } = await family();
+    let beach = -1;
+    answer = (p) => {
+      const line = p.messages[1].content
+        .split("\n")
+        .find((l) => /^\d+\. (Beach day|Dia de praia)$/.test(l))!;
+      beach = Number(line.split(".")[0]);
+      return {
+        kind: "task",
+        title: "Beach",
+        type: null,
+        persons: [],
+        date: null,
+        time: null,
+        allDay: null,
+        repeat: null,
+        items: ["Kite"],
+        list: beach,
+      };
+    };
+    const created = (await (
+      await browser.post("/voice", { sentence: "beach with the beach day list and the kite" })
+    ).json()) as Created & { form: { templateId: string } };
+    const templates = (await (await browser.get("/checklist-templates")).json()) as {
+      id: string;
+      builtinKey: string;
+    }[];
+    expect(created.form.templateId).toBe(templates.find((t) => t.builtinKey === "beachDay")!.id);
+    const items = created.values.items as string[];
+    expect(items.length).toBeGreaterThan(2);
+    expect(items.at(-1)).toBe("Kite");
+    expect(created.summary).toMatch(/(Beach day|Dia de praia).*1 item$/);
+    expect((await browser.post("/checklists", created.values)).status).toBe(201);
+  });
+
   it("makes one Entry for each person when the sentence names several appointments", async () => {
     const { browser, ana, types } = await family();
     const rui = (

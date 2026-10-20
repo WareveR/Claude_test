@@ -219,6 +219,7 @@ const VOICE_SCHEMA = {
     on: { type: ["string", "null"] },
     scope: { type: ["string", "null"], enum: ["this", "following", null] },
     items: { type: "array", items: { type: "string" } },
+    list: { type: ["integer", "null"] },
     others: {
       type: "array",
       items: {
@@ -251,6 +252,8 @@ export type VoiceContext = {
   language: Language;
   persons: { name: string; nicknames: string[] }[];
   types: string[];
+  /** The Family's predefined lists, by name. */
+  lists: string[];
   /** What a change may target, already numbered by position. */
   targets: string[];
 };
@@ -276,6 +279,7 @@ export function voicePrompt(context: VoiceContext) {
         '"persons" lists the numbers of the people it is for; "type" is the number of the best entry type, or null.',
         '"repeat" only when the sentence says it repeats; weekdays are 0 = Monday … 6 = Sunday.',
         'For "create", when the sentence names two or more separate things, at different times or for different people each with their own ("I have a massage on Friday at 10 and my wife has one at 11"), the main fields hold the first and "others" holds each of the rest, every one complete with its own kind, title, type, persons, date and time; one thing the people do together stays one item and "others" is empty.',
+        'A new "task" may have items: "items" lists the sub-tasks or things to remember the sentence names for it ("prepare the trip: passports, chargers and book the taxi"), short, in the sentence\'s language; "list" is the number of the predefined list it uses when the sentence asks for one or names it ("pack for the beach with the beach list"), else null. Otherwise "items" is empty.',
         '"shopping" is for buying things or adding them to the shopping list when no day or time is said ("buy milk and eggs", "we\'re out of bread"): "items" lists each thing, short, in the sentence\'s language, without verbs.',
         'For "change": "targets" lists the numbers of the existing items the sentence may mean (all that fit, best first; empty if none); "several" is true when the sentence asks to change two or more different items; "on" is the date of the one occurrence meant for a repeating item, if said; "scope" is "this" for only this time, "following" for from now on, null if not said. Fill only the fields that change and leave the rest null (title only when renamed, persons empty unless they change); "done": true when a task is done.',
         "Answer only with JSON matching the schema.",
@@ -287,6 +291,7 @@ export function voicePrompt(context: VoiceContext) {
         `Today is ${day} ${context.today}, time zone ${context.timeZone}.`,
         `People:\n${persons || "(none)"}`,
         `Entry types:\n${context.types.map((t, i) => `${i}. ${t}`).join("\n")}`,
+        `Predefined lists:\n${context.lists.map((l, i) => `${i}. ${l}`).join("\n") || "(none)"}`,
         `Existing items:\n${context.targets.map((t, i) => `${i}. ${t}`).join("\n") || "(none)"}`,
         `Sentence: ${JSON.stringify(context.sentence)}`,
       ].join("\n\n"),
