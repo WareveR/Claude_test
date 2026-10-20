@@ -78,6 +78,8 @@
     "version": "App version",
     "message": "Message",
     "report": "Report",
+    "copy": "Copy",
+    "copied": "Copied",
     "reportComment": "What were you doing? (optional)",
     "send": "Send",
     "reported": "Report sent.",

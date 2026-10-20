@@ -6,6 +6,7 @@ import { formatLocale } from "../../core/languages";
 import { api } from "../api";
 import { useSignedIn } from "../family";
 import { BUTTON } from "../ui/button";
+import { CopyError } from "../errors/CopyError";
 
 type LoggedError = {
   code: string;
@@ -55,6 +56,9 @@ export function ErrorLogPage() {
             {error.comment && (
               <p className="mt-1 text-xs">{t("errors.log.comment", { comment: error.comment })}</p>
             )}
+            <div className="mt-2 text-xs">
+              <CopyError error={{ ...error, time: when.format(new Date(error.at)) }} />
+            </div>
           </li>
         ))}
       </ul>

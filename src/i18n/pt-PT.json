@@ -78,6 +78,8 @@
     "version": "Versão da aplicação",
     "message": "Mensagem",
     "report": "Reportar",
+    "copy": "Copiar",
+    "copied": "Copiado",
     "reportComment": "O que estavas a fazer? (opcional)",
     "send": "Enviar",
     "reported": "Reporte enviado.",

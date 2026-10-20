@@ -5,7 +5,9 @@ test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 
 test("a failure shows a code and details, can be reported and is in the Error log", async ({
   page,
+  context,
 }) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await signIn(page);
   await page.route("**/api/tasks", (route) =>
     route.fulfill({ status: 503, json: { error: "unavailable" } }),
@@ -18,6 +20,13 @@ test("a failure shows a code and details, can be reported and is in the Error lo
   await notice.getByRole("button", { name: "See details" }).click();
   await expect(notice.getByText("GET /tasks")).toBeVisible();
   await expect(notice.getByText("unavailable")).toBeVisible();
+  // Copy puts the same details in the clipboard, to paste into a message.
+  await notice.getByRole("button", { name: "Copy" }).click();
+  await expect(notice.getByRole("button", { name: "Copied" })).toBeVisible();
+  const copied = String(await page.evaluate("navigator.clipboard.readText()"));
+  expect(copied).toContain(code);
+  expect(copied).toContain("Action: GET /tasks");
+  expect(copied).toContain("Message: Error: unavailable");
 
   await notice.getByRole("button", { name: "Report" }).click();
   await notice.getByLabel("What were you doing? (optional)").fill("Opening the Tasks");
@@ -32,6 +41,11 @@ test("a failure shows a code and details, can be reported and is in the Error lo
   const row = page.getByRole("listitem").filter({ hasText: code });
   await expect(row).toContainText("GET /tasks");
   await expect(row).toContainText("Comment: Opening the Tasks");
+  await row.getByRole("button", { name: "Copy" }).click();
+  await expect(row.getByRole("button", { name: "Copied" })).toBeVisible();
+  expect(String(await page.evaluate("navigator.clipboard.readText()"))).toContain(
+    "Comment: Opening the Tasks",
+  );
 });
 
 test("errors that happen offline are logged once back online", async ({ page, context }) => {

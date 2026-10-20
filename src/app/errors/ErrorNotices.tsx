@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ApiError } from "../api";
 import { dismissNotice, sendReport, useErrorNotices, type ErrorNotice } from "./store";
 import { BUTTON } from "../ui/button";
+import { CopyError } from "./CopyError";
 
 /** Failures, shown at once over every screen until dismissed. */
 export function ErrorNotices() {
@@ -25,6 +26,10 @@ function Notice({ notice }: { notice: ErrorNotice }) {
   const [details, setDetails] = useState(false);
   const [report, setReport] = useState<ReportState>("closed");
   const [comment, setComment] = useState("");
+  const time = new Date(notice.at).toLocaleString(i18n.language, {
+    dateStyle: "short",
+    timeStyle: "medium",
+  });
 
   async function send() {
     setReport("sending");
@@ -62,12 +67,7 @@ function Notice({ notice }: { notice: ErrorNotice }) {
           <dt className="text-muted">{t("errors.action")}</dt>
           <dd className="break-all">{notice.action || "—"}</dd>
           <dt className="text-muted">{t("errors.time")}</dt>
-          <dd>
-            {new Date(notice.at).toLocaleString(i18n.language, {
-              dateStyle: "short",
-              timeStyle: "medium",
-            })}
-          </dd>
+          <dd>{time}</dd>
           <dt className="text-muted">{t("errors.version")}</dt>
           <dd>{notice.appVersion}</dd>
           <dt className="text-muted">{t("errors.message")}</dt>
@@ -102,10 +102,11 @@ function Notice({ notice }: { notice: ErrorNotice }) {
           </button>
         </form>
       ) : (
-        <div className="flex gap-4 text-xs">
+        <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
           <button type="button" className={BUTTON} onClick={() => setDetails(!details)}>
             {t(details ? "errors.hideDetails" : "errors.seeDetails")}
           </button>
+          <CopyError error={{ ...notice, time }} />
           {report === "sent" ? (
             <span>{t("errors.reported")}</span>
           ) : (
