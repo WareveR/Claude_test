@@ -1,12 +1,7 @@
 import { expect, test } from "@playwright/test";
-import { signIn } from "./helpers";
+import { signIn, lisbonDate } from "./helpers";
 
 test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
-
-function lisbonDate(days: number) {
-  const date = new Date(Date.now() + days * 86_400_000);
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Lisbon" }).format(date);
-}
 
 test("a Checklist's page holds its items to tick, add, rename and remove", async ({ page }) => {
   await signIn(page);
