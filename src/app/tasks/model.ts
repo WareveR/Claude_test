@@ -70,6 +70,31 @@ export function useTask(id: string | undefined) {
 }
 
 /** Ticks a Task done or undoes it, from anywhere a Task shows. */
+/** Moves a Task to another day, keeping everything else (its time only on a dated move). */
+export function useMoveTask() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ task, dueDate }: { task: Task; dueDate: string }) =>
+      api<Task>(`/tasks/${task.id}`, {
+        method: "PUT",
+        body: {
+          title: task.title,
+          notes: task.notes,
+          dueDate,
+          dueTime: task.dueTime,
+          personIds: task.personIds,
+          private: task.private,
+          importance: task.importance,
+          repetition: task.repetition,
+          checklistId: task.checklistId,
+          parentId: task.parentId,
+          entryId: task.entryId,
+        },
+      }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["tasks"] }),
+  });
+}
+
 export function useTick() {
   const queryClient = useQueryClient();
   return useMutation({
