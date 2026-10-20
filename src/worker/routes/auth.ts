@@ -1,7 +1,14 @@
 import { Hono } from "hono";
 import { isLanguage, isTimeZone } from "../../core/languages";
+import { eq } from "drizzle-orm";
+import { accountByEmail, EMAIL, normalEmail } from "../auth/account";
 import { safeEqual, randomId, sha256 } from "../auth/crypto";
-import { hashPassword, isAcceptablePassword, verifyPassword } from "../auth/password";
+import {
+  hashPassword,
+  isAcceptablePassword,
+  NO_ACCOUNT_HASH,
+  verifyPassword,
+} from "../auth/password";
 import { currentDevice, endSession, startSession } from "../auth/session";
 import { clearFailures, clientIp, recordFailure, retryAfter } from "../auth/throttle";
 import { schema } from "../db";
@@ -10,8 +17,6 @@ import { seedBuiltInTypes } from "./entry-types";
 import { seedBuiltInTemplates } from "./checklist-templates";
 import { setupCodeChanged } from "./recovery";
 
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 /** Setup, sign-in and sign-out: the routes that work without a session. */
 export const authRoutes = new Hono<AppEnv>();
 
@@ -19,12 +24,15 @@ authRoutes.get("/status", async (c) => {
   const db = c.get("db");
   const [family] = await db.select().from(schema.family).limit(1);
   const device = family ? await currentDevice(c, db, c.get("now")) : null;
+  const [account] = device
+    ? await db.select().from(schema.account).where(eq(schema.account.id, device.accountId))
+    : [];
   return c.json({
     familyExists: Boolean(family),
     newSetupCode: family ? await setupCodeChanged(c.env, family) : false,
-    signedIn: Boolean(device),
+    signedIn: Boolean(account),
     family:
-      family && device
+      family && account
         ? {
             name: family.name,
             language: family.language,
@@ -35,15 +43,25 @@ authRoutes.get("/status", async (c) => {
             lastExportAt: family.lastExportAt,
           }
         : null,
-    device: device
+    account: account
       ? {
-          id: device.id,
-          name: device.name,
-          language: device.language,
-          kind: device.kind,
-          model: device.model,
+          id: account.id,
+          email: account.email,
+          role: account.role,
+          dev: account.dev,
+          personId: account.personId,
         }
       : null,
+    device:
+      device && account
+        ? {
+            id: device.id,
+            name: device.name,
+            language: device.language,
+            kind: device.kind,
+            model: device.model,
+          }
+        : null,
   });
 });
 
@@ -63,23 +81,32 @@ authRoutes.post("/setup", async (c) => {
     return c.json({ error: "wrong_setup_code" }, 401);
   }
   const name = typeof body.name === "string" ? body.name.trim() : "";
-  const recoveryEmail = typeof body.recoveryEmail === "string" ? body.recoveryEmail.trim() : "";
+  const email = normalEmail(body.email);
   if (!name) return c.json({ error: "invalid", field: "name" }, 400);
+  if (!EMAIL.test(email)) return c.json({ error: "invalid", field: "email" }, 400);
   if (!isAcceptablePassword(body.password))
     return c.json({ error: "invalid", field: "password" }, 400);
-  if (!EMAIL.test(recoveryEmail)) return c.json({ error: "invalid", field: "recoveryEmail" }, 400);
   if (!isLanguage(body.language)) return c.json({ error: "invalid", field: "language" }, 400);
   if (!isTimeZone(body.timeZone)) return c.json({ error: "invalid", field: "timeZone" }, 400);
 
+  const ownerId = randomId();
   await db.batch([
     db.insert(schema.family).values({
       id: randomId(),
       name,
       language: body.language,
       timeZone: body.timeZone,
-      passwordHash: await hashPassword(body.password),
-      recoveryEmail,
       setupCodeHash: await sha256(c.env.SETUP_CODE),
+      createdAt: now.toISOString(),
+      changedAt: now.toISOString(),
+    }),
+    db.insert(schema.account).values({
+      id: ownerId,
+      email,
+      passwordHash: await hashPassword(body.password),
+      role: "owner",
+      // Whoever installs the app sees its testing tools; they can switch Dev off.
+      dev: true,
       createdAt: now.toISOString(),
       changedAt: now.toISOString(),
     }),
@@ -87,7 +114,7 @@ authRoutes.post("/setup", async (c) => {
     ...seedBuiltInTemplates(db, now.toISOString()),
   ]);
   await clearFailures(db, ip);
-  await startSession(c, db, now);
+  await startSession(c, db, now, ownerId);
   return c.json({ ok: true }, 201);
 });
 
@@ -102,12 +129,16 @@ authRoutes.post("/session", async (c) => {
   if (wait > 0) return c.json({ error: "too_many_attempts", retryAfter: wait }, 429);
 
   const body = await c.req.json().catch(() => ({}));
-  if (!(await verifyPassword(String(body.password ?? ""), family.passwordHash))) {
+  const account = await accountByEmail(db, normalEmail(body.email));
+  // An unknown email and a wrong password look the same, so neither leaks who has an Account.
+  const password = String(body.password ?? "");
+  const matches = await verifyPassword(password, account?.passwordHash || NO_ACCOUNT_HASH);
+  if (!account || !matches) {
     await recordFailure(db, ip, now);
     return c.json({ error: "wrong_password" }, 401);
   }
   await clearFailures(db, ip);
-  await startSession(c, db, now);
+  await startSession(c, db, now, account.id);
   return c.json({ ok: true }, 201);
 });
 

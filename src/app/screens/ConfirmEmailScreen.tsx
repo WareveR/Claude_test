@@ -24,7 +24,9 @@ export function ConfirmEmailScreen({ token }: { token: string }) {
     : confirm.error
       ? confirm.error instanceof ApiError && confirm.error.body.error === "invalid_link"
         ? t("recovery.invalidLink")
-        : t("errors.unexpected")
+        : confirm.error instanceof ApiError && confirm.error.body.error === "email_taken"
+          ? t("recovery.emailTaken")
+          : t("errors.unexpected")
       : t("recovery.confirming");
 
   return (

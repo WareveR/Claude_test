@@ -1,11 +1,14 @@
 import { expect, type Page } from "@playwright/test";
 
-/** The Family Password after 01-first-run.spec.ts has changed it; specs run in file order. */
+/** The Owner's email, from 01-first-run.spec.ts. */
+export const EMAIL = "david@example.com";
+/** The Owner's password after 01-first-run.spec.ts has changed it; specs run in file order. */
 export const PASSWORD = "a brand new phrase";
 
 export async function signIn(page: Page) {
   await page.goto("/");
-  await page.getByLabel("Family Password").fill(PASSWORD);
+  await page.getByLabel("Email", { exact: true }).fill(EMAIL);
+  await page.getByLabel("Password", { exact: true }).fill(PASSWORD);
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByTestId("header-time")).toBeVisible();
 }
@@ -21,4 +24,13 @@ export async function openView(page: Page, name: string) {
   await link.click();
   // A big view (the year) can take a moment to draw; until then the old bar is still there.
   await page.locator(`nav[data-view-nav][data-view="${view}"]`).waitFor();
+}
+
+/** Leaves the Wall, which asks the signed-in Account's password. */
+export async function leaveWall(page: Page) {
+  await page.getByRole("banner").getByRole("button", { name: "Wall" }).click();
+  const dialog = page.getByRole("dialog", { name: "Leave the Wall" });
+  await dialog.getByLabel("Password").fill(PASSWORD);
+  await dialog.getByRole("button", { name: "Leave" }).click();
+  await expect(page.getByTestId("display-board")).toHaveCount(0);
 }

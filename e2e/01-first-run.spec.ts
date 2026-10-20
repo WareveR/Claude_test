@@ -6,8 +6,8 @@ test("set up the Family, move between views, sign out and back in", async ({ pag
   await page.goto("/");
   await page.getByLabel("Setup code").fill("local-setup-code");
   await page.getByLabel("Family name").fill("Pires");
-  await page.getByLabel("Family Password").fill("correct horse battery");
-  await page.getByLabel("Recovery email").fill("david@example.com");
+  await page.getByLabel("Your email").fill("david@example.com");
+  await page.getByLabel("Your password").fill("correct horse battery");
   await page.getByRole("button", { name: "Create" }).click();
 
   // The app opens on today's day view, with the clock in the header.
@@ -30,19 +30,24 @@ test("set up the Family, move between views, sign out and back in", async ({ pag
   await page.getByLabel("Idioma deste dispositivo").selectOption("en");
 
   await page.getByRole("button", { name: "Sign out on this device" }).click();
-  await page.getByLabel("Family Password").fill("wrong password");
+  await page.getByLabel("Email", { exact: true }).fill("David@Example.com");
+  await page.getByLabel("Password", { exact: true }).fill("wrong password");
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByRole("alert")).toHaveText("Wrong password.");
+  await expect(page.getByRole("alert")).toHaveText("Wrong email or password.");
 
-  await page.getByLabel("Family Password").fill("correct horse battery");
+  await page.getByLabel("Password", { exact: true }).fill("correct horse battery");
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByTestId("header-time")).toBeVisible();
 
   // Signing in again keeps the page it was on: still in Settings.
   await page.getByRole("link", { name: "Account and security" }).click();
+  const account = page.locator("section section", {
+    has: page.getByRole("heading", { name: "Your account" }),
+  });
+  await expect(account).toContainText("david@example.com · Owner");
   page.on("dialog", (dialog) => dialog.accept());
   const passwordSection = page.locator("section section", {
-    has: page.getByRole("heading", { name: "Change the Family Password" }),
+    has: page.getByRole("heading", { name: "Change your password" }),
   });
   await passwordSection.getByLabel("Current password").fill("correct horse battery");
   await passwordSection.getByLabel("New password").fill("a brand new phrase");

@@ -8,6 +8,7 @@ import { moveStart } from "../../core/entry-time";
 import { addDays, daysBetween, type PlainDate } from "../../core/plain-date";
 import type { Repetition } from "../../core/repetition";
 import { api, RANGE_STALE_TIME } from "../api";
+import i18n from "../i18n";
 import { fromList } from "../offline/from-list";
 import type { Scope } from "./ScopeDialog";
 
@@ -22,6 +23,8 @@ export type Entry = {
   notes: string;
   icon: string | null;
   private: boolean;
+  /** Private and not this Account's to see: only its time and Persons came. */
+  hidden?: boolean;
   reminders: number[];
   repetition: Repetition | null;
   /** Birthday Entries: the start date carries the real birth year, so the age shows. */
@@ -42,6 +45,17 @@ export type Shown = Entry & {
   href?: string;
 };
 
+/** A hidden Private Entry, and an Occurrence of one edited alone to be Private, read "Private". */
+export function nameHidden(entry: Entry): Entry {
+  const name = i18n.t("entries.private");
+  const exceptions = entry.exceptions?.map((e) =>
+    (e.override as { hidden?: boolean } | null)?.hidden
+      ? { ...e, override: { ...e.override, title: name } }
+      : e,
+  );
+  return { ...entry, title: entry.hidden ? name : entry.title, exceptions };
+}
+
 /** The query that holds the Entries overlapping a window. */
 export const entriesKey = (from: PlainDate, to: PlainDate) => ["entries", from, to];
 
@@ -49,7 +63,7 @@ export const entriesKey = (from: PlainDate, to: PlainDate) => ["entries", from, 
 export function entriesQuery(from: PlainDate, to: PlainDate) {
   return queryOptions({
     queryKey: entriesKey(from, to),
-    queryFn: () => api<Entry[]>(`/entries?from=${from}&to=${to}`),
+    queryFn: async () => (await api<Entry[]>(`/entries?from=${from}&to=${to}`)).map(nameHidden),
     staleTime: RANGE_STALE_TIME,
   });
 }
@@ -65,7 +79,7 @@ export function useEntry(id: string | undefined) {
   const listed = () => fromList<Entry>(queryClient, ["entries"], id);
   return useQuery({
     queryKey: ["entry", id],
-    queryFn: () => api<Entry>(`/entries/${id}`),
+    queryFn: async () => nameHidden(await api<Entry>(`/entries/${id}`)),
     enabled: Boolean(id),
     initialData: () => listed()?.data,
     initialDataUpdatedAt: () => listed()?.updatedAt,

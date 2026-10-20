@@ -7,13 +7,13 @@ import { clearFailures, clientIp, recordFailure, retryAfter } from "../auth/thro
 import { snapshot } from "../backup";
 import type { Db } from "../db";
 import { schema } from "../db";
-import { requireDevice } from "../require-device";
+import { requireDevice, requireOwner } from "../require-device";
 import type { AppEnv } from "../types";
 import { seedBuiltInTemplates } from "./checklist-templates";
 
 /**
- * Settings › Danger zone: deletes the chosen kinds of data for good. The Family Password, the
- * recovery email and the Signed-in Devices always stay. Images no longer used go with the
+ * Settings › Danger zone: deletes the chosen kinds of data for good. The Accounts and the
+ * Signed-in Devices always stay. Images no longer used go with the
  * nightly clean-up 30 days later, so the copy saved just before still finds them.
  */
 export const resetRoutes = new Hono<AppEnv>().use(requireDevice);
@@ -108,11 +108,11 @@ export async function resetSteps(db: Db, parts: Set<ResetPart>, now: string) {
 }
 
 /**
- * Checks the Family Password, saves a full copy to the Backup bucket ("before-reset/…", restored
+ * Only for the Owner. Checks the Owner's password, saves a full copy to the Backup bucket ("before-reset/…", restored
  * by hand like any Backup) and deletes the chosen parts at once. With `check`, only the password
  * is checked, so the device can download the Export before anything is deleted.
  */
-resetRoutes.post("/reset", async (c) => {
+resetRoutes.post("/reset", requireOwner, async (c) => {
   const db = c.get("db");
   const now = c.get("now");
   const ip = clientIp(c);
@@ -124,8 +124,7 @@ resetRoutes.post("/reset", async (c) => {
   if (parts.length === 0 || !parts.every((p: unknown) => RESET_PARTS.includes(p as ResetPart))) {
     return c.json({ error: "invalid", field: "parts" }, 400);
   }
-  const [family] = await db.select().from(schema.family).limit(1);
-  if (!(await verifyPassword(String(body.password ?? ""), family.passwordHash))) {
+  if (!(await verifyPassword(String(body.password ?? ""), c.get("account").passwordHash))) {
     await recordFailure(db, ip, now);
     return c.json({ error: "wrong_password" }, 401);
   }

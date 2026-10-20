@@ -1,7 +1,7 @@
 import { env } from "cloudflare:test";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { mailer, type Email } from "../email";
-import { PASSWORD, setUpFamily, TestBrowser, VALID_SETUP } from "../test/client";
+import { addAccount, EMAIL, PASSWORD, setUpFamily, TestBrowser, VALID_SETUP } from "../test/client";
 
 let outbox: Email[] = [];
 const realSend = mailer.send;
@@ -26,33 +26,37 @@ describe("password recovery", () => {
     expect(wrong.status).toBe(202);
     expect(await wrong.json()).toEqual(await right.json());
     expect(outbox).toHaveLength(1);
-    expect(outbox[0].to).toBe(VALID_SETUP.recoveryEmail);
+    expect(outbox[0].to).toBe(EMAIL);
     // Emails are in the Family Language.
-    expect(outbox[0].subject).toBe("Escolher uma nova Palavra-passe da Família");
+    expect(outbox[0].subject).toBe("Escolher uma nova palavra-passe do calendário");
     expect(outbox[0].text).toContain("https://calendar.example/recover?token=");
   });
 
   it("sets a new password once, signs out every device and sends a notice", async () => {
     const browser = await setUpFamily();
     const stranger = new TestBrowser("203.0.113.51");
-    await stranger.post("/recovery", { email: VALID_SETUP.recoveryEmail });
+    await stranger.post("/recovery", { email: EMAIL });
     const token = tokenIn(outbox[0]);
 
     const res = await stranger.post("/recovery/password", { token, password: "a fresh phrase" });
     expect(res.status).toBe(204);
     expect((await browser.get("/persons")).status).toBe(401);
-    expect(outbox.at(-1)!.subject).toBe("A Palavra-passe da Família mudou");
+    expect(outbox.at(-1)!.subject).toBe("A tua palavra-passe do calendário mudou");
     const again = await stranger.post("/recovery/password", { token, password: "another one!" });
     expect(again.status).toBe(410);
 
-    expect((await stranger.post("/session", { password: PASSWORD })).status).toBe(401);
-    expect((await stranger.post("/session", { password: "a fresh phrase" })).status).toBe(201);
+    expect((await stranger.post("/session", { email: EMAIL, password: PASSWORD })).status).toBe(
+      401,
+    );
+    expect(
+      (await stranger.post("/session", { email: EMAIL, password: "a fresh phrase" })).status,
+    ).toBe(201);
   });
 
   it("expires the link after an hour", async () => {
     await setUpFamily();
     const stranger = new TestBrowser("203.0.113.52");
-    await stranger.post("/recovery", { email: VALID_SETUP.recoveryEmail });
+    await stranger.post("/recovery", { email: EMAIL });
     const token = tokenIn(outbox[0]);
     await env.DB.prepare("UPDATE recovery_token SET expires_at = '2000-01-01T00:00:00.000Z'").run();
     const res = await stranger.post("/recovery/password", { token, password: "a fresh phrase" });
@@ -84,17 +88,14 @@ describe("recovery email change", () => {
       token: tokenIn(outbox[0]),
     });
     expect(confirm.status).toBe(204);
-    expect(outbox.slice(1).map((e) => e.to)).toEqual([
-      VALID_SETUP.recoveryEmail,
-      "new@example.com",
-    ]);
+    expect(outbox.slice(1).map((e) => e.to)).toEqual([EMAIL, "new@example.com"]);
     await browser.post("/recovery", { email: "new@example.com" });
     expect(outbox.at(-1)!.to).toBe("new@example.com");
   });
 });
 
 describe("a new setup code", () => {
-  it("reopens a screen that only chooses a new Family Password", async () => {
+  it("reopens a screen that only chooses a new password for the Owner", async () => {
     const browser = await setUpFamily();
     const stranger = new TestBrowser("203.0.113.54");
     const locked = await stranger.post("/setup/password", {
@@ -121,5 +122,37 @@ describe("a new setup code", () => {
     expect((await stranger.get("/persons")).status).toBe(200);
     const after = (await (await stranger.get("/status")).json()) as { newSetupCode: boolean };
     expect(after.newSetupCode).toBe(false);
+  });
+});
+
+describe("recovery for each Account", () => {
+  it("emails the link to that Account and signs out only its devices", async () => {
+    const owner = await setUpFamily();
+    const ana = await addAccount("ana@example.com");
+    const stranger = new TestBrowser("203.0.113.55");
+    await stranger.post("/recovery", { email: "ana@example.com" });
+    expect(outbox.map((e) => e.to)).toEqual(["ana@example.com"]);
+    const res = await stranger.post("/recovery/password", {
+      token: tokenIn(outbox[0]),
+      password: "ana's fresh phrase",
+    });
+    expect(res.status).toBe(204);
+    expect((await ana.get("/device")).status).toBe(401);
+    expect((await owner.get("/device")).status).toBe(200);
+    expect(
+      (
+        await stranger.post("/session", {
+          email: "ana@example.com",
+          password: "ana's fresh phrase",
+        })
+      ).status,
+    ).toBe(201);
+  });
+
+  it("won't change an email to one another Account has", async () => {
+    await setUpFamily();
+    const ana = await addAccount("ana@example.com");
+    const res = await ana.post("/recovery-email", { password: PASSWORD, email: EMAIL });
+    expect(res.status).toBe(409);
   });
 });

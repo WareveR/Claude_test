@@ -2,7 +2,7 @@ import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { createBrowserRouter, Navigate, Outlet, RouterProvider, useLocation } from "react-router";
 import { displayAllows } from "../core/display";
-import type { Device, Family } from "./api";
+import type { Account, Device, Family } from "./api";
 import { DisplayBoard } from "./display/DisplayBoard";
 import { DisplayEffects } from "./display/DisplayEffects";
 import { EntryDetails } from "./display/EntryDetails";
@@ -100,7 +100,15 @@ const router = createBrowserRouter([
   },
 ]);
 
-export function SignedInApp({ family, device }: { family: Family; device: Device }) {
+export function SignedInApp({
+  family,
+  account,
+  device,
+}: {
+  family: Family;
+  account: Account;
+  device: Device;
+}) {
   const { i18n } = useTranslation();
   const language = deviceLanguage(device.language, family.language);
   useEffect(() => {
@@ -116,7 +124,10 @@ export function SignedInApp({ family, device }: { family: Family; device: Device
   useEffect(() => {
     reportDeviceDetails(device).catch(() => undefined);
   }, [device]);
-  const value = useMemo(() => ({ family, device, language }), [family, device, language]);
+  const value = useMemo(
+    () => ({ family, account, device, language }),
+    [family, account, device, language],
+  );
 
   return (
     <SignedInContext.Provider value={value}>

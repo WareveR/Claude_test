@@ -53,23 +53,25 @@ type Texts = {
   reportText: (details: string, comment: string) => string;
   summarySubject: (count: number) => string;
   summaryText: (lines: string) => string;
+  inviteSubject: (family: string) => string;
+  inviteText: (family: string, link: string) => string;
 };
 
 /** Emails are written in the Family Language. */
 export const EMAIL_TEXTS: Record<Language, Texts> = {
   "pt-PT": {
-    recoverySubject: "Escolher uma nova Palavra-passe da Família",
+    recoverySubject: "Escolher uma nova palavra-passe do calendário",
     recoveryText: (link) =>
-      `Alguém pediu para escolher uma nova Palavra-passe da Família.\n\nAbre esta ligação na próxima hora para a escolher (só funciona uma vez):\n${link}\n\nSe não foste tu, ignora este email; nada muda.`,
-    confirmSubject: "Confirmar o email de recuperação",
+      `Alguém pediu para escolher uma nova palavra-passe para entrares no calendário da Família.\n\nAbre esta ligação na próxima hora para a escolher (só funciona uma vez):\n${link}\n\nSe não foste tu, ignora este email; nada muda.`,
+    confirmSubject: "Confirmar o teu novo email",
     confirmText: (link) =>
-      `Este endereço foi indicado como email de recuperação do calendário da Família.\n\nAbre esta ligação nas próximas 24 horas para o confirmar:\n${link}\n\nSe não esperavas isto, ignora este email.`,
-    passwordChangedSubject: "A Palavra-passe da Família mudou",
+      `Este endereço foi indicado como o novo email para entrares no calendário da Família.\n\nAbre esta ligação nas próximas 24 horas para o confirmar:\n${link}\n\nSe não esperavas isto, ignora este email.`,
+    passwordChangedSubject: "A tua palavra-passe do calendário mudou",
     passwordChangedText:
-      "A Palavra-passe da Família acabou de mudar e todos os dispositivos saíram.\n\nSe não foi ninguém da Família, escolhe uma nova com «Esqueci-me da palavra-passe».",
-    emailChangedSubject: "O email de recuperação mudou",
+      "A tua palavra-passe do calendário acabou de mudar e todos os teus dispositivos saíram.\n\nSe não foste tu, escolhe uma nova com «Esqueci-me da palavra-passe».",
+    emailChangedSubject: "O teu email do calendário mudou",
     emailChangedText: (address) =>
-      `O email de recuperação do calendário da Família passou a ser ${address}.\n\nSe não foi ninguém da Família, avisa quem instalou o calendário.`,
+      `Passas a entrar no calendário da Família com ${address}.\n\nSe não foste tu, avisa quem gere o calendário.`,
     reportSubject: (code) => `Erro reportado: ${code}`,
     reportText: (details, comment) =>
       `Alguém da Família reportou um erro.\n\n${details}\n\nComentário: ${comment || "(nenhum)"}`,
@@ -77,20 +79,23 @@ export const EMAIL_TEXTS: Record<Language, Texts> = {
       count === 1 ? "Houve 1 erro no calendário" : `Houve ${count} erros no calendário`,
     summaryText: (lines) =>
       `Resumo dos erros desde o último resumo:\n\n${lines}\n\nOs detalhes estão em Definições › Registo de erros.`,
+    inviteSubject: (family) => `Convite para o calendário da família ${family}`,
+    inviteText: (family, link) =>
+      `Foste convidado para o calendário da família ${family}.\n\nAbre esta ligação nos próximos 7 dias para escolheres a tua palavra-passe e entrares (só funciona uma vez):\n${link}\n\nDepois entras sempre com este email.`,
   },
   en: {
-    recoverySubject: "Choose a new Family Password",
+    recoverySubject: "Choose a new calendar password",
     recoveryText: (link) =>
-      `Someone asked to choose a new Family Password.\n\nOpen this link within the next hour to choose it (it works once):\n${link}\n\nIf it wasn't you, ignore this email; nothing changes.`,
-    confirmSubject: "Confirm the recovery email",
+      `Someone asked to choose a new password for signing in to the Family calendar.\n\nOpen this link within the next hour to choose it (it works once):\n${link}\n\nIf it wasn't you, ignore this email; nothing changes.`,
+    confirmSubject: "Confirm your new email",
     confirmText: (link) =>
-      `This address was given as the recovery email of the Family calendar.\n\nOpen this link within 24 hours to confirm it:\n${link}\n\nIf you weren't expecting this, ignore this email.`,
-    passwordChangedSubject: "The Family Password changed",
+      `This address was given as your new email for signing in to the Family calendar.\n\nOpen this link within 24 hours to confirm it:\n${link}\n\nIf you weren't expecting this, ignore this email.`,
+    passwordChangedSubject: "Your calendar password changed",
     passwordChangedText:
-      'The Family Password has just changed and every device was signed out.\n\nIf it wasn\'t anyone in the Family, choose a new one with "Forgot password".',
-    emailChangedSubject: "The recovery email changed",
+      'Your calendar password has just changed and all your devices were signed out.\n\nIf it wasn\'t you, choose a new one with "Forgot password".',
+    emailChangedSubject: "Your calendar email changed",
     emailChangedText: (address) =>
-      `The Family calendar's recovery email is now ${address}.\n\nIf it wasn't anyone in the Family, tell whoever installed the calendar.`,
+      `You now sign in to the Family calendar with ${address}.\n\nIf it wasn't you, tell whoever manages the calendar.`,
     reportSubject: (code) => `Error reported: ${code}`,
     reportText: (details, comment) =>
       `Someone in the Family reported an error.\n\n${details}\n\nComment: ${comment || "(none)"}`,
@@ -100,5 +105,8 @@ export const EMAIL_TEXTS: Record<Language, Texts> = {
         : `There were ${count} errors in the calendar`,
     summaryText: (lines) =>
       `Errors since the last summary:\n\n${lines}\n\nThe details are in Settings › Error log.`,
+    inviteSubject: (family) => `Invitation to the ${family} family calendar`,
+    inviteText: (family, link) =>
+      `You were invited to the ${family} family calendar.\n\nOpen this link within 7 days to choose your password and sign in (it works only once):\n${link}\n\nAfterwards you always sign in with this email.`,
   },
 };

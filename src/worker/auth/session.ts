@@ -14,11 +14,17 @@ const TOUCH_INTERVAL_MS = 60 * 60 * 1000;
 
 export type Device = typeof schema.signedInDevice.$inferSelect;
 
-/** Signs this browser in as a new Signed-in Device and sets its session cookie. */
-export async function startSession(c: Context, db: Db, now: Date): Promise<Device> {
+/** Signs this browser in to an Account as a new Signed-in Device and sets its session cookie. */
+export async function startSession(
+  c: Context,
+  db: Db,
+  now: Date,
+  accountId: string,
+): Promise<Device> {
   const token = randomToken();
   const device: Device = {
     id: randomId(),
+    accountId,
     name: deviceName(c.req.header("User-Agent") ?? ""),
     sessionHash: await sha256(token),
     language: null,

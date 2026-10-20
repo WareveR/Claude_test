@@ -6,6 +6,7 @@ import { api, ApiError } from "../api";
 import { ErrorText, Field, FormActions, TextInput } from "../screens/form";
 import { PERSON_COLORS, uploadPhoto, usePersons, type Person } from "./model";
 import { PersonAvatar } from "./PersonAvatar";
+import { RelationSection } from "./RelationSection";
 import { readyToEdit } from "../offline/fresh";
 import { BUTTON, BUTTON_DANGER } from "../ui/button";
 
@@ -155,6 +156,7 @@ function PersonForm({ person }: { person?: Person }) {
           onCancel={() => navigate("/settings/family")}
         />
       </form>
+      {person && <RelationSection person={person} />}
       {person && (
         <div className="flex flex-col gap-2 border-t border-line pt-4">
           <button

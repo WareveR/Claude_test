@@ -19,6 +19,8 @@ export type Relative = {
   /** At most two. */
   parentIds: string[];
   partnerIds: string[];
+  /** The calendar Person this Relative is, if any; they share photo and date of birth. */
+  personId?: string | null;
 };
 
 export const SEXES: Sex[] = ["f", "m", ""];

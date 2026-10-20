@@ -9,7 +9,7 @@ The single account that signs in and owns every piece of data in the calendar; e
 _Avoid_: User, account, household, tenant
 
 **Person**:
-A member of a Family who can be attached to calendar entries and used as a filter; a Person never signs in. A Person has a name, a colour, an optional photo, optional Nicknames and an optional date of birth, which keeps a Birthday Entry in sync. Removing a Person archives them (gone from pickers and filters, kept on past Entries); only a Person no Entry mentions can be deleted.
+A member of a Family who can be attached to calendar entries and used as a filter; a Person never signs in. A Person has a name, a colour, an optional photo, optional Nicknames and an optional date of birth, which keeps a Birthday Entry in sync. Removing a Person archives them (gone from pickers and filters, kept on past Entries); only a Person no Entry mentions can be deleted. A relation from a Person's page ("Carla is the sister of Sara") links two Persons in the family tree: each becomes a tree Relative (one of the same name is reused), partners are linked, a child also becomes the child of its parent's only partner, and siblings share their parents, or an unknown parent when neither has any; "another relation" adds no link.
 _Avoid_: User, member, participant
 
 **Nickname**:
@@ -33,7 +33,7 @@ How prominent an Entry is in the views: Low, Normal or High.
 _Avoid_: Priority, urgency
 
 **Private**:
-A switch on an Entry or Task for things not everyone should see, such as a medical appointment. On a Signed-in Device it shows as usual, except in Display Mode, where only "Private" and its time show; the Calendar Feed shows it as "Busy", its Reminders say only the time ("Reminder at 10:00"), and it is left out of the Briefing.
+A switch on an Entry or Task for things not everyone should see, such as a medical appointment. It is seen in full by whoever made it and by the Accounts of the Persons it is for; every other Account sees only "Private", its time and its Persons, and can't open, change, tick or delete it, nor find it by voice, and its Export blanks it. Even those who may see it get only "Private" and its time in Display Mode; the Calendar Feed shows it as "Busy", its Reminders say only the time ("Reminder at 10:00"), and it is left out of the Briefing.
 _Avoid_: Hidden, secret, confidential
 
 **Timed Entry**:
@@ -76,16 +76,20 @@ _Avoid_: View filter, member filter
 An Entry of the built-in Birthday type. It is either synced from a Person's date of birth (attached to that Person; its date and Person change only on the Person) or entered by hand for someone outside the Family. The birth year is optional; when known, the age reached is shown. A birthday party is a separate, ordinary Entry.
 _Avoid_: Anniversary, birthdate entry
 
-**Family Password**:
-The single secret that signs any device in as the Family: at least 10 characters, no complexity rules. It is recovered through the Family's one registered recovery email, or, as a last resort, through a new setup code in the hosting settings.
-_Avoid_: Login, account password, PIN
+**Account**:
+How one adult signs in: their own email and password (at least 10 characters, no complexity rules), belonging to one Person. A Person without one, like a child, never signs in. Each Account has a role: the **Owner** (whoever set up the Family; exactly one, the only one who can use the Danger zone), an **Admin** or a **Member**; and a **Dev** switch that shows the tools for testing and diagnosing the app. A forgotten password is recovered by a link sent to the Account's email; the Owner's last resort is a new setup code in the hosting settings. It replaced the Family Password (ADR-0009).
+_Avoid_: User, login, profile, Family Password
+
+**Invite**:
+How a new adult gets an Account: the Owner or an Admin types their email, and optionally their Person, role and Dev, in Settings › Family › Members; a single-use link valid for 7 days goes to that email, where they choose their password and are signed in. Until then the Account is pending and cannot sign in. The Owner and Admins also send a member a new-password link, change roles, Dev and Persons, and remove Accounts (whose devices are signed out; what they made stays), but never change the Owner's Account or another adult's email. Only the Owner hands the Family to another adult, becoming an Admin. Family-wide settings (Public Holidays, bins, Sleeping Hours) and the Error Log are for the Owner and Admins; the Error Log also for anyone with Dev.
+_Avoid_: Sign-up, registration
 
 **Signed-in Device**:
-A browser or device holding a Family session that lasts a year from its last use. Each one is listed and can be signed out on its own; changing the Family Password signs out all of them. A device that is signed out, or finds it has been, deletes its offline copy of the calendar at once. Every Signed-in Device can edit.
+A browser or device signed in to one Account, holding a session that lasts a year from its last use. Each one is listed and can be signed out on its own: a Member sees their own devices, the Owner and Admins see everyone's. Changing an Account's password signs out all of that Account's devices. A device that is signed out, or finds it has been, deletes its offline copy of the calendar at once.
 _Avoid_: Session, user, client
 
 **Display Mode**:
-A per-device setting for a screen used as a wall display (typically a tablet): the screen stays awake, text is larger, the view returns to today after a few minutes without touch and rolls over at midnight, editing controls are hidden except ticking a Task done, and Private Entries and Tasks show only as "Private". Display Mode is entered from the "Wall" tab of the view switcher and left with a "Leave wall view" button in the header; it is not a separate access level.
+A per-device setting for a screen used as a wall display (typically a tablet): the screen stays awake, text is larger, the view returns to today after a few minutes without touch and rolls over at midnight, editing controls are hidden except ticking a Task done, and Private Entries and Tasks show only as "Private". Display Mode is entered from the "Wall" tab of the view switcher and left with the Wall switch in the header, which asks the password of the Account the device is signed in with, so a child at a wall tablet can't reach everything that Account sees; it is not a separate access level.
 _Avoid_: Kiosk, read-only mode, wall mode
 
 **Task**:
@@ -145,9 +149,9 @@ A copy of the Family's data kept so it can be brought back after a mistake or a 
 _Avoid_: Snapshot, archive, history
 
 **Export**:
-A file the Family downloads from Settings to keep its data outside the app: either everything (all data and images) or all Entries as an .ics calendar file. It holds everything the Family sees, Private Entries and Tasks, archived Persons and closed Checklist rounds included, but never the Family Password, secrets, Signed-in Devices or the Error Log. Settings shows when the last full Export was downloaded. A full Export can be used to restore, the same way as a Backup; the app has no import.
+A file the Family downloads from Settings to keep its data outside the app: either everything (all data and images) or all Entries as an .ics calendar file. It holds everything the Family sees, Private Entries and Tasks, archived Persons and closed Checklist rounds included, but never a password, secrets, Signed-in Devices or the Error Log. Settings shows when the last full Export was downloaded. A full Export can be used to restore, the same way as a Backup; the app has no import.
 _Avoid_: Download, dump, Calendar Feed (a live link, not a file)
 
 **Danger zone**:
-The last part of Settings › Account, where the Family deletes data for good: any of Entries, Tasks and Checklists, the Shopping List, Persons (with their nicknames and synced Birthdays; their Entries and Tasks stay, Family-wide), Entry Types (those made by the Family go, their Entries moving to General, and the built-in ones are reset), Checklist templates (reset to the built-in ones), Family settings (Public Holiday places, bins, Weather Locations, Sleeping Hours, Calendar Feeds) and the Error Log; or all of them, to start again as a new Family. Deleting Entries keeps the synced Birthdays of Persons who stay. The Family Password, the recovery email, the Family's name, language and time zone, and the Signed-in Devices always stay. The Family Password is asked first, then the device downloads a full Export, and the server saves a full copy beside the Backups, restored by hand like them, before deleting. Not offered in Display Mode.
+The last part of Settings › Account, only for the Owner, where the Family deletes data for good: any of Entries, Tasks and Checklists, the Shopping List, Persons (with their nicknames and synced Birthdays; their Entries and Tasks stay, Family-wide), Entry Types (those made by the Family go, their Entries moving to General, and the built-in ones are reset), Checklist templates (reset to the built-in ones), Family settings (Public Holiday places, bins, Weather Locations, Sleeping Hours, Calendar Feeds) and the Error Log; or all of them, to start again as a new Family. Deleting Entries keeps the synced Birthdays of Persons who stay. The Accounts, the Family's name, language and time zone, and the Signed-in Devices always stay. The Owner's password is asked first, then the device downloads a full Export, and the server saves a full copy beside the Backups, restored by hand like them, before deleting. Not offered in Display Mode.
 _Avoid_: Reset, wipe, factory reset

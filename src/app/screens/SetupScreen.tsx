@@ -15,7 +15,7 @@ export function SetupScreen() {
     setupCode: "",
     name: "",
     password: "",
-    recoveryEmail: "",
+    email: "",
     language: i18n.language,
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   });
@@ -45,6 +45,15 @@ export function SetupScreen() {
         <Field label={t("setup.familyName")}>
           <TextInput required value={form.name} onChange={update("name")} />
         </Field>
+        <Field label={t("setup.email")}>
+          <TextInput
+            required
+            type="email"
+            autoComplete="username"
+            value={form.email}
+            onChange={update("email")}
+          />
+        </Field>
         <Field label={t("setup.password")}>
           <TextInput
             required
@@ -56,14 +65,6 @@ export function SetupScreen() {
           />
         </Field>
         <p className="-mt-2 text-xs text-muted">{t("setup.passwordHint")}</p>
-        <Field label={t("setup.recoveryEmail")}>
-          <TextInput
-            required
-            type="email"
-            value={form.recoveryEmail}
-            onChange={update("recoveryEmail")}
-          />
-        </Field>
         <Field label={t("setup.language")}>
           <select
             value={form.language}

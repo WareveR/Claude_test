@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { signIn } from "./helpers";
+import { leaveWall, signIn } from "./helpers";
 
 test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 
@@ -76,6 +76,6 @@ test("the Wall shows the curtain too, with the season's picture under the Month 
   await expect(curtain).toContainText(String(new Date(Date.now() + 7 * 86_400_000).getFullYear()));
   await expect(curtain).toHaveCount(0);
 
-  await page.getByRole("banner").getByRole("button", { name: "Wall" }).click();
+  await leaveWall(page);
   await page.evaluate(() => localStorage.removeItem("theme"));
 });

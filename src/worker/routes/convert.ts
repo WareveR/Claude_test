@@ -8,6 +8,8 @@ import type { Db } from "../db";
 import { schema } from "../db";
 import { requireDevice } from "../require-device";
 import type { AppEnv } from "../types";
+import { mayChangeEntry } from "./entries";
+import { mayChangeTask } from "./tasks";
 
 /**
  * Turning an Entry into a Task and back. Each stays its own kind underneath; the new one keeps
@@ -22,7 +24,7 @@ async function today(db: Db, now: Date) {
 }
 
 /** A new Entry of the General type, without Reminders, from a Task's values. */
-async function insertEntry(db: Db, values: EntryFromTask, now: string) {
+async function insertEntry(db: Db, values: EntryFromTask, now: string, createdBy: string | null) {
   const [general] = await db
     .select({ id: schema.entryType.id })
     .from(schema.entryType)
@@ -43,6 +45,7 @@ async function insertEntry(db: Db, values: EntryFromTask, now: string) {
       importance: values.importance,
       notes: values.notes,
       private: values.private,
+      createdBy,
       reminders: [],
       repetition: values.repetition,
       createdAt: now,
@@ -64,6 +67,7 @@ convertRoutes.post("/entries/:id/to-task", async (c) => {
   const [row] = await db.select().from(schema.entry).where(eq(schema.entry.id, id));
   if (!row) return c.json({ error: "not_found" }, 404);
   if (row.birthdayPersonId) return c.json({ error: "birthday_locked" }, 409);
+  if (!(await mayChangeEntry(db, c.get("account"), row))) return c.json({ error: "private" }, 403);
   const persons = await db
     .select({ personId: schema.entryPerson.personId })
     .from(schema.entryPerson)
@@ -94,7 +98,13 @@ convertRoutes.post("/entries/:id/to-task", async (c) => {
   const taskId = randomId();
   const now = c.get("now").toISOString();
   await db.batch([
-    db.insert(schema.task).values({ id: taskId, ...fields, createdAt: now, changedAt: now }),
+    db.insert(schema.task).values({
+      id: taskId,
+      ...fields,
+      createdBy: row.createdBy,
+      createdAt: now,
+      changedAt: now,
+    }),
     ...personIds.map((personId) => db.insert(schema.taskPerson).values({ taskId, personId })),
     db.delete(schema.entry).where(eq(schema.entry.id, id)),
   ]);
@@ -108,6 +118,7 @@ convertRoutes.post("/tasks/:id/to-entry", async (c) => {
   const [row] = await db.select().from(schema.task).where(eq(schema.task.id, id));
   if (!row) return c.json({ error: "not_found" }, 404);
   if (row.checklistId) return c.json({ error: "invalid", field: "checklistId" }, 400);
+  if (!(await mayChangeTask(db, c.get("account"), row))) return c.json({ error: "private" }, 403);
   const persons = await db
     .select({ personId: schema.taskPerson.personId })
     .from(schema.taskPerson)
@@ -125,7 +136,7 @@ convertRoutes.post("/tasks/:id/to-entry", async (c) => {
     },
     await today(db, c.get("now")),
   );
-  const entry = await insertEntry(db, values, c.get("now").toISOString());
+  const entry = await insertEntry(db, values, c.get("now").toISOString(), row.createdBy);
   await db.batch([
     entry.insert,
     ...entry.links,
@@ -159,7 +170,7 @@ convertRoutes.post("/checklists/:id/to-entry", async (c) => {
     time: { allDay: true, startDate: start, endDate: row.endDate ?? start },
   };
   const now = c.get("now").toISOString();
-  const entry = await insertEntry(db, values, now);
+  const entry = await insertEntry(db, values, now, c.get("account").id);
   await db.batch([
     entry.insert,
     ...entry.links,

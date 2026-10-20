@@ -25,7 +25,9 @@ export const family = sqliteTable("family", {
   timeZone: text("time_zone").notNull(),
   createdAt: text("created_at").notNull(),
   changedAt: text("changed_at").notNull(),
+  /** No longer used: the Family Password became the Owner's Account (migration 0035). */
   passwordHash: text("password_hash").notNull().default(""),
+  /** No longer used: the recovery email became the Owner's Account email (migration 0035). */
   recoveryEmail: text("recovery_email").notNull().default(""),
   /** SHA-256 of the setup code last used, to notice when the installer sets a new one. */
   setupCodeHash: text("setup_code_hash").notNull().default(""),
@@ -48,9 +50,32 @@ export const family = sqliteTable("family", {
   sleepEndHour: integer("sleep_end_hour").notNull().default(7),
 });
 
-/** A browser that signed in with the Family Password. Only the session token's hash is kept. */
+export type Role = "owner" | "admin" | "member";
+
+/**
+ * An adult who signs in with their own email and password. It belongs to one Person (chosen on
+ * the Owner's first sign-in after accounts came in); a Person without one, like a child, never
+ * signs in. Exactly one Account is the Owner.
+ */
+export const account = sqliteTable("account", {
+  id: text("id").primaryKey(),
+  personId: text("person_id").references(() => person.id, { onDelete: "set null" }),
+  /** Kept in lower case; signs in and receives the recovery and notice emails. */
+  email: text("email").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  role: text("role").$type<Role>().notNull(),
+  /** Shows the tools for testing and diagnosing the app. */
+  dev: integer("dev", { mode: "boolean" }).notNull().default(false),
+  createdAt: text("created_at").notNull(),
+  changedAt: text("changed_at").notNull(),
+});
+
+/** A browser that signed in with an Account. Only the session token's hash is kept. */
 export const signedInDevice = sqliteTable("signed_in_device", {
   id: text("id").primaryKey(),
+  accountId: text("account_id")
+    .notNull()
+    .references(() => account.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   sessionHash: text("session_hash").notNull().unique(),
   language: text("language"),
@@ -144,6 +169,8 @@ export const entry = sqliteTable("entry", {
   /** Overrides the Entry Type's icon; from the app's fixed set. */
   icon: text("icon"),
   private: integer("private", { mode: "boolean" }).notNull().default(false),
+  /** Who made it; a Private one is seen in full only by them and its Persons' Accounts. */
+  createdBy: text("created_by").references(() => account.id, { onDelete: "set null" }),
   reminders: text("reminders", { mode: "json" }).$type<ReminderOffset[]>().notNull(),
   repetition: text("repetition", { mode: "json" }).$type<Repetition | null>(),
   /** Links the Entries a "this and the following" change split one series into. */
@@ -198,6 +225,8 @@ export const task = sqliteTable("task", {
   dueDate: text("due_date"),
   dueTime: text("due_time"),
   private: integer("private", { mode: "boolean" }).notNull().default(false),
+  /** Who made it; a Private one is seen in full only by them and its Persons' Accounts. */
+  createdBy: text("created_by").references(() => account.id, { onDelete: "set null" }),
   doneAt: text("done_at"),
   /** A repeating Task brings up the next one when ticked; needs a due date. */
   repetition: text("repetition", { mode: "json" }).$type<Repetition | null>(),
@@ -295,14 +324,19 @@ export const checklistTemplate = sqliteTable("checklist_template", {
   changedAt: text("changed_at").notNull(),
 });
 
+export type TokenPurpose = "password" | "email" | "invite";
+
 /**
- * A single-use link sent by email: choosing a new Family Password (valid 1 hour) or confirming
- * a new recovery email (valid 24 hours). Only the token's hash is kept.
+ * A single-use link sent by email to one Account: choosing a new password (valid 1 hour), confirming
+ * a new recovery email (valid 24 hours) or accepting an invite (valid 7 days). Only the token's hash
+ * is kept.
  */
 export const recoveryToken = sqliteTable("recovery_token", {
   id: text("id").primaryKey(),
   tokenHash: text("token_hash").notNull().unique(),
-  purpose: text("purpose").$type<"password" | "email">().notNull(),
+  purpose: text("purpose").$type<TokenPurpose>().notNull(),
+  /** The Account whose password or email it changes. */
+  accountId: text("account_id").references(() => account.id, { onDelete: "cascade" }),
   /** The recovery email waiting to be confirmed. */
   newEmail: text("new_email"),
   createdAt: text("created_at").notNull(),
@@ -469,6 +503,10 @@ export const relative = sqliteTable("relative", {
   photoKey: text("photo_key"),
   /** Free text: stories, what they liked, where they lived. */
   notes: text("notes").notNull().default(""),
+  /** The calendar Person this Relative is, linked by a relation between two Persons. */
+  personId: text("person_id")
+    .unique()
+    .references(() => person.id, { onDelete: "set null" }),
   createdAt: text("created_at").notNull(),
   changedAt: text("changed_at").notNull(),
 });

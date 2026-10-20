@@ -77,6 +77,7 @@ export async function allRelatives(db: Db): Promise<Relative[]> {
     birthPlace: r.birthPlace,
     photoKey: r.photoKey,
     notes: r.notes,
+    personId: r.personId,
     parentIds: parents.filter((p) => p.childId === r.id).map((p) => p.parentId),
     partnerIds: partners
       .filter((p) => p.aId === r.id || p.bId === r.id)
@@ -239,3 +240,125 @@ export async function relativePhotoKeys(db: Db): Promise<string[]> {
     .where(isNotNull(schema.relative.photoKey));
   return rows.map((r) => r.key!);
 }
+
+export const RELATIONS = ["partner", "parent", "child", "sibling", "other"] as const;
+export type Relation = (typeof RELATIONS)[number];
+
+/**
+ * The tree Relative a calendar Person is: the one already linked, else an unlinked one with the
+ * same name, else a new one; the Person's photo and date of birth fill in what it lacks.
+ */
+async function relativeFor(db: Db, personId: string, now: string) {
+  const [person] = await db.select().from(schema.person).where(eq(schema.person.id, personId));
+  if (!person) return null;
+  const tree = await allRelatives(db);
+  const linked = tree.find((r) => r.personId === personId);
+  if (linked) return linked.id;
+  const name = person.name.trim().toLowerCase();
+  const same = tree.find((r) => !r.personId && r.name.trim().toLowerCase() === name);
+  if (same) {
+    await db
+      .update(schema.relative)
+      .set({
+        personId,
+        photoKey: same.photoKey ?? person.photoKey,
+        birthDate: same.birthDate ?? person.dateOfBirth,
+        changedAt: now,
+      })
+      .where(eq(schema.relative.id, same.id));
+    return same.id;
+  }
+  const id = randomId();
+  await db.insert(schema.relative).values({
+    id,
+    name: person.name,
+    personId,
+    photoKey: person.photoKey,
+    birthDate: person.dateOfBirth,
+    createdAt: now,
+    changedAt: now,
+  });
+  return id;
+}
+
+/** The parents to give `id` so it is `relation` of `other`, or the reason it can't be. */
+function linksFor(tree: Relative[], id: string, other: string, relation: Relation) {
+  const me = tree.find((r) => r.id === id)!;
+  const them = tree.find((r) => r.id === other)!;
+  const union = (a: string[], b: string[]) => [...new Set([...a, ...b])];
+  switch (relation) {
+    case "partner":
+      return { partner: true };
+    case "parent":
+      return { parentsOf: { [other]: union(them.parentIds, [id]) } };
+    case "child": {
+      // A child of someone with one partner is taken to be theirs too, room allowing.
+      const both = them.partnerIds.length === 1 ? [other, them.partnerIds[0]] : [other];
+      const parents = union(me.parentIds, both);
+      return { parentsOf: { [id]: parents.length > 2 ? union(me.parentIds, [other]) : parents } };
+    }
+    case "sibling": {
+      if (me.parentIds.some((p) => them.parentIds.includes(p))) return {};
+      if (me.parentIds.length === 0 && them.parentIds.length > 0) {
+        return { parentsOf: { [id]: them.parentIds } };
+      }
+      if (them.parentIds.length === 0 && me.parentIds.length > 0) {
+        return { parentsOf: { [other]: me.parentIds } };
+      }
+      if (me.parentIds.length === 0) return { unknownParent: [id, other] };
+      return { conflict: true };
+    }
+    case "other":
+      return {};
+  }
+}
+
+/**
+ * "This Person is … of that one": links both into the Family Tree, as partners, parent and
+ * child, or siblings (sharing parents, or an unknown parent added to both when neither has any).
+ */
+relativeRoutes.post("/persons/:id/relation", async (c) => {
+  const db = c.get("db");
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
+  const relation = body.relation as Relation;
+  if (!RELATIONS.includes(relation)) return c.json({ error: "invalid", field: "relation" }, 400);
+  const otherPerson = typeof body.personId === "string" ? body.personId : "";
+  if (otherPerson === c.req.param("id"))
+    return c.json({ error: "invalid", field: "personId" }, 400);
+  if (relation === "other") return c.body(null, 204);
+  const now = c.get("now").toISOString();
+  const id = await relativeFor(db, c.req.param("id"), now);
+  if (!id) return c.json({ error: "not_found" }, 404);
+  const other = await relativeFor(db, otherPerson, now);
+  if (!other) return c.json({ error: "invalid", field: "personId" }, 400);
+  const tree = await allRelatives(db);
+  const plan = linksFor(tree, id, other, relation);
+  if ("conflict" in plan) return c.json({ error: "relation_conflict" }, 409);
+  const steps = [];
+  if ("partner" in plan && !tree.find((r) => r.id === id)!.partnerIds.includes(other)) {
+    steps.push(db.insert(schema.relativePartner).values(pair(id, other)));
+  }
+  for (const [child, parentIds] of Object.entries(plan.parentsOf ?? {})) {
+    const bad = checkLinks(tree, child, { parentIds });
+    if (bad) return c.json({ error: "relation_conflict", field: bad }, 409);
+    steps.push(
+      db.delete(schema.relativeParent).where(eq(schema.relativeParent.childId, child)),
+      ...parentIds.map((parentId) =>
+        db.insert(schema.relativeParent).values({ childId: child, parentId }),
+      ),
+    );
+  }
+  if ("unknownParent" in plan && plan.unknownParent) {
+    const parentId = randomId();
+    steps.push(
+      db
+        .insert(schema.relative)
+        .values({ id: parentId, name: "?", createdAt: now, changedAt: now }),
+      ...plan.unknownParent.map((childId) =>
+        db.insert(schema.relativeParent).values({ childId, parentId }),
+      ),
+    );
+  }
+  if (steps.length > 0) await db.batch(steps as [(typeof steps)[0], ...typeof steps]);
+  return c.json(await allRelatives(db));
+});

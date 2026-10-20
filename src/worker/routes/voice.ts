@@ -30,6 +30,8 @@ import { schema, type Db } from "../db";
 import { requireDevice } from "../require-device";
 import type { AppEnv } from "../types";
 import { allEntries } from "./entries";
+import type { Account } from "../auth/account";
+import { seesInFull } from "../private";
 
 /**
  * Voice Entry: one spoken or typed sentence becomes a new Entry or Task, a change to one, or
@@ -105,7 +107,8 @@ async function allTasks(db: Db) {
   }));
 }
 
-async function loadAll(db: Db) {
+/** What a voice change can find: never a Private Entry or Task hidden from this Account. */
+async function loadAll(db: Db, viewer: Account) {
   const [[family], persons, nicknames, types, entries, tasks] = await Promise.all([
     db.select().from(schema.family).limit(1),
     db.select().from(schema.person),
@@ -114,7 +117,14 @@ async function loadAll(db: Db) {
     allEntries(db),
     allTasks(db),
   ]);
-  return { family, persons, nicknames, types, entries, tasks };
+  return {
+    family,
+    persons,
+    nicknames,
+    types,
+    entries: entries.filter((e) => seesInFull(viewer, e, e.personIds)),
+    tasks: tasks.filter((t) => seesInFull(viewer, t, t.personIds)),
+  };
 }
 
 /**
@@ -175,7 +185,7 @@ voiceRoutes.post("/voice", async (c) => {
   // "comprar leite e ovos" needs no model.
   const shopping = readShoppingPhrase(sentence);
   if (shopping) return c.json(await shoppingAnswer(db, shopping));
-  const { family, persons, nicknames, types, entries, tasks } = await loadAll(db);
+  const { family, persons, nicknames, types, entries, tasks } = await loadAll(db, c.get("account"));
   const deviceLanguage = c.get("device").language;
   const language = isLanguage(deviceLanguage)
     ? deviceLanguage

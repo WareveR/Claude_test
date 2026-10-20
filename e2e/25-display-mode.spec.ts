@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { signIn } from "./helpers";
+import { leaveWall, signIn } from "./helpers";
 
 test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 
@@ -254,16 +254,21 @@ test("the Summary is the Wall's own, and the Wall switched off returns to the pa
   await boardSummary.click();
   await expect(page.getByTestId("time-scroller")).toBeVisible();
 
-  // Wall off: back to the week from before.
+  // Wall off, with the password: back to the week from before. Back keeps the Wall on.
   await wall.click();
+  await page
+    .getByRole("dialog", { name: "Leave the Wall" })
+    .getByRole("button", { name: "Back" })
+    .click();
+  await expect(page.getByTestId("display-board")).toBeVisible();
+  await leaveWall(page);
   await expect(page).toHaveURL(before);
 
   // The same from the wall, after a reload too.
   await wall.click();
   await expect(page.getByTestId("display-board")).toBeVisible();
   await page.reload();
-  await page.getByRole("banner").getByRole("button", { name: "Wall" }).click();
-  await expect(page.getByTestId("display-board")).toHaveCount(0);
+  await leaveWall(page);
   await expect(page).not.toHaveURL(/\/display$/);
   await expect(page.getByRole("link", { name: "Settings" })).toBeVisible();
   await page.reload();
@@ -283,5 +288,5 @@ test("on a tall screen the Wall's hours stretch to the bottom of the screen", as
   const bottom = await scroller.evaluate((el) => el.getBoundingClientRect().bottom);
   expect(bottom).toBeGreaterThan(1300 - 2);
   // Leave the Wall for the specs after this one.
-  await page.getByRole("banner").getByRole("button", { name: "Wall" }).click();
+  await leaveWall(page);
 });

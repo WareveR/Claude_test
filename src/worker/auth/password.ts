@@ -18,7 +18,7 @@ async function derive(password: string, salt: Uint8Array, iterations: number): P
   return toBase64Url(new Uint8Array(bits));
 }
 
-/** Hashes the Family Password as "pbkdf2-sha256$<iterations>$<salt>$<hash>". */
+/** Hashes an Account's password as "pbkdf2-sha256$<iterations>$<salt>$<hash>". */
 export async function hashPassword(password: string): Promise<string> {
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const hash = await derive(password, salt, PBKDF2_ITERATIONS);
@@ -31,6 +31,9 @@ export async function verifyPassword(password: string, stored: string): Promise<
   const candidate = await derive(password, fromBase64Url(salt), Number(iterations));
   return safeEqual(candidate, hash);
 }
+
+/** A hash no password matches, checked for an unknown email so it takes as long as a known one. */
+export const NO_ACCOUNT_HASH = `pbkdf2-sha256$${PBKDF2_ITERATIONS}$AAAAAAAAAAAAAAAAAAAAAA$none`;
 
 export function isAcceptablePassword(password: unknown): password is string {
   return typeof password === "string" && [...password].length >= MIN_PASSWORD_LENGTH;

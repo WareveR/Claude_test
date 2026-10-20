@@ -119,7 +119,7 @@ function VersionHistory() {
 
 type TestState = "idle" | "sending" | "sent" | "noPush" | "notSetUp" | "failed";
 
-/** Tests and diagnostics, for those allowed to see them (useDevTools) and closed by default: the screen this device draws on and a test notification. */
+/** Tests and diagnostics, for Accounts with Dev on (useDevTools), closed by default: the screen this device draws on and a test notification. */
 function Diagnostics() {
   const { t } = useTranslation();
   const screenSize = useSyncExternalStore(onResize, screenLine, () => "");

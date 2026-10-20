@@ -6,7 +6,7 @@ test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 test("Forgot password gives the same answer for any address", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Forgot password?" }).click();
-  await page.getByLabel("Recovery email").fill("nobody@example.com");
+  await page.getByLabel("Your email").fill("nobody@example.com");
   await page.getByRole("button", { name: "Send recovery link" }).click();
   await expect(page.getByRole("status")).toHaveText(
     "If that address is registered, a recovery link is on its way. Check your inbox.",
@@ -20,14 +20,14 @@ test("a used or unknown recovery link is refused", async ({ page }) => {
   await expect(page.getByText("This link is no longer valid. Ask for a new one.")).toBeVisible();
 });
 
-test("changing the recovery email waits for the new address to confirm", async ({ page }) => {
+test("changing one's email waits for the new address to confirm", async ({ page }) => {
   await signIn(page);
   await page.goto("/settings/account");
   const section = page.locator("section section", {
-    has: page.getByRole("heading", { name: "Recovery email" }),
+    has: page.getByRole("heading", { name: "Your email" }),
   });
   await section.getByLabel("Current password").fill(PASSWORD);
-  await section.getByLabel("New recovery email").fill("family@example.com");
-  await section.getByRole("button", { name: "Change recovery email" }).click();
+  await section.getByLabel("New email").fill("family@example.com");
+  await section.getByRole("button", { name: "Change email" }).click();
   await expect(section).toContainText("We sent a confirmation link to family@example.com.");
 });

@@ -246,6 +246,27 @@
       "when": 1792056410817,
       "tag": "0034_family_tree",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "6",
+      "when": 1792446458425,
+      "tag": "0035_accounts",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "6",
+      "when": 1792449466226,
+      "tag": "0036_private_per_person",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "6",
+      "when": 1792455518331,
+      "tag": "0037_relative_person",
+      "breakpoints": true
     }
   ]
 }

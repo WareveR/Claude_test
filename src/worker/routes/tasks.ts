@@ -10,6 +10,8 @@ import { randomId } from "../auth/crypto";
 import type { Db } from "../db";
 import { inParts, schema } from "../db";
 import { announceLater } from "../announce";
+import type { Account } from "../auth/account";
+import { seesInFull } from "../private";
 import { requireDevice } from "../require-device";
 import { settleChecklist } from "../task-tree";
 import type { AppEnv } from "../types";
@@ -109,35 +111,58 @@ async function parseTask(db: Db, body: Record<string, unknown>) {
   };
 }
 
-async function present(db: Db, rows: TaskRow[]) {
+/**
+ * Tasks as this Account may see them: a Private one it may not see in full keeps only its due
+ * date and time, Persons and done state, marked hidden.
+ */
+async function present(db: Db, rows: TaskRow[], viewer: Account) {
   if (rows.length === 0) return [];
   const links = await inParts(
     rows.map((r) => r.id),
     (ids) => db.select().from(schema.taskPerson).where(inArray(schema.taskPerson.taskId, ids)),
   );
-  return rows.map((row) => ({
-    id: row.id,
-    title: row.title,
-    notes: row.notes,
-    dueDate: row.dueDate,
-    dueTime: row.dueTime,
-    personIds: links.filter((l) => l.taskId === row.id).map((l) => l.personId),
-    private: row.private,
-    doneAt: row.doneAt,
-    repetition: row.repetition ?? null,
-    seriesId: row.seriesId,
-    checklistId: row.checklistId,
-    parentId: row.parentId,
-    entryId: row.entryId,
-    importance: row.importance,
-    createdAt: row.createdAt,
-    changedAt: row.changedAt,
-  }));
+  return rows.map((row) => {
+    const personIds = links.filter((l) => l.taskId === row.id).map((l) => l.personId);
+    const hidden = !seesInFull(viewer, row, personIds);
+    return {
+      id: row.id,
+      title: hidden ? "" : row.title,
+      notes: hidden ? "" : row.notes,
+      dueDate: row.dueDate,
+      dueTime: row.dueTime,
+      personIds,
+      private: row.private,
+      hidden,
+      doneAt: row.doneAt,
+      repetition: row.repetition ?? null,
+      seriesId: row.seriesId,
+      checklistId: row.checklistId,
+      parentId: row.parentId,
+      entryId: row.entryId,
+      importance: row.importance,
+      createdAt: row.createdAt,
+      changedAt: row.changedAt,
+    };
+  });
 }
 
-async function presentOne(db: Db, id: string) {
+async function presentOne(db: Db, id: string, viewer: Account) {
   const rows = await db.select().from(schema.task).where(eq(schema.task.id, id));
-  return (await present(db, rows))[0];
+  return (await present(db, rows, viewer))[0];
+}
+
+/** Whether this Account may change, tick or delete the Task: not when it is Private and hidden from it. */
+export async function mayChangeTask(db: Db, viewer: Account, row: TaskRow) {
+  if (!row.private) return true;
+  const links = await db
+    .select({ personId: schema.taskPerson.personId })
+    .from(schema.taskPerson)
+    .where(eq(schema.taskPerson.taskId, row.id));
+  return seesInFull(
+    viewer,
+    row,
+    links.map((l) => l.personId),
+  );
 }
 
 function personLinks(db: Db, taskId: string, personIds: string[]) {
@@ -159,11 +184,11 @@ export const taskRoutes = new Hono<AppEnv>().use(requireDevice);
 taskRoutes.get("/tasks", async (c) => {
   const db = c.get("db");
   const rows = await db.select().from(schema.task).orderBy(desc(schema.task.createdAt));
-  return c.json(await present(db, rows));
+  return c.json(await present(db, rows, c.get("account")));
 });
 
 taskRoutes.get("/tasks/:id", async (c) => {
-  const task = await presentOne(c.get("db"), c.req.param("id"));
+  const task = await presentOne(c.get("db"), c.req.param("id"), c.get("account"));
   if (!task) return c.json({ error: "not_found" }, 404);
   return c.json(task);
 });
@@ -176,7 +201,13 @@ taskRoutes.post("/tasks", async (c) => {
   const id = randomId();
   const now = c.get("now").toISOString();
   await db.batch([
-    db.insert(schema.task).values({ id, ...fields, createdAt: now, changedAt: now }),
+    db.insert(schema.task).values({
+      id,
+      ...fields,
+      createdBy: c.get("account").id,
+      createdAt: now,
+      changedAt: now,
+    }),
     ...personLinks(db, id, personIds),
   ]);
   // A new undone item unticks the items holding it.
@@ -185,7 +216,7 @@ taskRoutes.post("/tasks", async (c) => {
   if (!fields.parentId) {
     announceLater(c, { kind: "task", id, title: fields.title, private: fields.private, personIds });
   }
-  return c.json(await presentOne(db, id), 201);
+  return c.json(await presentOne(db, id, c.get("account")), 201);
 });
 
 taskRoutes.put("/tasks/:id", async (c) => {
@@ -193,6 +224,8 @@ taskRoutes.put("/tasks/:id", async (c) => {
   const id = c.req.param("id");
   const [existing] = await db.select().from(schema.task).where(eq(schema.task.id, id));
   if (!existing) return c.json({ error: "not_found" }, 404);
+  if (!(await mayChangeTask(db, c.get("account"), existing)))
+    return c.json({ error: "private" }, 403);
   const parsed = await parseTask(db, await c.req.json().catch(() => ({})));
   if (!parsed.values) return c.json({ error: "invalid", field: parsed.field }, 400);
   const { personIds, ...fields } = parsed.values;
@@ -226,7 +259,7 @@ taskRoutes.put("/tasks/:id", async (c) => {
   for (const checklistId of new Set([existing.checklistId, fields.checklistId])) {
     if (checklistId) await settleChecklist(db, checklistId, now);
   }
-  return c.json(await presentOne(db, id));
+  return c.json(await presentOne(db, id, c.get("account")));
 });
 
 /**
@@ -238,13 +271,15 @@ taskRoutes.post("/tasks/:id/done", async (c) => {
   const id = c.req.param("id");
   const [existing] = await db.select().from(schema.task).where(eq(schema.task.id, id));
   if (!existing) return c.json({ error: "not_found" }, 404);
+  if (!(await mayChangeTask(db, c.get("account"), existing)))
+    return c.json({ error: "private" }, 403);
   // An item ticks everything inside it, and the items holding it once all their items are done.
   if (existing.checklistId) {
     await settleChecklist(db, existing.checklistId, c.get("now").toISOString(), {
       id,
       done: true,
     });
-    return c.json(await presentOne(db, id));
+    return c.json(await presentOne(db, id, c.get("account")));
   }
   if (!existing.doneAt) {
     const now = c.get("now");
@@ -270,6 +305,7 @@ taskRoutes.post("/tasks/:id/done", async (c) => {
           dueDate: next.dueDate,
           dueTime: existing.dueTime,
           private: existing.private,
+          createdBy: existing.createdBy,
           importance: existing.importance,
           entryId: existing.entryId,
           repetition: next.repetition,
@@ -289,7 +325,7 @@ taskRoutes.post("/tasks/:id/done", async (c) => {
       ]);
     }
   }
-  return c.json(await presentOne(db, id));
+  return c.json(await presentOne(db, id, c.get("account")));
 });
 
 /** The next Task of a repeating series, unless the series ended or already has an undone one. */
@@ -319,12 +355,14 @@ taskRoutes.delete("/tasks/:id/done", async (c) => {
   const id = c.req.param("id");
   const [existing] = await db.select().from(schema.task).where(eq(schema.task.id, id));
   if (!existing) return c.json({ error: "not_found" }, 404);
+  if (!(await mayChangeTask(db, c.get("account"), existing)))
+    return c.json({ error: "private" }, 403);
   if (existing.checklistId) {
     await settleChecklist(db, existing.checklistId, c.get("now").toISOString(), {
       id,
       done: false,
     });
-    return c.json(await presentOne(db, id));
+    return c.json(await presentOne(db, id, c.get("account")));
   }
   const [next] = await db
     .select()
@@ -338,7 +376,7 @@ taskRoutes.delete("/tasks/:id/done", async (c) => {
       .where(eq(schema.task.id, id)),
     ...(untouched ? [db.delete(schema.task).where(eq(schema.task.id, next.id))] : []),
   ]);
-  return c.json(await presentOne(db, id));
+  return c.json(await presentOne(db, id, c.get("account")));
 });
 
 /**
@@ -347,6 +385,13 @@ taskRoutes.delete("/tasks/:id/done", async (c) => {
  */
 taskRoutes.delete("/tasks/:id", async (c) => {
   const db = c.get("db");
+  const [existing] = await db
+    .select()
+    .from(schema.task)
+    .where(eq(schema.task.id, c.req.param("id")));
+  if (existing && !(await mayChangeTask(db, c.get("account"), existing))) {
+    return c.json({ error: "private" }, 403);
+  }
   const deleted = await db
     .delete(schema.task)
     .where(eq(schema.task.id, c.req.param("id")))
@@ -371,6 +416,8 @@ taskRoutes.post("/tasks/:id/checklist", async (c) => {
   }
   const [existing] = await db.select().from(schema.task).where(eq(schema.task.id, id));
   if (!existing) return c.json({ error: "not_found" }, 404);
+  if (!(await mayChangeTask(db, c.get("account"), existing)))
+    return c.json({ error: "private" }, 403);
   if (existing.checklistId) return c.json({ error: "already_in_checklist" }, 409);
   const checklistId = typeof body.checklistId === "string" ? body.checklistId : "";
   const [checklist] = await db
@@ -395,7 +442,7 @@ taskRoutes.post("/tasks/:id/checklist", async (c) => {
         changedAt: now,
       })
       .where(eq(schema.task.id, id));
-    return c.json(await presentOne(db, id));
+    return c.json(await presentOne(db, id, c.get("account")));
   }
   const links = await db
     .select({ personId: schema.taskPerson.personId })
@@ -416,5 +463,5 @@ taskRoutes.post("/tasks/:id/checklist", async (c) => {
       links.map((l) => l.personId),
     ),
   ]);
-  return c.json(await presentOne(db, copyId), 201);
+  return c.json(await presentOne(db, copyId, c.get("account")), 201);
 });

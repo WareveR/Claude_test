@@ -3,6 +3,7 @@ import type { Importance } from "../../core/entry-type";
 import type { Repetition } from "../../core/repetition";
 import { api } from "../api";
 import { fromList } from "../offline/from-list";
+import i18n from "../i18n";
 
 export type Task = {
   id: string;
@@ -12,6 +13,8 @@ export type Task = {
   dueTime: string | null;
   personIds: string[];
   private: boolean;
+  /** Private and not this Account's to see: only its due time and Persons came. */
+  hidden?: boolean;
   /** High ones come first among Tasks due at the same time. */
   importance: Importance;
   doneAt: string | null;
@@ -41,8 +44,16 @@ export type TaskDraft = Pick<
   | "entryId"
 >;
 
+/** A hidden Private Task reads "Private". */
+function nameHidden(task: Task): Task {
+  return task.hidden ? { ...task, title: i18n.t("entries.private") } : task;
+}
+
 export function useTasks() {
-  return useQuery({ queryKey: ["tasks"], queryFn: () => api<Task[]>("/tasks") });
+  return useQuery({
+    queryKey: ["tasks"],
+    queryFn: async () => (await api<Task[]>("/tasks")).map(nameHidden),
+  });
 }
 
 export function useTask(id: string | undefined) {
@@ -51,7 +62,7 @@ export function useTask(id: string | undefined) {
   const listed = () => fromList<Task>(queryClient, ["tasks"], id);
   return useQuery({
     queryKey: ["task", id],
-    queryFn: () => api<Task>(`/tasks/${id}`),
+    queryFn: async () => nameHidden(await api<Task>(`/tasks/${id}`)),
     enabled: Boolean(id),
     initialData: () => listed()?.data,
     initialDataUpdatedAt: () => listed()?.updatedAt,

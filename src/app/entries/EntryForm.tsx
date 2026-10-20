@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
+import { EntryDetails } from "../display/EntryDetails";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router";
 import {
   clockTime,
@@ -43,6 +44,8 @@ export function EntryPage() {
   const entry = useEntry(isNew ? undefined : id);
   const types = useEntryTypes();
   if (!types.data || (!isNew && !readyToEdit(entry))) return null;
+  // A Private Entry hidden from this Account opens read-only.
+  if (entry.data?.hidden) return <EntryDetails wall={false} />;
   const date = search.get("occurrence");
   const occurrence =
     // A synced Birthday's edits always apply to every year.

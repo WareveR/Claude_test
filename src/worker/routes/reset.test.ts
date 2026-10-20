@@ -1,6 +1,6 @@
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
-import { PASSWORD, setUpFamily, TestBrowser } from "../test/client";
+import { addAccount, PASSWORD, setUpFamily, TestBrowser } from "../test/client";
 
 const count = async (table: string, where = "1 = 1") =>
   (await env.DB.prepare(`SELECT COUNT(*) AS n FROM "${table}" WHERE ${where}`).first<{
@@ -156,6 +156,15 @@ describe("Danger zone", () => {
     expect(
       (await browser.post("/reset", { password: PASSWORD, parts: ["everything"] })).status,
     ).toBe(400);
+    expect(await count("shopping_item")).toBe(1);
+  });
+
+  it("is only for the Owner", async () => {
+    await familyWithData();
+    const admin = await addAccount("ana@example.com", "admin");
+    expect((await admin.post("/reset", { password: PASSWORD, parts: ["shopping"] })).status).toBe(
+      403,
+    );
     expect(await count("shopping_item")).toBe(1);
   });
 
