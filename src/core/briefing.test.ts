@@ -146,6 +146,45 @@ describe("briefingCandidates", () => {
   });
 });
 
+describe("preparation", () => {
+  it("says which coming Entry a Task or list prepares for, and dates a list without a period by it", () => {
+    const candidates = briefingCandidates(
+      input({
+        entries: [
+          entry({
+            id: "trip",
+            title: "Trip to Porto",
+            time: { allDay: true, startDate: "2026-10-09", endDate: "2026-10-11" },
+          }),
+          entry({ id: "secret", title: "Surprise", private: true }),
+        ],
+        checklists: [
+          { id: "c1", name: "Pack", startDate: null, endDate: null, entryId: "trip" },
+          { id: "c2", name: "Unlinked", startDate: null, endDate: null },
+        ],
+        tasks: [
+          task({ id: "t1", title: "Book the hotel", dueDate: "2026-10-05", entryId: "trip" }),
+          task({ id: "t2", title: "Buy a gift", dueDate: "2026-10-04", entryId: "secret" }),
+          task({ id: "i1", checklistId: "c1" }),
+          task({ id: "i2", checklistId: "c2" }),
+        ],
+      }),
+    );
+    expect(candidates.find((c) => c.title === "Book the hotel")?.prepares).toBe("Trip to Porto");
+    expect(candidates.find((c) => c.title === "Pack")).toMatchObject({
+      date: "2026-10-09",
+      detail: "0/1",
+      prepares: "Trip to Porto",
+    });
+    // A Private Entry is never named; a list with no period and no Entry has no date.
+    expect(candidates.find((c) => c.title === "Buy a gift")?.prepares).toBeUndefined();
+    expect(candidates.find((c) => c.title === "Unlinked")).toBeUndefined();
+    expect(countdown(candidates, TODAY, "en").map((s) => s.text)).toContain(
+      'Book the hotel for "Trip to Porto" · in 3 days (Mon 5 Oct)',
+    );
+  });
+});
+
 describe("countdown", () => {
   it("lists the most pressing candidates with a countdown and date", () => {
     const candidates = briefingCandidates(

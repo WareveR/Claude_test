@@ -3,7 +3,7 @@ import { RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Segment } from "../../core/briefing";
-import { todayIn } from "../../core/plain-date";
+import { addDays, todayIn } from "../../core/plain-date";
 import { isOverdue } from "../../core/task";
 import { api } from "../api";
 import { EntryPopup } from "../entries/EntryPopup";
@@ -11,6 +11,7 @@ import { useSignedIn } from "../family";
 import { usePersonFilter } from "../filter/model";
 import { usePeriodTasks } from "../tasks/TasksAccordion";
 import { TaskRow } from "../tasks/TaskRow";
+import { useMoveTask, type Task } from "../tasks/model";
 import { BUTTON } from "../ui/button";
 
 type Briefing = { segments: Segment[]; fallback: boolean; writtenAt: string } | null;
@@ -90,7 +91,8 @@ export function ComingUp({ readOnly = false }: { readOnly?: boolean }) {
       <div data-testid="briefing" className="leading-relaxed hyphens-auto">
         {data === null && <p className="text-sm text-muted">{t("briefing.none")}</p>}
         {data && !data.fallback && (
-          <p>
+          // The Briefing's paragraphs come as pieces starting with a blank line.
+          <p className="whitespace-pre-line">
             {data.segments.map((s, i) => (
               <SegmentText key={i} segment={s} onOpen={setOpen} />
             ))}
@@ -116,12 +118,18 @@ export function ComingUp({ readOnly = false }: { readOnly?: boolean }) {
   );
 }
 
-/** What is left to do today: today's and overdue Tasks, tickable. Beside the Briefing on the Summary. */
+/** How many days "Still to do" looks ahead, today included, like the Summary's Entries. */
+const TO_DO_DAYS = 7;
+
+/**
+ * What is left to do: the Tasks of the next seven days and every overdue one, tickable, an
+ * overdue one with buttons to move it to today or tomorrow. Beside the Briefing on the Summary.
+ */
 export function TodayTasks() {
   const { t } = useTranslation();
   const { family } = useSignedIn();
   const today = todayIn(family.timeZone);
-  const { tasks, now, persons } = usePeriodTasks(today, today);
+  const { tasks, now, persons } = usePeriodTasks(today, addDays(today, TO_DO_DAYS - 1));
   const overdue = tasks.filter((task) => isOverdue(task, now)).length;
   return (
     <section
@@ -137,10 +145,53 @@ export function TodayTasks() {
       </h2>
       {tasks.length === 0 && <p className="text-muted">{t("tasks.nothingLeft")}</p>}
       <ul className="divide-y divide-line">
-        {tasks.map((task) => (
-          <TaskRow key={task.id} task={task} overdue={isOverdue(task, now)} persons={persons} />
-        ))}
+        {tasks.map((task) => {
+          const late = isOverdue(task, now);
+          return (
+            <TaskRow
+              key={task.id}
+              task={task}
+              overdue={late}
+              persons={persons}
+              actions={late && !task.hidden && <MoveTask task={task} today={today} />}
+            />
+          );
+        })}
       </ul>
     </section>
+  );
+}
+
+/** "Today" and "Tomorrow": an overdue Task moved on in one tap. */
+function MoveTask({ task, today }: { task: Task; today: string }) {
+  const { t } = useTranslation();
+  const move = useMoveTask();
+  const days = [
+    {
+      label: t("comingUp.moveToday"),
+      name: t("comingUp.moveTodayFor", { title: task.title }),
+      date: today,
+    },
+    {
+      label: t("comingUp.moveTomorrow"),
+      name: t("comingUp.moveTomorrowFor", { title: task.title }),
+      date: addDays(today, 1),
+    },
+  ];
+  return (
+    <>
+      {days.map((day) => (
+        <button
+          key={day.date}
+          type="button"
+          aria-label={day.name}
+          className={`${BUTTON} text-xs`}
+          disabled={move.isPending}
+          onClick={() => move.mutate({ task, dueDate: day.date })}
+        >
+          {day.label}
+        </button>
+      ))}
+    </>
   );
 }

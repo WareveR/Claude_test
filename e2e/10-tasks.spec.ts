@@ -1,14 +1,9 @@
 import { expect, test } from "@playwright/test";
-import { signIn } from "./helpers";
+import { signIn, lisbonDate } from "./helpers";
 
 test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 
 /** A date some days from today on Lisbon's wall clock, as the app's date fields want it. */
-function lisbonDate(days: number) {
-  const date = new Date(Date.now() + days * 86_400_000);
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Lisbon" }).format(date);
-}
-
 async function addTask(page: import("@playwright/test").Page, title: string, due?: string) {
   await page.goto("/tasks");
   await page.getByRole("link", { name: "New task" }).click();

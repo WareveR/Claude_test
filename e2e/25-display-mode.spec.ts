@@ -1,14 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
-import { leaveWall, signIn } from "./helpers";
+import { leaveWall, signIn, lisbonDate } from "./helpers";
 
 test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 
 const ORIGIN = { Origin: "http://localhost:4173" };
-
-function lisbonDate(days: number) {
-  const date = new Date(Date.now() + days * 86_400_000);
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Lisbon" }).format(date);
-}
 
 async function addEntry(page: Page, title: string, startTime: string, extra = {}) {
   const types = await (await page.request.get("/api/entry-types")).json();
@@ -186,7 +181,9 @@ test("‹ › move the grid a week, a pill returns, and three idle minutes retur
   await board.getByRole("button", { name: "Previous" }).click();
   await expect(board.getByTestId(`day-column-${lisbonDate(-7)}`)).toBeVisible();
   await page.clock.fastForward("03:05");
-  await expect(board.getByTestId(`day-column-${lisbonDate(0)}`)).toBeVisible();
+  // Today by the page's clock: the three minutes may have crossed midnight.
+  const now = (await page.evaluate("Date.now()")) as number;
+  await expect(board.getByTestId(`day-column-${lisbonDate(0, now)}`)).toBeVisible();
   await expect(pill).toHaveCount(0);
 
   // Still filtered after the return, and after a reload.
@@ -246,10 +243,11 @@ test("the Summary is the Wall's own, and the Wall switched off returns to the pa
   const briefingBox = await page.getByTestId("coming-up").boundingBox();
   const tasksBox = await page.getByTestId("coming-up-tasks").boundingBox();
   expect(tasksBox!.x).toBeGreaterThan(briefingBox!.x + briefingBox!.width - 1);
-  // A Task can be ticked there.
-  const box = page.getByRole("checkbox", { name: "Done: Water the plants" });
-  await box.check();
-  await expect(box).toBeChecked();
+  // A Task can be ticked there (its next round, a few days on, then shows beside it).
+  await page.getByRole("checkbox", { name: "Done: Water the plants" }).first().click();
+  await expect(
+    page.getByRole("checkbox", { name: "Done: Water the plants", checked: true }),
+  ).toHaveCount(1);
 
   await boardSummary.click();
   await expect(page.getByTestId("time-scroller")).toBeVisible();

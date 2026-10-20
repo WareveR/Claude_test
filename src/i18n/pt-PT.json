@@ -571,8 +571,12 @@
   },
   "comingUp": {
     "title": "A seguir",
-    "toDo_one": "Por fazer · {{count}}",
-    "toDo_other": "Por fazer · {{count}}"
+    "toDo_one": "Por fazer, próximos 7 dias · {{count}}",
+    "toDo_other": "Por fazer, próximos 7 dias · {{count}}",
+    "moveToday": "Para hoje",
+    "moveTomorrow": "Para amanhã",
+    "moveTodayFor": "Passar {{title}} para hoje",
+    "moveTomorrowFor": "Passar {{title}} para amanhã"
   },
   "weather": {
     "title": "Meteorologia",

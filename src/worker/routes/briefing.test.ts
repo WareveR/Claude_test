@@ -91,6 +91,30 @@ describe("Briefing", () => {
     expect(await (await browser.get("/briefing")).json()).toEqual(briefing);
   });
 
+  it("tells the model what a Task prepares for, and leaves it room for five paragraphs", async () => {
+    const { browser, dentist } = await familyWithPlans();
+    await browser.post("/tasks", {
+      title: "Find the X-rays",
+      dueDate: today(),
+      personIds: [],
+      entryId: dentist,
+    });
+    answer = () => ({
+      segments: [
+        { text: "Today: the ", item: null },
+        { text: "dentist", item: 0 },
+        { text: ".\n\nTo prepare: find the X-rays.", item: null },
+      ],
+    });
+    const briefing = (await (await browser.post("/briefing/refresh")).json()) as Briefing;
+    expect(briefing?.segments[2].text).toBe(".\n\nTo prepare: find the X-rays.");
+    const prompt = prompts[0] as Prompt & { max_tokens?: number };
+    expect(prompt.messages[1].content).toContain('"Find the X-rays"');
+    expect(prompt.messages[1].content).toContain('prepares for "Dentist"');
+    expect(prompt.messages[0].content).toContain("What to prepare");
+    expect(prompt.max_tokens).toBeGreaterThan(256);
+  });
+
   it("falls back to the countdown list when the model fails or answers nonsense", async () => {
     const { browser } = await familyWithPlans();
     answer = () => ({ segments: [{ text: "Made up", item: 7 }] });
