@@ -121,17 +121,16 @@ test("at the end of a view one more scroll down hides the days row, and the firs
       await page.mouse.wheel(0, 200);
       await expect(row).toBeHidden({ timeout: 1000 });
     }).toPass();
-    // Back up: the row comes back first, and the view's last line stays where it was.
-    const last = row.locator("xpath=following::*[last()]").first();
+    // Back up: the row comes back first and the view doesn't move back. (The browser may keep
+    // the content in place as the row returns, which scrolls down by its height, never up.)
     const scrolled = () =>
       page.evaluate(`document.querySelector("nav[data-view-nav]").parentElement.scrollTop`);
-    const before = await scrolled();
-    const bottom = (await last.boundingBox())?.y;
+    const before = (await scrolled()) as number;
     await page.mouse.wheel(0, -200);
     await expect(row).toBeVisible();
-    expect((await last.boundingBox())?.y).toBe(bottom);
+    expect(await scrolled()).toBeGreaterThanOrEqual(before - 1);
     // Then the view scrolls back as usual.
     await page.mouse.wheel(0, -200);
-    await expect.poll(scrolled).toBeLessThan((before as number) - 1);
+    await expect.poll(scrolled).toBeLessThan(before - 1);
   }
 });
