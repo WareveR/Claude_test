@@ -273,6 +273,19 @@ test("the Summary is the Wall's own, and the Wall switched off returns to the pa
   await expect(page.getByTestId("display-board")).toHaveCount(0);
 });
 
+test("just before midnight the now line stays inside the Wall's hours", async ({ page }) => {
+  await page.clock.install({ time: "2026-12-01T23:59:00Z" });
+  await page.setViewportSize({ width: 600, height: 1300 });
+  await signIn(page);
+  await page.getByRole("banner").getByRole("button", { name: "Wall" }).click();
+  const scroller = page.getByTestId("time-scroller");
+  await expect(scroller).toBeVisible();
+  await expect
+    .poll(() => scroller.evaluate((el) => el.scrollHeight - el.clientHeight))
+    .toBeLessThanOrEqual(0);
+  await leaveWall(page);
+});
+
 test("on a tall screen the Wall's hours stretch to the bottom of the screen", async ({ page }) => {
   await page.setViewportSize({ width: 600, height: 1300 });
   await signIn(page);

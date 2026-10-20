@@ -350,7 +350,8 @@ export function TimeGrid({
                 {day === today && (
                   <div
                     className="pointer-events-none absolute inset-x-0 z-10 border-t-2 border-overdue"
-                    style={{ top: yOf(nowMinutes) }}
+                    // Kept inside the day, so just before midnight it never makes the grid scroll.
+                    style={{ top: Math.min(yOf(nowMinutes), yOf(24 * 60) - 2) }}
                   />
                 )}
               </div>
