@@ -432,6 +432,7 @@
     "lateToday": "Late today",
     "high": "High importance",
     "withItems": "With items",
+    "moreItems": "Items (one per line)",
     "withItemsHint": "A task can hold a list of items, and each item items of its own.",
     "withItemsOnHint": "Saving opens its page to add the items. The due day becomes its deadline; the time, importance, notes and Private aren't kept.",
     "noDueDate": "No due date",
