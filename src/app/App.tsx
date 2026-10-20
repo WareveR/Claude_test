@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { api, type Status } from "./api";
 import { wipeOfflineCopy } from "./offline/persist";
+import { applyUpdateWhileSignedOut, useUpdateWaiting } from "./offline/service-worker";
 import { ConfirmEmailScreen } from "./screens/ConfirmEmailScreen";
 import { InviteScreen } from "./screens/InviteScreen";
 import { NewSetupCodeScreen } from "./screens/NewSetupCodeScreen";
@@ -19,6 +20,11 @@ export function App() {
   useEffect(() => {
     if (signedOut) wipeOfflineCopy(queryClient);
   }, [signedOut, queryClient]);
+  // Nor does it keep an old version of the app, whose sign-in screen may no longer fit.
+  const updateWaiting = useUpdateWaiting();
+  useEffect(() => {
+    if (signedOut) applyUpdateWhileSignedOut();
+  }, [signedOut, updateWaiting]);
 
   const token = new URLSearchParams(window.location.search).get("token");
   const path = window.location.pathname;
