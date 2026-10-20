@@ -664,6 +664,8 @@
     "fromNowOn": "Daqui em diante",
     "notFound": "Não encontrado",
     "oneAtATime": "Uma coisa de cada vez, por favor",
+    "personExists": "Já existe uma pessoa com esse nome",
+    "listExists": "Já existe uma lista pré-definida com esse nome",
     "refused": "A entrada por voz não apaga; abra o item para o apagar",
     "locked": "A data e a pessoa de um aniversário mudam na pessoa",
     "stop": "Parar e enviar",

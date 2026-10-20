@@ -11,21 +11,7 @@ export type Person = {
   archived: boolean;
 };
 
-/** Colours offered for Persons, chosen to stay legible in light and dark themes. */
-export const PERSON_COLORS = [
-  "#ffcdd2",
-  "#f8bbd0",
-  "#e1bee7",
-  "#c5cae9",
-  "#bbdefb",
-  "#b2ebf2",
-  "#c8e6c9",
-  "#f0f4c3",
-  "#ffecb3",
-  "#ffccbc",
-  "#d7ccc8",
-  "#cfd8dc",
-];
+export { PERSON_COLORS } from "../../core/person-colors";
 
 export function usePersons() {
   return useQuery({ queryKey: ["persons"], queryFn: () => api<Person[]>("/persons") });

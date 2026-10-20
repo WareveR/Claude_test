@@ -664,6 +664,8 @@
     "fromNowOn": "From now on",
     "notFound": "Not found",
     "oneAtATime": "One thing at a time, please",
+    "personExists": "There is already a person with that name",
+    "listExists": "There is already a predefined list with that name",
     "refused": "Voice Entry doesn't delete; open the item to delete it",
     "locked": "A Birthday's date and Person change on the Person",
     "stop": "Stop and send",

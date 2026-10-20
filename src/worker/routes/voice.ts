@@ -1,16 +1,19 @@
 import { asc } from "drizzle-orm";
 import { Hono } from "hono";
 import { checklistFromTask } from "../../core/checklist";
-import { MAX_TEMPLATE_ITEMS, templateText } from "../../core/checklist-template";
+import { MAX_TEMPLATE_ITEMS, MAX_TEMPLATE_TEXT, templateText } from "../../core/checklist-template";
+import { freeColor } from "../../core/person-colors";
 import { isLanguage, type Language } from "../../core/languages";
-import { formatPlainDate } from "../../core/plain-date";
+import { formatPlainDate, isPlainDate } from "../../core/plain-date";
 import { familyNow } from "../../core/task";
 import {
   entryValues,
   MAX_SENTENCE,
   parseVoiceCreate,
   parseVoiceFields,
+  personSummary,
   taskValues,
+  templateSummary,
   voiceSummary,
   type VoiceCreate,
 } from "../../core/voice";
@@ -38,8 +41,8 @@ import { seesInFull } from "../private";
 
 /**
  * Voice Entry: one spoken or typed sentence becomes a new Entry or Task (a Task with items, from
- * the sentence or a predefined list, is a Checklist), a change to one, or things to put on the
- * Shopping List.
+ * the sentence or a predefined list, is a Checklist), a change to one, things to put on the
+ * Shopping List, a new Person or a new predefined list.
  * Nothing is saved here: the answer carries the requests the browser sends to the usual routes
  * once the Family member says yes, so every rule of those routes still applies.
  */
@@ -235,6 +238,61 @@ voiceRoutes.post("/voice", async (c) => {
       : [];
     const names = splitShoppingNames(items.join("\n"));
     return names.length > 0 ? c.json(await shoppingAnswer(db, names)) : failed;
+  }
+
+  if (answer.action === "person") {
+    const name = typeof answer.title === "string" ? answer.title.trim().slice(0, 100) : "";
+    if (!name) return failed;
+    const known = (n: string) => n.trim().toLocaleLowerCase();
+    const taken = new Set(
+      [...persons.map((p) => p.name), ...nicknames.map((n) => n.nickname)].map(known),
+    );
+    if (taken.has(known(name))) return c.json({ outcome: "personExists" });
+    const born = typeof answer.date === "string" && isPlainDate(answer.date) ? answer.date : null;
+    const values = {
+      name,
+      color: freeColor(persons.filter((p) => !p.archived).map((p) => p.color)),
+      photoKey: null,
+      dateOfBirth: born && born <= today ? born : null,
+      nicknames: [
+        ...new Set(
+          (Array.isArray(answer.nicknames) ? answer.nicknames : [])
+            .filter((n): n is string => typeof n === "string")
+            .map((n) => n.trim())
+            .filter((n) => n && known(n) !== known(name)),
+        ),
+      ].slice(0, 10),
+    };
+    return c.json({
+      outcome: "create",
+      kind: "person",
+      values,
+      summary: personSummary(values, language),
+    });
+  }
+
+  if (answer.action === "list") {
+    const name = typeof answer.title === "string" ? answer.title.trim() : "";
+    if (!name || name.length > MAX_TEMPLATE_TEXT) return failed;
+    const known = (n: string) => n.trim().toLocaleLowerCase();
+    if (templates.some((t) => known(templateText(t, language).name) === known(name))) {
+      return c.json({ outcome: "listExists" });
+    }
+    const items = [
+      ...new Set(
+        (Array.isArray(answer.items) ? answer.items : [])
+          .filter((i): i is string => typeof i === "string")
+          .map((i) => i.trim().slice(0, MAX_TEMPLATE_TEXT))
+          .filter(Boolean),
+      ),
+    ].slice(0, MAX_TEMPLATE_ITEMS);
+    const values = { name, items };
+    return c.json({
+      outcome: "create",
+      kind: "template",
+      values,
+      summary: templateSummary(values, language),
+    });
   }
 
   if (answer.action === "change") {

@@ -170,6 +170,54 @@ test("a Task with items saves as one with them, and Edit opens the form with the
   await expect(page.getByRole("checkbox", { name: "Done: Voice torch" })).toBeVisible();
 });
 
+test("a new Person and a new predefined list by voice: Save, Undo and Edit", async ({ page }) => {
+  await signIn(page);
+  const person = {
+    outcome: "create",
+    kind: "person",
+    values: {
+      name: "Voice Maria",
+      color: "#c5cae9",
+      photoKey: null,
+      dateOfBirth: "2015-05-03",
+      nicknames: ["Mimi"],
+    },
+    summary: "New person: Voice Maria, also Mimi, born 3 May 2015",
+  };
+  await page.route("**/api/voice", (route) => route.fulfill({ json: person }));
+  await page.goto("/settings/family");
+  const dialog = await say(page, "add Maria, born 3 May 2015");
+  await expect(dialog.getByText(person.summary)).toBeVisible();
+  await dialog.getByRole("button", { name: "Save" }).click();
+  const toast = page.getByRole("status").filter({ hasText: "Saved" });
+  await expect(page.getByText("Voice Maria")).toBeVisible();
+  await toast.getByRole("button", { name: "Undo" }).click();
+  await expect(page.getByText("Voice Maria")).toHaveCount(0);
+
+  const again = await say(page, "add Maria, born 3 May 2015");
+  await again.getByRole("button", { name: "Edit" }).click();
+  await expect(page).toHaveURL(/\/settings\/persons\/new$/);
+  await expect(page.getByLabel("Name", { exact: true })).toHaveValue("Voice Maria");
+  await expect(page.getByLabel("Date of birth (optional)")).toHaveValue("2015-05-03");
+
+  await page.unroute("**/api/voice");
+  await page.route("**/api/voice", (route) =>
+    route.fulfill({
+      json: {
+        outcome: "create",
+        kind: "template",
+        values: { name: "Voice picnic", items: ["Blanket", "Sandwiches"] },
+        summary: "New predefined list: Voice picnic, with 2 items",
+      },
+    }),
+  );
+  const list = await say(page, "create the predefined list picnic");
+  await list.getByRole("button", { name: "Edit" }).click();
+  await expect(page).toHaveURL(/\/settings\/checklist-templates\/new$/);
+  await expect(page.getByLabel("Template name")).toHaveValue("Voice picnic");
+  await expect(page.getByLabel("Item 2")).toHaveValue("Sandwiches");
+});
+
 test("readback speaks the summary and the question as two sentences", async ({ page }) => {
   // A stand-in voice that records each sentence and finishes it at once.
   await page.addInitScript(`

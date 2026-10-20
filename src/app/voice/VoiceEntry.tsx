@@ -25,7 +25,7 @@ import {
 } from "./speech";
 import { BUTTON } from "../ui/button";
 
-type Kind = "entry" | "task" | "checklist";
+type Kind = "entry" | "task" | "checklist" | "person" | "template";
 /** A Task with items comes as a Checklist, with what the Task form opens on Edit. */
 type TaskWithItems = { values: object; templateId: string | null; items: string[] };
 type Proposal = { kind: Kind; values: object; summary: string; form?: TaskWithItems };
@@ -48,7 +48,7 @@ type Shopping = {
   items: { name: string; store: string }[];
   already: string[];
 };
-type Notice = "notFound" | "oneAtATime" | "refused" | "locked";
+type Notice = "notFound" | "oneAtATime" | "refused" | "locked" | "personExists" | "listExists";
 type Answer =
   | Create
   | { outcome: "failed"; sentence: string }
@@ -60,7 +60,18 @@ type Scope = "this" | "following" | "all";
 /** What the toast's Undo does; null when there is nothing to undo. */
 type Toast = { undo: (() => Promise<void>) | null; shopping?: boolean };
 
-const ROUTES: Record<Kind, string> = { entry: "entries", task: "tasks", checklist: "checklists" };
+const ROUTES: Record<Kind, string> = {
+  entry: "entries",
+  task: "tasks",
+  checklist: "checklists",
+  person: "persons",
+  template: "checklist-templates",
+};
+/** Where Edit opens a new Person or predefined list, filled in. */
+const FORMS: Partial<Record<Kind, string>> = {
+  person: "/settings/persons/new",
+  template: "/settings/checklist-templates/new",
+};
 const route = (kind: Kind) => ROUTES[kind];
 const proposalsOf = (create: Create): Proposal[] => [create, ...(create.more ?? [])];
 
@@ -133,6 +144,8 @@ export function VoiceEntry() {
       queryClient.invalidateQueries({ queryKey: ["task"] }),
       queryClient.invalidateQueries({ queryKey: ["checklists"] }),
       queryClient.invalidateQueries({ queryKey: ["checklist"] }),
+      queryClient.invalidateQueries({ queryKey: ["persons"] }),
+      queryClient.invalidateQueries({ queryKey: ["checklist-templates"] }),
     ]);
 
   const openForm = (kind: "entry" | "task", values: object) => {
@@ -179,9 +192,14 @@ export function VoiceEntry() {
   /** Edit opens the form for one; for several it goes back to the sentence. */
   const edit = (create: Create) => {
     if (!create.more?.length) {
-      if (!create.form) return openForm(create.kind === "entry" ? "entry" : "task", create.values);
-      close();
-      return void navigate("/tasks/new", { state: { ...create.form, withItems: true } });
+      const form = FORMS[create.kind];
+      if (form || create.form) {
+        close();
+        return void navigate(form ?? "/tasks/new", {
+          state: form ? { values: create.values } : { ...create.form, withItems: true },
+        });
+      }
+      return openForm(create.kind === "entry" ? "entry" : "task", create.values);
     }
     stopAll();
     setPending(null);

@@ -245,6 +245,10 @@ const TEXTS: Record<
     every: Record<Repetition["frequency"], (n: number) => string>;
     list: (name: string) => string;
     items: (n: number) => string;
+    person: string;
+    born: (date: string) => string;
+    aka: (names: string) => string;
+    template: string;
   }
 > = {
   "pt-PT": {
@@ -262,6 +266,10 @@ const TEXTS: Record<
     },
     list: (name) => `com a lista ${name}`,
     items: (n) => (n === 1 ? "com 1 item" : `com ${n} itens`),
+    person: "Nova pessoa",
+    born: (date) => `nasceu a ${date}`,
+    aka: (names) => `também ${names}`,
+    template: "Nova lista pré-definida",
   },
   en: {
     entry: "New entry",
@@ -278,6 +286,10 @@ const TEXTS: Record<
     },
     list: (name) => `with the list ${name}`,
     items: (n) => (n === 1 ? "with 1 item" : `with ${n} items`),
+    person: "New person",
+    born: (date) => `born ${date}`,
+    aka: (names) => `also ${names}`,
+    template: "New predefined list",
   },
 };
 
@@ -321,4 +333,36 @@ export function voiceSummary(
     values.items ? texts.items(values.items) : "",
   ];
   return `${kind === "entry" ? texts.entry : texts.task}: ${parts.filter(Boolean).join(", ")}`;
+}
+
+/** A new Person's summary: "New person: Maria, also Mimi, born 3 May 2015". */
+export function personSummary(
+  values: { name: string; nicknames: string[]; dateOfBirth: PlainDate | null },
+  language: Language,
+): string {
+  const texts = TEXTS[language];
+  const parts = [
+    values.name,
+    values.nicknames.length > 0 ? texts.aka(names(values.nicknames, texts.and)) : "",
+    values.dateOfBirth
+      ? texts.born(
+          formatPlainDate(values.dateOfBirth, LOCALES[language], {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          }),
+        )
+      : "",
+  ];
+  return `${texts.person}: ${parts.filter(Boolean).join(", ")}`;
+}
+
+/** A new predefined list's summary: "New predefined list: Beach, with 3 items". */
+export function templateSummary(
+  values: { name: string; items: string[] },
+  language: Language,
+): string {
+  const texts = TEXTS[language];
+  const parts = [values.name, values.items.length > 0 ? texts.items(values.items.length) : ""];
+  return `${texts.template}: ${parts.filter(Boolean).join(", ")}`;
 }
