@@ -93,3 +93,33 @@ test("on a phone the year's names column keeps its width and the switch its plac
   // The same month names in both.
   await expect(page.getByTestId("year-month-2")).toHaveText("February");
 });
+
+test("at the end of a view one more scroll down hides the days row, and the first one up shows it", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 762, height: 346 });
+  await signIn(page);
+  for (const path of ["/month/2026-10", "/year/2026"]) {
+    await page.goto(path);
+    const row = page.getByTestId("days-row");
+    await expect(row).toBeVisible();
+    await page.mouse.move(380, 250);
+    // Down to the end: the row stays while there is still somewhere to go.
+    await scrollPage(page, 5000);
+    await expect(row).toBeVisible();
+    await page.mouse.wheel(0, 200);
+    await expect(row).toBeHidden();
+    // Back up: the row comes back first, and the view's last line stays where it was.
+    const last = row.locator("xpath=following::*[last()]").first();
+    const scrolled = () =>
+      page.evaluate(`document.querySelector("nav[data-view-nav]").parentElement.scrollTop`);
+    const before = await scrolled();
+    const bottom = (await last.boundingBox())?.y;
+    await page.mouse.wheel(0, -200);
+    await expect(row).toBeVisible();
+    expect((await last.boundingBox())?.y).toBe(bottom);
+    // Then the view scrolls back as usual.
+    await page.mouse.wheel(0, -200);
+    await expect.poll(scrolled).toBeLessThan((before as number) - 1);
+  }
+});
