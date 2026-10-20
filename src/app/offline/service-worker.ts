@@ -39,6 +39,20 @@ export function applyUpdate() {
 }
 
 /**
+ * A signed-out device has nothing open to lose, so it takes a new version at once instead of
+ * waiting for every window to close: an installed app left open since the last deploy would
+ * otherwise keep showing the old sign-in screen. Asks the server for a newer version when none
+ * is waiting yet; the one it finds applies on the next call.
+ */
+export function applyUpdateWhileSignedOut() {
+  if (waiting) return applyUpdate();
+  void navigator.serviceWorker
+    ?.getRegistration()
+    .then((registration) => registration?.update())
+    .catch(() => {});
+}
+
+/**
  * Settings › "Update now": asks the server for a newer version at once and, when there is one,
  * applies it and reloads, without waiting for every window of the app to close (an installed
  * app on Android often stays open in the background). Resolves to "latest" when there is none.
