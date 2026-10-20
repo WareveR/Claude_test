@@ -646,8 +646,6 @@
     "sentence": "Say or type one sentence",
     "send": "Send",
     "listen": "Speak",
-    "listening": "Listening…",
-    "reading": "Reading what you said…",
     "cancel": "Cancel",
     "save": "Save",
     "edit": "Edit",
@@ -672,7 +670,17 @@
     "micDenied": "The microphone is blocked for this site and the browser no longer asks. In Chrome: tap the icon left of the address (or ⋮ › Settings › Site settings › Microphone), choose Allow for this site and try again. If it still fails, check Android Settings › Apps › Chrome › Permissions allows the microphone. You can also type the sentence.",
     "micDismissed": "The microphone wasn't allowed. Press the microphone again and choose Allow, or type the sentence.",
     "notHeard": "I didn't hear anything. Press the microphone and speak, or type the sentence.",
-    "micFailed": "Speech recognition isn't working here ({{code}}). Use the keyboard's microphone to dictate, or type the sentence."
+    "micFailed": "Speech recognition isn't working here ({{code}}). Use the keyboard's microphone to dictate, or type the sentence.",
+    "saveOrChange": "Shall I save it, or change something?",
+    "whatToChange": "What should I change?",
+    "answer": "Answer by voice",
+    "corrections": "Changes: {{list}}",
+    "status": {
+      "waiting": "Waiting for you, go ahead…",
+      "hearing": "Listening…",
+      "processing": "Working on it…",
+      "speaking": "Speaking…"
+    }
   },
   "display": {
     "today": "Today",
