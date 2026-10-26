@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { RefreshCw } from "lucide-react";
-import { useState } from "react";
+import { Play, RefreshCw, Square } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { Segment } from "../../core/briefing";
+import { briefingSentences, type Segment } from "../../core/briefing";
 import { addDays, todayIn } from "../../core/plain-date";
 import { isOverdue } from "../../core/task";
 import { api } from "../api";
@@ -13,6 +13,7 @@ import { usePeriodTasks } from "../tasks/TasksAccordion";
 import { TaskRow } from "../tasks/TaskRow";
 import { useMoveTask, type Task } from "../tasks/model";
 import { BUTTON } from "../ui/button";
+import { canSpeak, speak, stopSpeaking } from "../voice/speech";
 
 type Briefing = { segments: Segment[]; fallback: boolean; writtenAt: string } | null;
 
@@ -45,9 +46,47 @@ function SegmentText({ segment, onOpen }: { segment: Segment; onOpen: (open: Ope
   );
 }
 
+/** "Good morning", "Good afternoon" or "Good evening" by this device's clock, as a radio host opens. */
+function useGreeting() {
+  const { t } = useTranslation();
+  const hour = new Date().getHours();
+  return t(
+    hour >= 5 && hour < 12
+      ? "briefing.morning"
+      : hour >= 12 && hour < 20
+        ? "briefing.afternoon"
+        : "briefing.evening",
+  );
+}
+
+/** Play reads the Briefing aloud, greeting first; Stop, leaving or a new Briefing ends it. Keyed by its text. */
+function PlayButton({ sentences }: { sentences: string[] }) {
+  const { t, i18n } = useTranslation();
+  const [playing, setPlaying] = useState(false);
+  // Leaving the page stops what was being read; a new Briefing remounts this button, so it does too.
+  useEffect(() => () => stopSpeaking(), []);
+  if (!canSpeak()) return null;
+  const toggle = () => {
+    if (playing) {
+      stopSpeaking();
+      setPlaying(false);
+      return;
+    }
+    setPlaying(true);
+    void speak(sentences, i18n.language).then(() => setPlaying(false));
+  };
+  return (
+    <button type="button" className={BUTTON} aria-pressed={playing} onClick={toggle}>
+      {playing ? <Square aria-hidden size={14} /> : <Play aria-hidden size={14} />}
+      {playing ? t("briefing.stop") : t("briefing.play")}
+    </button>
+  );
+}
+
 /**
- * "Coming up": the AI-written Briefing of the next seven days. It is never written on load, only by Refresh;
- * with exactly one Person filtered it is that Person's, otherwise the Family's.
+ * "Coming up": the AI-written Briefing, told like a morning radio show, with Play to hear it. It is
+ * never written on load, only by the Scheduler or Refresh; with exactly one Person filtered it is
+ * that Person's, otherwise the Family's.
  */
 export function ComingUp({ readOnly = false }: { readOnly?: boolean }) {
   const { t, i18n } = useTranslation();
@@ -66,6 +105,8 @@ export function ComingUp({ readOnly = false }: { readOnly?: boolean }) {
   });
   const data = briefing.data;
   const [open, setOpen] = useState<Open>(null);
+  const greeting = useGreeting();
+  const spoken = data && [greeting, ...briefingSentences(data.segments, data.fallback)];
   return (
     <section
       aria-labelledby="coming-up-title"
@@ -76,6 +117,7 @@ export function ComingUp({ readOnly = false }: { readOnly?: boolean }) {
         <h2 id="coming-up-title" className="flex-1 text-xl font-bold">
           {t("comingUp.title")}
         </h2>
+        {spoken && <PlayButton key={spoken.join(" ")} sentences={spoken} />}
         {!readOnly && (
           <button
             type="button"
@@ -93,6 +135,7 @@ export function ComingUp({ readOnly = false }: { readOnly?: boolean }) {
         {data && !data.fallback && (
           // The Briefing's paragraphs come as pieces starting with a blank line.
           <p className="whitespace-pre-line">
+            <span className="font-semibold">{greeting} </span>
             {data.segments.map((s, i) => (
               <SegmentText key={i} segment={s} onOpen={setOpen} />
             ))}

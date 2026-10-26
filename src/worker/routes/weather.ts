@@ -1,4 +1,5 @@
 import { and, eq, gte, lt, lte } from "drizzle-orm";
+import type { BriefingWeather } from "../../core/briefing";
 import { isPlainDate } from "../../core/plain-date";
 import { Hono } from "hono";
 import {
@@ -246,6 +247,22 @@ weatherRoutes.delete("/weather/locations/:id", async (c) => {
   }
   return c.json(await listLocations(db));
 });
+
+/** Today's and tomorrow's weather at the selected Weather Location, for the Briefing; null when none is fresh. */
+export async function briefingWeather(db: Db, now: Date): Promise<BriefingWeather | null> {
+  const location = await selectedLocation(db);
+  if (!location) return null;
+  const [cache] = await db
+    .select()
+    .from(schema.weatherCache)
+    .where(eq(schema.weatherCache.locationId, location.id));
+  if (!cache?.forecast || !cache.fetchedAt) return null;
+  if (now.getTime() - Date.parse(cache.fetchedAt) > SHOWN_FOR) return null;
+  const today = placeClock(cache.forecast.utcOffset, now).slice(0, 10);
+  const days = cache.forecast.daily.filter((d) => d.date >= today).slice(0, 2);
+  const hours = cache.forecast.hourly.filter((h) => h.time.startsWith(today));
+  return days.length > 0 ? { place: location.name, days, hours } : null;
+}
 
 /**
  * The selected Weather Location's forecast from the cache: every day, and the hours of the

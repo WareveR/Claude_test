@@ -277,27 +277,47 @@ let speaking = 0;
 /** The silence between two sentences, so a summary and its question never run together. */
 const PAUSE_MS = 400;
 
+/** The longest one sentence may take before speech counts as stalled. */
+const SENTENCE_MS = 20000;
+
+/** Whether this browser can speak aloud. */
+export const canSpeak = () =>
+  typeof speechSynthesis !== "undefined" && typeof SpeechSynthesisUtterance !== "undefined";
+
 /**
- * Speaks each sentence in turn with a short pause between them; resolves when done (or at once if
- * speech is unavailable or stalls).
+ * A voice for exactly this language when the device has one, so Portugal's Portuguese isn't read
+ * by a Brazilian voice; otherwise the browser picks by `lang`.
+ */
+function voiceFor(lang: string): SpeechSynthesisVoice | undefined {
+  const wanted = lang.toLowerCase();
+  const voices = speechSynthesis.getVoices?.() ?? [];
+  return voices.find((v) => v.lang.replace("_", "-").toLowerCase() === wanted);
+}
+
+/**
+ * Speaks each sentence in turn with a short pause between them; resolves when done, stopped, or
+ * at once if speech is unavailable, or when one sentence stalls.
  */
 export function speak(parts: string | string[], lang: string): Promise<void> {
   const sentences = readbackSentences(parts);
   return new Promise((resolve) => {
     try {
-      if (typeof speechSynthesis === "undefined" || typeof SpeechSynthesisUtterance === "undefined")
-        return resolve();
+      if (!canSpeak()) return resolve();
       speechSynthesis.cancel();
       const id = ++speaking;
-      const timer = setTimeout(resolve, 20000 + sentences.length * PAUSE_MS);
+      const voice = voiceFor(lang);
+      let timer: ReturnType<typeof setTimeout> | undefined;
       const finish = () => {
         clearTimeout(timer);
         resolve();
       };
       const next = (i: number) => {
+        clearTimeout(timer);
         if (id !== speaking || i >= sentences.length) return finish();
+        timer = setTimeout(finish, SENTENCE_MS + PAUSE_MS);
         const u = new SpeechSynthesisUtterance(sentences[i]);
         u.lang = lang;
+        if (voice) u.voice = voice;
         u.onend = () => setTimeout(() => next(i + 1), i + 1 < sentences.length ? PAUSE_MS : 0);
         u.onerror = finish;
         speechSynthesis.speak(u);

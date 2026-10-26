@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { Hono } from "hono";
 import { createMiddleware } from "hono/factory";
 import {
@@ -7,9 +7,12 @@ import {
   countdown,
   forPerson,
   MAX_CANDIDATES,
+  REWRITE_DAYS,
   weekOf,
+  type BriefingExtras,
   type Candidate,
 } from "../../core/briefing";
+import { clockChangeWithin } from "../../core/clock-change";
 import { publicHolidays } from "../../core/holidays";
 import { isLanguage, LANGUAGES, type Language } from "../../core/languages";
 import { addDays, type PlainDate } from "../../core/plain-date";
@@ -20,6 +23,7 @@ import { schema } from "../db";
 import { requireDevice } from "../require-device";
 import type { AppEnv } from "../types";
 import { allEntries } from "./entries";
+import { briefingWeather } from "./weather";
 
 const FAMILY = "family";
 /** The Scheduler writes the day's Briefings from this hour, Family time. */
@@ -33,16 +37,26 @@ type Person = { id: string; name: string; archived: boolean };
 async function readCalendar(db: Db, now: Date) {
   const [family] = await db.select().from(schema.family).limit(1);
   const { today } = familyNow(family.timeZone, now);
-  const [entries, tasks, taskLinks, checklists, persons, Holidays] = await Promise.all([
-    allEntries(db),
-    db.select().from(schema.task),
-    db.select().from(schema.taskPerson),
-    db.select().from(schema.checklist),
-    db
-      .select({ id: schema.person.id, name: schema.person.name, archived: schema.person.archived })
-      .from(schema.person),
-    import("date-holidays").then((m) => m.default),
-  ]);
+  const [entries, tasks, taskLinks, checklists, persons, Holidays, weather, toBuy] =
+    await Promise.all([
+      allEntries(db),
+      db.select().from(schema.task),
+      db.select().from(schema.taskPerson),
+      db.select().from(schema.checklist),
+      db
+        .select({
+          id: schema.person.id,
+          name: schema.person.name,
+          archived: schema.person.archived,
+        })
+        .from(schema.person),
+      import("date-holidays").then((m) => m.default),
+      briefingWeather(db, now),
+      db
+        .select({ name: schema.shoppingItem.name })
+        .from(schema.shoppingItem)
+        .where(isNull(schema.shoppingItem.boughtAt)),
+    ]);
   const input = {
     today,
     entries: entries.map((e) => ({
@@ -75,7 +89,12 @@ async function readCalendar(db: Db, now: Date) {
       },
       Infinity,
     );
-  return { family, today, persons: persons as Person[], candidatesIn };
+  const extras: BriefingExtras = {
+    weather,
+    clockChange: clockChangeWithin(family.timeZone, today, REWRITE_DAYS),
+    shopping: toBuy.map((i) => i.name),
+  };
+  return { family, today, persons: persons as Person[], candidatesIn, extras };
 }
 
 function scopeCandidates(all: Candidate[], scope: string) {
@@ -91,9 +110,10 @@ async function writeOne(
   scope: string,
   language: Language,
   candidates: Candidate[],
+  extras: BriefingExtras,
   personName?: string,
 ) {
-  const written = await writeBriefing(env, candidates, today, language, personName);
+  const written = await writeBriefing(env, candidates, today, language, extras, personName);
   const row = {
     scope,
     language,
@@ -125,10 +145,10 @@ export async function writeScopeBriefing(
   scope: string,
   language: Language,
 ) {
-  const { today, persons, candidatesIn } = await readCalendar(db, now);
+  const { today, persons, candidatesIn, extras } = await readCalendar(db, now);
   const name = persons.find((p) => p.id === scope)?.name;
   const candidates = scopeCandidates(candidatesIn(language), scope);
-  return writeOne(db, env, now, today, scope, language, candidates, name);
+  return writeOne(db, env, now, today, scope, language, candidates, extras, name);
 }
 
 /** The languages Briefings are kept in: the Family Language and every Signed-in Device's. */
@@ -175,7 +195,17 @@ export async function briefingJob(db: Db, env: Env, now: Date) {
         const row = stored.find((r) => r.scope === scope && r.language === language);
         if (row && row.week === weekOf(candidates, calendar.today)) continue;
       }
-      await writeOne(db, env, now, calendar.today, scope, language, candidates, name);
+      await writeOne(
+        db,
+        env,
+        now,
+        calendar.today,
+        scope,
+        language,
+        candidates,
+        calendar.extras,
+        name,
+      );
     }
   }
 }

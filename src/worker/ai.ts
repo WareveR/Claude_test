@@ -1,6 +1,15 @@
-import { candidateLink, type Candidate, type Segment } from "../core/briefing";
+import {
+  candidateLink,
+  NO_EXTRAS,
+  type BriefingExtras,
+  type BriefingWeather,
+  type Candidate,
+  type Segment,
+} from "../core/briefing";
+import type { ClockChange } from "../core/clock-change";
 import type { Language } from "../core/languages";
 import { formatPlainDate, type PlainDate } from "../core/plain-date";
+import { weatherKind, type DayWeather, type HourWeather, type WeatherKind } from "../core/weather";
 
 /**
  * The one place that talks to Workers AI. Every call returns a checked, typed result or null,
@@ -107,18 +116,108 @@ function describe(c: Candidate, i: number, language: Language) {
   return parts.filter(Boolean).join(" ");
 }
 
+const SKY: Record<WeatherKind, string> = {
+  sunny: "sunny",
+  partlyCloudy: "partly cloudy",
+  cloudy: "cloudy",
+  rain: "rain",
+  showers: "showers",
+  thunder: "thunderstorms",
+  snow: "snow",
+  fog: "fog",
+};
+
+/** An hour with at least this chance of rain is worth an umbrella. */
+const RAIN_LIKELY = 40;
+
+/** One day's weather in words: "today: rain, 12 to 17 degrees, 80% chance of rain, wind up to 40 km/h". */
+function describeDay(day: DayWeather, today: PlainDate) {
+  const parts = [
+    `${day.date === today ? "today" : "tomorrow"}: ${SKY[weatherKind(day.code)]}`,
+    `${Math.round(day.min)} to ${Math.round(day.max)} degrees`,
+    day.rain !== undefined ? `${Math.round(day.rain)}% chance of rain` : "",
+    day.wind !== undefined ? `wind up to ${Math.round(day.wind)} km/h` : "",
+    day.uv !== undefined ? `UV index ${Math.round(day.uv)}` : "",
+  ];
+  return parts.filter(Boolean).join(", ");
+}
+
+/** Today's hours with a real chance of rain, as "15:00 to 18:00 (up to 70%)"; empty when none. */
+function rainHours(hours: HourWeather[]) {
+  const wet = hours.filter((h) => h.rain >= RAIN_LIKELY);
+  if (wet.length === 0) return "";
+  const from = wet[0].time.slice(11, 16);
+  const to = wet[wet.length - 1].time.slice(11, 16);
+  const most = Math.max(...wet.map((h) => Math.round(h.rain)));
+  return `rain likely today ${from === to ? `around ${from}` : `from ${from} to ${to}`} (up to ${most}%)`;
+}
+
+function describeWeather(weather: BriefingWeather | null, today: PlainDate) {
+  if (!weather) return "";
+  const days = weather.days.filter((d) => d.date >= today).slice(0, 2);
+  if (days.length === 0) return "";
+  const rain = rainHours(weather.hours);
+  return `Weather in ${weather.place}: ${days.map((d) => describeDay(d, today)).join("; ")}${rain ? `; ${rain}` : ""}.`;
+}
+
+function describeClockChange(change: ClockChange | null, locale: string) {
+  if (!change) return "";
+  const date = formatPlainDate(change.date, locale, {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+  const way = change.to > change.from ? "forward" : "back";
+  return `The clocks change on ${date}: at ${change.from} they go ${way} to ${change.to}.`;
+}
+
+/** At most this many Shopping List items are named; the rest are counted. */
+const SHOPPING_NAMED = 8;
+
+function describeShopping(items: string[]) {
+  if (items.length === 0) return "";
+  const named = items
+    .slice(0, SHOPPING_NAMED)
+    .map((i) => `"${i}"`)
+    .join(", ");
+  const more = items.length > SHOPPING_NAMED ? ` and ${items.length - SHOPPING_NAMED} more` : "";
+  return `Shopping list: ${items.length} still to buy: ${named}${more}.`;
+}
+
+/** How the host sounds, in the Briefing's own language. */
+const EXAMPLES: Record<Language, string> = {
+  "pt-PT": [
+    "«Atenção, que no domingo muda a hora: às 2h passam a ser 1h outra vez, mais uma hora de sono!»",
+    "«Para a semana há feriado, já pensaram em como o aproveitar?»",
+    "«O aniversário da mãe é no fim do mês, não se esqueçam de preparar tudo!»",
+    "«Hoje vai estar sol, por volta dos 25 graus, mas pode chover um pouco lá para as 17h: se saírem, levem o guarda-chuva.»",
+    "«Na lista de compras já estão o leite e os ovos.»",
+  ].join(" "),
+  en: [
+    '"Heads up: the clocks change on Sunday, at 2 they go back to 1, an extra hour in bed!"',
+    '"There\'s a bank holiday next week, any plans to make the most of it?"',
+    "\"Mum's birthday is at the end of the month, don't forget to get everything ready!\"",
+    '"Sunny today, around 25 degrees, but a little rain is possible around 5 pm: if you go out, take an umbrella."',
+    '"The shopping list already has milk and eggs."',
+  ].join(" "),
+};
+
 /** The most the model may write for one Briefing (docs/runbooks/workers-ai.md). */
-const BRIEFING_TOKENS = 1024;
+const BRIEFING_TOKENS = 1280;
 /** The longest Briefing kept, in pieces and in characters; a longer answer is a bad one. */
 const MAX_SEGMENTS = 60;
-const MAX_BRIEFING_LENGTH = 2400;
+const MAX_BRIEFING_LENGTH = 3000;
 
-/** The prompt for one Briefing; candidates are already free of notes and Private items. */
+/**
+ * The prompt for one Briefing, told like a morning radio show so it can be played aloud, about
+ * what is worth knowing soon; candidates are already free of notes and Private items.
+ */
 export function briefingPrompt(
   candidates: Candidate[],
   today: PlainDate,
   language: Language,
   personName?: string,
+  extras: BriefingExtras = NO_EXTRAS,
 ) {
   const locale = language === "en" ? "en-GB" : "pt-PT";
   const day = formatPlainDate(today, locale, {
@@ -131,23 +230,42 @@ export function briefingPrompt(
     {
       role: "system",
       content: [
-        `You write the morning briefing of a family calendar, in ${LANGUAGE_NAMES[language]}.`,
+        `You are the family's personal assistant and you tell the day's briefing like the host of a warm, lively morning radio show, in ${LANGUAGE_NAMES[language]}.`,
         personName
           ? `This briefing is for ${personName}: speak to them, about what is theirs and what the whole family does.`
-          : "This briefing is for the whole family.",
-        "Write it in up to five short paragraphs, in this order, leaving out a paragraph that has nothing to say:",
-        "1. Today: everything on today, with its time.",
-        "2. The next six days: what is on each day that has something, the HIGH importance ones first; group many small ones.",
-        "3. What to prepare: the tasks and lists that prepare for what is coming up, with their progress; also say when something important coming up within the week has nothing to prepare it, only if preparing is clearly needed (a trip, a party).",
-        "4. Tasks: those planned for the next days, and every overdue one, saying how late it is.",
-        "5. When there are overdue tasks, end by asking whether to do them today, move them to another day, or drop them.",
-        "Later dates are only worth a word when HIGH importance. Say dates relative to today (today, tomorrow, on Friday, in 10 days). Plain, warm, short sentences; use only facts from the list and never invent events.",
+          : "This briefing is for the whole family: speak to all of them.",
+        "It is shown on screen and also read aloud by a speech synthesiser, so write flowing spoken sentences, never lists, bullets, emojis, symbols or abbreviations that read badly aloud.",
+        "Do not greet: the app says the greeting just before your text.",
+        "Tell only what they need to know soon, like a friend who keeps an eye on things, and turn facts into useful, human remarks: a practical tip, a reminder to get ready, a light question. Leave out what is far off and not important.",
+        `Sound like these examples (not facts, only the tone): ${EXAMPLES[language]}`,
+        "Tell it in short paragraphs, in this order, leaving out a paragraph that has nothing to say:",
+        "1. Open by saying what day today is, in a lively way.",
+        "2. The weather, only when given: today's sky and temperature, when rain is likely and an umbrella tip then, a coat or sunscreen only when the numbers call for it, and a word about tomorrow.",
+        "3. A change of the clocks, when given: say the day and what happens to the time, as in the example.",
+        "4. Today: everything on today, with its time.",
+        "5. The next six days: what is on each day that has something, the HIGH importance ones first; group many small ones. A public holiday: say when, and ask how they'd like to make the most of it.",
+        "6. Further ahead, only what needs getting ready: a birthday within the next month with a reminder to prepare it, and HIGH importance items.",
+        "7. What to prepare: the tasks and lists that prepare for what is coming up, with their progress; also say when something important coming up within the week has nothing to prepare it, only if preparing is clearly needed (a trip, a party).",
+        "8. Tasks: those planned for the next days, and every overdue one, saying how late it is; when there are overdue tasks, ask whether to do them today, move them to another day, or drop them.",
+        "9. The shopping list, when given: a light word on what is already on it.",
+        "10. Sign off with one short, friendly sentence, like a radio host closing the show.",
+        "Link the items with natural radio transitions instead of listing them. Say dates relative to today (today, tomorrow, on Friday, next week, at the end of the month). Warm, short sentences; use only facts given here and never invent events.",
         'Answer as JSON {"segments":[{"text":"...","item":n}]}: split the sentences into pieces so that each piece names at most one item, give that item\'s number in "item", and null for pieces that name none. Joined in order, the pieces must read as the whole text. A new paragraph starts with a piece whose text begins with "\\n\\n".',
       ].join(" "),
     },
     {
       role: "user",
-      content: `Today is ${day}.\n\n${candidates.map((c, i) => describe(c, i, language)).join("\n")}`,
+      content: [
+        `Today is ${day}.`,
+        describeWeather(extras.weather, today),
+        describeClockChange(extras.clockChange, locale),
+        candidates.length > 0
+          ? candidates.map((c, i) => describe(c, i, language)).join("\n")
+          : "Nothing is planned.",
+        describeShopping(extras.shopping),
+      ]
+        .filter(Boolean)
+        .join("\n\n"),
     },
   ];
 }
@@ -189,14 +307,15 @@ export async function writeBriefing(
   candidates: Candidate[],
   today: PlainDate,
   language: Language,
+  extras: BriefingExtras,
   personName?: string,
 ): Promise<Segment[] | null> {
-  if (candidates.length === 0) return null;
+  if (candidates.length === 0 && !extras.weather && !extras.clockChange) return null;
   try {
     const result = await model.run(env, {
-      messages: briefingPrompt(candidates, today, language, personName),
+      messages: briefingPrompt(candidates, today, language, personName, extras),
       response_format: { type: "json_schema", json_schema: BRIEFING_SCHEMA },
-      // Five paragraphs as JSON pieces run well past the default 256 tokens.
+      // Several paragraphs as JSON pieces run well past the default 256 tokens.
       max_tokens: BRIEFING_TOKENS,
     });
     // Token counts, to check real use against the free daily allowance (docs/runbooks/workers-ai.md).

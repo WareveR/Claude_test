@@ -23,6 +23,20 @@ const PLACES = [
   },
 ];
 
+/** Lisbon's offset from UTC now, in seconds: 3600 in summer, 0 in winter, as Open-Meteo says. */
+function lisbonOffset() {
+  const name = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Europe/Lisbon",
+    timeZoneName: "longOffset",
+  })
+    .formatToParts(new Date())
+    .find((p) => p.type === "timeZoneName").value;
+  const match = /([+-])(\d{2}):(\d{2})/.exec(name);
+  return match
+    ? (match[1] === "-" ? -1 : 1) * (Number(match[2]) * 3600 + Number(match[3]) * 60)
+    : 0;
+}
+
 /**
  * 16 days from today in Lisbon: sunny, then partly cloudy, cloudy, rain, …; highs 20, 21, …
  * Like Open-Meteo with `past_days`, it also starts with yesterday: rainy, 15°/8°, 90%.
@@ -50,7 +64,7 @@ function forecast() {
   }).format(new Date());
   const all = [...pastHours, ...hours];
   return {
-    utc_offset_seconds: 3600,
+    utc_offset_seconds: lisbonOffset(),
     current: {
       time: `${today}T${now.padStart(2, "0")}:00`,
       weather_code: 2,
