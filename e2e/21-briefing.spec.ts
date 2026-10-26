@@ -72,13 +72,11 @@ test("Play reads the Briefing aloud, greeting first, and Stop ends it", async ({
   await band.getByRole("button", { name: "Play" }).click();
   await expect(band.getByRole("button", { name: "Stop" })).toBeVisible();
   const spoken = () => page.evaluate<string[]>("window.spoken");
-  await expect
-    .poll(spoken)
-    .toEqual([
-      expect.stringMatching(/^Good (morning|afternoon|evening)!$/),
-      // The first countdown line, whichever is most pressing, without its "·".
-      expect.stringMatching(/^[^·]+, (today|tomorrow|in \d+ days|\d+ days? overdue) \(/),
-    ]);
+  await expect.poll(spoken).toEqual([
+    expect.stringMatching(/^Good (morning|afternoon|evening)!$/),
+    // The first countdown line, whichever is most pressing, without its "·".
+    expect.stringMatching(/^[^·]+, (today|tomorrow|in \d+ days|\d+ days? overdue) \(/),
+  ]);
   await band.getByRole("button", { name: "Stop" }).click();
   await expect(band.getByRole("button", { name: "Play" })).toBeVisible();
 });
