@@ -1,6 +1,7 @@
 import { env } from "cloudflare:test";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { model } from "../ai";
+import { getDb, schema } from "../db";
 import worker from "../index";
 import { setUpFamily, TestBrowser } from "../test/client";
 
@@ -113,6 +114,57 @@ describe("Briefing", () => {
     expect(prompt.messages[1].content).toContain('prepares for "Dentist"');
     expect(prompt.messages[0].content).toContain("What to prepare");
     expect(prompt.max_tokens).toBeGreaterThan(256);
+  });
+
+  it("is told like a radio show, with the weather, when rain is likely and the shopping list", async () => {
+    const { browser } = await familyWithPlans();
+    const db = getDb(env.DB);
+    const now = new Date().toISOString();
+    await db.insert(schema.weatherLocation).values({
+      id: "lisboa",
+      name: "Lisboa",
+      admin: "Lisboa",
+      country: "Portugal",
+      countryCode: "PT",
+      latitude: 38.7,
+      longitude: -9.1,
+      createdAt: now,
+    });
+    await db.update(schema.family).set({ selectedWeatherLocationId: "lisboa" });
+    await db.insert(schema.weatherCache).values({
+      locationId: "lisboa",
+      forecast: {
+        utcOffset: 0,
+        daily: [{ date: today(), code: 61, max: 17.4, min: 11.6, rain: 80, wind: 35 }],
+        hourly: [16, 17, 18].map((h) => ({
+          time: `${today()}T${h}:00`,
+          code: 61,
+          temp: 15,
+          rain: h === 16 ? 10 : 80,
+        })),
+      },
+      fetchedAt: now,
+      attemptedAt: now,
+    });
+    await db.insert(schema.shoppingItem).values(
+      ["Milk", "Eggs"].map((name) => ({
+        id: name,
+        name,
+        createdAt: now,
+        changedAt: now,
+        boughtAt: name === "Eggs" ? now : null,
+      })),
+    );
+    await browser.post("/briefing/refresh");
+    const [system, user] = prompts[0].messages;
+    expect(system.content).toContain("morning radio show");
+    expect(system.content).toContain("read aloud");
+    expect(system.content).toContain("Do not greet");
+    expect(user.content).toContain(
+      "Weather in Lisboa: today: rain, 12 to 17 degrees, 80% chance of rain, wind up to 35 km/h; rain likely today from 17:00 to 18:00 (up to 80%).",
+    );
+    expect(user.content).toContain('Shopping list: 1 still to buy: "Milk".');
+    expect(system.content).toContain("guarda-chuva");
   });
 
   it("falls back to the countdown list when the model fails or answers nonsense", async () => {

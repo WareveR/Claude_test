@@ -567,7 +567,12 @@
   "briefing": {
     "refresh": "Atualizar",
     "none": "Ainda não há resumo.",
-    "failed": "Não foi possível atualizar o resumo. Tente de novo."
+    "failed": "Não foi possível atualizar o resumo. Tente de novo.",
+    "play": "Ouvir",
+    "stop": "Parar",
+    "morning": "Bom dia!",
+    "afternoon": "Boa tarde!",
+    "evening": "Boa noite!"
   },
   "comingUp": {
     "title": "A seguir",

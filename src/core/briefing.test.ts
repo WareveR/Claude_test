@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { briefingCandidates, countdown, forPerson, weekOf, type BriefingInput } from "./briefing";
+import {
+  briefingCandidates,
+  briefingSentences,
+  countdown,
+  forPerson,
+  weekOf,
+  type BriefingInput,
+} from "./briefing";
 
 const TODAY = "2026-10-02";
 
@@ -74,6 +81,18 @@ describe("briefingCandidates", () => {
     ]);
     expect(candidates[0]).toMatchObject({ kind: "task", detail: "overdue", importance: "high" });
     expect(candidates[3]).toMatchObject({ persons: ["Ana"], time: "15:00" });
+  });
+
+  it("leaves out Public Holidays more than two weeks away", () => {
+    const candidates = briefingCandidates(
+      input({
+        holidays: new Map([
+          ["2026-10-15", ["Soon"]],
+          ["2026-10-16", ["Too far"]],
+        ]),
+      }),
+    );
+    expect(candidates.map((c) => c.title)).toEqual(["Soon"]);
   });
 
   it("never includes Private items, done Tasks or notes", () => {
@@ -243,5 +262,32 @@ describe("forPerson and weekOf", () => {
       );
     expect(week("2026-11-20")).toBe(week("2026-12-01"));
     expect(week("2026-10-08")).not.toBe(week("2026-11-20"));
+  });
+});
+
+describe("briefingSentences", () => {
+  it("splits the Briefing into sentences and paragraphs, to be read one at a time", () => {
+    expect(
+      briefingSentences(
+        [
+          { text: "Hoje é segunda-feira! Às 09:30 há o " },
+          { text: "dentista", link: { kind: "entry", id: "e1", date: "2026-10-26" } },
+          { text: ".\n\nTenham um bom dia." },
+        ],
+        false,
+      ),
+    ).toEqual(["Hoje é segunda-feira!", "Às 09:30 há o dentista.", "Tenham um bom dia."]);
+  });
+
+  it("reads the countdown list line by line, without the dots between", () => {
+    expect(
+      briefingSentences(
+        [
+          { text: "Dentist · tomorrow (Tue 27 Oct)" },
+          { text: "Book the vet · in 3 days (Thu 29 Oct)" },
+        ],
+        true,
+      ),
+    ).toEqual(["Dentist, tomorrow (Tue 27 Oct)", "Book the vet, in 3 days (Thu 29 Oct)"]);
   });
 });

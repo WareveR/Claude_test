@@ -567,7 +567,12 @@
   "briefing": {
     "refresh": "Refresh",
     "none": "No briefing yet.",
-    "failed": "The briefing could not be refreshed. Try again."
+    "failed": "The briefing could not be refreshed. Try again.",
+    "play": "Play",
+    "stop": "Stop",
+    "morning": "Good morning!",
+    "afternoon": "Good afternoon!",
+    "evening": "Good evening!"
   },
   "comingUp": {
     "title": "Coming up",

@@ -7,11 +7,15 @@ import { occurrencesOf, type OccurrenceException } from "./occurrences";
 import { matchesFilter } from "./person-filter";
 import { addDays, daysBetween, formatPlainDate, type PlainDate } from "./plain-date";
 import type { Repetition } from "./repetition";
+import type { ClockChange } from "./clock-change";
+import type { DayWeather, HourWeather } from "./weather";
 
 /** How far ahead the Briefing looks. */
 export const BRIEFING_DAYS = 60;
 /** At most this many candidates go to the model, the most pressing first. */
 export const MAX_CANDIDATES = 40;
+/** A Public Holiday is only worth a word this close: one in 47 days is no news. */
+export const HOLIDAY_DAYS = 14;
 /** A change this close makes the Briefing out of date. */
 export const REWRITE_DAYS = 7;
 const FALLBACK_ITEMS = 8;
@@ -33,6 +37,20 @@ export type Candidate = {
   /** The title of the Entry a Task or Checklist prepares for, when that Entry is coming up. */
   prepares?: string;
 };
+
+/** The Family's weather for today and tomorrow, and today's hours, which the Briefing opens with. */
+export type BriefingWeather = { place: string; days: DayWeather[]; hours: HourWeather[] };
+
+/** What else the Briefing may tell besides the candidates; none of it is Private. */
+export type BriefingExtras = {
+  weather: BriefingWeather | null;
+  /** A change of the clocks in the next 7 days. */
+  clockChange: ClockChange | null;
+  /** What is still to buy on the Shopping List. */
+  shopping: string[];
+};
+
+export const NO_EXTRAS: BriefingExtras = { weather: null, clockChange: null, shopping: [] };
 
 /** A piece of Briefing text; one with `link` opens that Entry Occurrence, Task or Checklist. */
 export type Segment = {
@@ -90,7 +108,7 @@ const RANK: Record<Importance, number> = { high: 0, normal: 1, low: 2 };
 /**
  * What is coming up in the next 60 days, never notes and never Private items: Entry
  * Occurrences (Birthdays with their age), Tasks overdue or due, Checklists still open with
- * their progress, and Public Holidays. A Task or Checklist that prepares for a coming Entry says
+ * their progress, and Public Holidays in the next 14 days. A Task or Checklist that prepares for a coming Entry says
  * which; a Checklist without a period counts on that Entry's date. The most pressing first:
  * overdue, then by date, then High Importance.
  */
@@ -173,7 +191,7 @@ export function briefingCandidates(input: BriefingInput, max = MAX_CANDIDATES): 
   }
 
   for (const [date, holidayNames] of input.holidays) {
-    if (date < today || date > last) continue;
+    if (date < today || date > addDays(today, HOLIDAY_DAYS - 1)) continue;
     for (const title of holidayNames) {
       out.push({
         kind: "holiday",
@@ -284,4 +302,18 @@ export function countdown(
     const prep = c.prepares ? ` ${texts.prepares(c.prepares)}` : "";
     return { text: `${c.title}${progress}${prep} · ${when} (${date})`, link: candidateLink(c) };
   });
+}
+
+/**
+ * The Briefing as sentences to read aloud, one at a time: browsers cut a long utterance short. The
+ * countdown list's "Title · tomorrow (Tue 27 Oct)" reads as "Title, tomorrow (Tue 27 Oct)".
+ */
+export function briefingSentences(segments: Segment[], fallback: boolean): string[] {
+  const text = fallback
+    ? segments.map((s) => s.text.replace(/\s*·\s*/g, ", ")).join("\n")
+    : segments.map((s) => s.text).join("");
+  return text
+    .split(/\n+|(?<=[.!?…])\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
 }
