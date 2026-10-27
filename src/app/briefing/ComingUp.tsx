@@ -59,6 +59,9 @@ function useGreeting() {
   );
 }
 
+/** A radio host's voice: a little higher and brisker than the device's flat default. */
+const CHEERFUL = { pitch: 1.15, rate: 1.05 };
+
 /** Play reads the Briefing aloud, greeting first; Stop, leaving or a new Briefing ends it. Keyed by its text. */
 function PlayButton({ sentences }: { sentences: string[] }) {
   const { t, i18n } = useTranslation();
@@ -73,7 +76,7 @@ function PlayButton({ sentences }: { sentences: string[] }) {
       return;
     }
     setPlaying(true);
-    void speak(sentences, i18n.language).then(() => setPlaying(false));
+    void speak(sentences, i18n.language, CHEERFUL).then(() => setPlaying(false));
   };
   return (
     <button type="button" className={BUTTON} aria-pressed={playing} onClick={toggle}>
