@@ -352,6 +352,7 @@ const VOICE_SCHEMA = {
         "question",
         "open",
         "items",
+        "relative",
       ],
     },
     place: {
@@ -379,6 +380,10 @@ const VOICE_SCHEMA = {
     scope: { type: ["string", "null"], enum: ["this", "following", null] },
     items: { type: "array", items: { type: "string" } },
     checklist: { type: ["integer", "null"] },
+    relative: { type: ["integer", "null"] },
+    relation: { type: ["string", "null"], enum: ["parent", "child", "partner", "sibling", null] },
+    of: { type: ["integer", "null"] },
+    sex: { type: ["string", "null"], enum: ["f", "m", null] },
     tick: { type: "array", items: { type: "string" } },
     shop: { type: ["string", "null"], enum: ["add", "bought", "remove", "ask", null] },
     store: { type: ["string", "null"] },
@@ -425,6 +430,8 @@ export type VoiceContext = {
   targets: string[];
   /** Existing Tasks with items, each with its items: "Beach bag: towels (done), sunscreen". */
   checklists?: string[];
+  /** The Family Tree's Relatives: "Rosa (Avó), born 1950-03-02". */
+  relatives?: string[];
   /** The number of the Person speaking, when the Account has one. */
   speaker?: number | null;
 };
@@ -443,7 +450,7 @@ export function voicePrompt(context: VoiceContext) {
     {
       role: "system",
       content: [
-        'You read one sentence from a family member about the family calendar. "action" is "create" for a new entry or task, "change" to change an existing one, "delete" to remove or cancel one, "shopping" to put things on the family\'s shopping list, "person" to add a new person to the family, "list" to make a new predefined list, "question" to ask what is on the calendar, "open" to go to a part of the app, "items" to add or tick items in an existing task with items.',
+        'You read one sentence from a family member about the family calendar. "action" is "create" for a new entry or task, "change" to change an existing one, "delete" to remove or cancel one, "shopping" to put things on the family\'s shopping list, "person" to add a new person to the family, "list" to make a new predefined list, "question" to ask what is on the calendar, "open" to go to a part of the app, "items" to add or tick items in an existing task with items, "relative" for the family tree.',
         `The sentence is in ${LANGUAGE_NAMES[context.language]}; keep the title in that language, short, without the date, time or names.`,
         'An "entry" happens at a time (appointment, birthday, trip, class); a "task" is something to do, possibly by a due date.',
         "Give dates as YYYY-MM-DD and times as HH:mm (24-hour), worked out from today's date; null when the sentence doesn't say.",
@@ -460,6 +467,7 @@ export function voicePrompt(context: VoiceContext) {
         '"question" is for asking, not changing ("what do we have tomorrow?", "am I free on Friday afternoon?", "what\'s on this week?", "when is Ana\'s next dentist?"): "date" and "endDate" are the days asked about ("this week" is today to Sunday; endDate null for one day; date null for today); "time" and "endTime" a part of the day if said (morning 08:00–12:00, afternoon 12:00–19:00, evening 19:00–23:59), else null; "persons" whose calendar is asked about, empty for the whole family; for "when is the next …" about one existing item, "targets" lists the numbers of the items it may mean and date stays null.',
         '"open" is only for going somewhere in the app ("show next week", "open December", "open the shopping list", "search for dentist"): "place" is where (day, week, month, year, agenda, tasks, shopping, tree for the family tree, summary, wall, suggestions, search, settings); "date" the day it shows, if said; for "search", "title" is what to look for.',
         '"items" is only for an existing task with items, from the list below ("add sunscreen to the beach bag", "the towels are packed"): "checklist" is its number; "items" the new items to add to it, short, in the sentence\'s language; "tick" the names of its items the sentence says are done, as they are written in the list.',
+        '"relative" is for the family tree below: adding a relative ("Rosa is Ana\'s grandmother", "add Ana\'s mother Rosa, born in 1950") or changing one ("grandpa João died on 3 May 2020"). "relative" is the number of the one changed, null when adding; "title" the new one\'s name; "nicknames" what they are called; "date" the date of birth and "endDate" the date of death, if said; "relation" is what the new one is of "of" (another number in the tree): "parent", "child", "partner" or "sibling"; "sex" is "f" or "m" when the words say (mother, sister, avó), else null; a grandmother is the parent of a parent, so pick that parent when they are in the tree.',
         'For "delete": "targets", "several", "on" and "scope" work as for "change", and the other fields stay null; cancelling something that happens ("cancel Friday\'s dinner") is "delete".',
         "Answer only with JSON matching the schema.",
       ].join(" "),
@@ -474,6 +482,7 @@ export function voicePrompt(context: VoiceContext) {
           : []),
         `Entry types:\n${context.types.map((t, i) => `${i}. ${t}`).join("\n")}`,
         `Predefined lists:\n${context.lists.map((l, i) => `${i}. ${l}`).join("\n") || "(none)"}`,
+        `Family tree:\n${(context.relatives ?? []).map((r, i) => `${i}. ${r}`).join("\n") || "(none)"}`,
         `Tasks with items:\n${(context.checklists ?? []).map((l, i) => `${i}. ${l}`).join("\n") || "(none)"}`,
         `Existing items:\n${context.targets.map((t, i) => `${i}. ${t}`).join("\n") || "(none)"}`,
         `Sentence: ${JSON.stringify(context.sentence)}`,

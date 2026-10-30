@@ -834,6 +834,56 @@ describe("Voice Entry: items of a Task", () => {
   });
 });
 
+describe("Voice Entry: Family Tree", () => {
+  it("adds a relative linked to one in the tree, and changes one's dates, with Undo", async () => {
+    const { browser } = await family();
+    const ana = (await (await browser.post("/relatives", { name: "Ana" })).json()) as {
+      id: string;
+    };
+    const tree = async () =>
+      (await (await browser.get("/relatives")).json()) as {
+        id: string;
+        name: string;
+        sex: string;
+        parentIds: string[];
+        deathDate: string | null;
+      }[];
+    answer = (p) => {
+      expect(p.messages[1].content).toContain("Family tree:\n0. Ana");
+      return {
+        ...change({ action: "relative", title: "Rosa", date: "1950-03-02" }),
+        relation: "parent",
+        of: 0,
+        sex: "f",
+      };
+    };
+    const added = (await (
+      await browser.post("/voice", { sentence: "a Rosa é mãe da Ana, nasceu a 2 de março de 1950" })
+    ).json()) as { plan: Plan };
+    expect(added.plan.summary).toBe(
+      "Nova pessoa na árvore: Rosa, mãe de Ana, nasceu a 2 de março de 1950",
+    );
+    await send(browser, added.plan.apply.all);
+    const rosa = (await tree()).find((r) => r.name === "Rosa")!;
+    expect(rosa.sex).toBe("f");
+    expect((await tree()).find((r) => r.id === ana.id)!.parentIds).toEqual([rosa.id]);
+
+    answer = (p) => ({
+      ...change({ action: "relative", endDate: "2020-05-03" }),
+      relative: numberOf(p, "Rosa"),
+    });
+    const died = (await (
+      await browser.post("/voice", { sentence: "a Rosa faleceu a 3 de maio de 2020" })
+    ).json()) as { plan: Plan };
+    await send(browser, died.plan.apply.all);
+    expect((await tree()).find((r) => r.id === rosa.id)!.deathDate).toBe("2020-05-03");
+    await send(browser, died.plan.undo!);
+    expect((await tree()).find((r) => r.id === rosa.id)!.deathDate).toBeNull();
+    await send(browser, added.plan.undo!);
+    expect((await tree()).map((r) => r.name)).toEqual(["Ana"]);
+  });
+});
+
 describe("Voice Entry: open", () => {
   it("names the place, the day and what to search for", async () => {
     const { browser } = await family();
