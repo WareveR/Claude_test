@@ -5,7 +5,7 @@ import { occurrencesOf, type OccurrenceException } from "./occurrences";
 import { addMinutes, wallClock } from "./reminders";
 import { addDays, daysBetween, formatPlainDate, isPlainDate, type PlainDate } from "./plain-date";
 import type { Repetition } from "./repetition";
-import type { VoiceCreate } from "./voice";
+import { remindersText, type VoiceCreate } from "./voice";
 
 /** How far back and ahead Voice Entry looks for the Entry or Task a sentence changes. */
 export const CHANGE_DAYS_BACK = 7;
@@ -24,6 +24,8 @@ export type VoiceChange = {
   location: string | null;
   importance: Importance | null;
   repeat: VoiceCreate["repeat"];
+  /** An Entry's new Reminders, replacing its own, in minutes before the start. */
+  reminders: number[] | null;
   done: boolean | null;
 };
 
@@ -75,6 +77,7 @@ export function parseVoiceChange(
       location: fields.location,
       importance: fields.importance,
       repeat: fields.repeat,
+      reminders: fields.reminders?.length ? fields.reminders : null,
       done: value.done === true ? true : null,
     },
   };
@@ -276,6 +279,7 @@ export function changeSummary(
     change.repeat ? texts.repeats : "",
     change.location ?? "",
     change.importance ? `${texts.importance}: ${change.importance}` : "",
+    change.reminders ? remindersText(change.reminders, language) : "",
     change.done ? texts.done : "",
   ];
   return `${texts.change} ${title}: ${parts.filter(Boolean).join(", ")}`;

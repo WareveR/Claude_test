@@ -617,6 +617,7 @@ voiceRoutes.post("/voice", async (c) => {
           time: values.time.allDay ? null : values.time.startTime,
           allDay: values.time.allDay,
           repetition: values.repetition,
+          reminders: create.reminders,
         },
         names(values.personIds),
         language,
@@ -701,6 +702,7 @@ function planFor(
     personIds: personIds ?? values.personIds,
     location: change.location ?? values.location,
     importance: change.importance ?? values.importance,
+    reminders: change.reminders ?? values.reminders,
   });
 
   if (!entry.repetition || birthdayPersonId) {
@@ -710,6 +712,7 @@ function planFor(
           ...stored,
           location: change.location ?? stored.location,
           importance: change.importance ?? stored.importance,
+          reminders: change.reminders ?? stored.reminders,
         }
       : { ...edit(stored), repetition: changedRepetition(change.repeat) ?? stored.repetition };
     return {
