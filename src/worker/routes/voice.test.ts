@@ -903,6 +903,17 @@ describe("Voice Entry: Family Tree", () => {
   });
 });
 
+describe("Voice Entry: weather", () => {
+  it("answers from the forecast kept for the chosen place", async () => {
+    const { browser } = await family();
+    answer = () => ({ ...change({ action: "weather", date: null }) });
+    expect(await (await browser.post("/voice", { sentence: "vai chover hoje?" })).json()).toEqual({
+      outcome: "answer",
+      text: "Não há previsão do tempo: escolha um local em Definições.",
+    });
+  });
+});
+
 describe("Voice Entry: open", () => {
   it("names the place, the day and what to search for", async () => {
     const { browser } = await family();

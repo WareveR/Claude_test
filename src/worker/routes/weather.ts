@@ -8,7 +8,9 @@ import {
   parseForecast,
   parsePlaces,
   placeClock,
+  type DayWeather,
   type Forecast,
+  type HourWeather,
   type WeatherPlace,
 } from "../../core/weather";
 import { randomId } from "../auth/crypto";
@@ -262,6 +264,22 @@ export async function briefingWeather(db: Db, now: Date): Promise<BriefingWeathe
   const days = cache.forecast.daily.filter((d) => d.date >= today).slice(0, 2);
   const hours = cache.forecast.hourly.filter((h) => h.time.startsWith(today));
   return days.length > 0 ? { place: location.name, days, hours } : null;
+}
+
+/** Every forecast day and hour at the selected Weather Location, for Voice Entry; null when none is fresh. */
+export async function voiceWeather(
+  db: Db,
+  now: Date,
+): Promise<{ place: string; days: DayWeather[]; hours: HourWeather[] } | null> {
+  const location = await selectedLocation(db);
+  if (!location) return null;
+  const [cache] = await db
+    .select()
+    .from(schema.weatherCache)
+    .where(eq(schema.weatherCache.locationId, location.id));
+  if (!cache?.forecast || !cache.fetchedAt) return null;
+  if (now.getTime() - Date.parse(cache.fetchedAt) > SHOWN_FOR) return null;
+  return { place: location.name, days: cache.forecast.daily, hours: cache.forecast.hourly };
 }
 
 /**

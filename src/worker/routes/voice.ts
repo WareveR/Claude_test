@@ -47,6 +47,8 @@ import { requireDevice } from "../require-device";
 import type { AppEnv } from "../types";
 import { allEntries } from "./entries";
 import { allRelatives } from "./relatives";
+import { voiceWeather } from "./weather";
+import { weatherAnswer } from "../../core/voice-weather";
 import type { Relative } from "../../core/family-tree";
 import type { Account } from "../auth/account";
 import { seesInFull } from "../private";
@@ -434,6 +436,12 @@ voiceRoutes.post("/voice", async (c) => {
       ],
     };
     return c.json({ outcome: "change", plan });
+  }
+
+  if (answer.action === "weather") {
+    const date = typeof answer.date === "string" && isPlainDate(answer.date) ? answer.date : today;
+    const forecast = await voiceWeather(db, c.get("now"));
+    return c.json({ outcome: "answer", text: weatherAnswer(date, forecast, language) });
   }
 
   if (answer.action === "relative") {
