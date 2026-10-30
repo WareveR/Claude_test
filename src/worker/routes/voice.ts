@@ -438,6 +438,12 @@ voiceRoutes.post("/voice", async (c) => {
     return c.json({ outcome: "change", plan });
   }
 
+  if (answer.action === "briefing") {
+    const fields = parseVoiceFields(answer, active.length, types.length);
+    const person = fields.persons.length === 1 ? active[fields.persons[0]].id : null;
+    return c.json({ outcome: "briefing", person });
+  }
+
   if (answer.action === "overdue") {
     const now = familyNow(family.timeZone, c.get("now"));
     const late = tasks.filter((t) => !t.checklistId && isOverdue(t, now));

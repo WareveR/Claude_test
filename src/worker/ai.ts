@@ -355,6 +355,7 @@ const VOICE_SCHEMA = {
         "relative",
         "weather",
         "overdue",
+        "briefing",
       ],
     },
     place: {
@@ -453,7 +454,7 @@ export function voicePrompt(context: VoiceContext) {
     {
       role: "system",
       content: [
-        'You read one sentence from a family member about the family calendar. "action" is "create" for a new entry or task, "change" to change an existing one, "delete" to remove or cancel one, "shopping" to put things on the family\'s shopping list, "person" to add a new person to the family, "list" to make a new predefined list, "question" to ask what is on the calendar, "open" to go to a part of the app, "items" to add or tick items in an existing task with items, "relative" for the family tree, "weather" to ask about the weather, "overdue" to move every overdue task to another day.',
+        'You read one sentence from a family member about the family calendar. "action" is "create" for a new entry or task, "change" to change an existing one, "delete" to remove or cancel one, "shopping" to put things on the family\'s shopping list, "person" to add a new person to the family, "list" to make a new predefined list, "question" to ask what is on the calendar, "open" to go to a part of the app, "items" to add or tick items in an existing task with items, "relative" for the family tree, "weather" to ask about the weather, "overdue" to move every overdue task to another day, "briefing" to hear the summary.',
         `The sentence is in ${LANGUAGE_NAMES[context.language]}; keep the title in that language, short, without the date, time or names.`,
         'An "entry" happens at a time (appointment, birthday, trip, class); a "task" is something to do, possibly by a due date.',
         "Give dates as YYYY-MM-DD and times as HH:mm (24-hour), worked out from today's date; null when the sentence doesn't say.",
@@ -474,6 +475,7 @@ export function voicePrompt(context: VoiceContext) {
         '"notes" is a note the sentence asks to write on the entry or task ("note: bring the ID card", "add to the dentist: ask about the brace"), in the sentence\'s language; else null. For "change", the note is added to what is there.',
         '"weather" is for asking about the weather ("will it rain tomorrow?", "how hot is it on Saturday?"): "date" is the day asked about, null for today.',
         '"overdue" is for moving all the overdue tasks at once ("move the overdue tasks to tomorrow", "pass what is late to today"): "date" is the new day, null for today. One named task is a "change".',
+        '"briefing" is for hearing the day\'s summary read out ("read me the summary", "what\'s my briefing?"): "persons" holds the one person whose summary it is, if said, else empty.',
         'For "delete": "targets", "several", "on" and "scope" work as for "change", and the other fields stay null; cancelling something that happens ("cancel Friday\'s dinner") is "delete".',
         "Answer only with JSON matching the schema.",
       ].join(" "),
