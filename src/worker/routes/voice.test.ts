@@ -659,6 +659,25 @@ describe("Voice Entry: change", () => {
     ).toBe(true);
   });
 
+  it("adds a note after an Entry's own, and Undo takes it off", async () => {
+    const { browser, dinner } = await withPlans();
+    await browser.request("PUT", `/entries/${dinner}`, {
+      ...((await (await browser.get(`/entries/${dinner}`)).json()) as object),
+      notes: "Mesa para 6",
+    });
+    answer = (p) => change({ targets: [targetOf(p, "Dinner")], notes: "levar o bolo" });
+    const res = (await (
+      await browser.post("/voice", { sentence: "no jantar, acrescenta: levar o bolo" })
+    ).json()) as { plan: Plan };
+    expect(res.plan.summary).toBe("Alterar Dinner: nota: levar o bolo");
+    await send(browser, res.plan.apply.all);
+    const notes = async () =>
+      ((await (await browser.get(`/entries/${dinner}`)).json()) as { notes: string }).notes;
+    expect(await notes()).toBe("Mesa para 6\nlevar o bolo");
+    await send(browser, res.plan.undo!);
+    expect(await notes()).toBe("Mesa para 6");
+  });
+
   it("keeps a synced Birthday's date and Person", async () => {
     const { browser } = await withPlans();
     await browser.post("/persons", { name: "Bia", color: "#3d405b", dateOfBirth: "2016-10-20" });
