@@ -42,6 +42,8 @@ type Plan = {
   scope: "all" | "this" | "following" | "ask";
   apply: { all?: Req[]; this?: Req[]; following?: Req[] };
   undo: Req[] | null;
+  /** Deletes instead of changing; never undone. */
+  remove?: true;
 };
 /** Things to put on the Shopping List; `already` are open on it and left out. */
 type Shopping = {
@@ -49,7 +51,7 @@ type Shopping = {
   items: { name: string; store: string }[];
   already: string[];
 };
-type Notice = "notFound" | "oneAtATime" | "refused" | "locked" | "personExists" | "listExists";
+type Notice = "notFound" | "oneAtATime" | "locked" | "personExists" | "listExists";
 type Answer =
   | Create
   | { outcome: "failed"; sentence: string }
@@ -59,7 +61,7 @@ type Answer =
   | { outcome: Notice };
 type Scope = "this" | "following" | "all";
 /** What the toast's Undo does; null when there is nothing to undo. */
-type Toast = { undo: (() => Promise<void>) | null; shopping?: boolean };
+type Toast = { undo: (() => Promise<void>) | null; shopping?: boolean; removed?: boolean };
 
 const ROUTES: Record<Kind, string> = {
   entry: "entries",
@@ -350,7 +352,7 @@ export function VoiceEntry() {
             }
           }
         : null;
-      setToast({ undo });
+      setToast({ undo, removed: chosen.remove });
     } catch (e) {
       reportFailure(e, "save");
       await invalidate();
@@ -367,7 +369,10 @@ export function VoiceEntry() {
     setPhase("readback");
     if (!talk()) return;
     const mine = ++run.current;
-    await say(mine, [chosen.summary, t("voice.saveOrChange")]);
+    await say(mine, [
+      chosen.summary,
+      t(chosen.remove ? "voice.removeOrChange" : "voice.saveOrChange"),
+    ]);
     await converse(mine, () => void saveChange(chosen, how), editSentence);
   }
 
@@ -593,7 +598,9 @@ export function VoiceEntry() {
                     scope && (
                       <>
                         <p data-testid="voice-summary">{plan.summary}</p>
-                        <p className="text-sm text-muted">{t("voice.saveQuestion")}</p>
+                        <p className="text-sm text-muted">
+                          {t(plan.remove ? "voice.removeQuestion" : "voice.saveQuestion")}
+                        </p>
                         {error && (
                           <p role="alert" className="text-sm text-overdue">
                             {t("voice.saveFailed")}
@@ -602,10 +609,14 @@ export function VoiceEntry() {
                         <div className="flex gap-2">
                           <button
                             type="button"
-                            className="rounded-md bg-accent px-4 py-2 font-medium text-accent-ink"
+                            className={`rounded-md px-4 py-2 font-medium ${
+                              plan.remove
+                                ? "border border-overdue bg-surface text-overdue"
+                                : "bg-accent text-accent-ink"
+                            }`}
                             onClick={() => void saveChange(plan, scope)}
                           >
-                            {t("voice.save")}
+                            {t(plan.remove ? "voice.remove" : "voice.save")}
                           </button>
                         </div>
                       </>
@@ -776,7 +787,7 @@ export function VoiceEntry() {
             role="status"
             className="pointer-events-auto flex items-center gap-3 rounded-lg border border-line bg-surface px-4 py-2 text-sm shadow-lg"
           >
-            <span>{t("voice.saved")} ·</span>
+            <span>{t(toast.removed ? "voice.removed" : "voice.saved")} ·</span>
             {toast.undo && (
               <button type="button" className={BUTTON} onClick={() => void undo()}>
                 {t("voice.undo")}

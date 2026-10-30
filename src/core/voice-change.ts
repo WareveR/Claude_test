@@ -226,16 +226,31 @@ const LOCALES: Record<Language, string> = { "pt-PT": "pt-PT", en: "en-GB" };
 
 const TEXTS: Record<
   Language,
-  { change: string; done: string; for: string; repeats: string; importance: string }
+  {
+    change: string;
+    remove: string;
+    done: string;
+    for: string;
+    repeats: string;
+    importance: string;
+  }
 > = {
   "pt-PT": {
     change: "Alterar",
+    remove: "Apagar",
     done: "feita",
     for: "para",
     repeats: "repete",
     importance: "importância",
   },
-  en: { change: "Change", done: "done", for: "for", repeats: "repeats", importance: "importance" },
+  en: {
+    change: "Change",
+    remove: "Delete",
+    done: "done",
+    for: "for",
+    repeats: "repeats",
+    importance: "importance",
+  },
 };
 
 /** "Change Dinner: Friday 9 October, 20:00" — what will change, read back before saving. */
@@ -264,4 +279,9 @@ export function changeSummary(
     change.done ? texts.done : "",
   ];
   return `${texts.change} ${title}: ${parts.filter(Boolean).join(", ")}`;
+}
+
+/** "Delete Dinner · Friday 9 October" — what will be deleted, read back before deleting. */
+export function removeSummary(label: string, language: Language): string {
+  return `${TEXTS[language].remove} ${label}`;
 }

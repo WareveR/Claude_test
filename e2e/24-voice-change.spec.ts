@@ -105,10 +105,34 @@ test("a plan without undo shows no Undo button", async ({ page }) => {
   await expect(toast.getByRole("button", { name: "Undo" })).toHaveCount(0);
 });
 
+test("a delete plan asks Delete, deletes and offers no Undo", async ({ page }) => {
+  await signIn(page);
+  const id = await addTask(page, "Voice delete");
+  const dialog = await say(page, {
+    outcome: "change",
+    plan: {
+      kind: "task",
+      id,
+      date: null,
+      label: "Voice delete",
+      summary: "Delete Voice delete",
+      scope: "all",
+      apply: { all: [{ method: "DELETE", path: `/tasks/${id}` }] },
+      undo: null,
+      remove: true,
+    },
+  });
+  await expect(dialog.getByText("Delete? This can't be undone.")).toBeVisible();
+  await dialog.getByRole("button", { name: "Delete", exact: true }).click();
+  const toast = page.getByRole("status").filter({ hasText: "Deleted" });
+  await expect(toast).toBeVisible();
+  await expect(toast.getByRole("button", { name: "Undo" })).toHaveCount(0);
+  await expect.poll(async () => (await page.request.get(`/api/tasks/${id}`)).status()).toBe(404);
+});
+
 for (const [outcome, message] of [
   ["notFound", "Not found"],
   ["oneAtATime", "One thing at a time, please"],
-  ["refused", "Voice Entry doesn't delete; open the item to delete it"],
   ["locked", "A Birthday's date and Person change on the Person"],
 ] as const) {
   test(`${outcome} shows its message`, async ({ page }) => {
