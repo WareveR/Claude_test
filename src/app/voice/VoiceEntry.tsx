@@ -54,7 +54,7 @@ type Shopping = {
   items: { name: string; store: string }[];
   already: string[];
 };
-type Notice = "notFound" | "oneAtATime" | "locked" | "personExists" | "listExists";
+type Notice = "notFound" | "oneAtATime" | "locked" | "personExists" | "listExists" | "noneOverdue";
 type Answer =
   | Create
   | { outcome: "failed"; sentence: string }

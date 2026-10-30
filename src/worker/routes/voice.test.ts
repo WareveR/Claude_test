@@ -678,6 +678,30 @@ describe("Voice Entry: change", () => {
     expect(await notes()).toBe("Mesa para 6");
   });
 
+  it("moves every overdue Task to the day said, and Undo moves them back", async () => {
+    const { browser } = await withPlans();
+    const late = (
+      (await (
+        await browser.post("/tasks", { title: "Pay water", personIds: [], dueDate: "2026-10-01" })
+      ).json()) as { id: string }
+    ).id;
+    answer = () => change({ action: "overdue", date: "2026-10-07" });
+    const res = (await (
+      await browser.post("/voice", { sentence: "passa as tarefas em atraso para amanhã" })
+    ).json()) as { plan: Plan };
+    expect(res.plan.summary).toBe("Passar para quarta-feira, 7 de outubro: Pay water");
+    await send(browser, res.plan.apply.all);
+    const due = async () =>
+      ((await (await browser.get(`/tasks/${late}`)).json()) as { dueDate: string }).dueDate;
+    expect(await due()).toBe("2026-10-07");
+    await send(browser, res.plan.undo!);
+    expect(await due()).toBe("2026-10-01");
+    await browser.post(`/tasks/${late}/done`, {});
+    expect(await (await browser.post("/voice", { sentence: "x" })).json()).toEqual({
+      outcome: "noneOverdue",
+    });
+  });
+
   it("keeps a synced Birthday's date and Person", async () => {
     const { browser } = await withPlans();
     await browser.post("/persons", { name: "Bia", color: "#3d405b", dateOfBirth: "2016-10-20" });
