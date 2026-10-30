@@ -24,6 +24,7 @@ import {
   changeTargets,
   hasChange,
   parseVoiceChange,
+  removeSummary,
   touchesBirthday,
   type Target,
   type VoiceChange,
@@ -42,7 +43,7 @@ import { seesInFull } from "../private";
 /**
  * Voice Entry: one spoken or typed sentence becomes a new Entry or Task (a Task with items, from
  * the sentence or a predefined list, is a Checklist), a change to one, things to put on the
- * Shopping List, a new Person or a new predefined list.
+ * Shopping List, a new Person, a new predefined list, or deleting an Entry or Task.
  * Nothing is saved here: the answer carries the requests the browser sends to the usual routes
  * once the Family member says yes, so every rule of those routes still applies.
  */
@@ -65,6 +66,8 @@ type Plan = {
   apply: Partial<Record<"all" | "this" | "following", Request[]>>;
   /** Undoes "all"; none for a repeating Entry. */
   undo: Request[] | null;
+  /** Deletes instead of changing: asked as "Delete?", and never undone. */
+  remove?: true;
 };
 
 const LOCALES: Record<Language, string> = { "pt-PT": "pt-PT", en: "en-GB" };
@@ -242,7 +245,22 @@ voiceRoutes.post("/voice", async (c) => {
   if (typeof raw !== "object" || raw === null) return failed;
   const answer = raw as Record<string, unknown>;
 
-  if (answer.action === "delete") return c.json({ outcome: "refused" });
+  if (answer.action === "delete") {
+    const fields = parseVoiceFields(answer, active.length, types.length);
+    const reading = parseVoiceChange(answer, fields, targets.length);
+    if (reading.several) return c.json({ outcome: "oneAtATime" });
+    if (reading.targets.length === 0) return c.json({ outcome: "notFound" });
+    const plans = reading.targets
+      .slice(0, 3)
+      .map((i) => removePlan(targets[i], reading, { entries, tasks, language, names }));
+    const options = plans.filter((p): p is Plan => p !== "locked");
+    if (options.length === 0) return c.json({ outcome: "locked" });
+    return c.json(
+      options.length === 1
+        ? { outcome: "change", plan: options[0] }
+        : { outcome: "choose", options },
+    );
+  }
 
   if (answer.action === "shopping") {
     const items = Array.isArray(answer.items)
@@ -528,5 +546,56 @@ function planFor(
       following,
     },
     undo: null,
+  };
+}
+
+/**
+ * How deleting one target goes: a Task or a one-off Entry goes for good, a repeating Entry loses
+ * one Occurrence or ends before it. A synced Birthday is deleted only through its Person.
+ */
+function removePlan(
+  target: Target,
+  reading: { on: string | null; scope: "this" | "following" | null },
+  context: Context,
+): Plan | "locked" {
+  const label = labelOf(target, context.language);
+  const base = { kind: target.kind, id: target.id, label, undo: null, remove: true as const };
+  if (target.kind === "task") {
+    return {
+      ...base,
+      date: null,
+      summary: removeSummary(label, context.language),
+      scope: "all",
+      apply: { all: [{ method: "DELETE", path: `/tasks/${target.id}` }] },
+    };
+  }
+  const entry = context.entries.find((e) => e.id === target.id)!;
+  if (entry.birthdayPersonId) return "locked";
+  if (!entry.repetition) {
+    return {
+      ...base,
+      date: target.date,
+      summary: removeSummary(label, context.language),
+      scope: "all",
+      apply: { all: [{ method: "DELETE", path: `/entries/${entry.id}` }] },
+    };
+  }
+  const date =
+    (reading.on &&
+      occurrencesOf(entry, reading.on, reading.on).find(
+        (o) => o.date === reading.on || o.time.startDate === reading.on,
+      )?.date) ||
+    target.date;
+  const dated = labelOf({ ...target, date }, context.language);
+  return {
+    ...base,
+    label: dated,
+    date,
+    summary: removeSummary(dated, context.language),
+    scope: reading.scope ?? "ask",
+    apply: {
+      this: [{ method: "DELETE", path: `/entries/${entry.id}/occurrences/${date}` }],
+      following: [{ method: "DELETE", path: `/entries/${entry.id}/following/${date}` }],
+    },
   };
 }

@@ -487,7 +487,7 @@ describe("Voice Entry: change", () => {
     await send(browser, every.plan.apply.following);
   });
 
-  it("says which one, not found, one at a time, and never deletes", async () => {
+  it("says which one, not found and one at a time", async () => {
     const { browser } = await withPlans();
     answer = (p) =>
       change({
@@ -518,9 +518,69 @@ describe("Voice Entry: change", () => {
     expect(await (await browser.post("/voice", { sentence: "x" })).json()).toEqual({
       outcome: "oneAtATime",
     });
-    answer = (p) => ({ ...change({ targets: [targetOf(p, "Dinner")] }), action: "delete" });
-    expect(await (await browser.post("/voice", { sentence: "cancel dinner" })).json()).toEqual({
-      outcome: "refused",
+  });
+
+  const remove = (patch: Record<string, unknown>) => ({ ...change(patch), action: "delete" });
+
+  it("deletes a one-off Entry or a Task, asked as Delete and never undone", async () => {
+    const { browser, dinner, bins } = await withPlans();
+    answer = (p) => remove({ targets: [targetOf(p, "Dinner")] });
+    const res = (await (await browser.post("/voice", { sentence: "cancel dinner" })).json()) as {
+      outcome: string;
+      plan: Plan & { remove: boolean };
+    };
+    expect(res.outcome).toBe("change");
+    expect(res.plan).toMatchObject({
+      remove: true,
+      undo: null,
+      scope: "all",
+      summary: "Apagar Dinner · segunda-feira, 5 de outubro",
+    });
+    await send(browser, res.plan.apply.all);
+    expect((await browser.get(`/entries/${dinner}`)).status).toBe(404);
+
+    answer = (p) => remove({ targets: [targetOf(p, "Take out the bins")] });
+    const task = (await (
+      await browser.post("/voice", { sentence: "delete the bins task" })
+    ).json()) as { plan: Plan };
+    await send(browser, task.plan.apply.all);
+    expect((await browser.get(`/tasks/${bins}`)).status).toBe(404);
+  });
+
+  it("deletes one Occurrence or from it on, asking which when the sentence doesn't say", async () => {
+    const { browser, swimming } = await withPlans();
+    answer = (p) => remove({ targets: [targetOf(p, "Swimming")], on: "2026-10-12" });
+    const res = (await (
+      await browser.post("/voice", { sentence: "no swimming on the 12th" })
+    ).json()) as { plan: Plan };
+    expect(res.plan).toMatchObject({ scope: "ask", date: "2026-10-12" });
+    await send(browser, res.plan.apply.this);
+    const entry = (await (await browser.get(`/entries/${swimming}`)).json()) as {
+      exceptions: { date: string; skipped: boolean }[];
+    };
+    expect(entry.exceptions).toMatchObject([{ date: "2026-10-12", skipped: true }]);
+
+    answer = (p) =>
+      remove({ targets: [targetOf(p, "Swimming")], on: "2026-10-19", scope: "following" });
+    const following = (await (
+      await browser.post("/voice", { sentence: "no more swimming from the 19th" })
+    ).json()) as { plan: Plan };
+    expect(following.plan.scope).toBe("following");
+    await send(browser, following.plan.apply.following);
+    const ended = (await (await browser.get(`/entries/${swimming}`)).json()) as {
+      repetition: { end: unknown };
+    };
+    expect(ended.repetition.end).toEqual({ type: "until", date: "2026-10-18" });
+  });
+
+  it("deletes a synced Birthday only through its Person", async () => {
+    const { browser } = await withPlans();
+    await browser.post("/persons", { name: "Bia", color: "#3d405b", dateOfBirth: "2016-10-20" });
+    answer = (p) => remove({ targets: [targetOf(p, "Bia")] });
+    expect(
+      await (await browser.post("/voice", { sentence: "delete Bia's birthday" })).json(),
+    ).toEqual({
+      outcome: "locked",
     });
   });
 
