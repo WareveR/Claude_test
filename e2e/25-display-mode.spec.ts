@@ -208,9 +208,11 @@ test("Back from an Entry returns to the week the board showed", async ({ page })
   await turnOnDisplayMode(page);
   const board = page.getByTestId("display-board");
   await board.getByRole("button", { name: "Next" }).click();
+  // By its title: the day may also hold another spec's Entry, such as 05's on 2026-11-04.
   await board
     .getByTestId(`day-column-${lisbonDate(8)}`)
     .getByTestId("entry")
+    .filter({ hasText: "Piano recital" })
     .click();
   await expect(page.getByTestId("entry-details")).toContainText("Piano recital");
   await page.getByRole("button", { name: "Back to the board" }).click();

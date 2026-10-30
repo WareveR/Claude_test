@@ -1,4 +1,4 @@
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { createMiddleware } from "hono/factory";
 import {
@@ -37,26 +37,21 @@ type Person = { id: string; name: string; archived: boolean };
 async function readCalendar(db: Db, now: Date) {
   const [family] = await db.select().from(schema.family).limit(1);
   const { today } = familyNow(family.timeZone, now);
-  const [entries, tasks, taskLinks, checklists, persons, Holidays, weather, toBuy] =
-    await Promise.all([
-      allEntries(db),
-      db.select().from(schema.task),
-      db.select().from(schema.taskPerson),
-      db.select().from(schema.checklist),
-      db
-        .select({
-          id: schema.person.id,
-          name: schema.person.name,
-          archived: schema.person.archived,
-        })
-        .from(schema.person),
-      import("date-holidays").then((m) => m.default),
-      briefingWeather(db, now),
-      db
-        .select({ name: schema.shoppingItem.name })
-        .from(schema.shoppingItem)
-        .where(isNull(schema.shoppingItem.boughtAt)),
-    ]);
+  const [entries, tasks, taskLinks, checklists, persons, Holidays, weather] = await Promise.all([
+    allEntries(db),
+    db.select().from(schema.task),
+    db.select().from(schema.taskPerson),
+    db.select().from(schema.checklist),
+    db
+      .select({
+        id: schema.person.id,
+        name: schema.person.name,
+        archived: schema.person.archived,
+      })
+      .from(schema.person),
+    import("date-holidays").then((m) => m.default),
+    briefingWeather(db, now),
+  ]);
   const input = {
     today,
     entries: entries.map((e) => ({
@@ -92,7 +87,6 @@ async function readCalendar(db: Db, now: Date) {
   const extras: BriefingExtras = {
     weather,
     clockChange: clockChangeWithin(family.timeZone, today, REWRITE_DAYS),
-    shopping: toBuy.map((i) => i.name),
   };
   return { family, today, persons: persons as Person[], candidatesIn, extras };
 }

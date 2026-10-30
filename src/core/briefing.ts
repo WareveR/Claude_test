@@ -46,11 +46,9 @@ export type BriefingExtras = {
   weather: BriefingWeather | null;
   /** A change of the clocks in the next 7 days. */
   clockChange: ClockChange | null;
-  /** What is still to buy on the Shopping List. */
-  shopping: string[];
 };
 
-export const NO_EXTRAS: BriefingExtras = { weather: null, clockChange: null, shopping: [] };
+export const NO_EXTRAS: BriefingExtras = { weather: null, clockChange: null };
 
 /** A piece of Briefing text; one with `link` opens that Entry Occurrence, Task or Checklist. */
 export type Segment = {

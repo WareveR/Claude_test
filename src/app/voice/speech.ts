@@ -284,21 +284,35 @@ const SENTENCE_MS = 20000;
 export const canSpeak = () =>
   typeof speechSynthesis !== "undefined" && typeof SpeechSynthesisUtterance !== "undefined";
 
+/** Voices that sound like a person rather than a machine, by the names browsers give them. */
+const NATURAL = /natural|neural|online|enhanced|premium|wavenet/i;
+
 /**
- * A voice for exactly this language when the device has one, so Portugal's Portuguese isn't read
- * by a Brazilian voice; otherwise the browser picks by `lang`.
+ * The most natural voice for exactly this language when the device has one, so Portugal's
+ * Portuguese isn't read by a Brazilian voice: a "Natural"/"Online" one first, then one the device
+ * fetches from its maker (fuller than the built-in ones); otherwise the browser picks by `lang`.
  */
 function voiceFor(lang: string): SpeechSynthesisVoice | undefined {
   const wanted = lang.toLowerCase();
-  const voices = speechSynthesis.getVoices?.() ?? [];
-  return voices.find((v) => v.lang.replace("_", "-").toLowerCase() === wanted);
+  const voices = (speechSynthesis.getVoices?.() ?? []).filter(
+    (v) => v.lang.replace("_", "-").toLowerCase() === wanted,
+  );
+  const rank = (v: SpeechSynthesisVoice) => (NATURAL.test(v.name) ? 0 : v.localService ? 2 : 1);
+  return voices.sort((a, b) => rank(a) - rank(b))[0];
 }
+
+/** How a voice reads: a touch higher and quicker sounds cheerful; the browser's default is 1. */
+export type Delivery = { pitch?: number; rate?: number };
 
 /**
  * Speaks each sentence in turn with a short pause between them; resolves when done, stopped, or
  * at once if speech is unavailable, or when one sentence stalls.
  */
-export function speak(parts: string | string[], lang: string): Promise<void> {
+export function speak(
+  parts: string | string[],
+  lang: string,
+  delivery: Delivery = {},
+): Promise<void> {
   const sentences = readbackSentences(parts);
   return new Promise((resolve) => {
     try {
@@ -318,6 +332,8 @@ export function speak(parts: string | string[], lang: string): Promise<void> {
         const u = new SpeechSynthesisUtterance(sentences[i]);
         u.lang = lang;
         if (voice) u.voice = voice;
+        if (delivery.pitch) u.pitch = delivery.pitch;
+        if (delivery.rate) u.rate = delivery.rate;
         u.onend = () => setTimeout(() => next(i + 1), i + 1 < sentences.length ? PAUSE_MS : 0);
         u.onerror = finish;
         speechSynthesis.speak(u);

@@ -35,6 +35,7 @@ function runScheduler(at: Date) {
 
 const today = () =>
   new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Lisbon" }).format(new Date());
+const tomorrow = () => new Date(Date.parse(today()) + 86_400_000).toISOString().slice(0, 10);
 
 async function familyWithPlans() {
   const browser = await setUpFamily();
@@ -116,7 +117,7 @@ describe("Briefing", () => {
     expect(prompt.max_tokens).toBeGreaterThan(256);
   });
 
-  it("is told like a radio show, with the weather, when rain is likely and the shopping list", async () => {
+  it("is a short radio show: the weather in a few facts, no shopping list", async () => {
     const { browser } = await familyWithPlans();
     const db = getDb(env.DB);
     const now = new Date().toISOString();
@@ -135,7 +136,10 @@ describe("Briefing", () => {
       locationId: "lisboa",
       forecast: {
         utcOffset: 0,
-        daily: [{ date: today(), code: 61, max: 17.4, min: 11.6, rain: 80, wind: 35 }],
+        daily: [
+          { date: today(), code: 0, max: 24.4, min: 11.6, rain: 80, wind: 35 },
+          { date: tomorrow(), code: 3, max: 19.2, min: 9, rain: 10, wind: 20 },
+        ],
         hourly: [16, 17, 18].map((h) => ({
           time: `${today()}T${h}:00`,
           code: 61,
@@ -161,10 +165,12 @@ describe("Briefing", () => {
     expect(system.content).toContain("read aloud");
     expect(system.content).toContain("Do not greet");
     expect(user.content).toContain(
-      "Weather in Lisboa: today: rain, 12 to 17 degrees, 80% chance of rain, wind up to 35 km/h; rain likely today from 17:00 to 18:00 (up to 80%).",
+      "Weather in Lisboa: today sunny, about 24 degrees; rain likely from 17:00 to 18:00; tomorrow colder, about 19 degrees.",
     );
-    expect(user.content).toContain('Shopping list: 1 still to buy: "Milk".');
-    expect(system.content).toContain("guarda-chuva");
+    expect(user.content).not.toContain("Milk");
+    expect(user.content).not.toContain("km/h");
+    expect(system.content).toContain("about 120 words");
+    expect(system.content).toContain("agasalho");
   });
 
   it("falls back to the countdown list when the model fails or answers nonsense", async () => {
