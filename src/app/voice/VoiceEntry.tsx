@@ -35,9 +35,9 @@ type TaskWithItems = { values: object; templateId: string | null; items: string[
 type Proposal = { kind: Kind; values: object; summary: string; form?: TaskWithItems };
 /** A new Entry or Task, and any more the same sentence named ("me at 10, my wife at 11"). */
 type Create = Proposal & { outcome: "create"; more?: Proposal[] };
-type Req = { method: "PUT" | "POST" | "DELETE"; path: string; body?: unknown };
+type Req = { method: "PUT" | "POST" | "PATCH" | "DELETE"; path: string; body?: unknown };
 type Plan = {
-  kind: "entry" | "task";
+  kind: "entry" | "task" | "shopping";
   id: string;
   date: string | null;
   label: string;
@@ -239,6 +239,7 @@ export function VoiceEntry() {
       queryClient.invalidateQueries({ queryKey: ["checklist"] }),
       queryClient.invalidateQueries({ queryKey: ["persons"] }),
       queryClient.invalidateQueries({ queryKey: ["checklist-templates"] }),
+      refreshShopping(queryClient),
     ]);
 
   const openForm = (kind: "entry" | "task", values: object) => {

@@ -197,3 +197,19 @@ export function shoppingToAdd(
   }
   return { add, already };
 }
+
+/** The open items each said name is, matched whatever the case or accents; `missing` matched none. */
+export function shoppingMatches<T extends { name: string; boughtAt: string | null }>(
+  names: string[],
+  items: T[],
+): { found: T[]; missing: string[] } {
+  const found: T[] = [];
+  const missing: string[] = [];
+  for (const name of names) {
+    const key = foldName(name);
+    const item = items.find((i) => !i.boughtAt && foldName(i.name) === key);
+    if (!item) missing.push(name);
+    else if (!found.includes(item)) found.push(item);
+  }
+  return { found, missing };
+}
