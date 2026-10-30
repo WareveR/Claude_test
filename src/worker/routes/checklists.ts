@@ -18,6 +18,7 @@ import { inParts, schema } from "../db";
 import { requireDevice } from "../require-device";
 import { settleChecklist } from "../task-tree";
 import type { AppEnv } from "../types";
+import { moveAttachments } from "./attachments";
 import { personMentionChecks } from "./persons";
 
 type ChecklistRow = typeof schema.checklist.$inferSelect;
@@ -335,6 +336,7 @@ checklistRoutes.post("/tasks/:id/with-items", async (c) => {
       changedAt: now,
     }),
     ...personLinks(db, id, personIds),
+    moveAttachments(db, { column: "taskId", id: taskId }, { column: "checklistId", id }),
     db.delete(schema.task).where(eq(schema.task.id, taskId)),
   ]);
   return c.json(await presentOne(db, id), 201);

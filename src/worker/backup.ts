@@ -5,6 +5,7 @@ import { APP_VERSION } from "../core/version";
 import type { Db } from "./db";
 import { schema } from "./db";
 import { relativePhotoKeys } from "./routes/relatives";
+import { sweepAttachments } from "./routes/attachments";
 
 /** Both daily jobs wait until the night is quiet, before the Briefings at dawn. */
 const NIGHT_HOUR = 3;
@@ -102,6 +103,7 @@ export async function backupJob(db: Db, env: Env, now: Date) {
 /**
  * Scheduler: once a night, marks images still referenced as used now and deletes those unused
  * for 30 days. Images are never overwritten, so a Backup's image keys stay valid that long.
+ * Attachment files left without their row go too.
  */
 export async function imageCleanupJob(db: Db, env: Env, now: Date) {
   if (!(await claimNight(db, "image-cleanup", now))) return;
@@ -140,4 +142,5 @@ export async function imageCleanupJob(db: Db, env: Env, now: Date) {
       .delete(schema.image)
       .where(and(eq(schema.image.key, key), lt(schema.image.lastUsedAt, cutoff)));
   }
+  await sweepAttachments(db, env, now);
 }

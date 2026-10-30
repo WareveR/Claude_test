@@ -13,6 +13,7 @@ import { PersonAvatar } from "../persons/PersonAvatar";
 import { useNow } from "../shell/useNow";
 import { EntryShopping } from "../shopping/EntryShopping";
 import { EntryPreparation } from "./EntryPreparation";
+import { Attachments } from "../attachments/Attachments";
 import { occurrenceValues, useEntry } from "./model";
 
 function timeText(time: EntryTime, t: (key: string) => string): string {
@@ -151,6 +152,9 @@ export function EntrySummary({
       )}
       {hidden && shown.hidden && !discreet && personList}
       {!discreet && !shown.hidden && <EntryPreparation entryId={id} readOnly />}
+      {!discreet && !shown.hidden && (
+        <Attachments owner={`entry=${id}`} readOnly className="border-t border-line pt-3" />
+      )}
       {!discreet && !shown.hidden && (
         <EntryShopping title={shown.title} type={type?.builtinKey ?? null} />
       )}

@@ -538,3 +538,23 @@ export const relativePartner = sqliteTable(
   },
   (t) => [primaryKey({ columns: [t.aId, t.bId] })],
 );
+
+/**
+ * A photo or file attached to one Entry, loose Task or Task with items (a Checklist); exactly
+ * one of the three is set. The bytes live in the images bucket under `attachments/`; an object
+ * whose row is gone is swept away at night.
+ */
+export const attachment = sqliteTable("attachment", {
+  id: text("id").primaryKey(),
+  entryId: text("entry_id").references(() => entry.id, { onDelete: "cascade" }),
+  taskId: text("task_id").references(() => task.id, { onDelete: "cascade" }),
+  checklistId: text("checklist_id").references(() => checklist.id, { onDelete: "cascade" }),
+  /** The bucket key, `attachments/<random>`. */
+  key: text("key").notNull(),
+  /** The file name as picked, shown and offered when saving. */
+  name: text("name").notNull(),
+  contentType: text("content_type").notNull(),
+  size: integer("size").notNull(),
+  createdBy: text("created_by").references(() => account.id, { onDelete: "set null" }),
+  createdAt: text("created_at").notNull(),
+});

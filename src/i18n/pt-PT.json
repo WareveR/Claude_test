@@ -1020,6 +1020,19 @@
     "done": "Feito",
     "toDo": "Por fazer"
   },
+  "attachments": {
+    "title": "Anexos",
+    "none": "Sem fotografias nem ficheiros.",
+    "camera": "Tirar fotografia",
+    "photos": "Fotografias",
+    "files": "Ficheiros",
+    "uploading": "A enviar…",
+    "onSave": "Junta-se ao guardar",
+    "remove": "Retirar {{name}}",
+    "confirmRemove": "Retirar o anexo «{{name}}»?",
+    "tooBig": "Um ficheiro passa dos 25 MB e não foi anexado.",
+    "saveFailed": "Ficou guardado, mas um anexo não foi enviado: abra-o e junte-o de novo."
+  },
   "search": {
     "title": "Pesquisa",
     "box": "Pesquisar",
