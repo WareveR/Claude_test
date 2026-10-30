@@ -47,6 +47,25 @@ type Created = {
 };
 
 describe("Voice Entry: create", () => {
+  it("makes a new Entry Private when the sentence says so", async () => {
+    const { browser } = await family();
+    answer = () => ({
+      kind: "entry",
+      title: "Médico",
+      type: null,
+      persons: [],
+      date: "2026-10-06",
+      time: "15:00",
+      allDay: null,
+      private: true,
+    });
+    const created = (await (
+      await browser.post("/voice", { sentence: "privado: médico terça às 3" })
+    ).json()) as Created;
+    expect(created.values.private).toBe(true);
+    expect(created.summary).toContain("privada");
+  });
+
   it("takes the Reminders the sentence asks for", async () => {
     const { browser } = await family();
     answer = () => ({
@@ -617,6 +636,27 @@ describe("Voice Entry: change", () => {
     expect((await reminders()).sort((a, b) => a - b)).toEqual([60, 1440]);
     await send(browser, res.plan.undo!);
     expect(await reminders()).toEqual([]);
+  });
+
+  it("makes an Entry or a Task Private, or not", async () => {
+    const { browser, dinner, bins } = await withPlans();
+    answer = (p) => change({ targets: [targetOf(p, "Dinner")], private: true });
+    const res = (await (
+      await browser.post("/voice", { sentence: "o jantar é privado" })
+    ).json()) as { plan: Plan };
+    expect(res.plan.summary).toBe("Alterar Dinner: privado");
+    await send(browser, res.plan.apply.all);
+    expect(
+      ((await (await browser.get(`/entries/${dinner}`)).json()) as { private: boolean }).private,
+    ).toBe(true);
+    answer = (p) => change({ targets: [targetOf(p, "Take out the bins")], private: true });
+    const task = (await (
+      await browser.post("/voice", { sentence: "a tarefa do lixo é privada" })
+    ).json()) as { plan: Plan };
+    await send(browser, task.plan.apply.all);
+    expect(
+      ((await (await browser.get(`/tasks/${bins}`)).json()) as { private: boolean }).private,
+    ).toBe(true);
   });
 
   it("keeps a synced Birthday's date and Person", async () => {

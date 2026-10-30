@@ -618,6 +618,7 @@ voiceRoutes.post("/voice", async (c) => {
           allDay: values.time.allDay,
           repetition: values.repetition,
           reminders: create.reminders,
+          private: values.private,
         },
         names(values.personIds),
         language,
@@ -676,6 +677,7 @@ function planFor(
       dueDate,
       dueTime: dueDate ? (change.time ?? old.dueTime) : null,
       personIds: personIds ?? old.personIds,
+      private: change.private ?? old.private,
       repetition: dueDate ? (changedRepetition(change.repeat) ?? old.repetition) : null,
     };
     const edits = JSON.stringify(values) !== JSON.stringify(old);
@@ -703,6 +705,7 @@ function planFor(
     location: change.location ?? values.location,
     importance: change.importance ?? values.importance,
     reminders: change.reminders ?? values.reminders,
+    private: change.private ?? values.private,
   });
 
   if (!entry.repetition || birthdayPersonId) {

@@ -26,6 +26,7 @@ export type VoiceChange = {
   repeat: VoiceCreate["repeat"];
   /** An Entry's new Reminders, replacing its own, in minutes before the start. */
   reminders: number[] | null;
+  private: boolean | null;
   done: boolean | null;
 };
 
@@ -78,6 +79,7 @@ export function parseVoiceChange(
       importance: fields.importance,
       repeat: fields.repeat,
       reminders: fields.reminders?.length ? fields.reminders : null,
+      private: fields.private ?? null,
       done: value.done === true ? true : null,
     },
   };
@@ -232,6 +234,8 @@ const TEXTS: Record<
   {
     change: string;
     remove: string;
+    private: string;
+    notPrivate: string;
     done: string;
     for: string;
     repeats: string;
@@ -241,6 +245,8 @@ const TEXTS: Record<
   "pt-PT": {
     change: "Alterar",
     remove: "Apagar",
+    private: "privado",
+    notPrivate: "não privado",
     done: "feita",
     for: "para",
     repeats: "repete",
@@ -249,6 +255,8 @@ const TEXTS: Record<
   en: {
     change: "Change",
     remove: "Delete",
+    private: "private",
+    notPrivate: "not private",
     done: "done",
     for: "for",
     repeats: "repeats",
@@ -280,6 +288,7 @@ export function changeSummary(
     change.location ?? "",
     change.importance ? `${texts.importance}: ${change.importance}` : "",
     change.reminders ? remindersText(change.reminders, language) : "",
+    change.private === null ? "" : change.private ? texts.private : texts.notPrivate,
     change.done ? texts.done : "",
   ];
   return `${texts.change} ${title}: ${parts.filter(Boolean).join(", ")}`;
