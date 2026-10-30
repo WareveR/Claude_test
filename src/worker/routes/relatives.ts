@@ -118,9 +118,12 @@ export const relativeRoutes = new Hono<AppEnv>().use(requireDevice);
 
 relativeRoutes.get("/relatives", async (c) => c.json(await allRelatives(c.get("db"))));
 
+/** An id the browser may give a new Relative, so that Voice Entry's Undo can find it. */
+const ID = /^[A-Za-z0-9_-]{8,64}$/;
+
 /**
  * Adds a Relative with their parents and partners, and as parent of `childIds` (adding a
- * mother to someone already in the tree).
+ * mother to someone already in the tree). `id`, if given, names the new Relative.
  */
 relativeRoutes.post("/relatives", async (c) => {
   const db = c.get("db");
@@ -135,7 +138,10 @@ relativeRoutes.post("/relatives", async (c) => {
   for (const [field, value] of Object.entries(links)) {
     if (!value) return c.json({ error: "invalid", field }, 400);
   }
-  const id = randomId();
+  const id = body.id ?? randomId();
+  if (typeof id !== "string" || !ID.test(id)) return c.json({ error: "invalid", field: "id" }, 400);
+  const tree = await allRelatives(db);
+  if (tree.some((r) => r.id === id)) return c.json({ error: "conflict" }, 409);
   const now = c.get("now").toISOString();
   const draft: Relative = {
     id,
@@ -151,7 +157,7 @@ relativeRoutes.post("/relatives", async (c) => {
     parentIds: [],
     partnerIds: [],
   };
-  const bad = checkLinks([...(await allRelatives(db)), draft], id, links);
+  const bad = checkLinks([...tree, draft], id, links);
   if (bad) return c.json({ error: "invalid", field: bad }, 400);
   await db.batch([
     db.insert(schema.relative).values({ ...draft, createdAt: now, changedAt: now }),

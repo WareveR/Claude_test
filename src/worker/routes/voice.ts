@@ -46,6 +46,8 @@ import { schema, type Db } from "../db";
 import { requireDevice } from "../require-device";
 import type { AppEnv } from "../types";
 import { allEntries } from "./entries";
+import { allRelatives } from "./relatives";
+import type { Relative } from "../../core/family-tree";
 import type { Account } from "../auth/account";
 import { seesInFull } from "../private";
 
@@ -129,7 +131,7 @@ async function allTasks(db: Db) {
 
 /** What a voice change can find: never a Private Entry or Task hidden from this Account. */
 async function loadAll(db: Db, viewer: Account) {
-  const [[family], persons, nicknames, types, templates, entries, tasks, checklists] =
+  const [[family], persons, nicknames, types, templates, entries, tasks, checklists, relatives] =
     await Promise.all([
       db.select().from(schema.family).limit(1),
       db.select().from(schema.person),
@@ -142,8 +144,10 @@ async function loadAll(db: Db, viewer: Account) {
       allEntries(db),
       allTasks(db),
       db.select().from(schema.checklist).orderBy(asc(schema.checklist.name)),
+      allRelatives(db),
     ]);
   return {
+    relatives,
     checklists: checklists.slice(0, MAX_CHECKLISTS).map((c) => ({
       ...c,
       items: tasks.filter((t) => t.checklistId === c.id),
@@ -317,7 +321,7 @@ voiceRoutes.post("/voice", async (c) => {
   const shopping =
     corrections.length === 0 && !NAMES_SHOP.test(sentence) && readShoppingPhrase(sentence);
   if (shopping) return c.json(await shoppingAnswer(db, shopping));
-  const { family, persons, nicknames, types, templates, entries, tasks, checklists } =
+  const { family, persons, nicknames, types, templates, entries, tasks, checklists, relatives } =
     await loadAll(db, c.get("account"));
   const deviceLanguage = c.get("device").language;
   const language = isLanguage(deviceLanguage)
@@ -347,6 +351,10 @@ voiceRoutes.post("/voice", async (c) => {
     lists: templates.map((t) => templateText(t, language).name),
     targets: targets.map((t) => describeTarget(t, names, language)),
     speaker: speaker >= 0 ? speaker : null,
+    relatives: relatives.map(
+      (r) =>
+        `${r.name}${r.nickname ? ` (${r.nickname})` : ""}${r.birthDate ? `, born ${r.birthDate}` : ""}`,
+    ),
     checklists: checklists.map(
       (l) =>
         `${l.name}: ${l.items.map((i) => (i.doneAt ? `${i.title} (done)` : i.title)).join(", ") || "(no items yet)"}`,
@@ -426,6 +434,11 @@ voiceRoutes.post("/voice", async (c) => {
       ],
     };
     return c.json({ outcome: "change", plan });
+  }
+
+  if (answer.action === "relative") {
+    const plan = relativePlan(answer, relatives, language);
+    return plan ? c.json({ outcome: "change", plan }) : failed;
   }
 
   if (answer.action === "open") {
@@ -819,5 +832,131 @@ function removePlan(
       this: [{ method: "DELETE", path: `/entries/${entry.id}/occurrences/${date}` }],
       following: [{ method: "DELETE", path: `/entries/${entry.id}/following/${date}` }],
     },
+  };
+}
+
+const TREE_TEXTS: Record<
+  Language,
+  {
+    add: string;
+    change: string;
+    born: string;
+    died: string;
+    relation: Record<
+      "parent" | "child" | "partner" | "sibling",
+      (name: string, sex: "f" | "m" | "") => string
+    >;
+  }
+> = {
+  "pt-PT": {
+    add: "Nova pessoa na árvore",
+    change: "Alterar na árvore",
+    born: "nasceu a",
+    died: "faleceu a",
+    relation: {
+      parent: (n, s) => `${s === "f" ? "mãe" : s === "m" ? "pai" : "pai ou mãe"} de ${n}`,
+      child: (n, s) => `${s === "f" ? "filha" : s === "m" ? "filho" : "filho ou filha"} de ${n}`,
+      partner: (n, s) =>
+        `${s === "f" ? "companheira" : s === "m" ? "companheiro" : "companheiro ou companheira"} de ${n}`,
+      sibling: (n, s) => `${s === "f" ? "irmã" : s === "m" ? "irmão" : "irmão ou irmã"} de ${n}`,
+    },
+  },
+  en: {
+    add: "New person in the tree",
+    change: "Change in the tree",
+    born: "born",
+    died: "died",
+    relation: {
+      parent: (n, s) => `${s === "f" ? "mother" : s === "m" ? "father" : "parent"} of ${n}`,
+      child: (n, s) => `${s === "f" ? "daughter" : s === "m" ? "son" : "child"} of ${n}`,
+      partner: (n) => `partner of ${n}`,
+      sibling: (n, s) => `${s === "f" ? "sister" : s === "m" ? "brother" : "sibling"} of ${n}`,
+    },
+  },
+};
+
+/**
+ * Adding someone to the Family Tree, linked to a Relative already in it, or changing one's
+ * dates or nickname; with Undo either way.
+ */
+function relativePlan(
+  answer: Record<string, unknown>,
+  tree: Relative[],
+  language: Language,
+): (Omit<Plan, "kind"> & { kind: "relative" }) | null {
+  const texts = TREE_TEXTS[language];
+  const at = (v: unknown) => (Number.isInteger(v) ? tree[v as number] : undefined);
+  const day = (v: unknown) => (typeof v === "string" && isPlainDate(v) ? v : null);
+  const long = (d: string) =>
+    formatPlainDate(d, LOCALES[language], { day: "numeric", month: "long", year: "numeric" });
+  const nickname = Array.isArray(answer.nicknames)
+    ? (answer.nicknames.find((n): n is string => typeof n === "string" && !!n.trim()) ?? "")
+        .trim()
+        .slice(0, 80)
+    : "";
+  const birthDate = day(answer.date);
+  const deathDate = day(answer.endDate);
+  const details = [
+    nickname ? `“${nickname}”` : "",
+    birthDate ? `${texts.born} ${long(birthDate)}` : "",
+    deathDate ? `${texts.died} ${long(deathDate)}` : "",
+  ];
+  const changed = at(answer.relative);
+  if (changed) {
+    const patch = {
+      ...(birthDate ? { birthDate } : {}),
+      ...(deathDate ? { deathDate } : {}),
+      ...(nickname ? { nickname } : {}),
+    };
+    if (Object.keys(patch).length === 0) return null;
+    const old = Object.fromEntries(
+      Object.keys(patch).map((k) => [k, changed[k as keyof typeof patch]]),
+    );
+    return {
+      kind: "relative",
+      id: changed.id,
+      date: null,
+      label: changed.name,
+      summary: `${texts.change}: ${[changed.name, ...details].filter(Boolean).join(", ")}`,
+      scope: "all",
+      apply: { all: [{ method: "PATCH", path: `/relatives/${changed.id}`, body: patch }] },
+      undo: [{ method: "PATCH", path: `/relatives/${changed.id}`, body: old }],
+    };
+  }
+  const name = typeof answer.title === "string" ? answer.title.trim().slice(0, 80) : "";
+  if (!name) return null;
+  const of = at(answer.of);
+  const relation =
+    of && ["parent", "child", "partner", "sibling"].includes(answer.relation as string)
+      ? (answer.relation as "parent" | "child" | "partner" | "sibling")
+      : null;
+  const sex = answer.sex === "f" || answer.sex === "m" ? answer.sex : "";
+  const id = randomId();
+  const body = {
+    id,
+    name,
+    nickname,
+    sex,
+    birthDate,
+    deathDate,
+    parentIds: relation === "child" ? [of!.id] : relation === "sibling" ? of!.parentIds : [],
+    childIds: relation === "parent" ? [of!.id] : [],
+    partnerIds: relation === "partner" ? [of!.id] : [],
+  };
+  return {
+    kind: "relative",
+    id,
+    date: null,
+    label: name,
+    summary: `${texts.add}: ${[
+      name,
+      relation ? texts.relation[relation](of!.name, sex) : "",
+      ...details,
+    ]
+      .filter(Boolean)
+      .join(", ")}`,
+    scope: "all",
+    apply: { all: [{ method: "POST", path: "/relatives", body }] },
+    undo: [{ method: "DELETE", path: `/relatives/${id}` }],
   };
 }
