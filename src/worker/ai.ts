@@ -354,6 +354,7 @@ const VOICE_SCHEMA = {
         "items",
         "relative",
         "weather",
+        "overdue",
       ],
     },
     place: {
@@ -452,7 +453,7 @@ export function voicePrompt(context: VoiceContext) {
     {
       role: "system",
       content: [
-        'You read one sentence from a family member about the family calendar. "action" is "create" for a new entry or task, "change" to change an existing one, "delete" to remove or cancel one, "shopping" to put things on the family\'s shopping list, "person" to add a new person to the family, "list" to make a new predefined list, "question" to ask what is on the calendar, "open" to go to a part of the app, "items" to add or tick items in an existing task with items, "relative" for the family tree, "weather" to ask about the weather.',
+        'You read one sentence from a family member about the family calendar. "action" is "create" for a new entry or task, "change" to change an existing one, "delete" to remove or cancel one, "shopping" to put things on the family\'s shopping list, "person" to add a new person to the family, "list" to make a new predefined list, "question" to ask what is on the calendar, "open" to go to a part of the app, "items" to add or tick items in an existing task with items, "relative" for the family tree, "weather" to ask about the weather, "overdue" to move every overdue task to another day.',
         `The sentence is in ${LANGUAGE_NAMES[context.language]}; keep the title in that language, short, without the date, time or names.`,
         'An "entry" happens at a time (appointment, birthday, trip, class); a "task" is something to do, possibly by a due date.',
         "Give dates as YYYY-MM-DD and times as HH:mm (24-hour), worked out from today's date; null when the sentence doesn't say.",
@@ -472,6 +473,7 @@ export function voicePrompt(context: VoiceContext) {
         '"relative" is for the family tree below: adding a relative ("Rosa is Ana\'s grandmother", "add Ana\'s mother Rosa, born in 1950") or changing one ("grandpa João died on 3 May 2020"). "relative" is the number of the one changed, null when adding; "title" the new one\'s name; "nicknames" what they are called; "date" the date of birth and "endDate" the date of death, if said; "relation" is what the new one is of "of" (another number in the tree): "parent", "child", "partner" or "sibling"; "sex" is "f" or "m" when the words say (mother, sister, avó), else null; a grandmother is the parent of a parent, so pick that parent when they are in the tree.',
         '"notes" is a note the sentence asks to write on the entry or task ("note: bring the ID card", "add to the dentist: ask about the brace"), in the sentence\'s language; else null. For "change", the note is added to what is there.',
         '"weather" is for asking about the weather ("will it rain tomorrow?", "how hot is it on Saturday?"): "date" is the day asked about, null for today.',
+        '"overdue" is for moving all the overdue tasks at once ("move the overdue tasks to tomorrow", "pass what is late to today"): "date" is the new day, null for today. One named task is a "change".',
         'For "delete": "targets", "several", "on" and "scope" work as for "change", and the other fields stay null; cancelling something that happens ("cancel Friday\'s dinner") is "delete".',
         "Answer only with JSON matching the schema.",
       ].join(" "),

@@ -5,7 +5,7 @@ import { MAX_TEMPLATE_ITEMS, MAX_TEMPLATE_TEXT, templateText } from "../../core/
 import { freeColor } from "../../core/person-colors";
 import { isLanguage, type Language } from "../../core/languages";
 import { formatPlainDate, isPlainDate } from "../../core/plain-date";
-import { familyNow } from "../../core/task";
+import { familyNow, isOverdue } from "../../core/task";
 import {
   entryValues,
   MAX_SENTENCE,
@@ -434,6 +434,55 @@ voiceRoutes.post("/voice", async (c) => {
         ...tick.map((i) => ({ method: "DELETE" as const, path: `/tasks/${i.id}/done` })),
         ...ids.map((id) => ({ method: "DELETE" as const, path: `/tasks/${id}` })),
       ],
+    };
+    return c.json({ outcome: "change", plan });
+  }
+
+  if (answer.action === "overdue") {
+    const now = familyNow(family.timeZone, c.get("now"));
+    const late = tasks.filter((t) => !t.checklistId && isOverdue(t, now));
+    if (late.length === 0) return c.json({ outcome: "noneOverdue" });
+    const date =
+      typeof answer.date === "string" && isPlainDate(answer.date) && answer.date >= today
+        ? answer.date
+        : today;
+    const body = (t: (typeof late)[number], dueDate: string) => ({
+      title: t.title,
+      notes: t.notes,
+      dueDate,
+      dueTime: t.dueTime,
+      personIds: t.personIds,
+      private: t.private,
+      importance: t.importance,
+      repetition: t.repetition,
+      checklistId: t.checklistId,
+      parentId: t.parentId,
+      entryId: t.entryId,
+    });
+    const when = formatPlainDate(date, LOCALES[language], {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+    });
+    const plan: Omit<Plan, "kind"> & { kind: "task" } = {
+      kind: "task",
+      id: late.map((t) => t.id).join(","),
+      date: null,
+      label: late.map((t) => t.title).join(", "),
+      summary: `${language === "en" ? "Move to" : "Passar para"} ${when}: ${late.map((t) => t.title).join(", ")}`,
+      scope: "all",
+      apply: {
+        all: late.map((t) => ({
+          method: "PUT" as const,
+          path: `/tasks/${t.id}`,
+          body: body(t, date),
+        })),
+      },
+      undo: late.map((t) => ({
+        method: "PUT" as const,
+        path: `/tasks/${t.id}`,
+        body: body(t, t.dueDate!),
+      })),
     };
     return c.json({ outcome: "change", plan });
   }
