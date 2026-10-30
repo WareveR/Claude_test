@@ -10,6 +10,7 @@ import { paths } from "../paths";
 import { addShoppingItems, refreshShopping, removeShoppingItems } from "../shopping/model";
 import { Field, TextInput } from "../screens/form";
 import { readAnswer } from "../../core/voice-answer";
+import { briefingSentences, type Segment } from "../../core/briefing";
 import type { VoiceOpen } from "../../core/voice-open";
 import { todayIn } from "../../core/plain-date";
 import { useSignedIn } from "../family";
@@ -54,7 +55,14 @@ type Shopping = {
   items: { name: string; store: string }[];
   already: string[];
 };
-type Notice = "notFound" | "oneAtATime" | "locked" | "personExists" | "listExists" | "noneOverdue";
+type Notice =
+  | "notFound"
+  | "oneAtATime"
+  | "locked"
+  | "personExists"
+  | "listExists"
+  | "noneOverdue"
+  | "noBriefing";
 type Answer =
   | Create
   | { outcome: "failed"; sentence: string }
@@ -63,6 +71,7 @@ type Answer =
   | Shopping
   | { outcome: "answer"; text: string }
   | ({ outcome: "open" } & VoiceOpen)
+  | { outcome: "briefing"; person: string | null }
   | { outcome: Notice };
 type Scope = "this" | "following" | "all";
 /** What the toast's Undo does; null when there is nothing to undo. */
@@ -501,6 +510,7 @@ export function VoiceEntry() {
     if (answer.outcome === "failed") return openForm("entry", { title: answer.sentence });
     if (answer.outcome === "change") return void startPlan(answer.plan);
     if (answer.outcome === "choose") return void startChoice(answer.options);
+    if (answer.outcome === "briefing") return void readBriefing(answer.person);
     if (answer.outcome === "open") {
       close();
       return void navigate(pathOf(answer, todayIn(family.timeZone)));
@@ -527,6 +537,30 @@ export function VoiceEntry() {
     setPending(answer);
     setPhase("readback");
     if (talk()) void readBack(answer);
+  }
+
+  /** "Read me the summary": the Briefing as written, shown and read aloud. */
+  async function readBriefing(person: string | null) {
+    const mine = run.current;
+    setText("");
+    setPhase("idle");
+    let briefing: { segments: Segment[]; fallback: boolean } | null;
+    try {
+      const query = person ? `?person=${encodeURIComponent(person)}` : "";
+      briefing = await api(`/briefing${query}`);
+    } catch {
+      if (run.current === mine) setError(true);
+      return;
+    }
+    if (run.current !== mine) return;
+    if (!briefing) {
+      setNotice("noBriefing");
+      if (voiced.current) void say(++run.current, t("voice.noBriefing"));
+      return;
+    }
+    const sentences = briefingSentences(briefing.segments, briefing.fallback);
+    setReply(sentences.join(" "));
+    void say(++run.current, sentences);
   }
 
   async function dictate() {

@@ -938,6 +938,19 @@ describe("Voice Entry: weather", () => {
   });
 });
 
+describe("Voice Entry: Briefing", () => {
+  it("names whose Briefing to read", async () => {
+    const { browser, ana } = await family();
+    answer = (p) => ({ ...change({ action: "briefing", persons: [numberOf(p, "Ana")] }) });
+    expect(await (await browser.post("/voice", { sentence: "lê o resumo da Ana" })).json()).toEqual(
+      {
+        outcome: "briefing",
+        person: ana,
+      },
+    );
+  });
+});
+
 describe("Voice Entry: open", () => {
   it("names the place, the day and what to search for", async () => {
     const { browser } = await family();

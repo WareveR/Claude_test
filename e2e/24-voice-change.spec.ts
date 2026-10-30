@@ -151,10 +151,26 @@ test("open goes to the place said, on the day said", async ({ page }) => {
   await expect(page).toHaveURL(/\/search\?q=dentist$/);
 });
 
+test("read the summary shows the Briefing, or says there is none", async ({ page }) => {
+  await signIn(page);
+  await page.route("**/api/briefing", (route) =>
+    route.fulfill({
+      json: {
+        segments: [{ text: "Sunny today." }, { text: " Dinner at 8." }],
+        fallback: false,
+        writtenAt: "2026-10-30T07:00:00Z",
+      },
+    }),
+  );
+  const dialog = await say(page, { outcome: "briefing", person: null });
+  await expect(dialog.getByTestId("voice-answer")).toContainText("Dinner at 8.");
+});
+
 for (const [outcome, message] of [
   ["notFound", "Not found"],
   ["oneAtATime", "One thing at a time, please"],
   ["locked", "A Birthday's date and Person change on the Person"],
+  ["noneOverdue", "No overdue tasks"],
 ] as const) {
   test(`${outcome} shows its message`, async ({ page }) => {
     await signIn(page);
