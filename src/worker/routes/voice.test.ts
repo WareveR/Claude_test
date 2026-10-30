@@ -666,6 +666,47 @@ describe("Voice Entry: Persons and predefined lists", () => {
   });
 });
 
+describe("Voice Entry: questions", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-06T10:00:00Z"));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("answers what is on a day, and when one thing is, without saving anything", async () => {
+    const { browser, ana, types } = await family();
+    await browser.post("/entries", {
+      title: "Dentista",
+      entryTypeId: types[0].id,
+      time: {
+        allDay: false,
+        startDate: "2026-10-09",
+        startTime: "10:00",
+        endDate: "2026-10-09",
+        endTime: "11:00",
+      },
+      personIds: [ana],
+    });
+    answer = () => ({ ...change({ date: "2026-10-09" }), action: "question" });
+    expect(await (await browser.post("/voice", { sentence: "o que temos sexta?" })).json()).toEqual(
+      { outcome: "answer", text: "sexta-feira, 9 de outubro: 10:00 Dentista (Ana)." },
+    );
+    answer = (p) => ({ ...change({ targets: [targetOf(p, "Dentista")] }), action: "question" });
+    expect(
+      await (await browser.post("/voice", { sentence: "quando é o dentista da Ana?" })).json(),
+    ).toEqual({ outcome: "answer", text: "Dentista (Ana): sexta-feira, 9 de outubro, 10:00." });
+  });
+
+  it("names no speaker when the Account has no Person", async () => {
+    const { browser } = await family();
+    answer = () => ({ ...change({}), action: "question" });
+    await browser.post("/voice", { sentence: "o que tenho hoje?" });
+    expect(prompts[0].messages[1].content).not.toContain("The person speaking");
+  });
+});
+
 describe("Voice Entry: Shopping List", () => {
   it("reads things to buy without the model, leaving out those already open on the list", async () => {
     const { browser } = await family();

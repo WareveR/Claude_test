@@ -130,6 +130,18 @@ test("a delete plan asks Delete, deletes and offers no Undo", async ({ page }) =
   await expect.poll(async () => (await page.request.get(`/api/tasks/${id}`)).status()).toBe(404);
 });
 
+test("a question's answer shows in the sheet, ready for the next one", async ({ page }) => {
+  await signIn(page);
+  const dialog = await say(page, {
+    outcome: "answer",
+    text: "Friday 9 October: 10:00 Dentist (Ana).",
+  });
+  await expect(dialog.getByTestId("voice-answer")).toHaveText(
+    "Friday 9 October: 10:00 Dentist (Ana).",
+  );
+  await expect(dialog.getByLabel("Say or type one sentence")).toHaveValue("");
+});
+
 for (const [outcome, message] of [
   ["notFound", "Not found"],
   ["oneAtATime", "One thing at a time, please"],

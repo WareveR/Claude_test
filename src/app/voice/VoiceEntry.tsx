@@ -58,6 +58,7 @@ type Answer =
   | { outcome: "change"; plan: Plan }
   | { outcome: "choose"; options: Plan[] }
   | Shopping
+  | { outcome: "answer"; text: string }
   | { outcome: Notice };
 type Scope = "this" | "following" | "all";
 /** What the toast's Undo does; null when there is nothing to undo. */
@@ -97,6 +98,8 @@ export function VoiceEntry() {
   const [plan, setPlan] = useState<Plan | null>(null);
   const [scope, setScope] = useState<Scope | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
+  /** The answer to a question about the calendar, said aloud when the question was. */
+  const [reply, setReply] = useState<string | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
   const [unheard, setUnheard] = useState<string | null>(null);
   const [activity, setActivity] = useState<Activity | null>(null);
@@ -185,6 +188,7 @@ export function VoiceEntry() {
     setPlan(null);
     setScope(null);
     setNotice(null);
+    setReply(null);
     setError(false);
     setUnheard(null);
     setText("");
@@ -440,6 +444,7 @@ export function VoiceEntry() {
     setUnheard(null);
     setText(trimmed);
     setNotice(null);
+    setReply(null);
     setError(false);
     setPhase("sending");
     const mine = run.current;
@@ -470,6 +475,13 @@ export function VoiceEntry() {
     if (answer.outcome === "failed") return openForm("entry", { title: answer.sentence });
     if (answer.outcome === "change") return void startPlan(answer.plan);
     if (answer.outcome === "choose") return void startChoice(answer.options);
+    if (answer.outcome === "answer") {
+      setReply(answer.text);
+      setText("");
+      setPhase("idle");
+      if (voiced.current) void say(++run.current, answer.text);
+      return;
+    }
     if (answer.outcome === "shopping") {
       setShopping(answer);
       setPhase("readback");
@@ -494,6 +506,7 @@ export function VoiceEntry() {
     const mine = run.current;
     setError(false);
     setNotice(null);
+    setReply(null);
     setUnheard(null);
     setText("");
     setPhase("listening");
@@ -719,6 +732,11 @@ export function VoiceEntry() {
                               unheard === "aborted"
                             ? t("voice.notHeard")
                             : t("voice.micFailed", { code: unheard })}
+                    </p>
+                  )}
+                  {reply && (
+                    <p data-testid="voice-answer" className="whitespace-pre-line">
+                      {reply}
                     </p>
                   )}
                   {notice && (

@@ -341,7 +341,7 @@ const VOICE_SCHEMA = {
   properties: {
     action: {
       type: "string",
-      enum: ["create", "change", "delete", "shopping", "person", "list"],
+      enum: ["create", "change", "delete", "shopping", "person", "list", "question"],
     },
     kind: { type: ["string", "null"], enum: ["entry", "task", null] },
     title: { type: ["string", "null"] },
@@ -401,6 +401,8 @@ export type VoiceContext = {
   lists: string[];
   /** What a change may target, already numbered by position. */
   targets: string[];
+  /** The number of the Person speaking, when the Account has one. */
+  speaker?: number | null;
 };
 
 /** The prompt that turns one sentence into a new Entry or Task, or a change to one. */
@@ -417,7 +419,7 @@ export function voicePrompt(context: VoiceContext) {
     {
       role: "system",
       content: [
-        'You read one sentence from a family member about the family calendar. "action" is "create" for a new entry or task, "change" to change an existing one, "delete" to remove or cancel one, "shopping" to put things on the family\'s shopping list, "person" to add a new person to the family, "list" to make a new predefined list.',
+        'You read one sentence from a family member about the family calendar. "action" is "create" for a new entry or task, "change" to change an existing one, "delete" to remove or cancel one, "shopping" to put things on the family\'s shopping list, "person" to add a new person to the family, "list" to make a new predefined list, "question" to ask what is on the calendar.',
         `The sentence is in ${LANGUAGE_NAMES[context.language]}; keep the title in that language, short, without the date, time or names.`,
         'An "entry" happens at a time (appointment, birthday, trip, class); a "task" is something to do, possibly by a due date.',
         "Give dates as YYYY-MM-DD and times as HH:mm (24-hour), worked out from today's date; null when the sentence doesn't say.",
@@ -429,6 +431,7 @@ export function voicePrompt(context: VoiceContext) {
         '"list" is only for making a new predefined list, a reusable template of items, when the sentence says so ("create the predefined list Beach with towels and sunscreen"): "title" is its name and "items" its items; a list for one task or occasion is a "create" task with items.',
         '"shopping" is for buying things or adding them to the shopping list when no day or time is said ("buy milk and eggs", "we\'re out of bread"): "items" lists each thing, short, in the sentence\'s language, without verbs.',
         'For "change": "targets" lists the numbers of the existing items the sentence may mean (all that fit, best first; empty if none); "several" is true when the sentence asks to change two or more different items; "on" is the date of the one occurrence meant for a repeating item, if said; "scope" is "this" for only this time, "following" for from now on, null if not said. Fill only the fields that change and leave the rest null (title only when renamed, persons empty unless they change); "done": true when a task is done.',
+        '"question" is for asking, not changing ("what do we have tomorrow?", "am I free on Friday afternoon?", "what\'s on this week?", "when is Ana\'s next dentist?"): "date" and "endDate" are the days asked about ("this week" is today to Sunday; endDate null for one day; date null for today); "time" and "endTime" a part of the day if said (morning 08:00–12:00, afternoon 12:00–19:00, evening 19:00–23:59), else null; "persons" whose calendar is asked about, empty for the whole family; for "when is the next …" about one existing item, "targets" lists the numbers of the items it may mean and date stays null.',
         'For "delete": "targets", "several", "on" and "scope" work as for "change", and the other fields stay null; cancelling something that happens ("cancel Friday\'s dinner") is "delete".',
         "Answer only with JSON matching the schema.",
       ].join(" "),
@@ -438,6 +441,9 @@ export function voicePrompt(context: VoiceContext) {
       content: [
         `Today is ${day} ${context.today}, time zone ${context.timeZone}.`,
         `People:\n${persons || "(none)"}`,
+        ...(context.speaker != null
+          ? [`The person speaking is number ${context.speaker}; "I", "me" and "my" mean them.`]
+          : []),
         `Entry types:\n${context.types.map((t, i) => `${i}. ${t}`).join("\n")}`,
         `Predefined lists:\n${context.lists.map((l, i) => `${i}. ${l}`).join("\n") || "(none)"}`,
         `Existing items:\n${context.targets.map((t, i) => `${i}. ${t}`).join("\n") || "(none)"}`,
