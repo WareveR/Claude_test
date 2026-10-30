@@ -47,6 +47,25 @@ type Created = {
 };
 
 describe("Voice Entry: create", () => {
+  it("takes the Reminders the sentence asks for", async () => {
+    const { browser } = await family();
+    answer = () => ({
+      kind: "entry",
+      title: "Dentista",
+      type: null,
+      persons: [],
+      date: "2026-10-06",
+      time: "15:00",
+      allDay: null,
+      reminders: [60, 60, -5, 30],
+    });
+    const created = (await (
+      await browser.post("/voice", { sentence: "dentista terça às 3, lembra-me 1 hora antes" })
+    ).json()) as Created;
+    expect(created.values.reminders).toEqual([30, 60]);
+    expect(created.summary).toContain("lembrete 30 min antes e 1 h antes");
+  });
+
   it("fills a new Entry from the sentence and the Entry Type's defaults, without saving it", async () => {
     const { browser, ana, types } = await family();
     answer = (p) => ({
@@ -582,6 +601,22 @@ describe("Voice Entry: change", () => {
     ).toEqual({
       outcome: "locked",
     });
+  });
+
+  it("sets an Entry's Reminders, replacing its own, and Undo puts them back", async () => {
+    const { browser, dinner } = await withPlans();
+    answer = (p) => change({ targets: [targetOf(p, "Dinner")], reminders: [1440, 60] });
+    const res = (await (
+      await browser.post("/voice", { sentence: "lembra-me do jantar na véspera e 1 hora antes" })
+    ).json()) as { plan: Plan };
+    expect(res.plan.summary).toBe("Alterar Dinner: lembrete 1 h antes e 1 dia antes");
+    await send(browser, res.plan.apply.all);
+    const reminders = async () =>
+      ((await (await browser.get(`/entries/${dinner}`)).json()) as { reminders: number[] })
+        .reminders;
+    expect((await reminders()).sort((a, b) => a - b)).toEqual([60, 1440]);
+    await send(browser, res.plan.undo!);
+    expect(await reminders()).toEqual([]);
   });
 
   it("keeps a synced Birthday's date and Person", async () => {
