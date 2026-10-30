@@ -795,6 +795,68 @@ describe("Voice Entry: Shopping List", () => {
       outcome: "failed",
     });
   });
+
+  const shop = (patch: Record<string, unknown>) => ({
+    ...change({ action: "shopping" }),
+    ...patch,
+  });
+
+  it("ticks things bought or takes them off, with Undo, and says what is left", async () => {
+    const { browser } = await family();
+    const add = async (name: string, store = "") =>
+      (
+        (await (await browser.post("/shopping/items", { name, store, quantity: "" })).json()) as {
+          id: string;
+        }
+      ).id;
+    const leite = await add("Leite", "Lidl");
+    const ovos = await add("Ovos");
+    await add("Pão", "Padaria");
+
+    answer = () => shop({ shop: "bought", items: ["leite"] });
+    const bought = (await (
+      await browser.post("/voice", { sentence: "já comprei o leite" })
+    ).json()) as { outcome: string; plan: Plan };
+    expect(bought.plan.summary).toBe("Comprado: Leite");
+    await send(browser, bought.plan.apply.all);
+    const items = async () =>
+      (await (await browser.get("/shopping/items")).json()) as {
+        id: string;
+        boughtAt: string | null;
+      }[];
+    expect((await items()).find((i) => i.id === leite)!.boughtAt).not.toBeNull();
+    await send(browser, bought.plan.undo!);
+    expect((await items()).find((i) => i.id === leite)!.boughtAt).toBeNull();
+
+    answer = () => shop({ shop: "remove", items: ["ovos", "chocolate"] });
+    const removed = (await (
+      await browser.post("/voice", { sentence: "tira os ovos e o chocolate da lista" })
+    ).json()) as { plan: Plan };
+    expect(removed.plan.summary).toBe("Tirar da lista de compras: Ovos");
+    await send(browser, removed.plan.apply.all);
+    expect((await items()).some((i) => i.id === ovos)).toBe(false);
+    await send(browser, removed.plan.undo!);
+    expect((await items()).some((i) => i.id === ovos)).toBe(true);
+
+    answer = () => shop({ shop: "remove", items: ["chocolate"] });
+    expect(await (await browser.post("/voice", { sentence: "tira o chocolate" })).json()).toEqual({
+      outcome: "notFound",
+    });
+
+    answer = () => shop({ shop: "ask", store: "Lidl" });
+    expect(
+      await (await browser.post("/voice", { sentence: "o que falta comprar no Lidl?" })).json(),
+    ).toEqual({ outcome: "answer", text: "Na lista de compras no Lidl: Leite, Ovos." });
+  });
+
+  it("keeps the shop said with the things to buy", async () => {
+    const { browser } = await family();
+    answer = () => shop({ shop: "add", items: ["leite"], store: "Lidl" });
+    expect(
+      await (await browser.post("/voice", { sentence: "comprar leite no Lidl" })).json(),
+    ).toEqual({ outcome: "shopping", items: [{ name: "Leite", store: "Lidl" }], already: [] });
+    expect(prompts).toHaveLength(1);
+  });
 });
 
 describe("Voice Entry: corrections", () => {
