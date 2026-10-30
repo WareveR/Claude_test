@@ -142,6 +142,15 @@ test("a question's answer shows in the sheet, ready for the next one", async ({ 
   await expect(dialog.getByLabel("Say or type one sentence")).toHaveValue("");
 });
 
+test("open goes to the place said, on the day said", async ({ page }) => {
+  await signIn(page);
+  await say(page, { outcome: "open", place: "month", date: "2026-12-01", query: null });
+  await expect(page).toHaveURL(/\/month\/2026-12$/);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await say(page, { outcome: "open", place: "search", date: null, query: "dentist" });
+  await expect(page).toHaveURL(/\/search\?q=dentist$/);
+});
+
 for (const [outcome, message] of [
   ["notFound", "Not found"],
   ["oneAtATime", "One thing at a time, please"],

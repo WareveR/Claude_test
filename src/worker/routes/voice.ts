@@ -30,6 +30,7 @@ import {
   type VoiceChange,
 } from "../../core/voice-change";
 import { occurrencesOf } from "../../core/occurrences";
+import { parseVoiceOpen } from "../../core/voice-open";
 import { agendaAnswer, questionDays, whenAnswer } from "../../core/voice-question";
 import { suggestionFor, rankSuggestions } from "../../core/shopping";
 import { readShoppingPhrase, shoppingToAdd, splitShoppingNames } from "../../core/shopping-phrase";
@@ -45,7 +46,7 @@ import { seesInFull } from "../private";
  * Voice Entry: one spoken or typed sentence becomes a new Entry or Task (a Task with items, from
  * the sentence or a predefined list, is a Checklist), a change to one, things to put on the
  * Shopping List, a new Person, a new predefined list, or deleting an Entry or Task; or the
- * answer to a question about what is on the calendar.
+ * answer to a question about what is on the calendar, or a place in the app to open.
  * Nothing is saved here: the answer carries the requests the browser sends to the usual routes
  * once the Family member says yes, so every rule of those routes still applies.
  */
@@ -265,6 +266,11 @@ voiceRoutes.post("/voice", async (c) => {
         ? { outcome: "change", plan: options[0] }
         : { outcome: "choose", options },
     );
+  }
+
+  if (answer.action === "open") {
+    const open = parseVoiceOpen(answer);
+    return open ? c.json({ outcome: "open", ...open }) : failed;
   }
 
   if (answer.action === "question") {

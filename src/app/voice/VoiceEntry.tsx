@@ -10,6 +10,9 @@ import { paths } from "../paths";
 import { addShoppingItems, refreshShopping, removeShoppingItems } from "../shopping/model";
 import { Field, TextInput } from "../screens/form";
 import { readAnswer } from "../../core/voice-answer";
+import type { VoiceOpen } from "../../core/voice-open";
+import { todayIn } from "../../core/plain-date";
+import { useSignedIn } from "../family";
 import {
   canListen,
   finishListening,
@@ -59,6 +62,7 @@ type Answer =
   | { outcome: "choose"; options: Plan[] }
   | Shopping
   | { outcome: "answer"; text: string }
+  | ({ outcome: "open" } & VoiceOpen)
   | { outcome: Notice };
 type Scope = "this" | "following" | "all";
 /** What the toast's Undo does; null when there is nothing to undo. */
@@ -77,6 +81,25 @@ const FORMS: Partial<Record<Kind, string>> = {
   template: "/settings/checklist-templates/new",
 };
 const route = (kind: Kind) => ROUTES[kind];
+
+/** Where "open …" goes: a calendar view on the day said (today by default), or a page. */
+function pathOf(open: VoiceOpen, today: string): string {
+  const date = open.date ?? today;
+  switch (open.place) {
+    case "day":
+    case "week":
+    case "month":
+    case "year":
+    case "agenda":
+      return paths[open.place](date);
+    case "wall":
+      return paths.display();
+    case "search":
+      return open.query ? `${paths.search()}?q=${encodeURIComponent(open.query)}` : paths.search();
+    default:
+      return paths[open.place]();
+  }
+}
 const proposalsOf = (create: Create): Proposal[] => [create, ...(create.more ?? [])];
 /** As many corrections as the Worker takes after one sentence. */
 const MAX_CORRECTIONS = 5;
@@ -112,6 +135,7 @@ export function VoiceEntry() {
   const voiced = useRef(false);
   const saving = useRef(false);
   const lang = i18n.language;
+  const { family } = useSignedIn();
 
   useEffect(() => {
     if (!toast) return;
@@ -475,6 +499,10 @@ export function VoiceEntry() {
     if (answer.outcome === "failed") return openForm("entry", { title: answer.sentence });
     if (answer.outcome === "change") return void startPlan(answer.plan);
     if (answer.outcome === "choose") return void startChoice(answer.options);
+    if (answer.outcome === "open") {
+      close();
+      return void navigate(pathOf(answer, todayIn(family.timeZone)));
+    }
     if (answer.outcome === "answer") {
       setReply(answer.text);
       setText("");
