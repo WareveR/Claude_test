@@ -1,4 +1,5 @@
 import { readbackSentences } from "../../core/readback";
+import { pickVoice, readVoiceSettings, type VoiceSettings } from "../../core/voice-choice";
 import { ApiError, NetworkError } from "../api";
 import { reportFailure } from "../errors/store";
 
@@ -27,6 +28,25 @@ export function getReadback(): boolean {
 export function setReadback(on: boolean) {
   try {
     localStorage.setItem(READBACK_KEY, on ? "on" : "off");
+  } catch {
+    // Storage may be blocked; the choice then lasts only until reload.
+  }
+}
+
+const VOICE_KEY = "voice-sound";
+
+/** Which voice this device speaks with, and how fast and high; the app's own pick by default. */
+export function getVoiceSettings(): VoiceSettings {
+  try {
+    return readVoiceSettings(localStorage.getItem(VOICE_KEY));
+  } catch {
+    return readVoiceSettings(null);
+  }
+}
+
+export function setVoiceSettings(settings: VoiceSettings) {
+  try {
+    localStorage.setItem(VOICE_KEY, JSON.stringify(settings));
   } catch {
     // Storage may be blocked; the choice then lasts only until reload.
   }
@@ -284,34 +304,43 @@ const SENTENCE_MS = 20000;
 export const canSpeak = () =>
   typeof speechSynthesis !== "undefined" && typeof SpeechSynthesisUtterance !== "undefined";
 
-/** Voices that sound like a person rather than a machine, by the names browsers give them. */
-const NATURAL = /natural|neural|online|enhanced|premium|wavenet/i;
+/** The device's voices; Chrome loads them late, so this may be empty at first. */
+export function deviceVoices(): SpeechSynthesisVoice[] {
+  try {
+    return canSpeak() ? (speechSynthesis.getVoices?.() ?? []) : [];
+  } catch {
+    return [];
+  }
+}
 
-/**
- * The most natural voice for exactly this language when the device has one, so Portugal's
- * Portuguese isn't read by a Brazilian voice: a "Natural"/"Online" one first, then one the device
- * fetches from its maker (fuller than the built-in ones); otherwise the browser picks by `lang`.
- */
-function voiceFor(lang: string): SpeechSynthesisVoice | undefined {
-  const wanted = lang.toLowerCase();
-  const voices = (speechSynthesis.getVoices?.() ?? []).filter(
-    (v) => v.lang.replace("_", "-").toLowerCase() === wanted,
-  );
-  const rank = (v: SpeechSynthesisVoice) => (NATURAL.test(v.name) ? 0 : v.localService ? 2 : 1);
-  return voices.sort((a, b) => rank(a) - rank(b))[0];
+/** Calls back whenever the device's list of voices changes; returns how to stop listening. */
+export function onVoicesChanged(callback: () => void): () => void {
+  try {
+    if (!canSpeak() || !speechSynthesis.addEventListener) return () => {};
+    speechSynthesis.addEventListener("voiceschanged", callback);
+    return () => speechSynthesis.removeEventListener("voiceschanged", callback);
+  } catch {
+    return () => {};
+  }
 }
 
 /** How a voice reads: a touch higher and quicker sounds cheerful; the browser's default is 1. */
 export type Delivery = { pitch?: number; rate?: number };
 
+/** The browser's own limits for rate and pitch. */
+const clampSpeech = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
+
 /**
  * Speaks each sentence in turn with a short pause between them; resolves when done, stopped, or
- * at once if speech is unavailable, or when one sentence stalls.
+ * at once if speech is unavailable, or when one sentence stalls. It uses this device's chosen
+ * voice, speed and pitch unless others are given (a preview tries them before saving); a delivery
+ * scales that speed and pitch, so the Briefing stays a touch cheerier than the readback.
  */
 export function speak(
   parts: string | string[],
   lang: string,
   delivery: Delivery = {},
+  sound: VoiceSettings = getVoiceSettings(),
 ): Promise<void> {
   const sentences = readbackSentences(parts);
   return new Promise((resolve) => {
@@ -319,7 +348,7 @@ export function speak(
       if (!canSpeak()) return resolve();
       speechSynthesis.cancel();
       const id = ++speaking;
-      const voice = voiceFor(lang);
+      const voice = pickVoice(deviceVoices(), lang, sound.voice);
       let timer: ReturnType<typeof setTimeout> | undefined;
       const finish = () => {
         clearTimeout(timer);
@@ -332,8 +361,8 @@ export function speak(
         const u = new SpeechSynthesisUtterance(sentences[i]);
         u.lang = lang;
         if (voice) u.voice = voice;
-        if (delivery.pitch) u.pitch = delivery.pitch;
-        if (delivery.rate) u.rate = delivery.rate;
+        u.rate = clampSpeech(sound.rate * (delivery.rate ?? 1), 0.1, 10);
+        u.pitch = clampSpeech(sound.pitch * (delivery.pitch ?? 1), 0, 2);
         u.onend = () => setTimeout(() => next(i + 1), i + 1 < sentences.length ? PAUSE_MS : 0);
         u.onerror = finish;
         speechSynthesis.speak(u);
