@@ -632,6 +632,7 @@ voiceRoutes.post("/voice", async (c) => {
           repetition: values.repetition,
           reminders: create.reminders,
           private: values.private,
+          notes: create.notes,
         },
         names(values.personIds),
         language,
@@ -653,6 +654,11 @@ type Context = {
   language: Language;
   names: (ids: string[]) => string[];
 };
+
+/** The notes with the sentence's note added on a new line. */
+function withNote(notes: string, note: string | null) {
+  return note ? [notes.trimEnd(), note].filter(Boolean).join("\n") : notes;
+}
 
 /** How one change applies to one target: the requests to send, or "locked" for a synced Birthday. */
 function planFor(
@@ -691,6 +697,7 @@ function planFor(
       dueTime: dueDate ? (change.time ?? old.dueTime) : null,
       personIds: personIds ?? old.personIds,
       private: change.private ?? old.private,
+      notes: withNote(old.notes, change.notes),
       repetition: dueDate ? (changedRepetition(change.repeat) ?? old.repetition) : null,
     };
     const edits = JSON.stringify(values) !== JSON.stringify(old);
@@ -719,6 +726,7 @@ function planFor(
     importance: change.importance ?? values.importance,
     reminders: change.reminders ?? values.reminders,
     private: change.private ?? values.private,
+    notes: withNote(values.notes, change.notes),
   });
 
   if (!entry.repetition || birthdayPersonId) {

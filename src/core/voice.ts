@@ -38,11 +38,16 @@ export type VoiceCreate = {
   reminders?: ReminderOffset[] | null;
   /** Private, or not, when the sentence says so. */
   private?: boolean | null;
+  /** A note the sentence gives ("bring the ID card"). */
+  notes?: string | null;
   /** A Task's items, as the sentence names them ("towels, sunscreen"). */
   items?: string[];
   /** The predefined list a Task takes its items from. */
   list?: number | null;
 };
+
+/** The longest note one sentence adds. */
+const MAX_NOTE = 500;
 
 /** At most this many Reminders, each at most four weeks before. */
 const MAX_REMINDERS = 5;
@@ -140,6 +145,7 @@ export function parseVoiceFields(
           .slice(0, MAX_REMINDERS)
       : null,
     private: typeof v.private === "boolean" ? v.private : null,
+    notes: typeof v.notes === "string" && v.notes.trim() ? v.notes.trim().slice(0, MAX_NOTE) : null,
   };
 }
 
@@ -252,7 +258,7 @@ export function entryValues(
     personIds: personIds.length > 0 ? personIds : (d.personIds ?? []),
     importance: answer.importance ?? d.importance ?? "normal",
     location: answer.location ?? d.location ?? "",
-    notes: d.notes ?? "",
+    notes: [d.notes, answer.notes].filter(Boolean).join("\n"),
     icon: newEntryIcon(answer.title, type),
     private: answer.private ?? false,
     reminders: answer.reminders ?? d.reminders ?? [],
@@ -266,7 +272,7 @@ export function taskValues(answer: VoiceCreate, personIds: string[]): TaskValues
   const repetition = answer.date ? repetitionOf(answer.repeat) : null;
   return {
     title: answer.title,
-    notes: "",
+    notes: answer.notes ?? "",
     dueDate: answer.date,
     dueTime: answer.date ? answer.time : null,
     personIds,
@@ -296,6 +302,7 @@ const TEXTS: Record<
     template: string;
     reminder: string;
     private: string;
+    note: (text: string) => string;
     noReminders: string;
   }
 > = {
@@ -320,6 +327,7 @@ const TEXTS: Record<
     template: "Nova lista pré-definida",
     reminder: "lembrete",
     private: "privada",
+    note: (text) => `nota: ${text}`,
     noReminders: "sem lembretes",
   },
   en: {
@@ -343,6 +351,7 @@ const TEXTS: Record<
     template: "New predefined list",
     reminder: "reminder",
     private: "private",
+    note: (text) => `note: ${text}`,
     noReminders: "no reminders",
   },
 };
@@ -367,6 +376,7 @@ export function voiceSummary(
     items?: number;
     reminders?: ReminderOffset[] | null;
     private?: boolean;
+    notes?: string | null;
   },
   personNames: string[],
   language: Language,
@@ -389,6 +399,7 @@ export function voiceSummary(
     values.items ? texts.items(values.items) : "",
     values.reminders?.length ? remindersText(values.reminders, language) : "",
     values.private ? texts.private : "",
+    values.notes ? texts.note(values.notes) : "",
   ];
   return `${kind === "entry" ? texts.entry : texts.task}: ${parts.filter(Boolean).join(", ")}`;
 }
