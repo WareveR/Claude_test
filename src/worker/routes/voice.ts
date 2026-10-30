@@ -30,6 +30,7 @@ import {
   type VoiceChange,
 } from "../../core/voice-change";
 import { occurrencesOf } from "../../core/occurrences";
+import { agendaAnswer, questionDays, whenAnswer } from "../../core/voice-question";
 import { suggestionFor, rankSuggestions } from "../../core/shopping";
 import { readShoppingPhrase, shoppingToAdd, splitShoppingNames } from "../../core/shopping-phrase";
 import { readVoice, transcribe } from "../ai";
@@ -43,7 +44,8 @@ import { seesInFull } from "../private";
 /**
  * Voice Entry: one spoken or typed sentence becomes a new Entry or Task (a Task with items, from
  * the sentence or a predefined list, is a Checklist), a change to one, things to put on the
- * Shopping List, a new Person, a new predefined list, or deleting an Entry or Task.
+ * Shopping List, a new Person, a new predefined list, or deleting an Entry or Task; or the
+ * answer to a question about what is on the calendar.
  * Nothing is saved here: the answer carries the requests the browser sends to the usual routes
  * once the Family member says yes, so every rule of those routes still applies.
  */
@@ -226,6 +228,8 @@ voiceRoutes.post("/voice", async (c) => {
   const nameOf = (id: string) => persons.find((p) => p.id === id)?.name ?? "";
   const names = (ids: string[]) => ids.map(nameOf).filter(Boolean);
   const targets = changeTargets(entries, tasks, today);
+  const viewer = c.get("account");
+  const speaker = active.findIndex((p) => p.id === viewer.personId);
 
   const raw = await readVoice(c.env, {
     sentence,
@@ -240,6 +244,7 @@ voiceRoutes.post("/voice", async (c) => {
     types: types.map((t) => t.name ?? t.builtinKey ?? ""),
     lists: templates.map((t) => templateText(t, language).name),
     targets: targets.map((t) => describeTarget(t, names, language)),
+    speaker: speaker >= 0 ? speaker : null,
   });
   const failed = c.json({ outcome: "failed", sentence });
   if (typeof raw !== "object" || raw === null) return failed;
@@ -260,6 +265,44 @@ voiceRoutes.post("/voice", async (c) => {
         ? { outcome: "change", plan: options[0] }
         : { outcome: "choose", options },
     );
+  }
+
+  if (answer.action === "question") {
+    const fields = parseVoiceFields(answer, active.length, types.length);
+    const asked = parseVoiceChange(answer, fields, targets.length).targets;
+    if (asked.length > 0 && !fields.date) {
+      const t = targets[asked[0]];
+      return c.json({
+        outcome: "answer",
+        text: whenAnswer(
+          {
+            ...t,
+            time: t.kind === "task" ? t.time : t.time.allDay ? null : t.time.startTime,
+          },
+          names,
+          language,
+        ),
+      });
+    }
+    // Every Entry and Task counts, a Private one hidden from this Account as "Private".
+    const [everyEntry, everyTask] = await Promise.all([allEntries(db), allTasks(db)]);
+    const { from, to } = questionDays(fields.date, fields.endDate, today);
+    const text = agendaAnswer(
+      {
+        from,
+        to,
+        startTime:
+          fields.time && fields.endTime && fields.endTime > fields.time ? fields.time : null,
+        endTime:
+          fields.time && fields.endTime && fields.endTime > fields.time ? fields.endTime : null,
+        personIds: fields.persons.length > 0 ? fields.persons.map((i) => active[i].id) : null,
+      },
+      everyEntry.map((e) => ({ ...e, hidden: !seesInFull(viewer, e, e.personIds) })),
+      everyTask.map((t) => ({ ...t, hidden: !seesInFull(viewer, t, t.personIds) })),
+      names,
+      language,
+    );
+    return c.json({ outcome: "answer", text });
   }
 
   if (answer.action === "shopping") {
