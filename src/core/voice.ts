@@ -36,6 +36,8 @@ export type VoiceCreate = {
   } | null;
   /** An Entry's Reminders, in minutes before its start, when the sentence says them. */
   reminders?: ReminderOffset[] | null;
+  /** Private, or not, when the sentence says so. */
+  private?: boolean | null;
   /** A Task's items, as the sentence names them ("towels, sunscreen"). */
   items?: string[];
   /** The predefined list a Task takes its items from. */
@@ -137,6 +139,7 @@ export function parseVoiceFields(
           .sort((a, b) => a - b)
           .slice(0, MAX_REMINDERS)
       : null,
+    private: typeof v.private === "boolean" ? v.private : null,
   };
 }
 
@@ -251,7 +254,7 @@ export function entryValues(
     location: answer.location ?? d.location ?? "",
     notes: d.notes ?? "",
     icon: newEntryIcon(answer.title, type),
-    private: false,
+    private: answer.private ?? false,
     reminders: answer.reminders ?? d.reminders ?? [],
     repetition: repetitionOf(answer.repeat) ?? d.repetition ?? null,
     birthYearKnown: false,
@@ -267,7 +270,7 @@ export function taskValues(answer: VoiceCreate, personIds: string[]): TaskValues
     dueDate: answer.date,
     dueTime: answer.date ? answer.time : null,
     personIds,
-    private: false,
+    private: answer.private ?? false,
     repetition,
     checklistId: null,
   };
@@ -292,6 +295,7 @@ const TEXTS: Record<
     aka: (names: string) => string;
     template: string;
     reminder: string;
+    private: string;
     noReminders: string;
   }
 > = {
@@ -315,6 +319,7 @@ const TEXTS: Record<
     aka: (names) => `também ${names}`,
     template: "Nova lista pré-definida",
     reminder: "lembrete",
+    private: "privada",
     noReminders: "sem lembretes",
   },
   en: {
@@ -337,6 +342,7 @@ const TEXTS: Record<
     aka: (names) => `also ${names}`,
     template: "New predefined list",
     reminder: "reminder",
+    private: "private",
     noReminders: "no reminders",
   },
 };
@@ -360,6 +366,7 @@ export function voiceSummary(
     list?: string | null;
     items?: number;
     reminders?: ReminderOffset[] | null;
+    private?: boolean;
   },
   personNames: string[],
   language: Language,
@@ -381,6 +388,7 @@ export function voiceSummary(
     values.list ? texts.list(values.list) : "",
     values.items ? texts.items(values.items) : "",
     values.reminders?.length ? remindersText(values.reminders, language) : "",
+    values.private ? texts.private : "",
   ];
   return `${kind === "entry" ? texts.entry : texts.task}: ${parts.filter(Boolean).join(", ")}`;
 }
