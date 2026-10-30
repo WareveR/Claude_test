@@ -342,7 +342,17 @@ const VOICE_SCHEMA = {
   properties: {
     action: {
       type: "string",
-      enum: ["create", "change", "delete", "shopping", "person", "list", "question", "open"],
+      enum: [
+        "create",
+        "change",
+        "delete",
+        "shopping",
+        "person",
+        "list",
+        "question",
+        "open",
+        "items",
+      ],
     },
     place: {
       type: ["string", "null"],
@@ -366,6 +376,8 @@ const VOICE_SCHEMA = {
     on: { type: ["string", "null"] },
     scope: { type: ["string", "null"], enum: ["this", "following", null] },
     items: { type: "array", items: { type: "string" } },
+    checklist: { type: ["integer", "null"] },
+    tick: { type: "array", items: { type: "string" } },
     shop: { type: ["string", "null"], enum: ["add", "bought", "remove", "ask", null] },
     store: { type: ["string", "null"] },
     list: { type: ["integer", "null"] },
@@ -408,6 +420,8 @@ export type VoiceContext = {
   lists: string[];
   /** What a change may target, already numbered by position. */
   targets: string[];
+  /** Existing Tasks with items, each with its items: "Beach bag: towels (done), sunscreen". */
+  checklists?: string[];
   /** The number of the Person speaking, when the Account has one. */
   speaker?: number | null;
 };
@@ -426,7 +440,7 @@ export function voicePrompt(context: VoiceContext) {
     {
       role: "system",
       content: [
-        'You read one sentence from a family member about the family calendar. "action" is "create" for a new entry or task, "change" to change an existing one, "delete" to remove or cancel one, "shopping" to put things on the family\'s shopping list, "person" to add a new person to the family, "list" to make a new predefined list, "question" to ask what is on the calendar, "open" to go to a part of the app.',
+        'You read one sentence from a family member about the family calendar. "action" is "create" for a new entry or task, "change" to change an existing one, "delete" to remove or cancel one, "shopping" to put things on the family\'s shopping list, "person" to add a new person to the family, "list" to make a new predefined list, "question" to ask what is on the calendar, "open" to go to a part of the app, "items" to add or tick items in an existing task with items.',
         `The sentence is in ${LANGUAGE_NAMES[context.language]}; keep the title in that language, short, without the date, time or names.`,
         'An "entry" happens at a time (appointment, birthday, trip, class); a "task" is something to do, possibly by a due date.',
         "Give dates as YYYY-MM-DD and times as HH:mm (24-hour), worked out from today's date; null when the sentence doesn't say.",
@@ -440,6 +454,7 @@ export function voicePrompt(context: VoiceContext) {
         'For "change": "targets" lists the numbers of the existing items the sentence may mean (all that fit, best first; empty if none); "several" is true when the sentence asks to change two or more different items; "on" is the date of the one occurrence meant for a repeating item, if said; "scope" is "this" for only this time, "following" for from now on, null if not said. Fill only the fields that change and leave the rest null (title only when renamed, persons empty unless they change); "done": true when a task is done.',
         '"question" is for asking, not changing ("what do we have tomorrow?", "am I free on Friday afternoon?", "what\'s on this week?", "when is Ana\'s next dentist?"): "date" and "endDate" are the days asked about ("this week" is today to Sunday; endDate null for one day; date null for today); "time" and "endTime" a part of the day if said (morning 08:00–12:00, afternoon 12:00–19:00, evening 19:00–23:59), else null; "persons" whose calendar is asked about, empty for the whole family; for "when is the next …" about one existing item, "targets" lists the numbers of the items it may mean and date stays null.',
         '"open" is only for going somewhere in the app ("show next week", "open December", "open the shopping list", "search for dentist"): "place" is where (day, week, month, year, agenda, tasks, shopping, tree for the family tree, summary, wall, suggestions, search, settings); "date" the day it shows, if said; for "search", "title" is what to look for.',
+        '"items" is only for an existing task with items, from the list below ("add sunscreen to the beach bag", "the towels are packed"): "checklist" is its number; "items" the new items to add to it, short, in the sentence\'s language; "tick" the names of its items the sentence says are done, as they are written in the list.',
         'For "delete": "targets", "several", "on" and "scope" work as for "change", and the other fields stay null; cancelling something that happens ("cancel Friday\'s dinner") is "delete".',
         "Answer only with JSON matching the schema.",
       ].join(" "),
@@ -454,6 +469,7 @@ export function voicePrompt(context: VoiceContext) {
           : []),
         `Entry types:\n${context.types.map((t, i) => `${i}. ${t}`).join("\n")}`,
         `Predefined lists:\n${context.lists.map((l, i) => `${i}. ${l}`).join("\n") || "(none)"}`,
+        `Tasks with items:\n${(context.checklists ?? []).map((l, i) => `${i}. ${l}`).join("\n") || "(none)"}`,
         `Existing items:\n${context.targets.map((t, i) => `${i}. ${t}`).join("\n") || "(none)"}`,
         `Sentence: ${JSON.stringify(context.sentence)}`,
         ...(context.corrections?.length

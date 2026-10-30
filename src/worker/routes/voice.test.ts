@@ -707,6 +707,58 @@ describe("Voice Entry: questions", () => {
   });
 });
 
+describe("Voice Entry: items of a Task", () => {
+  it("adds items to a Task with items and ticks others, and Undo takes both back", async () => {
+    const { browser } = await family();
+    const created = (await (
+      await browser.post("/checklists", {
+        name: "Praia",
+        startDate: null,
+        endDate: null,
+        repetition: null,
+        remindAtStart: false,
+        entryId: null,
+        personIds: [],
+        items: ["Toalhas", "Chapéu"],
+      })
+    ).json()) as { id: string };
+    const items = async () =>
+      (
+        (await (await browser.get("/tasks")).json()) as {
+          title: string;
+          checklistId: string | null;
+          doneAt: string | null;
+        }[]
+      )
+        .filter((t) => t.checklistId === created.id)
+        .sort((a, b) => a.title.localeCompare(b.title));
+    answer = (p) => {
+      expect(p.messages[1].content).toContain("0. Praia: Toalhas, Chapéu");
+      return {
+        ...change({ action: "items" }),
+        checklist: 0,
+        items: ["Protetor solar", "toalhas"],
+        tick: ["chapéu"],
+      };
+    };
+    const res = (await (
+      await browser.post("/voice", { sentence: "junta protetor solar à praia, o chapéu já está" })
+    ).json()) as { plan: Plan };
+    expect(res.plan.summary).toBe("Em Praia: juntar Protetor solar; feito Chapéu");
+    await send(browser, res.plan.apply.all);
+    expect((await items()).map((i) => [i.title, i.doneAt !== null])).toEqual([
+      ["Chapéu", true],
+      ["Protetor solar", false],
+      ["Toalhas", false],
+    ]);
+    await send(browser, res.plan.undo!);
+    expect((await items()).map((i) => [i.title, i.doneAt !== null])).toEqual([
+      ["Chapéu", false],
+      ["Toalhas", false],
+    ]);
+  });
+});
+
 describe("Voice Entry: open", () => {
   it("names the place, the day and what to search for", async () => {
     const { browser } = await family();

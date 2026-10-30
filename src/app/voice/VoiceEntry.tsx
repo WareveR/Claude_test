@@ -37,7 +37,7 @@ type Proposal = { kind: Kind; values: object; summary: string; form?: TaskWithIt
 type Create = Proposal & { outcome: "create"; more?: Proposal[] };
 type Req = { method: "PUT" | "POST" | "PATCH" | "DELETE"; path: string; body?: unknown };
 type Plan = {
-  kind: "entry" | "task" | "shopping";
+  kind: "entry" | "task" | "shopping" | "checklist";
   id: string;
   date: string | null;
   label: string;
