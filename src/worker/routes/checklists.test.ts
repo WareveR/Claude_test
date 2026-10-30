@@ -151,6 +151,22 @@ describe("Checklists", () => {
     );
     const bad = await browser.post(`/checklists/${id}/items`, { parentId: "nope", items: ["X"] });
     expect(await bad.json()).toMatchObject({ field: "parentId" });
+    // Ids given by the browser name the new items, once each.
+    const named = await browser.post(`/checklists/${id}/items`, {
+      items: ["Gloves"],
+      ids: ["voice-item-1"],
+    });
+    expect(named.status).toBe(201);
+    expect(
+      ((await (await browser.get("/tasks/voice-item-1")).json()) as { title: string }).title,
+    ).toBe("Gloves");
+    const again = await browser.post(`/checklists/${id}/items`, {
+      items: ["Boots"],
+      ids: ["voice-item-1"],
+    });
+    expect(again.status).toBe(409);
+    const short = await browser.post(`/checklists/${id}/items`, { items: ["A", "B"], ids: ["x"] });
+    expect(await short.json()).toMatchObject({ field: "ids" });
   });
 
   it("turns a loose Task into a Checklist named after it when it gets items", async () => {

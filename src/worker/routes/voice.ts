@@ -41,6 +41,7 @@ import {
 } from "../../core/shopping-phrase";
 import { forStore } from "../../core/shopping";
 import { readVoice, transcribe } from "../ai";
+import { randomId } from "../auth/crypto";
 import { schema, type Db } from "../db";
 import { requireDevice } from "../require-device";
 import type { AppEnv } from "../types";
@@ -128,19 +129,25 @@ async function allTasks(db: Db) {
 
 /** What a voice change can find: never a Private Entry or Task hidden from this Account. */
 async function loadAll(db: Db, viewer: Account) {
-  const [[family], persons, nicknames, types, templates, entries, tasks] = await Promise.all([
-    db.select().from(schema.family).limit(1),
-    db.select().from(schema.person),
-    db.select().from(schema.personNickname),
-    db.select().from(schema.entryType),
-    db
-      .select()
-      .from(schema.checklistTemplate)
-      .orderBy(asc(schema.checklistTemplate.createdAt), asc(schema.checklistTemplate.id)),
-    allEntries(db),
-    allTasks(db),
-  ]);
+  const [[family], persons, nicknames, types, templates, entries, tasks, checklists] =
+    await Promise.all([
+      db.select().from(schema.family).limit(1),
+      db.select().from(schema.person),
+      db.select().from(schema.personNickname),
+      db.select().from(schema.entryType),
+      db
+        .select()
+        .from(schema.checklistTemplate)
+        .orderBy(asc(schema.checklistTemplate.createdAt), asc(schema.checklistTemplate.id)),
+      allEntries(db),
+      allTasks(db),
+      db.select().from(schema.checklist).orderBy(asc(schema.checklist.name)),
+    ]);
   return {
+    checklists: checklists.slice(0, MAX_CHECKLISTS).map((c) => ({
+      ...c,
+      items: tasks.filter((t) => t.checklistId === c.id),
+    })),
     family,
     persons,
     nicknames,
@@ -253,6 +260,14 @@ async function shoppingChange(
 /** "… no Lidl", "… at Tesco": a capitalised name after a word for where. */
 const NAMES_SHOP = /\b(?:no|na|do|da|at|from)\s+\p{Lu}/u;
 
+/** The most Tasks with items the model is shown. */
+const MAX_CHECKLISTS = 40;
+
+const ITEMS_TEXTS: Record<Language, { add: string; done: string; on: (name: string) => string }> = {
+  "pt-PT": { add: "juntar", done: "feito", on: (name) => `Em ${name}` },
+  en: { add: "add", done: "done", on: (name) => `On ${name}` },
+};
+
 /** At most this many corrections follow one sentence. */
 export const MAX_CORRECTIONS = 5;
 
@@ -302,10 +317,8 @@ voiceRoutes.post("/voice", async (c) => {
   const shopping =
     corrections.length === 0 && !NAMES_SHOP.test(sentence) && readShoppingPhrase(sentence);
   if (shopping) return c.json(await shoppingAnswer(db, shopping));
-  const { family, persons, nicknames, types, templates, entries, tasks } = await loadAll(
-    db,
-    c.get("account"),
-  );
+  const { family, persons, nicknames, types, templates, entries, tasks, checklists } =
+    await loadAll(db, c.get("account"));
   const deviceLanguage = c.get("device").language;
   const language = isLanguage(deviceLanguage)
     ? deviceLanguage
@@ -334,6 +347,10 @@ voiceRoutes.post("/voice", async (c) => {
     lists: templates.map((t) => templateText(t, language).name),
     targets: targets.map((t) => describeTarget(t, names, language)),
     speaker: speaker >= 0 ? speaker : null,
+    checklists: checklists.map(
+      (l) =>
+        `${l.name}: ${l.items.map((i) => (i.doneAt ? `${i.title} (done)` : i.title)).join(", ") || "(no items yet)"}`,
+    ),
   });
   const failed = c.json({ outcome: "failed", sentence });
   if (typeof raw !== "object" || raw === null) return failed;
@@ -354,6 +371,61 @@ voiceRoutes.post("/voice", async (c) => {
         ? { outcome: "change", plan: options[0] }
         : { outcome: "choose", options },
     );
+  }
+
+  if (answer.action === "items") {
+    const index = answer.checklist;
+    const list =
+      Number.isInteger(index) && (index as number) >= 0 ? checklists[index as number] : undefined;
+    if (!list) return c.json({ outcome: "notFound" });
+    const strings = (v: unknown) =>
+      Array.isArray(v) ? v.filter((s): s is string => typeof s === "string") : [];
+    const known = (s: string) => s.trim().toLocaleLowerCase();
+    const add = [
+      ...new Set(
+        strings(answer.items)
+          .map((s) => s.trim().slice(0, MAX_TEMPLATE_TEXT))
+          .filter((s) => s && !list.items.some((i) => known(i.title) === known(s))),
+      ),
+    ].slice(0, MAX_TEMPLATE_ITEMS);
+    const tick = list.items.filter(
+      (i) => !i.doneAt && strings(answer.tick).some((s) => known(s) === known(i.title)),
+    );
+    if (add.length === 0 && tick.length === 0) return failed;
+    const ids = add.map(() => randomId());
+    const texts = ITEMS_TEXTS[language];
+    const plan: Omit<Plan, "kind"> & { kind: "checklist" } = {
+      kind: "checklist",
+      id: list.id,
+      date: null,
+      label: list.name,
+      summary: `${texts.on(list.name)}: ${[
+        add.length > 0 ? `${texts.add} ${add.join(", ")}` : "",
+        tick.length > 0 ? `${texts.done} ${tick.map((i) => i.title).join(", ")}` : "",
+      ]
+        .filter(Boolean)
+        .join("; ")}`,
+      scope: "all",
+      apply: {
+        all: [
+          ...(add.length > 0
+            ? [
+                {
+                  method: "POST" as const,
+                  path: `/checklists/${list.id}/items`,
+                  body: { items: add, ids },
+                },
+              ]
+            : []),
+          ...tick.map((i) => ({ method: "POST" as const, path: `/tasks/${i.id}/done` })),
+        ],
+      },
+      undo: [
+        ...tick.map((i) => ({ method: "DELETE" as const, path: `/tasks/${i.id}/done` })),
+        ...ids.map((id) => ({ method: "DELETE" as const, path: `/tasks/${id}` })),
+      ],
+    };
+    return c.json({ outcome: "change", plan });
   }
 
   if (answer.action === "open") {
