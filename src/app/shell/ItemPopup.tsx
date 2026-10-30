@@ -9,6 +9,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
+import { Attachments } from "../attachments/Attachments";
 import { Link, useLocation, type LinkProps } from "react-router";
 import { formatLocale } from "../../core/languages";
 import { formatPlainDate } from "../../core/plain-date";
@@ -195,6 +196,9 @@ function TaskPopup({ id, onClose }: { id: string; onClose: () => void }) {
             )}
             {!hidden && data.notes && (
               <p className="text-sm break-words whitespace-pre-wrap">{data.notes}</p>
+            )}
+            {!hidden && (
+              <Attachments owner={`task=${id}`} readOnly className="border-t border-line pt-3" />
             )}
           </div>
         )}

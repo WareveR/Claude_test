@@ -1020,6 +1020,19 @@
     "done": "Done",
     "toDo": "To do"
   },
+  "attachments": {
+    "title": "Attachments",
+    "none": "No photos or files.",
+    "camera": "Take a photo",
+    "photos": "Photos",
+    "files": "Files",
+    "uploading": "Uploading…",
+    "onSave": "Added on save",
+    "remove": "Remove {{name}}",
+    "confirmRemove": "Remove the attachment “{{name}}”?",
+    "tooBig": "A file is over 25 MB and wasn't attached.",
+    "saveFailed": "Saved, but an attachment didn't upload: open it and add it again."
+  },
   "search": {
     "title": "Search",
     "box": "Search for",

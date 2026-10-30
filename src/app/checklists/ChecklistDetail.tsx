@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, BookmarkPlus, ChevronDown, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
+import { Attachments } from "../attachments/Attachments";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
 import { checklistProgress, isChecklistTaskOverdue } from "../../core/checklist";
 import { templateText } from "../../core/checklist-template";
@@ -112,6 +113,7 @@ function ChecklistDetail({ checklist, items: all }: { checklist: Checklist; item
         onParent={setAddParent}
         nameRef={addName}
       />
+      <Attachments owner={`checklist=${checklist.id}`} />
       <div className="sticky bottom-0 z-[5] -mx-4 mt-auto flex justify-end gap-3 border-t border-line bg-bg/95 px-4 py-3 backdrop-blur">
         <button type="button" className={BUTTON} onClick={back}>
           <ArrowLeft aria-hidden size={16} />

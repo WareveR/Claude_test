@@ -32,6 +32,7 @@ import { BUTTON, BUTTON_DANGER } from "../ui/button";
 import { Chip, Switch } from "../ui/Toggle";
 import { TimeSelect } from "../ui/TimeSelect";
 import { EntryShopping } from "../shopping/EntryShopping";
+import { Attachments, uploadPending } from "../attachments/Attachments";
 
 const INPUT = "rounded-md border border-line bg-surface px-3 py-2 text-base text-ink";
 /** The time picker suggests 15-minute steps but accepts any typed minute. */
@@ -190,11 +191,24 @@ function EntryForm({
   const [asking, setAsking] = useState<"save" | "delete" | null>(null);
   const repetitionChanged =
     JSON.stringify(draft.repetition) !== JSON.stringify(entry?.repetition ?? null);
+  // Files picked before a new Entry has an id go up once it is saved.
+  const [pending, setPending] = useState<File[]>([]);
   const save = useMutation({
-    mutationFn: (scope: Scope | null) =>
-      entry
-        ? saveEntry(entry, draft, occurrence && scope ? { date: occurrence.date, scope } : null)
-        : api("/entries", { method: "POST", body: draft }),
+    mutationFn: async (scope: Scope | null) => {
+      if (entry) {
+        return saveEntry(
+          entry,
+          draft,
+          occurrence && scope ? { date: occurrence.date, scope } : null,
+        );
+      }
+      const created = await api<{ id: string }>("/entries", { method: "POST", body: draft });
+      if (pending.length > 0) {
+        await uploadPending(`entry=${created.id}`, pending).catch(() =>
+          window.alert(t("attachments.saveFailed")),
+        );
+      }
+    },
     onSuccess: leave,
   });
   const remove = useMutation({
@@ -455,6 +469,11 @@ function EntryForm({
             onChange={(e) => set({ notes: e.target.value })}
           />
         </Field>
+        {entry ? (
+          <Attachments owner={`entry=${entry.id}`} />
+        ) : (
+          <Attachments owner={null} pending={pending} onPending={setPending} />
+        )}
 
         <fieldset className="flex flex-col gap-1 text-sm">
           <legend className="mb-1 font-medium">{t("entries.icon")}</legend>

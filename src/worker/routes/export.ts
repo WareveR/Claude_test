@@ -37,6 +37,7 @@ export const EXPORTED: Record<string, string[]> = {
   relative: [],
   relative_parent: [],
   relative_partner: [],
+  attachment: [],
 };
 
 export const NOT_EXPORTED = new Set([
@@ -91,10 +92,16 @@ function hidePrivate(tables: Record<string, Row[]>, viewer: Account) {
     if (hidden) e.override = JSON.stringify({ ...override, title: "", location: "", notes: "" });
   }
   const taskPersons = personsOf(tables.task_person, "task_id");
+  const hiddenTasks = new Set<string>();
   for (const row of tables.task) {
-    if (!sees(row, taskPersons.get(row.id as string) ?? []))
-      Object.assign(row, { title: "", notes: "" });
+    if (sees(row, taskPersons.get(row.id as string) ?? [])) continue;
+    Object.assign(row, { title: "", notes: "" });
+    hiddenTasks.add(row.id as string);
   }
+  // A hidden Entry's or Task's attachments are left out altogether, names included.
+  tables.attachment = tables.attachment.filter(
+    (a) => !hiddenEntries.has(a.entry_id as string) && !hiddenTasks.has(a.task_id as string),
+  );
 }
 
 /** Settings › Export. The browser fetches the images itself and builds the ZIP. */
