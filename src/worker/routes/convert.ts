@@ -10,6 +10,7 @@ import { requireDevice } from "../require-device";
 import type { AppEnv } from "../types";
 import { mayChangeEntry } from "./entries";
 import { mayChangeTask } from "./tasks";
+import { moveAttachments } from "./attachments";
 
 /**
  * Turning an Entry into a Task and back. Each stays its own kind underneath; the new one keeps
@@ -106,6 +107,7 @@ convertRoutes.post("/entries/:id/to-task", async (c) => {
       changedAt: now,
     }),
     ...personIds.map((personId) => db.insert(schema.taskPerson).values({ taskId, personId })),
+    moveAttachments(db, { column: "entryId", id }, { column: "taskId", id: taskId }),
     db.delete(schema.entry).where(eq(schema.entry.id, id)),
   ]);
   return c.json({ id: taskId }, 201);
@@ -140,6 +142,7 @@ convertRoutes.post("/tasks/:id/to-entry", async (c) => {
   await db.batch([
     entry.insert,
     ...entry.links,
+    moveAttachments(db, { column: "taskId", id }, { column: "entryId", id: entry.id }),
     db.delete(schema.task).where(eq(schema.task.id, id)),
   ]);
   return c.json({ id: entry.id }, 201);

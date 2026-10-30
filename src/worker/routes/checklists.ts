@@ -18,6 +18,7 @@ import { inParts, schema } from "../db";
 import { requireDevice } from "../require-device";
 import { settleChecklist } from "../task-tree";
 import type { AppEnv } from "../types";
+import { moveAttachments } from "./attachments";
 import { personMentionChecks } from "./persons";
 
 type ChecklistRow = typeof schema.checklist.$inferSelect;
@@ -253,9 +254,12 @@ checklistRoutes.post("/checklists", async (c) => {
   return c.json(await presentOne(db, id), 201);
 });
 
+/** An id the browser may give a new item, so that Voice Entry's Undo can find it. */
+const ITEM_ID = /^[A-Za-z0-9_-]{8,64}$/;
+
 /**
  * Adds items by name (from a predefined list) at the end of a Checklist, or inside one of its
- * items (`parentId`), each for the Checklist's Persons.
+ * items (`parentId`), each for the Checklist's Persons. `ids`, if given, name the new items.
  */
 checklistRoutes.post("/checklists/:id/items", async (c) => {
   const db = c.get("db");
@@ -265,6 +269,23 @@ checklistRoutes.post("/checklists/:id/items", async (c) => {
   const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
   const items = cleanItems(body.items);
   if (!items || items.length === 0) return c.json({ error: "invalid", field: "items" }, 400);
+  const ids = body.ids;
+  if (
+    ids !== undefined &&
+    (!Array.isArray(ids) ||
+      ids.length !== items.length ||
+      new Set(ids).size !== ids.length ||
+      ids.some((i) => typeof i !== "string" || !ITEM_ID.test(i)))
+  ) {
+    return c.json({ error: "invalid", field: "ids" }, 400);
+  }
+  if (ids) {
+    const taken = await db
+      .select({ id: schema.task.id })
+      .from(schema.task)
+      .where(inArray(schema.task.id, ids as string[]));
+    if (taken.length > 0) return c.json({ error: "conflict" }, 409);
+  }
   const parentId = body.parentId ?? null;
   if (parentId !== null) {
     const [parent] =
@@ -285,7 +306,7 @@ checklistRoutes.post("/checklists/:id/items", async (c) => {
   const at = c.get("now");
   const [first, ...rest] = items.flatMap((title, i) => {
     const createdAt = new Date(at.getTime() + i).toISOString();
-    const taskId = randomId();
+    const taskId = ids ? (ids as string[])[i] : randomId();
     return [
       db.insert(schema.task).values({
         id: taskId,
@@ -335,6 +356,7 @@ checklistRoutes.post("/tasks/:id/with-items", async (c) => {
       changedAt: now,
     }),
     ...personLinks(db, id, personIds),
+    moveAttachments(db, { column: "taskId", id: taskId }, { column: "checklistId", id }),
     db.delete(schema.task).where(eq(schema.task.id, taskId)),
   ]);
   return c.json(await presentOne(db, id), 201);

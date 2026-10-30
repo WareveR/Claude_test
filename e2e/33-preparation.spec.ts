@@ -12,7 +12,12 @@ test("an Entry holds the Checklists and Tasks that prepare for it", async ({ pag
   await page.getByLabel("Date", { exact: true }).fill("2026-11-07");
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page).not.toHaveURL(/\/entries\/new/);
-  await page.getByTestId("day-column-2026-11-07").getByTestId("entry").click();
+  // Another spec may put an Entry on the same day (25-display-mode's lands 8 days from today).
+  await page
+    .getByTestId("day-column-2026-11-07")
+    .getByTestId("entry")
+    .filter({ hasText: "Grandma's visit" })
+    .click();
 
   // The summary only reads: with nothing linked it shows no preparation; the form links things.
   await expect(page.getByTestId("entry-summary")).toBeVisible();
@@ -32,7 +37,11 @@ test("an Entry holds the Checklists and Tasks that prepare for it", async ({ pag
   await expect(detail.getByTestId("checklist-item")).toHaveCount(1);
 
   await page.goto("/week/2026-11-02");
-  await page.getByTestId("day-column-2026-11-07").getByTestId("entry").click();
+  await page
+    .getByTestId("day-column-2026-11-07")
+    .getByTestId("entry")
+    .filter({ hasText: "Grandma's visit" })
+    .click();
   await page.getByRole("link", { name: "Edit" }).click();
   await preparation.getByRole("link", { name: "New task", exact: true }).click();
   await expect(page.getByTestId("linked-entry")).toContainText("For: Grandma's visit");
@@ -42,7 +51,11 @@ test("an Entry holds the Checklists and Tasks that prepare for it", async ({ pag
   await expect(page).not.toHaveURL(/\/tasks\/new/);
 
   await page.goto("/week/2026-11-02");
-  await page.getByTestId("day-column-2026-11-07").getByTestId("entry").click();
+  await page
+    .getByTestId("day-column-2026-11-07")
+    .getByTestId("entry")
+    .filter({ hasText: "Grandma's visit" })
+    .click();
   // The summary lists what is linked, with nothing to tick.
   await expect(preparation.getByRole("link", { name: /Grandma's visit/ })).toContainText("0 of 1");
   await expect(preparation.getByText("Book the hall")).toBeVisible();

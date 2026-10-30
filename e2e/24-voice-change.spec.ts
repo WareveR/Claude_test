@@ -105,11 +105,72 @@ test("a plan without undo shows no Undo button", async ({ page }) => {
   await expect(toast.getByRole("button", { name: "Undo" })).toHaveCount(0);
 });
 
+test("a delete plan asks Delete, deletes and offers no Undo", async ({ page }) => {
+  await signIn(page);
+  const id = await addTask(page, "Voice delete");
+  const dialog = await say(page, {
+    outcome: "change",
+    plan: {
+      kind: "task",
+      id,
+      date: null,
+      label: "Voice delete",
+      summary: "Delete Voice delete",
+      scope: "all",
+      apply: { all: [{ method: "DELETE", path: `/tasks/${id}` }] },
+      undo: null,
+      remove: true,
+    },
+  });
+  await expect(dialog.getByText("Delete? This can't be undone.")).toBeVisible();
+  await dialog.getByRole("button", { name: "Delete", exact: true }).click();
+  const toast = page.getByRole("status").filter({ hasText: "Deleted" });
+  await expect(toast).toBeVisible();
+  await expect(toast.getByRole("button", { name: "Undo" })).toHaveCount(0);
+  await expect.poll(async () => (await page.request.get(`/api/tasks/${id}`)).status()).toBe(404);
+});
+
+test("a question's answer shows in the sheet, ready for the next one", async ({ page }) => {
+  await signIn(page);
+  const dialog = await say(page, {
+    outcome: "answer",
+    text: "Friday 9 October: 10:00 Dentist (Ana).",
+  });
+  await expect(dialog.getByTestId("voice-answer")).toHaveText(
+    "Friday 9 October: 10:00 Dentist (Ana).",
+  );
+  await expect(dialog.getByLabel("Say or type one sentence")).toHaveValue("");
+});
+
+test("open goes to the place said, on the day said", async ({ page }) => {
+  await signIn(page);
+  await say(page, { outcome: "open", place: "month", date: "2026-12-01", query: null });
+  await expect(page).toHaveURL(/\/month\/2026-12$/);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await say(page, { outcome: "open", place: "search", date: null, query: "dentist" });
+  await expect(page).toHaveURL(/\/search\?q=dentist$/);
+});
+
+test("read the summary shows the Briefing, or says there is none", async ({ page }) => {
+  await signIn(page);
+  await page.route("**/api/briefing", (route) =>
+    route.fulfill({
+      json: {
+        segments: [{ text: "Sunny today." }, { text: " Dinner at 8." }],
+        fallback: false,
+        writtenAt: "2026-10-30T07:00:00Z",
+      },
+    }),
+  );
+  const dialog = await say(page, { outcome: "briefing", person: null });
+  await expect(dialog.getByTestId("voice-answer")).toContainText("Dinner at 8.");
+});
+
 for (const [outcome, message] of [
   ["notFound", "Not found"],
   ["oneAtATime", "One thing at a time, please"],
-  ["refused", "Voice Entry doesn't delete; open the item to delete it"],
   ["locked", "A Birthday's date and Person change on the Person"],
+  ["noneOverdue", "No overdue tasks"],
 ] as const) {
   test(`${outcome} shows its message`, async ({ page }) => {
     await signIn(page);

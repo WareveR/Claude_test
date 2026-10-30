@@ -5,7 +5,7 @@ import { occurrencesOf, type OccurrenceException } from "./occurrences";
 import { addMinutes, wallClock } from "./reminders";
 import { addDays, daysBetween, formatPlainDate, isPlainDate, type PlainDate } from "./plain-date";
 import type { Repetition } from "./repetition";
-import type { VoiceCreate } from "./voice";
+import { remindersText, type VoiceCreate } from "./voice";
 
 /** How far back and ahead Voice Entry looks for the Entry or Task a sentence changes. */
 export const CHANGE_DAYS_BACK = 7;
@@ -24,6 +24,11 @@ export type VoiceChange = {
   location: string | null;
   importance: Importance | null;
   repeat: VoiceCreate["repeat"];
+  /** An Entry's new Reminders, replacing its own, in minutes before the start. */
+  reminders: number[] | null;
+  private: boolean | null;
+  /** A note added after the Entry's or Task's own. */
+  notes: string | null;
   done: boolean | null;
 };
 
@@ -75,6 +80,9 @@ export function parseVoiceChange(
       location: fields.location,
       importance: fields.importance,
       repeat: fields.repeat,
+      reminders: fields.reminders?.length ? fields.reminders : null,
+      private: fields.private ?? null,
+      notes: fields.notes ?? null,
       done: value.done === true ? true : null,
     },
   };
@@ -226,16 +234,40 @@ const LOCALES: Record<Language, string> = { "pt-PT": "pt-PT", en: "en-GB" };
 
 const TEXTS: Record<
   Language,
-  { change: string; done: string; for: string; repeats: string; importance: string }
+  {
+    change: string;
+    remove: string;
+    private: string;
+    notPrivate: string;
+    note: string;
+    done: string;
+    for: string;
+    repeats: string;
+    importance: string;
+  }
 > = {
   "pt-PT": {
     change: "Alterar",
+    remove: "Apagar",
+    private: "privado",
+    notPrivate: "não privado",
+    note: "nota",
     done: "feita",
     for: "para",
     repeats: "repete",
     importance: "importância",
   },
-  en: { change: "Change", done: "done", for: "for", repeats: "repeats", importance: "importance" },
+  en: {
+    change: "Change",
+    remove: "Delete",
+    private: "private",
+    notPrivate: "not private",
+    note: "note",
+    done: "done",
+    for: "for",
+    repeats: "repeats",
+    importance: "importance",
+  },
 };
 
 /** "Change Dinner: Friday 9 October, 20:00" — what will change, read back before saving. */
@@ -261,7 +293,15 @@ export function changeSummary(
     change.repeat ? texts.repeats : "",
     change.location ?? "",
     change.importance ? `${texts.importance}: ${change.importance}` : "",
+    change.reminders ? remindersText(change.reminders, language) : "",
+    change.private === null ? "" : change.private ? texts.private : texts.notPrivate,
+    change.notes ? `${texts.note}: ${change.notes}` : "",
     change.done ? texts.done : "",
   ];
   return `${texts.change} ${title}: ${parts.filter(Boolean).join(", ")}`;
+}
+
+/** "Delete Dinner · Friday 9 October" — what will be deleted, read back before deleting. */
+export function removeSummary(label: string, language: Language): string {
+  return `${TEXTS[language].remove} ${label}`;
 }

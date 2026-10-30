@@ -23,6 +23,8 @@ import { readyToEdit } from "../offline/fresh";
 import { BUTTON_DANGER } from "../ui/button";
 import { Chip, Switch } from "../ui/Toggle";
 import { TimeSelect } from "../ui/TimeSelect";
+import { Attachments, uploadPending } from "../attachments/Attachments";
+import type { AttachmentOwner } from "../attachments/model";
 
 const INPUT = "rounded-md border border-line bg-surface px-3 py-2 text-base text-ink";
 
@@ -101,11 +103,18 @@ function TaskForm({ task }: { task?: Task }) {
     if (window.history.length > 1) navigate(-1);
     else navigate(paths.tasks());
   };
+  // Files picked before a new Task has an id go up once it is saved.
+  const [pending, setPending] = useState<File[]>([]);
+  const sendPending = async (owner: AttachmentOwner) => {
+    if (pending.length === 0) return;
+    await uploadPending(owner, pending).catch(() => window.alert(t("attachments.saveFailed")));
+  };
   const save = useMutation({
-    mutationFn: () =>
-      task
-        ? api(`/tasks/${task.id}`, { method: "PUT", body: draft })
-        : api("/tasks", { method: "POST", body: draft }),
+    mutationFn: async () => {
+      if (task) return api(`/tasks/${task.id}`, { method: "PUT", body: draft });
+      const created = await api<{ id: string }>("/tasks", { method: "POST", body: draft });
+      await sendPending(`task=${created.id}`);
+    },
     onSuccess: leave,
   });
   const saveWithItems = useMutation({
@@ -120,10 +129,12 @@ function TaskForm({ task }: { task?: Task }) {
         ]),
       ];
       if (!task) {
-        return api<{ id: string }>("/checklists", {
+        const created = await api<{ id: string }>("/checklists", {
           method: "POST",
           body: { ...checklistFromTask(draft), items },
         });
+        await sendPending(`checklist=${created.id}`);
+        return created;
       }
       const checklist = await api<{ id: string }>(`/tasks/${task.id}/with-items`, {
         method: "POST",
@@ -279,6 +290,11 @@ function TaskForm({ task }: { task?: Task }) {
           </div>
           <p className="text-xs text-muted">{t("tasks.familyWideHint")}</p>
         </fieldset>
+        {task ? (
+          <Attachments owner={`task=${task.id}`} />
+        ) : (
+          <Attachments owner={null} pending={pending} onPending={setPending} />
+        )}
 
         {!withItems && (
           <>

@@ -10,6 +10,10 @@ import { paths } from "../paths";
 import { addShoppingItems, refreshShopping, removeShoppingItems } from "../shopping/model";
 import { Field, TextInput } from "../screens/form";
 import { readAnswer } from "../../core/voice-answer";
+import { briefingSentences, type Segment } from "../../core/briefing";
+import type { VoiceOpen } from "../../core/voice-open";
+import { todayIn } from "../../core/plain-date";
+import { useSignedIn } from "../family";
 import {
   canListen,
   finishListening,
@@ -32,9 +36,9 @@ type TaskWithItems = { values: object; templateId: string | null; items: string[
 type Proposal = { kind: Kind; values: object; summary: string; form?: TaskWithItems };
 /** A new Entry or Task, and any more the same sentence named ("me at 10, my wife at 11"). */
 type Create = Proposal & { outcome: "create"; more?: Proposal[] };
-type Req = { method: "PUT" | "POST" | "DELETE"; path: string; body?: unknown };
+type Req = { method: "PUT" | "POST" | "PATCH" | "DELETE"; path: string; body?: unknown };
 type Plan = {
-  kind: "entry" | "task";
+  kind: "entry" | "task" | "shopping" | "checklist" | "relative";
   id: string;
   date: string | null;
   label: string;
@@ -42,6 +46,8 @@ type Plan = {
   scope: "all" | "this" | "following" | "ask";
   apply: { all?: Req[]; this?: Req[]; following?: Req[] };
   undo: Req[] | null;
+  /** Deletes instead of changing; never undone. */
+  remove?: true;
 };
 /** Things to put on the Shopping List; `already` are open on it and left out. */
 type Shopping = {
@@ -49,17 +55,27 @@ type Shopping = {
   items: { name: string; store: string }[];
   already: string[];
 };
-type Notice = "notFound" | "oneAtATime" | "refused" | "locked" | "personExists" | "listExists";
+type Notice =
+  | "notFound"
+  | "oneAtATime"
+  | "locked"
+  | "personExists"
+  | "listExists"
+  | "noneOverdue"
+  | "noBriefing";
 type Answer =
   | Create
   | { outcome: "failed"; sentence: string }
   | { outcome: "change"; plan: Plan }
   | { outcome: "choose"; options: Plan[] }
   | Shopping
+  | { outcome: "answer"; text: string }
+  | ({ outcome: "open" } & VoiceOpen)
+  | { outcome: "briefing"; person: string | null }
   | { outcome: Notice };
 type Scope = "this" | "following" | "all";
 /** What the toast's Undo does; null when there is nothing to undo. */
-type Toast = { undo: (() => Promise<void>) | null; shopping?: boolean };
+type Toast = { undo: (() => Promise<void>) | null; shopping?: boolean; removed?: boolean };
 
 const ROUTES: Record<Kind, string> = {
   entry: "entries",
@@ -74,6 +90,25 @@ const FORMS: Partial<Record<Kind, string>> = {
   template: "/settings/checklist-templates/new",
 };
 const route = (kind: Kind) => ROUTES[kind];
+
+/** Where "open …" goes: a calendar view on the day said (today by default), or a page. */
+function pathOf(open: VoiceOpen, today: string): string {
+  const date = open.date ?? today;
+  switch (open.place) {
+    case "day":
+    case "week":
+    case "month":
+    case "year":
+    case "agenda":
+      return paths[open.place](date);
+    case "wall":
+      return paths.display();
+    case "search":
+      return open.query ? `${paths.search()}?q=${encodeURIComponent(open.query)}` : paths.search();
+    default:
+      return paths[open.place]();
+  }
+}
 const proposalsOf = (create: Create): Proposal[] => [create, ...(create.more ?? [])];
 /** As many corrections as the Worker takes after one sentence. */
 const MAX_CORRECTIONS = 5;
@@ -95,6 +130,8 @@ export function VoiceEntry() {
   const [plan, setPlan] = useState<Plan | null>(null);
   const [scope, setScope] = useState<Scope | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
+  /** The answer to a question about the calendar, said aloud when the question was. */
+  const [reply, setReply] = useState<string | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
   const [unheard, setUnheard] = useState<string | null>(null);
   const [activity, setActivity] = useState<Activity | null>(null);
@@ -107,6 +144,7 @@ export function VoiceEntry() {
   const voiced = useRef(false);
   const saving = useRef(false);
   const lang = i18n.language;
+  const { family } = useSignedIn();
 
   useEffect(() => {
     if (!toast) return;
@@ -183,6 +221,7 @@ export function VoiceEntry() {
     setPlan(null);
     setScope(null);
     setNotice(null);
+    setReply(null);
     setError(false);
     setUnheard(null);
     setText("");
@@ -209,6 +248,8 @@ export function VoiceEntry() {
       queryClient.invalidateQueries({ queryKey: ["checklist"] }),
       queryClient.invalidateQueries({ queryKey: ["persons"] }),
       queryClient.invalidateQueries({ queryKey: ["checklist-templates"] }),
+      refreshShopping(queryClient),
+      queryClient.invalidateQueries({ queryKey: ["relatives"] }),
     ]);
 
   const openForm = (kind: "entry" | "task", values: object) => {
@@ -350,7 +391,7 @@ export function VoiceEntry() {
             }
           }
         : null;
-      setToast({ undo });
+      setToast({ undo, removed: chosen.remove });
     } catch (e) {
       reportFailure(e, "save");
       await invalidate();
@@ -367,7 +408,10 @@ export function VoiceEntry() {
     setPhase("readback");
     if (!talk()) return;
     const mine = ++run.current;
-    await say(mine, [chosen.summary, t("voice.saveOrChange")]);
+    await say(mine, [
+      chosen.summary,
+      t(chosen.remove ? "voice.removeOrChange" : "voice.saveOrChange"),
+    ]);
     await converse(mine, () => void saveChange(chosen, how), editSentence);
   }
 
@@ -435,6 +479,7 @@ export function VoiceEntry() {
     setUnheard(null);
     setText(trimmed);
     setNotice(null);
+    setReply(null);
     setError(false);
     setPhase("sending");
     const mine = run.current;
@@ -465,6 +510,18 @@ export function VoiceEntry() {
     if (answer.outcome === "failed") return openForm("entry", { title: answer.sentence });
     if (answer.outcome === "change") return void startPlan(answer.plan);
     if (answer.outcome === "choose") return void startChoice(answer.options);
+    if (answer.outcome === "briefing") return void readBriefing(answer.person);
+    if (answer.outcome === "open") {
+      close();
+      return void navigate(pathOf(answer, todayIn(family.timeZone)));
+    }
+    if (answer.outcome === "answer") {
+      setReply(answer.text);
+      setText("");
+      setPhase("idle");
+      if (voiced.current) void say(++run.current, answer.text);
+      return;
+    }
     if (answer.outcome === "shopping") {
       setShopping(answer);
       setPhase("readback");
@@ -482,6 +539,30 @@ export function VoiceEntry() {
     if (talk()) void readBack(answer);
   }
 
+  /** "Read me the summary": the Briefing as written, shown and read aloud. */
+  async function readBriefing(person: string | null) {
+    const mine = run.current;
+    setText("");
+    setPhase("idle");
+    let briefing: { segments: Segment[]; fallback: boolean } | null;
+    try {
+      const query = person ? `?person=${encodeURIComponent(person)}` : "";
+      briefing = await api(`/briefing${query}`);
+    } catch {
+      if (run.current === mine) setError(true);
+      return;
+    }
+    if (run.current !== mine) return;
+    if (!briefing) {
+      setNotice("noBriefing");
+      if (voiced.current) void say(++run.current, t("voice.noBriefing"));
+      return;
+    }
+    const sentences = briefingSentences(briefing.segments, briefing.fallback);
+    setReply(sentences.join(" "));
+    void say(++run.current, sentences);
+  }
+
   async function dictate() {
     // A second press while listening ends it and sends what was heard.
     if (phase === "listening") return finishListening();
@@ -489,6 +570,7 @@ export function VoiceEntry() {
     const mine = run.current;
     setError(false);
     setNotice(null);
+    setReply(null);
     setUnheard(null);
     setText("");
     setPhase("listening");
@@ -593,7 +675,9 @@ export function VoiceEntry() {
                     scope && (
                       <>
                         <p data-testid="voice-summary">{plan.summary}</p>
-                        <p className="text-sm text-muted">{t("voice.saveQuestion")}</p>
+                        <p className="text-sm text-muted">
+                          {t(plan.remove ? "voice.removeQuestion" : "voice.saveQuestion")}
+                        </p>
                         {error && (
                           <p role="alert" className="text-sm text-overdue">
                             {t("voice.saveFailed")}
@@ -602,10 +686,14 @@ export function VoiceEntry() {
                         <div className="flex gap-2">
                           <button
                             type="button"
-                            className="rounded-md bg-accent px-4 py-2 font-medium text-accent-ink"
+                            className={`rounded-md px-4 py-2 font-medium ${
+                              plan.remove
+                                ? "border border-overdue bg-surface text-overdue"
+                                : "bg-accent text-accent-ink"
+                            }`}
                             onClick={() => void saveChange(plan, scope)}
                           >
-                            {t("voice.save")}
+                            {t(plan.remove ? "voice.remove" : "voice.save")}
                           </button>
                         </div>
                       </>
@@ -710,6 +798,11 @@ export function VoiceEntry() {
                             : t("voice.micFailed", { code: unheard })}
                     </p>
                   )}
+                  {reply && (
+                    <p data-testid="voice-answer" className="whitespace-pre-line">
+                      {reply}
+                    </p>
+                  )}
                   {notice && (
                     <p data-testid="voice-notice" className="text-sm">
                       {t(`voice.${notice}`)}
@@ -776,7 +869,7 @@ export function VoiceEntry() {
             role="status"
             className="pointer-events-auto flex items-center gap-3 rounded-lg border border-line bg-surface px-4 py-2 text-sm shadow-lg"
           >
-            <span>{t("voice.saved")} ·</span>
+            <span>{t(toast.removed ? "voice.removed" : "voice.saved")} ·</span>
             {toast.undo && (
               <button type="button" className={BUTTON} onClick={() => void undo()}>
                 {t("voice.undo")}

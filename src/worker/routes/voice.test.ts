@@ -47,6 +47,44 @@ type Created = {
 };
 
 describe("Voice Entry: create", () => {
+  it("makes a new Entry Private when the sentence says so", async () => {
+    const { browser } = await family();
+    answer = () => ({
+      kind: "entry",
+      title: "Médico",
+      type: null,
+      persons: [],
+      date: "2026-10-06",
+      time: "15:00",
+      allDay: null,
+      private: true,
+    });
+    const created = (await (
+      await browser.post("/voice", { sentence: "privado: médico terça às 3" })
+    ).json()) as Created;
+    expect(created.values.private).toBe(true);
+    expect(created.summary).toContain("privada");
+  });
+
+  it("takes the Reminders the sentence asks for", async () => {
+    const { browser } = await family();
+    answer = () => ({
+      kind: "entry",
+      title: "Dentista",
+      type: null,
+      persons: [],
+      date: "2026-10-06",
+      time: "15:00",
+      allDay: null,
+      reminders: [60, 60, -5, 30],
+    });
+    const created = (await (
+      await browser.post("/voice", { sentence: "dentista terça às 3, lembra-me 1 hora antes" })
+    ).json()) as Created;
+    expect(created.values.reminders).toEqual([30, 60]);
+    expect(created.summary).toContain("lembrete 30 min antes e 1 h antes");
+  });
+
   it("fills a new Entry from the sentence and the Entry Type's defaults, without saving it", async () => {
     const { browser, ana, types } = await family();
     answer = (p) => ({
@@ -487,7 +525,7 @@ describe("Voice Entry: change", () => {
     await send(browser, every.plan.apply.following);
   });
 
-  it("says which one, not found, one at a time, and never deletes", async () => {
+  it("says which one, not found and one at a time", async () => {
     const { browser } = await withPlans();
     answer = (p) =>
       change({
@@ -518,9 +556,149 @@ describe("Voice Entry: change", () => {
     expect(await (await browser.post("/voice", { sentence: "x" })).json()).toEqual({
       outcome: "oneAtATime",
     });
-    answer = (p) => ({ ...change({ targets: [targetOf(p, "Dinner")] }), action: "delete" });
-    expect(await (await browser.post("/voice", { sentence: "cancel dinner" })).json()).toEqual({
-      outcome: "refused",
+  });
+
+  const remove = (patch: Record<string, unknown>) => ({ ...change(patch), action: "delete" });
+
+  it("deletes a one-off Entry or a Task, asked as Delete and never undone", async () => {
+    const { browser, dinner, bins } = await withPlans();
+    answer = (p) => remove({ targets: [targetOf(p, "Dinner")] });
+    const res = (await (await browser.post("/voice", { sentence: "cancel dinner" })).json()) as {
+      outcome: string;
+      plan: Plan & { remove: boolean };
+    };
+    expect(res.outcome).toBe("change");
+    expect(res.plan).toMatchObject({
+      remove: true,
+      undo: null,
+      scope: "all",
+      summary: "Apagar Dinner · segunda-feira, 5 de outubro",
+    });
+    await send(browser, res.plan.apply.all);
+    expect((await browser.get(`/entries/${dinner}`)).status).toBe(404);
+
+    answer = (p) => remove({ targets: [targetOf(p, "Take out the bins")] });
+    const task = (await (
+      await browser.post("/voice", { sentence: "delete the bins task" })
+    ).json()) as { plan: Plan };
+    await send(browser, task.plan.apply.all);
+    expect((await browser.get(`/tasks/${bins}`)).status).toBe(404);
+  });
+
+  it("deletes one Occurrence or from it on, asking which when the sentence doesn't say", async () => {
+    const { browser, swimming } = await withPlans();
+    answer = (p) => remove({ targets: [targetOf(p, "Swimming")], on: "2026-10-12" });
+    const res = (await (
+      await browser.post("/voice", { sentence: "no swimming on the 12th" })
+    ).json()) as { plan: Plan };
+    expect(res.plan).toMatchObject({ scope: "ask", date: "2026-10-12" });
+    await send(browser, res.plan.apply.this);
+    const entry = (await (await browser.get(`/entries/${swimming}`)).json()) as {
+      exceptions: { date: string; skipped: boolean }[];
+    };
+    expect(entry.exceptions).toMatchObject([{ date: "2026-10-12", skipped: true }]);
+
+    answer = (p) =>
+      remove({ targets: [targetOf(p, "Swimming")], on: "2026-10-19", scope: "following" });
+    const following = (await (
+      await browser.post("/voice", { sentence: "no more swimming from the 19th" })
+    ).json()) as { plan: Plan };
+    expect(following.plan.scope).toBe("following");
+    await send(browser, following.plan.apply.following);
+    const ended = (await (await browser.get(`/entries/${swimming}`)).json()) as {
+      repetition: { end: unknown };
+    };
+    expect(ended.repetition.end).toEqual({ type: "until", date: "2026-10-18" });
+  });
+
+  it("deletes a synced Birthday only through its Person", async () => {
+    const { browser } = await withPlans();
+    await browser.post("/persons", { name: "Bia", color: "#3d405b", dateOfBirth: "2016-10-20" });
+    answer = (p) => remove({ targets: [targetOf(p, "Bia")] });
+    expect(
+      await (await browser.post("/voice", { sentence: "delete Bia's birthday" })).json(),
+    ).toEqual({
+      outcome: "locked",
+    });
+  });
+
+  it("sets an Entry's Reminders, replacing its own, and Undo puts them back", async () => {
+    const { browser, dinner } = await withPlans();
+    answer = (p) => change({ targets: [targetOf(p, "Dinner")], reminders: [1440, 60] });
+    const res = (await (
+      await browser.post("/voice", { sentence: "lembra-me do jantar na véspera e 1 hora antes" })
+    ).json()) as { plan: Plan };
+    expect(res.plan.summary).toBe("Alterar Dinner: lembrete 1 h antes e 1 dia antes");
+    await send(browser, res.plan.apply.all);
+    const reminders = async () =>
+      ((await (await browser.get(`/entries/${dinner}`)).json()) as { reminders: number[] })
+        .reminders;
+    expect((await reminders()).sort((a, b) => a - b)).toEqual([60, 1440]);
+    await send(browser, res.plan.undo!);
+    expect(await reminders()).toEqual([]);
+  });
+
+  it("makes an Entry or a Task Private, or not", async () => {
+    const { browser, dinner, bins } = await withPlans();
+    answer = (p) => change({ targets: [targetOf(p, "Dinner")], private: true });
+    const res = (await (
+      await browser.post("/voice", { sentence: "o jantar é privado" })
+    ).json()) as { plan: Plan };
+    expect(res.plan.summary).toBe("Alterar Dinner: privado");
+    await send(browser, res.plan.apply.all);
+    expect(
+      ((await (await browser.get(`/entries/${dinner}`)).json()) as { private: boolean }).private,
+    ).toBe(true);
+    answer = (p) => change({ targets: [targetOf(p, "Take out the bins")], private: true });
+    const task = (await (
+      await browser.post("/voice", { sentence: "a tarefa do lixo é privada" })
+    ).json()) as { plan: Plan };
+    await send(browser, task.plan.apply.all);
+    expect(
+      ((await (await browser.get(`/tasks/${bins}`)).json()) as { private: boolean }).private,
+    ).toBe(true);
+  });
+
+  it("adds a note after an Entry's own, and Undo takes it off", async () => {
+    const { browser, dinner } = await withPlans();
+    await browser.request("PUT", `/entries/${dinner}`, {
+      ...((await (await browser.get(`/entries/${dinner}`)).json()) as object),
+      notes: "Mesa para 6",
+    });
+    answer = (p) => change({ targets: [targetOf(p, "Dinner")], notes: "levar o bolo" });
+    const res = (await (
+      await browser.post("/voice", { sentence: "no jantar, acrescenta: levar o bolo" })
+    ).json()) as { plan: Plan };
+    expect(res.plan.summary).toBe("Alterar Dinner: nota: levar o bolo");
+    await send(browser, res.plan.apply.all);
+    const notes = async () =>
+      ((await (await browser.get(`/entries/${dinner}`)).json()) as { notes: string }).notes;
+    expect(await notes()).toBe("Mesa para 6\nlevar o bolo");
+    await send(browser, res.plan.undo!);
+    expect(await notes()).toBe("Mesa para 6");
+  });
+
+  it("moves every overdue Task to the day said, and Undo moves them back", async () => {
+    const { browser } = await withPlans();
+    const late = (
+      (await (
+        await browser.post("/tasks", { title: "Pay water", personIds: [], dueDate: "2026-10-01" })
+      ).json()) as { id: string }
+    ).id;
+    answer = () => change({ action: "overdue", date: "2026-10-07" });
+    const res = (await (
+      await browser.post("/voice", { sentence: "passa as tarefas em atraso para amanhã" })
+    ).json()) as { plan: Plan };
+    expect(res.plan.summary).toBe("Passar para quarta-feira, 7 de outubro: Pay water");
+    await send(browser, res.plan.apply.all);
+    const due = async () =>
+      ((await (await browser.get(`/tasks/${late}`)).json()) as { dueDate: string }).dueDate;
+    expect(await due()).toBe("2026-10-07");
+    await send(browser, res.plan.undo!);
+    expect(await due()).toBe("2026-10-01");
+    await browser.post(`/tasks/${late}/done`, {});
+    expect(await (await browser.post("/voice", { sentence: "x" })).json()).toEqual({
+      outcome: "noneOverdue",
     });
   });
 
@@ -606,6 +784,195 @@ describe("Voice Entry: Persons and predefined lists", () => {
   });
 });
 
+describe("Voice Entry: questions", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-06T10:00:00Z"));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("answers what is on a day, and when one thing is, without saving anything", async () => {
+    const { browser, ana, types } = await family();
+    await browser.post("/entries", {
+      title: "Dentista",
+      entryTypeId: types[0].id,
+      time: {
+        allDay: false,
+        startDate: "2026-10-09",
+        startTime: "10:00",
+        endDate: "2026-10-09",
+        endTime: "11:00",
+      },
+      personIds: [ana],
+    });
+    answer = () => ({ ...change({ date: "2026-10-09" }), action: "question" });
+    expect(await (await browser.post("/voice", { sentence: "o que temos sexta?" })).json()).toEqual(
+      { outcome: "answer", text: "sexta-feira, 9 de outubro: 10:00 Dentista (Ana)." },
+    );
+    answer = (p) => ({ ...change({ targets: [targetOf(p, "Dentista")] }), action: "question" });
+    expect(
+      await (await browser.post("/voice", { sentence: "quando é o dentista da Ana?" })).json(),
+    ).toEqual({ outcome: "answer", text: "Dentista (Ana): sexta-feira, 9 de outubro, 10:00." });
+  });
+
+  it("names no speaker when the Account has no Person", async () => {
+    const { browser } = await family();
+    answer = () => ({ ...change({}), action: "question" });
+    await browser.post("/voice", { sentence: "o que tenho hoje?" });
+    expect(prompts[0].messages[1].content).not.toContain("The person speaking");
+  });
+});
+
+describe("Voice Entry: items of a Task", () => {
+  it("adds items to a Task with items and ticks others, and Undo takes both back", async () => {
+    const { browser } = await family();
+    const created = (await (
+      await browser.post("/checklists", {
+        name: "Praia",
+        startDate: null,
+        endDate: null,
+        repetition: null,
+        remindAtStart: false,
+        entryId: null,
+        personIds: [],
+        items: ["Toalhas", "Chapéu"],
+      })
+    ).json()) as { id: string };
+    const items = async () =>
+      (
+        (await (await browser.get("/tasks")).json()) as {
+          title: string;
+          checklistId: string | null;
+          doneAt: string | null;
+        }[]
+      )
+        .filter((t) => t.checklistId === created.id)
+        .sort((a, b) => a.title.localeCompare(b.title));
+    answer = (p) => {
+      expect(p.messages[1].content).toContain("0. Praia: Toalhas, Chapéu");
+      return {
+        ...change({ action: "items" }),
+        checklist: 0,
+        items: ["Protetor solar", "toalhas"],
+        tick: ["chapéu"],
+      };
+    };
+    const res = (await (
+      await browser.post("/voice", { sentence: "junta protetor solar à praia, o chapéu já está" })
+    ).json()) as { plan: Plan };
+    expect(res.plan.summary).toBe("Em Praia: juntar Protetor solar; feito Chapéu");
+    await send(browser, res.plan.apply.all);
+    expect((await items()).map((i) => [i.title, i.doneAt !== null])).toEqual([
+      ["Chapéu", true],
+      ["Protetor solar", false],
+      ["Toalhas", false],
+    ]);
+    await send(browser, res.plan.undo!);
+    expect((await items()).map((i) => [i.title, i.doneAt !== null])).toEqual([
+      ["Chapéu", false],
+      ["Toalhas", false],
+    ]);
+  });
+});
+
+describe("Voice Entry: Family Tree", () => {
+  it("adds a relative linked to one in the tree, and changes one's dates, with Undo", async () => {
+    const { browser } = await family();
+    const ana = (await (await browser.post("/relatives", { name: "Ana" })).json()) as {
+      id: string;
+    };
+    const tree = async () =>
+      (await (await browser.get("/relatives")).json()) as {
+        id: string;
+        name: string;
+        sex: string;
+        parentIds: string[];
+        deathDate: string | null;
+      }[];
+    answer = (p) => {
+      expect(p.messages[1].content).toContain("Family tree:\n0. Ana");
+      return {
+        ...change({ action: "relative", title: "Rosa", date: "1950-03-02" }),
+        relation: "parent",
+        of: 0,
+        sex: "f",
+      };
+    };
+    const added = (await (
+      await browser.post("/voice", { sentence: "a Rosa é mãe da Ana, nasceu a 2 de março de 1950" })
+    ).json()) as { plan: Plan };
+    expect(added.plan.summary).toBe(
+      "Nova pessoa na árvore: Rosa, mãe de Ana, nasceu a 2 de março de 1950",
+    );
+    await send(browser, added.plan.apply.all);
+    const rosa = (await tree()).find((r) => r.name === "Rosa")!;
+    expect(rosa.sex).toBe("f");
+    expect((await tree()).find((r) => r.id === ana.id)!.parentIds).toEqual([rosa.id]);
+
+    answer = (p) => ({
+      ...change({ action: "relative", endDate: "2020-05-03" }),
+      relative: numberOf(p, "Rosa"),
+    });
+    const died = (await (
+      await browser.post("/voice", { sentence: "a Rosa faleceu a 3 de maio de 2020" })
+    ).json()) as { plan: Plan };
+    await send(browser, died.plan.apply.all);
+    expect((await tree()).find((r) => r.id === rosa.id)!.deathDate).toBe("2020-05-03");
+    await send(browser, died.plan.undo!);
+    expect((await tree()).find((r) => r.id === rosa.id)!.deathDate).toBeNull();
+    await send(browser, added.plan.undo!);
+    expect((await tree()).map((r) => r.name)).toEqual(["Ana"]);
+  });
+});
+
+describe("Voice Entry: weather", () => {
+  it("answers from the forecast kept for the chosen place", async () => {
+    const { browser } = await family();
+    answer = () => ({ ...change({ action: "weather", date: null }) });
+    expect(await (await browser.post("/voice", { sentence: "vai chover hoje?" })).json()).toEqual({
+      outcome: "answer",
+      text: "Não há previsão do tempo: escolha um local em Definições.",
+    });
+  });
+});
+
+describe("Voice Entry: Briefing", () => {
+  it("names whose Briefing to read", async () => {
+    const { browser, ana } = await family();
+    answer = (p) => ({ ...change({ action: "briefing", persons: [numberOf(p, "Ana")] }) });
+    expect(await (await browser.post("/voice", { sentence: "lê o resumo da Ana" })).json()).toEqual(
+      {
+        outcome: "briefing",
+        person: ana,
+      },
+    );
+  });
+});
+
+describe("Voice Entry: open", () => {
+  it("names the place, the day and what to search for", async () => {
+    const { browser } = await family();
+    answer = () => ({ ...change({ date: "2026-12-01" }), action: "open", place: "month" });
+    expect(await (await browser.post("/voice", { sentence: "abre dezembro" })).json()).toEqual({
+      outcome: "open",
+      place: "month",
+      date: "2026-12-01",
+      query: null,
+    });
+    answer = () => ({ ...change({ title: "dentista" }), action: "open", place: "search" });
+    expect(
+      await (await browser.post("/voice", { sentence: "procura dentista" })).json(),
+    ).toMatchObject({ outcome: "open", place: "search", query: "dentista" });
+    answer = () => ({ ...change({}), action: "open", place: "kitchen" });
+    expect(await (await browser.post("/voice", { sentence: "abre a cozinha" })).json()).toEqual({
+      outcome: "failed",
+      sentence: "abre a cozinha",
+    });
+  });
+});
+
 describe("Voice Entry: Shopping List", () => {
   it("reads things to buy without the model, leaving out those already open on the list", async () => {
     const { browser } = await family();
@@ -671,6 +1038,68 @@ describe("Voice Entry: Shopping List", () => {
     expect(await (await browser.post("/voice", { sentence: "hmm" })).json()).toMatchObject({
       outcome: "failed",
     });
+  });
+
+  const shop = (patch: Record<string, unknown>) => ({
+    ...change({ action: "shopping" }),
+    ...patch,
+  });
+
+  it("ticks things bought or takes them off, with Undo, and says what is left", async () => {
+    const { browser } = await family();
+    const add = async (name: string, store = "") =>
+      (
+        (await (await browser.post("/shopping/items", { name, store, quantity: "" })).json()) as {
+          id: string;
+        }
+      ).id;
+    const leite = await add("Leite", "Lidl");
+    const ovos = await add("Ovos");
+    await add("Pão", "Padaria");
+
+    answer = () => shop({ shop: "bought", items: ["leite"] });
+    const bought = (await (
+      await browser.post("/voice", { sentence: "já comprei o leite" })
+    ).json()) as { outcome: string; plan: Plan };
+    expect(bought.plan.summary).toBe("Comprado: Leite");
+    await send(browser, bought.plan.apply.all);
+    const items = async () =>
+      (await (await browser.get("/shopping/items")).json()) as {
+        id: string;
+        boughtAt: string | null;
+      }[];
+    expect((await items()).find((i) => i.id === leite)!.boughtAt).not.toBeNull();
+    await send(browser, bought.plan.undo!);
+    expect((await items()).find((i) => i.id === leite)!.boughtAt).toBeNull();
+
+    answer = () => shop({ shop: "remove", items: ["ovos", "chocolate"] });
+    const removed = (await (
+      await browser.post("/voice", { sentence: "tira os ovos e o chocolate da lista" })
+    ).json()) as { plan: Plan };
+    expect(removed.plan.summary).toBe("Tirar da lista de compras: Ovos");
+    await send(browser, removed.plan.apply.all);
+    expect((await items()).some((i) => i.id === ovos)).toBe(false);
+    await send(browser, removed.plan.undo!);
+    expect((await items()).some((i) => i.id === ovos)).toBe(true);
+
+    answer = () => shop({ shop: "remove", items: ["chocolate"] });
+    expect(await (await browser.post("/voice", { sentence: "tira o chocolate" })).json()).toEqual({
+      outcome: "notFound",
+    });
+
+    answer = () => shop({ shop: "ask", store: "Lidl" });
+    expect(
+      await (await browser.post("/voice", { sentence: "o que falta comprar no Lidl?" })).json(),
+    ).toEqual({ outcome: "answer", text: "Na lista de compras no Lidl: Leite, Ovos." });
+  });
+
+  it("keeps the shop said with the things to buy", async () => {
+    const { browser } = await family();
+    answer = () => shop({ shop: "add", items: ["leite"], store: "Lidl" });
+    expect(
+      await (await browser.post("/voice", { sentence: "comprar leite no Lidl" })).json(),
+    ).toEqual({ outcome: "shopping", items: [{ name: "Leite", store: "Lidl" }], already: [] });
+    expect(prompts).toHaveLength(1);
   });
 });
 

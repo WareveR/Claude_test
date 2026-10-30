@@ -1,3 +1,4 @@
+import { VOICE_PLACES } from "../core/voice-open";
 import {
   candidateLink,
   NO_EXTRAS,
@@ -334,7 +335,25 @@ const VOICE_SCHEMA = {
   properties: {
     action: {
       type: "string",
-      enum: ["create", "change", "delete", "shopping", "person", "list"],
+      enum: [
+        "create",
+        "change",
+        "delete",
+        "shopping",
+        "person",
+        "list",
+        "question",
+        "open",
+        "items",
+        "relative",
+        "weather",
+        "overdue",
+        "briefing",
+      ],
+    },
+    place: {
+      type: ["string", "null"],
+      enum: [...VOICE_PLACES, null],
     },
     kind: { type: ["string", "null"], enum: ["entry", "task", null] },
     title: { type: ["string", "null"] },
@@ -349,11 +368,22 @@ const VOICE_SCHEMA = {
     importance: { type: ["string", "null"], enum: ["low", "normal", "high", null] },
     repeat: REPEAT_SCHEMA,
     done: { type: ["boolean", "null"] },
+    reminders: { type: ["array", "null"], items: { type: "integer" } },
+    private: { type: ["boolean", "null"] },
+    notes: { type: ["string", "null"] },
     targets: { type: "array", items: { type: "integer" } },
     several: { type: "boolean" },
     on: { type: ["string", "null"] },
     scope: { type: ["string", "null"], enum: ["this", "following", null] },
     items: { type: "array", items: { type: "string" } },
+    checklist: { type: ["integer", "null"] },
+    relative: { type: ["integer", "null"] },
+    relation: { type: ["string", "null"], enum: ["parent", "child", "partner", "sibling", null] },
+    of: { type: ["integer", "null"] },
+    sex: { type: ["string", "null"], enum: ["f", "m", null] },
+    tick: { type: "array", items: { type: "string" } },
+    shop: { type: ["string", "null"], enum: ["add", "bought", "remove", "ask", null] },
+    store: { type: ["string", "null"] },
     list: { type: ["integer", "null"] },
     nicknames: { type: "array", items: { type: "string" } },
     others: {
@@ -373,6 +403,7 @@ const VOICE_SCHEMA = {
           location: { type: ["string", "null"] },
           importance: { type: ["string", "null"], enum: ["low", "normal", "high", null] },
           repeat: REPEAT_SCHEMA,
+          reminders: { type: ["array", "null"], items: { type: "integer" } },
         },
         required: ["kind", "title", "type", "persons", "date", "time", "allDay"],
       },
@@ -394,6 +425,12 @@ export type VoiceContext = {
   lists: string[];
   /** What a change may target, already numbered by position. */
   targets: string[];
+  /** Existing Tasks with items, each with its items: "Beach bag: towels (done), sunscreen". */
+  checklists?: string[];
+  /** The Family Tree's Relatives: "Rosa (Avó), born 1950-03-02". */
+  relatives?: string[];
+  /** The number of the Person speaking, when the Account has one. */
+  speaker?: number | null;
 };
 
 /** The prompt that turns one sentence into a new Entry or Task, or a change to one. */
@@ -410,18 +447,29 @@ export function voicePrompt(context: VoiceContext) {
     {
       role: "system",
       content: [
-        'You read one sentence from a family member about the family calendar. "action" is "create" for a new entry or task, "change" to change an existing one, "delete" to remove or cancel one, "shopping" to put things on the family\'s shopping list, "person" to add a new person to the family, "list" to make a new predefined list.',
+        'You read one sentence from a family member about the family calendar. "action" is "create" for a new entry or task, "change" to change an existing one, "delete" to remove or cancel one, "shopping" to put things on the family\'s shopping list, "person" to add a new person to the family, "list" to make a new predefined list, "question" to ask what is on the calendar, "open" to go to a part of the app, "items" to add or tick items in an existing task with items, "relative" for the family tree, "weather" to ask about the weather, "overdue" to move every overdue task to another day, "briefing" to hear the summary.',
         `The sentence is in ${LANGUAGE_NAMES[context.language]}; keep the title in that language, short, without the date, time or names.`,
         'An "entry" happens at a time (appointment, birthday, trip, class); a "task" is something to do, possibly by a due date.',
         "Give dates as YYYY-MM-DD and times as HH:mm (24-hour), worked out from today's date; null when the sentence doesn't say.",
         '"persons" lists the numbers of the people it is for; "type" is the number of the best entry type, or null.',
         '"repeat" only when the sentence says it repeats; weekdays are 0 = Monday … 6 = Sunday.',
+        '"reminders" only when the sentence asks to be reminded, for an entry: minutes before the start, one number per reminder ("remind me an hour before" is [60], "the day before and 30 minutes before" is [1440, 30], "at the time" is [0]); otherwise null.',
+        '"private" is true when the sentence says it is private or only for them ("private: doctor on Monday"), false when it says to stop being private, else null.',
         'For "create", when the sentence names two or more separate things, at different times or for different people each with their own ("I have a massage on Friday at 10 and my wife has one at 11"), the main fields hold the first and "others" holds each of the rest, every one complete with its own kind, title, type, persons, date and time; one thing the people do together stays one item and "others" is empty.',
         'A new "task" may have items: "items" lists the sub-tasks or things to remember the sentence names for it ("prepare the trip: passports, chargers and book the taxi"), short, in the sentence\'s language; "list" is the number of the predefined list it uses when the sentence asks for one or names it ("pack for the beach with the beach list"), else null. Otherwise "items" is empty.',
         '"person" is only for adding someone new to the family\'s people ("add Maria, born 3 May 2015, we call her Mimi"): "title" is the name, "nicknames" the other names they go by, "date" the date of birth if said.',
         '"list" is only for making a new predefined list, a reusable template of items, when the sentence says so ("create the predefined list Beach with towels and sunscreen"): "title" is its name and "items" its items; a list for one task or occasion is a "create" task with items.',
-        '"shopping" is for buying things or adding them to the shopping list when no day or time is said ("buy milk and eggs", "we\'re out of bread"): "items" lists each thing, short, in the sentence\'s language, without verbs.',
+        '"shopping" is for buying things or adding them to the shopping list when no day or time is said ("buy milk and eggs", "we\'re out of bread"): "items" lists each thing, short, in the sentence\'s language, without verbs. "shop" is "add" for that; "bought" when they say things were bought ("I bought the milk"); "remove" to take things off the list; "ask" for what is on the list ("what do we need to buy?"). "store" is the shop named ("milk at Lidl", "what is there to buy at Lidl?"), else null.',
         'For "change": "targets" lists the numbers of the existing items the sentence may mean (all that fit, best first; empty if none); "several" is true when the sentence asks to change two or more different items; "on" is the date of the one occurrence meant for a repeating item, if said; "scope" is "this" for only this time, "following" for from now on, null if not said. Fill only the fields that change and leave the rest null (title only when renamed, persons empty unless they change); "done": true when a task is done.',
+        '"question" is for asking, not changing ("what do we have tomorrow?", "am I free on Friday afternoon?", "what\'s on this week?", "when is Ana\'s next dentist?"): "date" and "endDate" are the days asked about ("this week" is today to Sunday; endDate null for one day; date null for today); "time" and "endTime" a part of the day if said (morning 08:00–12:00, afternoon 12:00–19:00, evening 19:00–23:59), else null; "persons" whose calendar is asked about, empty for the whole family; for "when is the next …" about one existing item, "targets" lists the numbers of the items it may mean and date stays null.',
+        '"open" is only for going somewhere in the app ("show next week", "open December", "open the shopping list", "search for dentist"): "place" is where (day, week, month, year, agenda, tasks, shopping, tree for the family tree, summary, wall, suggestions, search, settings); "date" the day it shows, if said; for "search", "title" is what to look for.',
+        '"items" is only for an existing task with items, from the list below ("add sunscreen to the beach bag", "the towels are packed"): "checklist" is its number; "items" the new items to add to it, short, in the sentence\'s language; "tick" the names of its items the sentence says are done, as they are written in the list.',
+        '"relative" is for the family tree below: adding a relative ("Rosa is Ana\'s grandmother", "add Ana\'s mother Rosa, born in 1950") or changing one ("grandpa João died on 3 May 2020"). "relative" is the number of the one changed, null when adding; "title" the new one\'s name; "nicknames" what they are called; "date" the date of birth and "endDate" the date of death, if said; "relation" is what the new one is of "of" (another number in the tree): "parent", "child", "partner" or "sibling"; "sex" is "f" or "m" when the words say (mother, sister, avó), else null; a grandmother is the parent of a parent, so pick that parent when they are in the tree.',
+        '"notes" is a note the sentence asks to write on the entry or task ("note: bring the ID card", "add to the dentist: ask about the brace"), in the sentence\'s language; else null. For "change", the note is added to what is there.',
+        '"weather" is for asking about the weather ("will it rain tomorrow?", "how hot is it on Saturday?"): "date" is the day asked about, null for today.',
+        '"overdue" is for moving all the overdue tasks at once ("move the overdue tasks to tomorrow", "pass what is late to today"): "date" is the new day, null for today. One named task is a "change".',
+        '"briefing" is for hearing the day\'s summary read out ("read me the summary", "what\'s my briefing?"): "persons" holds the one person whose summary it is, if said, else empty.',
+        'For "delete": "targets", "several", "on" and "scope" work as for "change", and the other fields stay null; cancelling something that happens ("cancel Friday\'s dinner") is "delete".',
         "Answer only with JSON matching the schema.",
       ].join(" "),
     },
@@ -430,8 +478,13 @@ export function voicePrompt(context: VoiceContext) {
       content: [
         `Today is ${day} ${context.today}, time zone ${context.timeZone}.`,
         `People:\n${persons || "(none)"}`,
+        ...(context.speaker != null
+          ? [`The person speaking is number ${context.speaker}; "I", "me" and "my" mean them.`]
+          : []),
         `Entry types:\n${context.types.map((t, i) => `${i}. ${t}`).join("\n")}`,
         `Predefined lists:\n${context.lists.map((l, i) => `${i}. ${l}`).join("\n") || "(none)"}`,
+        `Family tree:\n${(context.relatives ?? []).map((r, i) => `${i}. ${r}`).join("\n") || "(none)"}`,
+        `Tasks with items:\n${(context.checklists ?? []).map((l, i) => `${i}. ${l}`).join("\n") || "(none)"}`,
         `Existing items:\n${context.targets.map((t, i) => `${i}. ${t}`).join("\n") || "(none)"}`,
         `Sentence: ${JSON.stringify(context.sentence)}`,
         ...(context.corrections?.length
