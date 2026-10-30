@@ -707,6 +707,28 @@ describe("Voice Entry: questions", () => {
   });
 });
 
+describe("Voice Entry: open", () => {
+  it("names the place, the day and what to search for", async () => {
+    const { browser } = await family();
+    answer = () => ({ ...change({ date: "2026-12-01" }), action: "open", place: "month" });
+    expect(await (await browser.post("/voice", { sentence: "abre dezembro" })).json()).toEqual({
+      outcome: "open",
+      place: "month",
+      date: "2026-12-01",
+      query: null,
+    });
+    answer = () => ({ ...change({ title: "dentista" }), action: "open", place: "search" });
+    expect(
+      await (await browser.post("/voice", { sentence: "procura dentista" })).json(),
+    ).toMatchObject({ outcome: "open", place: "search", query: "dentista" });
+    answer = () => ({ ...change({}), action: "open", place: "kitchen" });
+    expect(await (await browser.post("/voice", { sentence: "abre a cozinha" })).json()).toEqual({
+      outcome: "failed",
+      sentence: "abre a cozinha",
+    });
+  });
+});
+
 describe("Voice Entry: Shopping List", () => {
   it("reads things to buy without the model, leaving out those already open on the list", async () => {
     const { browser } = await family();
