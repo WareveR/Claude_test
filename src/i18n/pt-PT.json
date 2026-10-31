@@ -694,7 +694,19 @@
       "hearing": "A ouvir…",
       "processing": "A processar…",
       "speaking": "A responder…"
-    }
+    },
+    "sound": "Voz",
+    "soundHint": "Como a aplicação fala neste dispositivo: no resumo e nas respostas.",
+    "voice": "Voz",
+    "voiceAuto": "Automática (a mais natural)",
+    "voiceOnline": "online",
+    "noVoices": "Este dispositivo não tem nenhuma voz de português de Portugal. No Android, instale-a em Definições › Acessibilidade › Texto para voz › Motor do Google › Instalar dados de voz › Português (Portugal).",
+    "androidHint": "No Android, as variantes de voz (masculina, feminina) escolhem-se em Definições › Acessibilidade › Texto para voz › Motor do Google › Português (Portugal).",
+    "rate": "Velocidade",
+    "pitch": "Tom",
+    "preview": "Ouvir",
+    "reset": "Repor",
+    "sample": "Bom dia! É esta a voz que vai ler o resumo e responder-lhe na aplicação."
   },
   "display": {
     "today": "Hoje",

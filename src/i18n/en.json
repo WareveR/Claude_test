@@ -694,7 +694,19 @@
       "hearing": "Listening…",
       "processing": "Working on it…",
       "speaking": "Speaking…"
-    }
+    },
+    "sound": "Voice",
+    "soundHint": "How the app speaks on this device: the summary and the answers.",
+    "voice": "Voice",
+    "voiceAuto": "Automatic (the most natural)",
+    "voiceOnline": "online",
+    "noVoices": "This device has no voice for this language. On Android, install one in Settings › Accessibility › Text-to-speech › Google engine › Install voice data.",
+    "androidHint": "On Android, voice variants (male, female) are chosen in Settings › Accessibility › Text-to-speech › Google engine.",
+    "rate": "Speed",
+    "pitch": "Pitch",
+    "preview": "Listen",
+    "reset": "Reset",
+    "sample": "Good morning! This is the voice that will read the summary and answer you in the app."
   },
   "display": {
     "today": "Today",
