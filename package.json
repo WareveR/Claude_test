@@ -27,7 +27,7 @@
     "date-holidays": "3.37.0",
     "drizzle-orm": "0.45.3",
     "fflate": "^0.8.3",
-    "hono": "4.13.12",
+    "hono": "4.13.18",
     "i18next": "26.4.2",
     "lucide-react": "1.49.0",
     "react": "19.3.0",

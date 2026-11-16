@@ -140,7 +140,7 @@ async function present(db: Db, rows: TaskRow[], viewer: Account) {
       checklistId: row.checklistId,
       parentId: row.parentId,
       entryId: row.entryId,
-      importance: row.importance,
+      importance: hidden ? "normal" : row.importance,
       createdAt: row.createdAt,
       changedAt: row.changedAt,
     };

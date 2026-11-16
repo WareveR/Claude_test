@@ -101,6 +101,21 @@ describe("Private per person", () => {
     expect(next).toMatchObject({ title: "", hidden: true });
   });
 
+  it("does not let someone else give items to a Private Task", async () => {
+    const { david, carla } = await family();
+    const { id } = (await (
+      await carla.post("/tasks", { title: "Marcar dentista", dueDate: "2026-10-23", private: true })
+    ).json()) as Item;
+    const res = await david.post(`/tasks/${id}/with-items`);
+    expect(res.status).toBe(403);
+    const text = await res.text();
+    expect(JSON.parse(text)).toEqual({ error: "private" });
+    expect(text).not.toContain("Marcar dentista");
+    const own = (await (await carla.get("/tasks")).json()) as Item[];
+    expect(own).toHaveLength(1);
+    expect(own[0]).toMatchObject({ id, title: "Marcar dentista", hidden: false });
+  });
+
   it("leaves hidden Private items out of a voice change and blanks them in the Export", async () => {
     const { david, rui, ids, typeId } = await family();
     await david.post("/entries", {
@@ -119,5 +134,91 @@ describe("Private per person", () => {
     expect(ics).not.toContain("Consulta");
     expect(ics).toContain("SUMMARY:Ocupado");
     expect(await (await david.get("/export/entries.ics")).text()).toContain("SUMMARY:Consulta");
+  });
+
+  it("hides the type, importance, icon and reminders of a hidden Private Entry and its exceptions", async () => {
+    const { david, rui, ids, typeId } = await family();
+    const types = (await (await david.get("/entry-types")).json()) as {
+      id: string;
+      builtinKey: string | null;
+    }[];
+    const medical = types.find((t) => t.builtinKey !== "general")!.id;
+    const weekly = { frequency: "weekly", interval: 1, end: { type: "never" } };
+    const base = {
+      title: "Consulta",
+      entryTypeId: medical,
+      time: TIME,
+      personIds: [ids.david],
+      importance: "high",
+      icon: "heart",
+      reminders: [3600],
+      private: true,
+    };
+    const { id } = (await (
+      await david.post("/entries", { ...base, repetition: weekly })
+    ).json()) as Item;
+    const res = await david.request("PUT", `/entries/${id}/occurrences/2026-10-30`, {
+      ...base,
+      repetition: weekly,
+    });
+    expect(res.status).toBe(200);
+
+    type Seen = {
+      entryTypeId: string;
+      importance: string;
+      icon: string | null;
+      reminders: number[];
+      exceptions: { override: Record<string, unknown> }[];
+    };
+    const [own] = (await entries(david)) as unknown as Seen[];
+    expect(own).toMatchObject({ entryTypeId: medical, importance: "high", icon: "heart" });
+    expect(own.exceptions[0].override).toMatchObject({ entryTypeId: medical, icon: "heart" });
+
+    const [seen] = (await entries(rui)) as unknown as Seen[];
+    expect(seen).toMatchObject({
+      entryTypeId: typeId,
+      importance: "normal",
+      icon: null,
+      reminders: [],
+    });
+    expect(seen.exceptions[0].override).toMatchObject({
+      entryTypeId: typeId,
+      importance: "normal",
+      icon: null,
+      reminders: [],
+      hidden: true,
+    });
+
+    const exported = (await (await rui.get("/export")).json()) as {
+      tables: {
+        entry: { entry_type_id: string; importance: string; icon: string | null }[];
+        occurrence_exception: { override: string }[];
+      };
+    };
+    expect(exported.tables.entry[0]).toMatchObject({
+      entry_type_id: typeId,
+      importance: "normal",
+      icon: null,
+    });
+    expect(JSON.parse(exported.tables.occurrence_exception[0].override)).toMatchObject({
+      entryTypeId: typeId,
+      importance: "normal",
+      icon: null,
+      reminders: [],
+    });
+  });
+
+  it("shows a hidden Private Task with normal importance", async () => {
+    const { david, carla } = await family();
+    await carla.post("/tasks", {
+      title: "Marcar dentista",
+      dueDate: "2026-10-23",
+      importance: "high",
+      private: true,
+    });
+    const own = (await (await carla.get("/tasks")).json()) as { importance: string }[];
+    expect(own[0].importance).toBe("high");
+    const other = (await (await david.get("/tasks")).json()) as { importance: string }[];
+    expect(other[0].importance).toBe("normal");
   });
 });
