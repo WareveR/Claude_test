@@ -86,6 +86,8 @@ export type BriefingExtras = {
   bins?: Bin[];
   /** Clashes and full days in the next 7 days, from this Briefing's own candidates. */
   logistics?: Logistics;
+  /** The Shopping List items marked urgent and not yet bought, the only ones it mentions. */
+  urgentShopping?: string[];
 };
 
 export const NO_EXTRAS: BriefingExtras = { weather: null, clockChange: null, bins: [] };
@@ -323,14 +325,22 @@ export function forAccount(candidates: Candidate[], reader: BriefingReader): Can
   });
 }
 
-/** The next 7 days (and anything overdue) as a string; when it changes, the Briefing is rewritten. */
-export function weekOf(candidates: Candidate[], today: PlainDate): string {
+/**
+ * The next 7 days (and anything overdue), and the urgent shopping, as a string; when it changes,
+ * the Briefing is rewritten.
+ */
+export function weekOf(
+  candidates: Candidate[],
+  today: PlainDate,
+  urgentShopping: string[] = [],
+): string {
   const last = addDays(today, REWRITE_DAYS - 1);
-  return JSON.stringify(
+  const week = JSON.stringify(
     candidates
       .filter((c) => c.date <= last)
       .map((c) => [c.kind, c.id, c.date, c.time, c.title, c.persons, c.importance, c.detail]),
   );
+  return urgentShopping.length > 0 ? `${week}|${JSON.stringify(urgentShopping)}` : week;
 }
 
 /** The link a candidate's phrase opens, if any. */

@@ -13,6 +13,8 @@ export type ShoppingItem = {
   note: string;
   /** "" for any shop. */
   store: string;
+  /** Needed soon: shown first-glance on the list and mentioned in the Briefing. */
+  urgent: boolean;
   boughtAt: string | null;
   createdAt: string;
   changedAt: string;

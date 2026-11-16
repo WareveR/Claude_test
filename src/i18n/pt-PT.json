@@ -1448,7 +1448,9 @@
     "addFromText": "Adicionar à lista de compras: {{names}}",
     "alreadyOnList": "Já está na lista de compras: {{names}}",
     "added": "Adicionado à lista de compras: {{names}}",
-    "open": "Abrir lista de compras"
+    "open": "Abrir lista de compras",
+    "urgent": "Urgente",
+    "urgentHint": "Urgente: o Resumo lembra-o"
   },
   "recipes": {
     "title": "Livro de receitas",

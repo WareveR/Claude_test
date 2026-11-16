@@ -487,6 +487,8 @@ export const shoppingItem = sqliteTable("shopping_item", {
   note: text("note").notNull().default(""),
   /** The shop it is to be bought at, as typed; "" for any shop. */
   store: text("store").notNull().default(""),
+  /** Needed soon: the only items the Briefing mentions. */
+  urgent: integer("urgent", { mode: "boolean" }).notNull().default(false),
   boughtAt: text("bought_at"),
   createdAt: text("created_at").notNull(),
   changedAt: text("changed_at").notNull(),

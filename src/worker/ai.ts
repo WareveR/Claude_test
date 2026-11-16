@@ -214,6 +214,12 @@ function describeBins(bins: Bin[] | undefined) {
   return `Rubbish collection: tonight the ${bins.map((b) => BIN_NAMES[b]).join(" and ")} goes out.`;
 }
 
+/** The urgent Shopping List items, the only ones the Briefing names. */
+function describeShopping(items: string[] | undefined) {
+  if (!items || items.length === 0) return "";
+  return `Urgent on the shopping list: ${items.map((i) => `"${i}"`).join(", ")}.`;
+}
+
 /** The weather during the day's timed Entries, when rain, cold or heat is worth a word. */
 function describeEntryWeather(
   candidates: Candidate[],
@@ -316,8 +322,9 @@ export function briefingPrompt(
         "4. Today: what is on today, with its time.",
         "5. The coming days: only the HIGH importance items and what needs getting ready (a trip, a party, a birthday within the next month with a reminder to prepare it, a public holiday with a question on how to make the most of it); group or skip the routine ones. What to prepare: the tasks and lists that prepare for these, with their progress, in a few words.",
         "6. Clashes, logistics and full days, when given: point each out briefly as something to sort out (who takes whom, what to move), and when the week is very full say so with a word of encouragement.",
-        "7. Tasks: say how many are overdue and name only the most important; when there are overdue tasks, ask whether to do them today, move them or drop them.",
-        "8. Sign off with one short, cheerful sentence, like a radio host closing the show.",
+        "7. Urgent shopping, when given: name those items in one sentence, so whoever passes a shop gets them; never mention the rest of the list.",
+        "8. Tasks: say how many are overdue and name only the most important; when there are overdue tasks, ask whether to do them today, move them or drop them.",
+        "9. Sign off with one short, cheerful sentence, like a radio host closing the show.",
         "Link the items with natural radio transitions instead of listing them. Say dates relative to today (today, tomorrow, on Friday, next week, at the end of the month). Warm, cheerful, short sentences; use only facts given here and never invent events.",
         'Answer as JSON {"segments":[{"text":"...","item":n}]}: split the sentences into pieces so that each piece names at most one item, give that item\'s number in "item", and null for pieces that name none. Joined in order, the pieces must read as the whole text. A new paragraph starts with a piece whose text begins with "\\n\\n".',
       ].join(" "),
@@ -331,6 +338,7 @@ export function briefingPrompt(
         describeBins(extras.bins),
         describeLogistics(extras.logistics, locale),
         describeEntryWeather(candidates, extras.weather, today),
+        describeShopping(extras.urgentShopping),
         candidates.length > 0
           ? candidates.map((c, i) => describe(c, i, language)).join("\n")
           : "Nothing is planned.",
@@ -385,7 +393,7 @@ function eveningPrompt(
         "1. Tomorrow's weather, only when given, as a practical tip for the morning (a coat, an umbrella); when rain, cold or heat is given during an item held outdoors, say it with that item.",
         "2. Tomorrow: what is on, with its time; for the first thing that needs leaving home, say its time and place and remind them to leave in good time. Never make up how long the trip takes.",
         "3. What to get ready tonight: the tasks and lists for tomorrow or that prepare for tomorrow's items, with their progress, and anything still left to do today; the rubbish collection, when given, as a reminder to put that bin out tonight.",
-        "4. Only if something HIGH importance is coming in the next days, one sentence about it; a clash or a child with no adult free tomorrow, when given, as something to sort out tonight.",
+        "4. Urgent shopping, when given, in one sentence. Only if something HIGH importance is coming in the next days, one sentence about it; a clash or a child with no adult free tomorrow, when given, as something to sort out tonight.",
         "5. Close with one short, gentle good-night sentence.",
         "Say dates relative to today (tomorrow, on Friday). Use only facts given here and never invent events.",
         'Answer as JSON {"segments":[{"text":"...","item":n}]}: split the sentences into pieces so that each piece names at most one item, give that item\'s number in "item", and null for pieces that name none. Joined in order, the pieces must read as the whole text. A new paragraph starts with a piece whose text begins with "\\n\\n".',
@@ -399,6 +407,7 @@ function eveningPrompt(
         describeBins(extras.bins),
         describeLogistics(extras.logistics, locale),
         describeEntryWeather(candidates, extras.weather, addDays(today, 1)),
+        describeShopping(extras.urgentShopping),
         candidates.length > 0
           ? candidates.map((c, i) => describe(c, i, language, "evening")).join("\n")
           : "Nothing is planned.",
@@ -450,7 +459,13 @@ export async function writeBriefing(
   personName?: string,
   edition: Edition = "morning",
 ): Promise<Segment[] | null> {
-  if (candidates.length === 0 && !extras.weather && !extras.clockChange && !extras.bins?.length) {
+  if (
+    candidates.length === 0 &&
+    !extras.weather &&
+    !extras.clockChange &&
+    !extras.bins?.length &&
+    !extras.urgentShopping?.length
+  ) {
     return null;
   }
   try {

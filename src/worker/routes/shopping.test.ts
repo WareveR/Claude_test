@@ -1,3 +1,4 @@
+import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { setUpFamily, TestBrowser } from "../test/client";
 
@@ -18,7 +19,27 @@ type History = {
 const items = async (browser: TestBrowser) =>
   (await (await browser.get("/shopping/items")).json()) as Item[];
 
+const pending = async () =>
+  (await env.DB.prepare("SELECT COUNT(*) AS n FROM briefing_pending").first<{ n: number }>())!.n;
+
 describe("Shopping List", () => {
+  it("marks an item urgent, which asks for the Briefing to be rewritten", async () => {
+    const browser = await setUpFamily();
+    const plain = (await (
+      await browser.post("/shopping/items", { name: "Sal" })
+    ).json()) as Item & {
+      urgent: boolean;
+    };
+    expect(plain.urgent).toBe(false);
+    expect(await pending()).toBe(0);
+    expect((await browser.post("/shopping/items", { name: "Fraldas", urgent: "yes" })).status).toBe(
+      400,
+    );
+    const urgent = await browser.request("PATCH", `/shopping/items/${plain.id}`, { urgent: true });
+    expect(await urgent.json()).toMatchObject({ urgent: true });
+    expect(await pending()).toBe(1);
+  });
+
   it("adds, changes, ticks bought, unticks and deletes an item", async () => {
     const browser = await setUpFamily();
     const created = await browser.post("/shopping/items", {

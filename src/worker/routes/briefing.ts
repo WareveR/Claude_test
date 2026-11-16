@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { Hono } from "hono";
 import { createMiddleware } from "hono/factory";
 import {
@@ -48,7 +48,7 @@ async function readCalendar(db: Db, now: Date) {
   const [family] = await db.select().from(schema.family).limit(1);
   const { today, minutes } = familyNow(family.timeZone, now);
   const edition = editionAt(minutes);
-  const [entries, tasks, taskLinks, checklists, persons, accounts, Holidays, weather] =
+  const [entries, tasks, taskLinks, checklists, persons, accounts, urgent, Holidays, weather] =
     await Promise.all([
       allEntries(db),
       db.select().from(schema.task),
@@ -68,6 +68,11 @@ async function readCalendar(db: Db, now: Date) {
           passwordHash: schema.account.passwordHash,
         })
         .from(schema.account),
+      db
+        .select({ name: schema.shoppingItem.name })
+        .from(schema.shoppingItem)
+        .where(and(eq(schema.shoppingItem.urgent, true), isNull(schema.shoppingItem.boughtAt)))
+        .orderBy(schema.shoppingItem.createdAt),
       import("date-holidays").then((m) => m.default),
       briefingWeather(db, now),
     ]);
@@ -113,6 +118,7 @@ async function readCalendar(db: Db, now: Date) {
     weather,
     clockChange: clockChangeWithin(family.timeZone, today, REWRITE_DAYS),
     bins: binsOn(family.wasteCollection, weekday(today)),
+    urgentShopping: urgent.map((u) => u.name),
   };
   // An invited Account that hasn't set its password yet reads nothing, so gets no Briefing.
   const readers: BriefingReader[] = accounts
@@ -192,7 +198,7 @@ async function writeOne(
     segments: written ?? countdown(candidates, today, language),
     fallback: !written,
     writtenAt: now.toISOString(),
-    week: weekOf(candidates, today),
+    week: weekOf(candidates, today, extras.urgentShopping),
     edition,
   };
   await db
@@ -296,7 +302,8 @@ export async function briefingJob(db: Db, env: Env, now: Date) {
       );
       if (!daily) {
         const row = stored.find((r) => r.scope === scope && r.language === language);
-        if (row && row.week === weekOf(candidates, calendar.today)) continue;
+        const week = weekOf(candidates, calendar.today, calendar.extras.urgentShopping);
+        if (row && row.week === week) continue;
       }
       await writeOne(
         db,
