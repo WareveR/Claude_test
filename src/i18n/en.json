@@ -720,7 +720,9 @@
     "leaveTitle": "Leave the Wall",
     "leaveHint": "To leave, type the password of {{email}}.",
     "leavePassword": "Password",
-    "leave": "Leave"
+    "leave": "Leave",
+    "askPassword": "Ask for the password to leave the Wall",
+    "askPasswordHint": "When off, the Wall button leaves at once, with no password. Only changed outside the Wall."
   },
   "layers": {
     "title": "Show on the calendar",

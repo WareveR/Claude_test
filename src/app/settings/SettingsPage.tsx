@@ -27,6 +27,7 @@ import { PasswordSection } from "./PasswordSection";
 import { RecoveryEmailSection } from "./RecoveryEmailSection";
 import { setTheme, THEMES, useTheme, type Theme } from "../theme";
 import { BUTTON } from "../ui/button";
+import { setWallPassword, useWallPassword } from "../display/mode";
 
 /** Settings come in four areas, each with its own address. */
 export const SETTINGS_AREAS = ["family", "calendar", "device", "account"] as const;
@@ -126,6 +127,7 @@ function AreaContent({ area }: { area: Area }) {
       return (
         <>
           <DeviceLooks />
+          <WallPasswordSwitch />
           <HelpSection />
           <VoiceSection />
           <AppVersionSection />
@@ -191,5 +193,25 @@ function DeviceLooks() {
         </select>
       </label>
     </>
+  );
+}
+
+/** Whether leaving the Wall on this device asks for the password. */
+function WallPasswordSwitch() {
+  const { t } = useTranslation();
+  const on = useWallPassword();
+  return (
+    <label className="flex items-start gap-2 text-sm">
+      <input
+        type="checkbox"
+        className="mt-1"
+        checked={on}
+        onChange={(e) => setWallPassword(e.target.checked)}
+      />
+      <span>
+        <span className="font-medium">{t("display.askPassword")}</span>
+        <span className="block text-muted">{t("display.askPasswordHint")}</span>
+      </span>
+    </label>
   );
 }
