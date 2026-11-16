@@ -53,6 +53,34 @@ describe("password recovery", () => {
     ).toBe(201);
   });
 
+  it("lets only one of two simultaneous requests redeem the same link", async () => {
+    await setUpFamily();
+    const stranger = new TestBrowser("203.0.113.53");
+    await stranger.post("/recovery", { email: EMAIL });
+    const token = tokenIn(outbox[0]);
+    const statuses = (
+      await Promise.all([
+        stranger.post("/recovery/password", { token, password: "first phrase!" }),
+        stranger.post("/recovery/password", { token, password: "second phrase" }),
+      ])
+    ).map((res) => res.status);
+    expect(statuses.sort()).toEqual([204, 410]);
+  });
+
+  it("cancels outstanding recovery links when the password changes another way", async () => {
+    const browser = await setUpFamily();
+    const stranger = new TestBrowser("203.0.113.54");
+    await stranger.post("/recovery", { email: EMAIL });
+    const token = tokenIn(outbox[0]);
+    const changed = await browser.post("/password", {
+      currentPassword: PASSWORD,
+      newPassword: "a fresh phrase",
+    });
+    expect(changed.status).toBeLessThan(300);
+    const res = await stranger.post("/recovery/password", { token, password: "hijack phrase" });
+    expect(res.status).toBe(410);
+  });
+
   it("expires the link after an hour", async () => {
     await setUpFamily();
     const stranger = new TestBrowser("203.0.113.52");

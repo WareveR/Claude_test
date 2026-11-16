@@ -1,4 +1,4 @@
-import { and, eq, gte } from "drizzle-orm";
+import { and, eq, gt, gte, isNotNull, isNull } from "drizzle-orm";
 import { Hono, type Context } from "hono";
 import { isLanguage } from "../../core/languages";
 import { accountByEmail, EMAIL, normalEmail, ownerAccount, type Account } from "../auth/account";
@@ -54,23 +54,21 @@ export async function issueToken(
 /** Uses up a token once; null when unknown, used, expired or for another purpose. */
 export async function redeemToken(db: Db, token: unknown, purpose: TokenPurpose, now: Date) {
   if (typeof token !== "string" || !token) return null;
+  // One conditional UPDATE both checks and uses the token, so two simultaneous requests can't both win.
   const [row] = await db
-    .select()
-    .from(schema.recoveryToken)
-    .where(eq(schema.recoveryToken.tokenHash, await sha256(token)));
-  if (
-    !row?.accountId ||
-    row.purpose !== purpose ||
-    row.usedAt ||
-    row.expiresAt <= now.toISOString()
-  ) {
-    return null;
-  }
-  await db
     .update(schema.recoveryToken)
     .set({ usedAt: now.toISOString() })
-    .where(eq(schema.recoveryToken.id, row.id));
-  return row;
+    .where(
+      and(
+        eq(schema.recoveryToken.tokenHash, await sha256(token)),
+        eq(schema.recoveryToken.purpose, purpose),
+        isNull(schema.recoveryToken.usedAt),
+        gt(schema.recoveryToken.expiresAt, now.toISOString()),
+        isNotNull(schema.recoveryToken.accountId),
+      ),
+    )
+    .returning();
+  return row ?? null;
 }
 
 /** Sets an Account's new password and signs out every device of that Account. */
@@ -81,6 +79,17 @@ export async function replacePassword(db: Db, accountId: string, password: strin
       .set({ passwordHash: await hashPassword(password), changedAt: now.toISOString() })
       .where(eq(schema.account.id, accountId)),
     db.delete(schema.signedInDevice).where(eq(schema.signedInDevice.accountId, accountId)),
+    // Outstanding recovery links die with the old password.
+    db
+      .update(schema.recoveryToken)
+      .set({ usedAt: now.toISOString() })
+      .where(
+        and(
+          eq(schema.recoveryToken.accountId, accountId),
+          eq(schema.recoveryToken.purpose, "password"),
+          isNull(schema.recoveryToken.usedAt),
+        ),
+      ),
   ]);
 }
 
