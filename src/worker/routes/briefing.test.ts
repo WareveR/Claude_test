@@ -256,7 +256,7 @@ describe("Briefing", () => {
       ).results;
 
     it("keeps one per Family and Person; a Person's has theirs and the Family-wide", async () => {
-      const { browser, ana } = await family();
+      const { browser, ana, add } = await family();
       await browser.request("PATCH", "/device", { language: "en" });
       await at(NOON);
       // Family and two Persons, in the Family Language and the device's.
@@ -275,6 +275,9 @@ describe("Briefing", () => {
         ],
       });
       await env.DB.prepare("UPDATE briefing SET written_at = '2000-01-01T00:00:00.000Z'").run();
+      // Refresh reads the real clock, so Ana needs something coming up from today.
+      const soon = new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10);
+      await add("Haircut", soon, [ana]);
       const mine = (await (
         await browser.post(`/briefing/refresh?person=${ana}`)
       ).json()) as Briefing;
