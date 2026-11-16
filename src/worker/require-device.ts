@@ -9,6 +9,9 @@ import type { AppEnv } from "./types";
  * available.
  */
 export const requireDevice = createMiddleware<AppEnv>(async (c, next) => {
+  // Every route group adds this check and all are mounted at "/", so one request meets it once
+  // per group mounted before its own: the session is looked up only the first time.
+  if (c.get("device")) return next();
   const db = c.get("db");
   const device = await currentDevice(c, db, c.get("now"));
   if (!device) return c.json({ error: "signed_out" }, 401);
