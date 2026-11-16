@@ -16,6 +16,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm audit --omit=dev --audit-level=high
       - run: cp .dev.vars.example .dev.vars
       - run: npm run typecheck
       - run: npm run lint
