@@ -1,5 +1,5 @@
 import { env } from "cloudflare:test";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { mailer, type Email } from "../email";
 import { addAccount, EMAIL, PASSWORD, setUpFamily, TestBrowser, VALID_SETUP } from "../test/client";
 
@@ -25,7 +25,7 @@ describe("password recovery", () => {
     const right = await stranger.post("/recovery", { email: "David@Example.com " });
     expect(wrong.status).toBe(202);
     expect(await wrong.json()).toEqual(await right.json());
-    expect(outbox).toHaveLength(1);
+    await vi.waitFor(() => expect(outbox).toHaveLength(1));
     expect(outbox[0].to).toBe(EMAIL);
     // Emails are in the Family Language.
     expect(outbox[0].subject).toBe("Escolher uma nova palavra-passe do calendário");
@@ -36,6 +36,7 @@ describe("password recovery", () => {
     const browser = await setUpFamily();
     const stranger = new TestBrowser("203.0.113.51");
     await stranger.post("/recovery", { email: EMAIL });
+    await vi.waitFor(() => expect(outbox).toHaveLength(1));
     const token = tokenIn(outbox[0]);
 
     const res = await stranger.post("/recovery/password", { token, password: "a fresh phrase" });
@@ -57,6 +58,7 @@ describe("password recovery", () => {
     await setUpFamily();
     const stranger = new TestBrowser("203.0.113.53");
     await stranger.post("/recovery", { email: EMAIL });
+    await vi.waitFor(() => expect(outbox).toHaveLength(1));
     const token = tokenIn(outbox[0]);
     const statuses = (
       await Promise.all([
@@ -71,6 +73,7 @@ describe("password recovery", () => {
     const browser = await setUpFamily();
     const stranger = new TestBrowser("203.0.113.54");
     await stranger.post("/recovery", { email: EMAIL });
+    await vi.waitFor(() => expect(outbox).toHaveLength(1));
     const token = tokenIn(outbox[0]);
     const changed = await browser.post("/password", {
       currentPassword: PASSWORD,
@@ -85,10 +88,24 @@ describe("password recovery", () => {
     await setUpFamily();
     const stranger = new TestBrowser("203.0.113.52");
     await stranger.post("/recovery", { email: EMAIL });
+    await vi.waitFor(() => expect(outbox).toHaveLength(1));
     const token = tokenIn(outbox[0]);
     await env.DB.prepare("UPDATE recovery_token SET expires_at = '2000-01-01T00:00:00.000Z'").run();
     const res = await stranger.post("/recovery/password", { token, password: "a fresh phrase" });
     expect(res.status).toBe(410);
+  });
+});
+
+describe("forgot password timing", () => {
+  it("answers an unknown and a known email with the same status and body", async () => {
+    await setUpFamily();
+    const stranger = new TestBrowser("203.0.113.60");
+    const unknown = await stranger.post("/recovery", { email: "nobody@else.com" });
+    const known = await stranger.post("/recovery", { email: EMAIL });
+    expect(known.status).toBe(unknown.status);
+    expect(known.status).toBe(202);
+    expect(await known.text()).toBe(await unknown.text());
+    await vi.waitFor(() => expect(outbox).toHaveLength(1));
   });
 });
 
@@ -110,6 +127,7 @@ describe("recovery email change", () => {
 
     // Not changed yet: recovery still goes to the old address.
     await browser.post("/recovery", { email: "new@example.com" });
+    await new Promise((resolve) => setTimeout(resolve, 50));
     expect(outbox).toHaveLength(1);
 
     const confirm = await new TestBrowser("203.0.113.53").post("/recovery-email/confirm", {
@@ -118,7 +136,7 @@ describe("recovery email change", () => {
     expect(confirm.status).toBe(204);
     expect(outbox.slice(1).map((e) => e.to)).toEqual([EMAIL, "new@example.com"]);
     await browser.post("/recovery", { email: "new@example.com" });
-    expect(outbox.at(-1)!.to).toBe("new@example.com");
+    await vi.waitFor(() => expect(outbox.at(-1)!.to).toBe("new@example.com"));
   });
 });
 
@@ -159,6 +177,7 @@ describe("recovery for each Account", () => {
     const ana = await addAccount("ana@example.com");
     const stranger = new TestBrowser("203.0.113.55");
     await stranger.post("/recovery", { email: "ana@example.com" });
+    await vi.waitFor(() => expect(outbox).toHaveLength(1));
     expect(outbox.map((e) => e.to)).toEqual(["ana@example.com"]);
     const res = await stranger.post("/recovery/password", {
       token: tokenIn(outbox[0]),

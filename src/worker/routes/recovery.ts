@@ -110,33 +110,46 @@ export async function accountById(db: Db, id: string): Promise<Account | undefin
 /** Password recovery and the setup-code reset: they work without a session. */
 export const recoveryRoutes = new Hono<AppEnv>();
 
-/** "Forgot password": the same answer whatever address is typed, so it leaks nothing. */
-recoveryRoutes.post("/recovery", async (c) => {
+/** Sends the recovery link when the address has an Account and the hourly limit allows it. */
+async function sendRecovery(c: Context<AppEnv>, email: unknown) {
   const db = c.get("db");
   const now = c.get("now");
-  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
   const family = await theFamily(db);
-  const account = family ? await accountByEmail(db, normalEmail(body.email)) : undefined;
-  if (family && account) {
-    const recent = await db
-      .select({ id: schema.recoveryToken.id })
-      .from(schema.recoveryToken)
-      .where(
-        and(
-          eq(schema.recoveryToken.accountId, account.id),
-          eq(schema.recoveryToken.purpose, "password"),
-          gte(schema.recoveryToken.createdAt, new Date(now.getTime() - HOUR).toISOString()),
-        ),
-      );
-    if (recent.length < RECOVERY_EMAILS_PER_HOUR) {
-      const token = await issueToken(db, account.id, "password", now, HOUR);
-      const texts = textsFor(family);
-      await sendEmail(c.env, {
-        to: account.email,
-        subject: texts.recoverySubject,
-        text: texts.recoveryText(link(c, "/recover", token)),
-      });
-    }
+  const account = family ? await accountByEmail(db, normalEmail(email)) : undefined;
+  if (!family || !account) return;
+  const recent = await db
+    .select({ id: schema.recoveryToken.id })
+    .from(schema.recoveryToken)
+    .where(
+      and(
+        eq(schema.recoveryToken.accountId, account.id),
+        eq(schema.recoveryToken.purpose, "password"),
+        gte(schema.recoveryToken.createdAt, new Date(now.getTime() - HOUR).toISOString()),
+      ),
+    );
+  if (recent.length >= RECOVERY_EMAILS_PER_HOUR) return;
+  const token = await issueToken(db, account.id, "password", now, HOUR);
+  const texts = textsFor(family);
+  await sendEmail(c.env, {
+    to: account.email,
+    subject: texts.recoverySubject,
+    text: texts.recoveryText(link(c, "/recover", token)),
+  });
+}
+
+/**
+ * "Forgot password": the same answer, in the same time, whatever address is typed, so it leaks
+ * nothing. All the work happens after the answer is sent.
+ */
+recoveryRoutes.post("/recovery", async (c) => {
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
+  const work = sendRecovery(c, body.email).catch((error) =>
+    console.error("recovery failed", error),
+  );
+  try {
+    c.executionCtx.waitUntil(work);
+  } catch {
+    // No execution context (tests): the promise still runs.
   }
   return c.json({ ok: true }, 202);
 });
