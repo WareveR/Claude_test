@@ -79,6 +79,17 @@ describe("Tasks", () => {
     expect(await timeOnly.json()).toMatchObject({ field: "dueTime" });
   });
 
+  it("refuses a title over 200 characters but takes exactly 200", async () => {
+    const { browser } = await family();
+    const tooLong = await browser.post("/tasks", { title: "a".repeat(201) });
+    expect(tooLong.status).toBe(400);
+    expect(await tooLong.json()).toMatchObject({ error: "invalid", field: "title" });
+    const exact = await browser.post("/tasks", { title: "a".repeat(200) });
+    expect(exact.status).toBe(201);
+    const notes = await browser.post("/tasks", { title: "Call", notes: "a".repeat(10_001) });
+    expect(await notes.json()).toMatchObject({ error: "invalid", field: "notes" });
+  });
+
   it("ticks a Task done, recording when, and undoes it", async () => {
     const { browser } = await family();
     const task = (await (await browser.post("/tasks", { title: "Water plants" })).json()) as Task;

@@ -45,6 +45,17 @@ describe("Checklists", () => {
     expect(await (await browser.get("/checklists")).json()).toHaveLength(1);
   });
 
+  it("refuses a name over 200 characters but takes exactly 200, and items over 200", async () => {
+    const { browser } = await family();
+    const tooLong = await browser.post("/checklists", { name: "a".repeat(201) });
+    expect(tooLong.status).toBe(400);
+    expect(await tooLong.json()).toMatchObject({ error: "invalid", field: "name" });
+    const exact = await browser.post("/checklists", { name: "a".repeat(200) });
+    expect(exact.status).toBe(201);
+    const item = await browser.post("/checklists", { name: "Packing", items: ["a".repeat(201)] });
+    expect(await item.json()).toMatchObject({ error: "invalid", field: "items" });
+  });
+
   it("takes a start or an end on its own, but refuses an end before the start", async () => {
     const { browser } = await family();
     const backwards = await browser.post("/checklists", {

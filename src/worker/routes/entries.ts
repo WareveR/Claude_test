@@ -25,6 +25,7 @@ import { announceLater } from "../announce";
 import type { Account } from "../auth/account";
 import { seesInFull } from "../private";
 import { requireDevice } from "../require-device";
+import { MAX_LOCATION_LENGTH, MAX_NOTES_LENGTH, MAX_TITLE_LENGTH } from "../limits";
 import type { AppEnv } from "../types";
 import { entryTypeDeleteSteps } from "./entry-types";
 import { personMentionChecks } from "./persons";
@@ -66,7 +67,7 @@ function parseTime(value: unknown): EntryTime | null {
 /** Validates a whole Entry; returns the bad field's name or the clean values. */
 async function parseEntry(db: Db, body: Record<string, unknown>) {
   const title = typeof body.title === "string" ? body.title.trim() : "";
-  if (!title) return { field: "title" };
+  if (!title || title.length > MAX_TITLE_LENGTH) return { field: "title" };
   const time = parseTime(body.time);
   if (!time) return { field: "time" };
   const problem = entryTimeProblem(time);
@@ -95,6 +96,10 @@ async function parseEntry(db: Db, body: Record<string, unknown>) {
   const repetition = body.repetition ?? null;
   if (repetition !== null && !isRepetition(repetition)) return { field: "repetition" };
   const text = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+  const location = text(body.location);
+  if (location.length > MAX_LOCATION_LENGTH) return { field: "location" };
+  const notes = text(body.notes);
+  if (notes.length > MAX_NOTES_LENGTH) return { field: "notes" };
   return {
     values: {
       title,
@@ -102,8 +107,8 @@ async function parseEntry(db: Db, body: Record<string, unknown>) {
       time,
       personIds: personIds as string[],
       importance: importance as Importance,
-      location: text(body.location),
-      notes: text(body.notes),
+      location,
+      notes,
       icon: icon as string | null,
       private: Boolean(body.private),
       reminders: [...new Set(reminders as number[])].sort((a, b) => b - a),
