@@ -1534,7 +1534,19 @@
     "noServings": "Não indicadas",
     "save": "Guardar",
     "remove": "Tirar",
-    "line": "Refeições do dia"
+    "line": "Refeições do dia",
+    "shop": {
+      "button": "Adicionar às compras",
+      "title": "Compras para {{period}}",
+      "pantry": "Despensa",
+      "existing": "já na lista: {{quantity}}",
+      "add": "Adicionar {{count}}",
+      "failed": "Não foi possível adicionar às compras. Nada foi alterado; tenta outra vez.",
+      "done": "Adicionado às compras.",
+      "undone": "Desfeito.",
+      "undo": "Desfazer",
+      "open": "Abrir as compras"
+    }
   },
   "reset": {
     "title": "Zona de perigo",

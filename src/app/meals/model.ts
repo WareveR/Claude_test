@@ -1,7 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Meal, MealSlot } from "../../core/meal-plan";
+import {
+  MAX_SHOPPING_TEXT,
+  mergeNote,
+  mergeQuantity,
+  type MealShoppingLine,
+} from "../../core/meal-shopping";
 import type { PlainDate } from "../../core/plain-date";
 import { api, RANGE_STALE_TIME } from "../api";
+import { newItemId, removeShoppingItems } from "../shopping/model";
 
 export type { Meal, MealSlot };
 
@@ -85,4 +92,58 @@ export function useRemoveMeal() {
     onMutate: ({ date, slot }) => optimistic(date, slot, () => null),
     onSettled: () => queryClient.invalidateQueries({ queryKey: ["meals"] }),
   });
+}
+
+/**
+ * Puts the Meals' ingredients on the Shopping List: new lines are added with the Recipes as
+ * their note, lines already open there get the quantity added and the Recipes appended. All or
+ * nothing: what was done before a failure is undone. Answers the Undo of the whole.
+ */
+export async function addMealLines(
+  lines: MealShoppingLine[],
+  language: string,
+): Promise<() => Promise<void>> {
+  const created: string[] = [];
+  const changed: { id: string; quantity: string; note: string }[] = [];
+  const undo = async () => {
+    await removeShoppingItems(created);
+    for (const before of changed) {
+      await api(`/shopping/items/${before.id}`, {
+        method: "PATCH",
+        body: { quantity: before.quantity, note: before.note },
+      }).catch(() => {});
+    }
+  };
+  try {
+    for (const line of lines) {
+      if (line.existing) {
+        const { id, quantity, note } = line.existing;
+        await api(`/shopping/items/${id}`, {
+          method: "PATCH",
+          body: {
+            quantity: mergeQuantity(quantity, line.quantity, language).slice(0, MAX_SHOPPING_TEXT),
+            note: mergeNote(note, line.recipes),
+          },
+        });
+        changed.push({ id, quantity, note });
+      } else {
+        const id = newItemId();
+        await api("/shopping/items", {
+          method: "POST",
+          body: {
+            id,
+            name: line.name.slice(0, MAX_SHOPPING_TEXT),
+            quantity: line.quantity.slice(0, MAX_SHOPPING_TEXT),
+            note: mergeNote("", line.recipes),
+            store: "",
+          },
+        });
+        created.push(id);
+      }
+    }
+  } catch (error) {
+    await undo();
+    throw error;
+  }
+  return undo;
 }

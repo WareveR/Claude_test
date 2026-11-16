@@ -1534,7 +1534,19 @@
     "noServings": "Not said",
     "save": "Save",
     "remove": "Remove",
-    "line": "Meals of the day"
+    "line": "Meals of the day",
+    "shop": {
+      "button": "Add to shopping",
+      "title": "Shopping for {{period}}",
+      "pantry": "Pantry",
+      "existing": "already on the list: {{quantity}}",
+      "add": "Add {{count}}",
+      "failed": "Could not add to the shopping list. Nothing was changed; try again.",
+      "done": "Added to the shopping list.",
+      "undone": "Undone.",
+      "undo": "Undo",
+      "open": "Open shopping list"
+    }
   },
   "reset": {
     "title": "Danger zone",
