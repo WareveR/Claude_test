@@ -86,18 +86,58 @@ function PlayButton({ sentences }: { sentences: string[] }) {
   );
 }
 
+const WHOSE_KEY = "briefing-whose";
+type Whose = "mine" | "family";
+
+/** Which Briefing this device shows when no single Person is filtered: its Account's own by default. */
+function useWhose(): [Whose, (whose: Whose) => void] {
+  const [whose, setWhose] = useState<Whose>(() => {
+    try {
+      return localStorage.getItem(WHOSE_KEY) === "family" ? "family" : "mine";
+    } catch {
+      return "mine";
+    }
+  });
+  const choose = (next: Whose) => {
+    setWhose(next);
+    try {
+      localStorage.setItem(WHOSE_KEY, next);
+    } catch {
+      // Private browsing: the choice lasts until the page closes.
+    }
+  };
+  return [whose, choose];
+}
+
+/**
+ * The Briefing's query: with exactly one Person filtered it is that Person's; otherwise this
+ * Account's own (with its Private items) or, on the Wall or when chosen, the Family's.
+ */
+export function briefingQuery(person: string | null, whose: Whose): string {
+  if (person) return `?person=${encodeURIComponent(person)}`;
+  return whose === "mine" ? "?mine=1" : "";
+}
+
 /**
  * "Coming up": the AI-written Briefing, told like a morning radio show, with Play to hear it. It is
- * never written on load, only by the Scheduler or Refresh; with exactly one Person filtered it is
- * that Person's, otherwise the Family's.
+ * never written on load, only by the Scheduler or Refresh. "For me" (the default) is this
+ * Account's own Briefing, the only one that mentions its Private items; "Family" is everyone's.
  */
 export function ComingUp({ readOnly = false }: { readOnly?: boolean }) {
   const { t, i18n } = useTranslation();
   const client = useQueryClient();
+  const { account } = useSignedIn();
   const { personIds } = usePersonFilter();
+  const [chosen, choose] = useWhose();
   const person = personIds.length === 1 ? personIds[0] : null;
-  const query = person ? `?person=${encodeURIComponent(person)}` : "";
-  const key = ["briefing", person ?? "family", i18n.language];
+  // The Wall is seen by everyone, so it never shows an Account's Private items.
+  const whose: Whose = readOnly ? "family" : chosen;
+  const query = briefingQuery(person, whose);
+  const key = [
+    "briefing",
+    person ?? (whose === "mine" ? `mine:${account.id}` : "family"),
+    i18n.language,
+  ];
   const briefing = useQuery({
     queryKey: key,
     queryFn: () => api<Briefing>(`/briefing${query}`),
@@ -116,10 +156,27 @@ export function ComingUp({ readOnly = false }: { readOnly?: boolean }) {
       data-testid="coming-up"
       className="mx-4 flex flex-col gap-3 rounded-xl border-2 border-accent/60 bg-surface p-4 shadow-sm"
     >
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <h2 id="coming-up-title" className="flex-1 text-xl font-bold">
           {t("comingUp.title")}
         </h2>
+        {!readOnly && !person && (
+          <div role="group" aria-label={t("briefing.whose")} className="flex">
+            {(["mine", "family"] as const).map((option) => (
+              <button
+                key={option}
+                type="button"
+                aria-pressed={whose === option}
+                className={`${BUTTON} ${whose === option ? "bg-accent/15 font-semibold" : ""} ${
+                  option === "mine" ? "rounded-r-none" : "-ml-px rounded-l-none"
+                }`}
+                onClick={() => choose(option)}
+              >
+                {t(option === "mine" ? "briefing.mine" : "briefing.family")}
+              </button>
+            ))}
+          </div>
+        )}
         {spoken && <PlayButton key={spoken.join(" ")} sentences={spoken} />}
         {!readOnly && (
           <button

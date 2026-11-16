@@ -546,7 +546,8 @@ export function VoiceEntry() {
     setPhase("idle");
     let briefing: { segments: Segment[]; fallback: boolean } | null;
     try {
-      const query = person ? `?person=${encodeURIComponent(person)}` : "";
+      // Without a Person named, the Account's own Briefing, as on the Summary.
+      const query = person ? `?person=${encodeURIComponent(person)}` : "?mine=1";
       briefing = await api(`/briefing${query}`);
     } catch {
       if (run.current === mine) setError(true);

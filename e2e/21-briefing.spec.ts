@@ -19,6 +19,11 @@ test("Refresh writes the countdown list, whose Entries open in a popup", async (
   await page.goto("/summary");
   const band = page.getByTestId("coming-up");
   await expect(band).toContainText("No briefing yet");
+  // Your own Briefing, with your Private items, unless you pick the Family's.
+  await expect(band.getByRole("button", { name: "For me" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
   await band.getByRole("button", { name: "Refresh" }).click();
   const line = band.getByTestId("briefing-line").filter({ hasText: "Book the vet · tomorrow" });
   await expect(line).toBeVisible();

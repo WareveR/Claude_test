@@ -32,6 +32,11 @@ export type Candidate = {
   /** Who it is for, to pick a Person's Briefing; never sent to the model. Empty is Family-wide. */
   personIds: string[];
   importance: Importance;
+  /**
+   * Set on a Private Entry or Task: only an Account Briefing whose Account sees it in full may
+   * mention it (its creator, or the Account of a Person it is for).
+   */
+  private?: { createdBy: string | null };
   /** A Task past its due date, or a Checklist's "3/8". */
   detail?: "overdue" | `${number}/${number}`;
   /** The title of the Entry a Task or Checklist prepares for, when that Entry is coming up. */
@@ -62,6 +67,7 @@ type BriefingEntry = {
   time: EntryTime;
   importance: Importance;
   private: boolean;
+  createdBy?: string | null;
   personIds: string[];
   repetition: Repetition | null;
   birthdayPersonId?: string | null;
@@ -76,6 +82,7 @@ type BriefingTask = {
   dueTime: string | null;
   doneAt: string | null;
   private: boolean;
+  createdBy?: string | null;
   personIds: string[];
   checklistId: string | null;
   /** The Entry a loose Task prepares for. */
@@ -104,11 +111,12 @@ export type BriefingInput = {
 const RANK: Record<Importance, number> = { high: 0, normal: 1, low: 2 };
 
 /**
- * What is coming up in the next 60 days, never notes and never Private items: Entry
+ * What is coming up in the next 60 days, never notes: Entry
  * Occurrences (Birthdays with their age), Tasks overdue or due, Checklists still open with
  * their progress, and Public Holidays in the next 14 days. A Task or Checklist that prepares for a coming Entry says
  * which; a Checklist without a period counts on that Entry's date. The most pressing first:
- * overdue, then by date, then High Importance.
+ * overdue, then by date, then High Importance. Private items carry `private`, so only their own
+ * Account's Briefing keeps them (forAccount); every other Briefing drops them (publicOnly).
  */
 export function briefingCandidates(input: BriefingInput, max = MAX_CANDIDATES): Candidate[] {
   const { today } = input;
@@ -122,12 +130,13 @@ export function briefingCandidates(input: BriefingInput, max = MAX_CANDIDATES): 
   for (const entry of input.entries) {
     for (const o of occurrencesOf(entry, today, last)) {
       const fields = { ...entry, ...o.override };
-      if (fields.private) continue;
       const age = entry.birthdayPersonId
         ? birthdayAge(entry.time.startDate, o.date, Boolean(entry.birthYearKnown))
         : null;
       const date = o.time.startDate < today ? today : o.time.startDate;
-      if (!coming.has(entry.id)) coming.set(entry.id, { date, title: fields.title });
+      // A Private Entry's title never names a public Task's "for «…»".
+      if (!fields.private && !coming.has(entry.id))
+        coming.set(entry.id, { date, title: fields.title });
       out.push({
         kind: "entry",
         id: entry.id,
@@ -137,12 +146,13 @@ export function briefingCandidates(input: BriefingInput, max = MAX_CANDIDATES): 
         persons: names(fields.personIds),
         personIds: fields.personIds,
         importance: entry.importance,
+        ...(fields.private ? { private: { createdBy: entry.createdBy ?? null } } : {}),
       });
     }
   }
 
   for (const task of input.tasks) {
-    if (task.private || task.doneAt || task.checklistId || !task.dueDate) continue;
+    if (task.doneAt || task.checklistId || !task.dueDate) continue;
     if (task.dueDate > last) continue;
     const overdue = task.dueDate < today;
     out.push({
@@ -156,6 +166,7 @@ export function briefingCandidates(input: BriefingInput, max = MAX_CANDIDATES): 
       importance: overdue ? "high" : "normal",
       ...(overdue ? { detail: "overdue" as const } : {}),
       ...prepares(task.entryId),
+      ...(task.private ? { private: { createdBy: task.createdBy ?? null } } : {}),
     });
   }
 
@@ -215,10 +226,38 @@ export function briefingCandidates(input: BriefingInput, max = MAX_CANDIDATES): 
     .slice(0, max);
 }
 
-/** A Person's Briefing: what is theirs and what is Family-wide. */
+/** Everything but Private items: the Family's and each Person's Briefing, which anyone may read. */
+export function publicOnly(candidates: Candidate[]): Candidate[] {
+  return candidates.filter((c) => !c.private);
+}
+
+/** A Person's Briefing: what is theirs and what is Family-wide, never Private. */
 export function forPerson(candidates: Candidate[], personId: string): Candidate[] {
   const filter = { personIds: [personId], familyWide: true, holidays: true, layers: [] };
-  return candidates.filter((c) => matchesFilter(c.personIds, filter));
+  return publicOnly(candidates).filter((c) => matchesFilter(c.personIds, filter));
+}
+
+/** Who reads an Account Briefing: the Account and the Person it belongs to, if any. */
+export type BriefingReader = { id: string; personId: string | null };
+
+/**
+ * An Account's own Briefing, read only on its devices: its Person's Briefing (or the Family's,
+ * for an Account without a Person) plus the Private items it sees in full, which are the ones
+ * it created and the ones for its Person.
+ */
+export function forAccount(candidates: Candidate[], reader: BriefingReader): Candidate[] {
+  const filter = reader.personId
+    ? { personIds: [reader.personId], familyWide: true, holidays: true, layers: [] }
+    : null;
+  return candidates.filter((c) => {
+    if (c.private) {
+      return (
+        c.private.createdBy === reader.id ||
+        (reader.personId !== null && c.personIds.includes(reader.personId))
+      );
+    }
+    return !filter || matchesFilter(c.personIds, filter);
+  });
 }
 
 /** The next 7 days (and anything overdue) as a string; when it changes, the Briefing is rewritten. */

@@ -3,7 +3,9 @@ import {
   briefingCandidates,
   briefingSentences,
   countdown,
+  forAccount,
   forPerson,
+  publicOnly,
   weekOf,
   type BriefingInput,
 } from "./briefing";
@@ -95,8 +97,8 @@ describe("briefingCandidates", () => {
     expect(candidates.map((c) => c.title)).toEqual(["Soon"]);
   });
 
-  it("never includes Private items, done Tasks or notes", () => {
-    const candidates = briefingCandidates(
+  it("never includes Private items in a public Briefing, done Tasks or notes", () => {
+    const all = briefingCandidates(
       input({
         entries: [
           entry({ private: true }),
@@ -110,6 +112,7 @@ describe("briefingCandidates", () => {
         tasks: [task({ private: true }), task({ id: "t2", doneAt: "2026-10-01T10:00:00Z" })],
       }),
     );
+    const candidates = publicOnly(all);
     expect(candidates.map((c) => c.title)).not.toContain("Dentist");
     expect(candidates.filter((c) => c.title === "Swimming").map((c) => c.date)).not.toContain(
       "2026-10-12",
@@ -252,6 +255,40 @@ describe("forPerson and weekOf", () => {
       "Dentist",
     ]);
     expect(forPerson(candidates, "p3").map((c) => c.title)).toEqual(["Pay the school"]);
+  });
+
+  it("gives an Account its Person's Briefing plus the Private items it sees in full", () => {
+    const candidates = briefingCandidates(
+      input({
+        entries: [
+          entry({ id: "mine", title: "Therapy", private: true, createdBy: "a1", personIds: [] }),
+          entry({
+            id: "forMe",
+            title: "Doctor",
+            private: true,
+            createdBy: "a2",
+            personIds: ["p1"],
+          }),
+          entry({ id: "theirs", title: "Gift", private: true, createdBy: "a2", personIds: [] }),
+          entry({ id: "bia", title: "Bia's party", personIds: ["p2"] }),
+        ],
+        tasks: [task({ title: "Secret task", private: true, createdBy: "a1" })],
+      }),
+    );
+    const titles = (list: typeof candidates) => list.map((c) => c.title).sort();
+    expect(titles(forAccount(candidates, { id: "a1", personId: "p1" }))).toEqual([
+      "Doctor",
+      "Secret task",
+      "Therapy",
+    ]);
+    // Without a Person: everything public, plus their own Private items.
+    expect(titles(forAccount(candidates, { id: "a2", personId: null }))).toEqual([
+      "Bia's party",
+      "Doctor",
+      "Gift",
+    ]);
+    expect(titles(forPerson(candidates, "p1"))).toEqual([]);
+    expect(titles(publicOnly(candidates))).toEqual(["Bia's party"]);
   });
 
   it("changes only when the next 7 days do", () => {

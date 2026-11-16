@@ -572,7 +572,10 @@
     "stop": "Parar",
     "morning": "Bom dia!",
     "afternoon": "Boa tarde!",
-    "evening": "Boa noite!"
+    "evening": "Boa noite!",
+    "whose": "De quem é o resumo",
+    "mine": "Para mim",
+    "family": "Família"
   },
   "comingUp": {
     "title": "A seguir",

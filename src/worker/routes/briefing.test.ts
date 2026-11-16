@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { model } from "../ai";
 import { getDb, schema } from "../db";
 import worker from "../index";
-import { setUpFamily, TestBrowser } from "../test/client";
+import { addAccount, setUpFamily, TestBrowser } from "../test/client";
 
 type Prompt = { messages: { role: string; content: string }[] };
 type Briefing = {
@@ -91,6 +91,24 @@ describe("Briefing", () => {
     expect(sent).not.toContain("secret notes");
     expect(sent).toContain("European Portuguese");
     expect(await (await browser.get("/briefing")).json()).toEqual(briefing);
+  });
+
+  it("gives each Account its own Briefing with its Private items, never anyone else's", async () => {
+    const { browser } = await familyWithPlans();
+    const other = await addAccount("carla@example.com");
+    answer = (prompt) => ({
+      segments: [
+        { text: prompt.messages[1].content.includes("Therapy") ? "Therapy" : "Plain", item: null },
+      ],
+    });
+    const mine = (await (await browser.post("/briefing/refresh?mine=1")).json()) as Briefing;
+    expect(mine?.segments[0].text).toBe("Therapy");
+    const family = (await (await browser.post("/briefing/refresh")).json()) as Briefing;
+    expect(family?.segments[0].text).toBe("Plain");
+    const theirs = (await (await other.post("/briefing/refresh?mine=1")).json()) as Briefing;
+    expect(theirs?.segments[0].text).toBe("Plain");
+    expect(await (await browser.get("/briefing?mine=1")).json()).toEqual(mine);
+    expect(await (await other.get("/briefing?mine=1")).json()).toEqual(theirs);
   });
 
   it("tells the model what a Task prepares for, and leaves it room for five paragraphs", async () => {
@@ -200,10 +218,15 @@ describe("Briefing", () => {
     expect(prompts).toHaveLength(0);
     await runScheduler(new Date("2026-10-02T04:00:00Z")); // 05:00
     await runScheduler(new Date("2026-10-02T04:05:00Z"));
-    expect(prompts).toHaveLength(1);
-    const [row] = (await env.DB.prepare("SELECT scope, language, fallback FROM briefing").all())
-      .results;
-    expect(row).toEqual({ scope: "family", language: "pt-PT", fallback: 0 });
+    // The Family's and the Owner Account's own.
+    expect(prompts).toHaveLength(2);
+    const rows = (
+      await env.DB.prepare("SELECT scope, language, fallback FROM briefing ORDER BY scope").all()
+    ).results;
+    expect(rows).toEqual([
+      { scope: expect.stringMatching(/^account:/), language: "pt-PT", fallback: 0 },
+      { scope: "family", language: "pt-PT", fallback: 0 },
+    ]);
   });
 
   it("needs a signed-in device", async () => {
@@ -259,8 +282,8 @@ describe("Briefing", () => {
       const { browser, ana, add } = await family();
       await browser.request("PATCH", "/device", { language: "en" });
       await at(NOON);
-      // Family and two Persons, in the Family Language and the device's.
-      expect(await rows()).toHaveLength(6);
+      // Family, two Persons and the Owner Account, in the Family Language and the device's.
+      expect(await rows()).toHaveLength(8);
       const forAna = prompts.find((p) => JSON.stringify(p).includes("briefing is for Ana"));
       expect(JSON.stringify(forAna)).toContain("Swimming");
       expect(JSON.stringify(forAna)).toContain("Picnic");
@@ -299,17 +322,18 @@ describe("Briefing", () => {
       await at("2026-10-02T11:05:00Z");
       expect(prompts).toHaveLength(0);
 
-      // A burst of edits close by: one rewrite, of the Family's and Ana's only.
+      // A burst of edits close by: one rewrite, of the Family's, Ana's and the Owner's (who
+      // has no Person, so reads everything) only.
       await add("Vet", "2026-10-05", [ana]);
       await add("Haircut", "2026-10-06", [ana]);
       await at("2026-10-02T11:10:00Z");
       await at("2026-10-02T11:15:00Z");
-      expect(prompts).toHaveLength(2);
+      expect(prompts).toHaveLength(3);
       const after = await rows();
       const changed = after
         .filter((r, i) => r.writtenAt !== first[i].writtenAt)
-        .map((r) => r.scope);
-      expect(changed.sort()).toEqual(["family", ana].sort());
+        .map((r) => (r.scope.startsWith("account:") ? "account" : r.scope));
+      expect(changed.sort()).toEqual(["account", "family", ana].sort());
     });
   });
 });

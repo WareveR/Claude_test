@@ -572,7 +572,10 @@
     "stop": "Stop",
     "morning": "Good morning!",
     "afternoon": "Good afternoon!",
-    "evening": "Good evening!"
+    "evening": "Good evening!",
+    "whose": "Whose briefing",
+    "mine": "For me",
+    "family": "Family"
   },
   "comingUp": {
     "title": "Coming up",
