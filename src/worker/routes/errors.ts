@@ -11,6 +11,7 @@ import { schema } from "../db";
 import { EMAIL_TEXTS, sendEmail } from "../email";
 import { requireDevice } from "../require-device";
 import type { AppEnv } from "../types";
+import { ERRORS_PER_HOUR, hour, withinLimit } from "../usage";
 
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
@@ -92,6 +93,11 @@ errorRoutes.post("/errors", async (c) => {
   const body = await c.req.json().catch(() => ({}));
   if (!isErrorCode(body.code)) return c.json({ error: "invalid", field: "code" }, 400);
   const now = c.get("now");
+  if (
+    !(await withinLimit(c.get("db"), `errors:${c.get("device").id}`, hour(now), ERRORS_PER_HOUR))
+  ) {
+    return c.json({ error: "too_many_requests", retryAfter: 3600 }, 429);
+  }
   const at = new Date(typeof body.at === "string" ? body.at : NaN);
   await c
     .get("db")

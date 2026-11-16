@@ -41,6 +41,7 @@ import {
 } from "../../core/shopping-phrase";
 import { forStore } from "../../core/shopping";
 import { readVoice, transcribe } from "../ai";
+import { AI_CALLS_PER_DAY, day, withinLimit } from "../usage";
 import { randomId } from "../auth/crypto";
 import { personsBy, schema, type Db } from "../db";
 import { requireDevice } from "../require-device";
@@ -292,6 +293,16 @@ voiceRoutes.post("/voice/transcribe", async (c) => {
   if (audio.byteLength === 0 || audio.byteLength > MAX_RECORDING) {
     return c.json({ error: "invalid", field: "audio" }, audio.byteLength === 0 ? 400 : 413);
   }
+  if (
+    !(await withinLimit(
+      c.get("db"),
+      `ai:${c.get("account").id}`,
+      day(c.get("now")),
+      AI_CALLS_PER_DAY,
+    ))
+  ) {
+    return c.json({ error: "too_many_requests", retryAfter: 3600 }, 429);
+  }
   const asked = c.req.query("language");
   const deviceLanguage = c.get("device").language;
   const language: Language = isLanguage(asked)
@@ -317,6 +328,16 @@ voiceRoutes.post("/voice", async (c) => {
     corrections.some((c: unknown) => typeof c !== "string" || !c.trim() || c.length > MAX_SENTENCE)
   ) {
     return c.json({ error: "invalid", field: "corrections" }, 400);
+  }
+  if (
+    !(await withinLimit(
+      c.get("db"),
+      `ai:${c.get("account").id}`,
+      day(c.get("now")),
+      AI_CALLS_PER_DAY,
+    ))
+  ) {
+    return c.json({ error: "too_many_requests", retryAfter: 3600 }, 429);
   }
   const db = c.get("db");
   // "comprar leite e ovos" needs no model.

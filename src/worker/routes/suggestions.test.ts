@@ -1,6 +1,8 @@
+import { env } from "cloudflare:test";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { model } from "../ai";
 import { setUpFamily } from "../test/client";
+import { AI_CALLS_PER_DAY } from "../usage";
 
 type Prompt = { messages: { role: string; content: string }[] };
 let prompts: Prompt[] = [];
@@ -68,6 +70,22 @@ describe("Suggestions: reading the box", () => {
     const content = prompts[0].messages[1].content;
     expect(content).toContain("0. Rui (also called pai)");
     expect(content).not.toContain("Avó");
+  });
+
+  it("stops after the day's quota of model calls for the Account", async () => {
+    const browser = await setUpFamily();
+    answer = JSON.stringify({ items: [] });
+    const { id } = (await env.DB.prepare("SELECT id FROM account").first()) as { id: string };
+    const today = new Date().toISOString().slice(0, 10);
+    await env.DB.prepare("INSERT INTO usage_count (key, window, count) VALUES (?, ?, ?)")
+      .bind(`ai:${id}`, today, AI_CALLS_PER_DAY)
+      .run();
+    const res = await browser.post("/suggestions/read", { phrases: ["carro"] });
+    expect(res.status).toBe(429);
+    expect(prompts).toHaveLength(0);
+    // A new day starts again.
+    await env.DB.prepare("UPDATE usage_count SET window = '2000-01-01'").run();
+    expect((await browser.post("/suggestions/read", { phrases: ["carro"] })).status).not.toBe(429);
   });
 
   it("says it failed when the model fails, and refuses an empty box", async () => {

@@ -7,6 +7,7 @@ import { readSuggestions } from "../ai";
 import { schema } from "../db";
 import { requireDevice } from "../require-device";
 import type { AppEnv } from "../types";
+import { AI_CALLS_PER_DAY, day, withinLimit } from "../usage";
 
 /**
  * Suggestions: the phrases written or said in the box become repeating Tasks and Entries to
@@ -26,6 +27,16 @@ suggestionRoutes.post("/suggestions/read", async (c) => {
     (phrases as string[]).join("").length > MAX_TEXT
   ) {
     return c.json({ error: "invalid", field: "phrases" }, 400);
+  }
+  if (
+    !(await withinLimit(
+      c.get("db"),
+      `ai:${c.get("account").id}`,
+      day(c.get("now")),
+      AI_CALLS_PER_DAY,
+    ))
+  ) {
+    return c.json({ error: "too_many_requests", retryAfter: 3600 }, 429);
   }
   const db = c.get("db");
   const [[family], persons, nicknames] = await Promise.all([

@@ -1,4 +1,4 @@
-import { asc, eq, type SQL } from "drizzle-orm";
+import { asc, eq, sql, type SQL } from "drizzle-orm";
 import { Hono } from "hono";
 import type { Account } from "../auth/account";
 import { randomId, randomToken } from "../auth/crypto";
@@ -6,6 +6,7 @@ import type { Db } from "../db";
 import { schema } from "../db";
 import { requireDevice } from "../require-device";
 import type { AppEnv } from "../types";
+import { ATTACHMENTS_TOTAL_BYTES } from "../usage";
 import { mayChangeEntry } from "./entries";
 import { mayChangeTask } from "./tasks";
 
@@ -135,6 +136,12 @@ attachmentRoutes.post("/attachments", async (c) => {
   const bytes = await c.req.arrayBuffer();
   if (bytes.byteLength === 0 || bytes.byteLength > MAX_ATTACHMENT_BYTES) {
     return c.json({ error: "invalid", field: "size" }, 413);
+  }
+  const [{ used }] = await db
+    .select({ used: sql<number>`coalesce(sum(${schema.attachment.size}), 0)` })
+    .from(schema.attachment);
+  if (used + bytes.byteLength > ATTACHMENTS_TOTAL_BYTES) {
+    return c.json({ error: "invalid", field: "quota" }, 413);
   }
   const contentType = cleanType(c.req.header("Content-Type"));
   const key = ATTACHMENT_PREFIX + randomToken(16);

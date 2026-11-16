@@ -19,6 +19,7 @@ const DAY = 24 * 60 * 60 * 1000;
 const SKIPPED_TABLES = new Set([
   "d1_migrations",
   "sign_in_throttle",
+  "usage_count",
   "recovery_token",
   "scheduler_run",
   "weather_cache",
