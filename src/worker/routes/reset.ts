@@ -48,6 +48,7 @@ export async function resetSteps(db: Db, parts: Set<ResetPart>, now: string) {
     steps.push(db.delete(schema.task), db.delete(schema.checklist));
   }
   if (parts.has("shopping")) steps.push(db.delete(schema.shoppingItem));
+  if (parts.has("recipes")) steps.push(db.delete(schema.recipe));
   if (parts.has("tree")) {
     steps.push(
       db.delete(schema.relativeParent),

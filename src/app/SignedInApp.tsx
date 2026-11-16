@@ -24,6 +24,9 @@ import { SuggestionsPage } from "./suggestions/SuggestionsPage";
 import { TaskPage } from "./tasks/TaskForm";
 import { SearchPage } from "./search/SearchPage";
 import { TasksView } from "./tasks/TasksView";
+import { RecipeFormPage } from "./recipes/RecipeForm";
+import { RecipePage } from "./recipes/RecipePage";
+import { RecipesPage } from "./recipes/RecipesPage";
 import { ShoppingPage } from "./shopping/ShoppingPage";
 import { TreePage } from "./tree/TreePage";
 import { RelativePage } from "./tree/RelativeForm";
@@ -79,6 +82,10 @@ const router = createBrowserRouter([
       { path: "/tasks", element: <TasksView /> },
       { path: "/tasks/:id", element: <TaskPage /> },
       { path: paths.shopping(), element: <ShoppingPage /> },
+      { path: paths.recipes(), element: <RecipesPage /> },
+      { path: paths.newRecipe(), element: <RecipeFormPage /> },
+      { path: "/recipes/:id", element: <RecipePage /> },
+      { path: "/recipes/:id/edit", element: <RecipeFormPage /> },
       { path: paths.tree(), element: <TreePage /> },
       { path: "/tree/:id", element: <RelativePage /> },
       { path: paths.suggestions(), element: <SuggestionsPage /> },
