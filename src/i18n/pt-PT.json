@@ -720,7 +720,9 @@
     "leaveTitle": "Sair do Mural",
     "leaveHint": "Para sair, escreve a palavra-passe de {{email}}.",
     "leavePassword": "Palavra-passe",
-    "leave": "Sair"
+    "leave": "Sair",
+    "askPassword": "Pedir a palavra-passe para sair do Mural",
+    "askPasswordHint": "Desligado, o botão do Mural sai logo, sem palavra-passe. Só se muda fora do Mural."
   },
   "layers": {
     "title": "Mostrar no calendário",

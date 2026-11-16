@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { formatLocale } from "../../core/languages";
 import { LeaveWallDialog } from "../display/LeaveWallDialog";
-import { leaveDisplayMode, setDisplayMode, useDisplayMode } from "../display/mode";
+import { leaveDisplayMode, setDisplayMode, useDisplayMode, useWallPassword } from "../display/mode";
 import { useSignedIn } from "../family";
 import { isPlainDate, todayIn, type PlainDate } from "../../core/plain-date";
 import { focusedDay } from "../views/focus";
@@ -89,8 +89,9 @@ export function Header({
   // Switched off, the page from before comes back. The Summary is a button of the Wall's own.
   // Leaving the wall asks for the password first.
   const [leaving, setLeaving] = useState(false);
+  const askPassword = useWallPassword();
   const toggleWall = () => {
-    if (wall) return setLeaving(true);
+    if (wall) return askPassword ? setLeaving(true) : leaveDisplayMode(outsideScreens);
     setDisplayMode(true);
     navigate(paths.display());
   };

@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 
 /** A switch remembered on this device, read by every view that shows it. */
-function deviceSwitch(key: string, initial: boolean) {
+export function deviceSwitch(key: string, initial: boolean) {
   const listeners = new Set<() => void>();
   let current: boolean | null = null;
 

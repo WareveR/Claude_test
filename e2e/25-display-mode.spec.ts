@@ -303,3 +303,26 @@ test("on a tall screen the Wall's hours stretch to the bottom of the screen", as
   // Leave the Wall for the specs after this one.
   await leaveWall(page);
 });
+
+test("a device can leave the Wall without the password when its Settings say so", async ({
+  page,
+}) => {
+  await signIn(page);
+  await page.goto("/settings/device");
+  const ask = page.getByRole("checkbox", { name: /Ask for the password to leave the Wall/ });
+  await expect(ask).toBeChecked();
+  await ask.uncheck();
+
+  const wall = page.getByRole("banner").getByRole("button", { name: "Wall" });
+  await wall.click();
+  await expect(page.getByTestId("display-board")).toBeVisible();
+  await wall.click();
+  await expect(page.getByRole("dialog", { name: "Leave the Wall" })).toHaveCount(0);
+  await expect(page.getByTestId("display-board")).toHaveCount(0);
+
+  // Back on, the password is asked again.
+  await page.goto("/settings/device");
+  await ask.check();
+  await wall.click();
+  await leaveWall(page);
+});

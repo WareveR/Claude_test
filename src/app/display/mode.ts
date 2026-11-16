@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { deviceSwitch } from "../calendar/compact";
 
 /** Display Mode belongs to this browser only: a tablet on the wall, not the Family. */
 const KEY = "display-mode";
@@ -48,3 +49,9 @@ export function useDisplayMode(): boolean {
     () => false,
   );
 }
+
+/**
+ * Whether leaving the Wall asks the Account's password on this device. On by default; it can only
+ * be switched in Settings, which the Wall hides.
+ */
+export const [useWallPassword, setWallPassword] = deviceSwitch("wall-password", true);
