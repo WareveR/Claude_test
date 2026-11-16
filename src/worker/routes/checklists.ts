@@ -20,6 +20,7 @@ import { settleChecklist } from "../task-tree";
 import type { AppEnv } from "../types";
 import { moveAttachments } from "./attachments";
 import { personMentionChecks } from "./persons";
+import { mayChangeTask } from "./tasks";
 
 type ChecklistRow = typeof schema.checklist.$inferSelect;
 
@@ -334,6 +335,7 @@ checklistRoutes.post("/tasks/:id/with-items", async (c) => {
   const taskId = c.req.param("id");
   const [task] = await db.select().from(schema.task).where(eq(schema.task.id, taskId));
   if (!task) return c.json({ error: "not_found" }, 404);
+  if (!(await mayChangeTask(db, c.get("account"), task))) return c.json({ error: "private" }, 403);
   if (task.checklistId) return c.json({ error: "already_in_checklist" }, 409);
   const personIds = (
     await db
