@@ -5,6 +5,7 @@ import {
   real,
   sqliteTable,
   text,
+  uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 import type { EntryTypeDefaults, Importance, ReminderOffset } from "../../core/entry-type";
 import type { DeviceKind } from "../../core/device-kind";
@@ -514,6 +515,30 @@ export const recipe = sqliteTable("recipe", {
   createdAt: text("created_at").notNull(),
   changedAt: text("changed_at").notNull(),
 });
+
+/**
+ * One Meal of the weekly meal plan: what the Family plans to eat in one slot ("lunch" or "dinner")
+ * of one day. Never an Entry. The `date` is a plain day in the Family Time Zone. A Meal names a
+ * Recipe, or is only free text ("Restos", "Jantar fora"); `text` also keeps the Recipe's name as
+ * it was when planned, so a Meal still reads after its Recipe is deleted. One Meal per slot.
+ */
+export const meal = sqliteTable(
+  "meal",
+  {
+    id: text("id").primaryKey(),
+    /** YYYY-MM-DD. */
+    date: text("date").notNull(),
+    /** "lunch" | "dinner". */
+    slot: text("slot").notNull(),
+    recipeId: text("recipe_id").references(() => recipe.id, { onDelete: "set null" }),
+    text: text("text").notNull().default(""),
+    /** How many it is cooked for; null when not said. */
+    servings: integer("servings"),
+    createdAt: text("created_at").notNull(),
+    changedAt: text("changed_at").notNull(),
+  },
+  (table) => [uniqueIndex("meal_date_slot_idx").on(table.date, table.slot)],
+);
 
 /**
  * Someone in the Family Tree: to show the children where they come from. Not a Person: never

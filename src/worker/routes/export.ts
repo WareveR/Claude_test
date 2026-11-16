@@ -35,6 +35,7 @@ export const EXPORTED: Record<string, string[]> = {
   weather_location: [],
   shopping_item: [],
   recipe: [],
+  meal: [],
   relative: [],
   relative_parent: [],
   relative_partner: [],

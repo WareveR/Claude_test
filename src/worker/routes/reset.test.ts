@@ -42,7 +42,8 @@ async function familyWithData() {
   await browser.post("/tasks", { title: "Comprar fato de banho", personIds: [ana.id] });
   await browser.post("/checklists", { name: "Mala", personIds: [ana.id] });
   await browser.post("/shopping/items", { name: "Leite" });
-  await browser.post("/recipes", { name: "Sopa" });
+  const sopa = (await (await browser.post("/recipes", { name: "Sopa" })).json()) as { id: string };
+  await browser.request("PUT", "/meals/2026-11-16/dinner", { recipeId: sopa.id, text: "" });
   await browser.post("/feeds", { name: "Trabalho", personIds: [ana.id] });
   await browser.request("PUT", "/family/sleep", { sleepHours: { start: 22, end: 6 } });
   return browser;
@@ -61,6 +62,7 @@ describe("Danger zone", () => {
     expect(await count("checklist")).toBe(0);
     expect(await count("shopping_item")).toBe(0);
     expect(await count("recipe")).toBe(1);
+    expect(await count("meal")).toBe(1);
     expect(await count("person")).toBe(1);
     expect(await count("entry")).toBe(2); // Natação and Ana's synced Birthday
     expect(await count("calendar_feed")).toBe(1);
@@ -104,6 +106,19 @@ describe("Danger zone", () => {
     expect(moved!.key).toBe("general");
   });
 
+  it("deleting only the recipes leaves the meals planned, as text", async () => {
+    const browser = await familyWithData();
+    const res = await browser.post("/reset", { password: PASSWORD, parts: ["recipes"] });
+    expect(res.status).toBe(204);
+    expect(await count("recipe")).toBe(0);
+    expect(await count("meal")).toBe(1);
+    const meals = (await (await browser.get("/meals?from=2026-11-16&to=2026-11-16")).json()) as {
+      recipeId: string | null;
+      text: string;
+    }[];
+    expect(meals).toMatchObject([{ recipeId: null, text: "Sopa" }]);
+  });
+
   it("starts again as a new Family, keeping the password and this device signed in", async () => {
     const browser = await familyWithData();
     const res = await browser.post("/reset", {
@@ -113,6 +128,7 @@ describe("Danger zone", () => {
         "tasks",
         "shopping",
         "recipes",
+        "meals",
         "persons",
         "entryTypes",
         "templates",
@@ -128,6 +144,7 @@ describe("Danger zone", () => {
       "person",
       "shopping_item",
       "recipe",
+      "meal",
       "calendar_feed",
     ]) {
       expect(await count(table)).toBe(0);

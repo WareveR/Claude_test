@@ -11,6 +11,8 @@ import { useSignedIn } from "../family";
 import { usePersonFilter } from "../filter/model";
 import { usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
+import { MealsLine } from "../meals/MealsLine";
+import { useMeals } from "../meals/model";
 import { EntryLink } from "../shell/ItemPopup";
 import { useNow } from "../shell/useNow";
 
@@ -32,9 +34,15 @@ export function WeekEntries() {
   const occurrences = (useOccurrences(today, last).data ?? []).filter((e) =>
     matchesFilter(e.personIds, filter),
   );
+  // One request for the seven days' meals, shown as a line under each day's name.
+  const meals = useMeals(today, last).data ?? [];
   const days = Array.from({ length: 7 }, (_, i) => addDays(today, i))
-    .map((day) => ({ day, entries: entriesOn(occurrences, day) as Shown[] }))
-    .filter(({ entries }) => entries.length > 0);
+    .map((day) => ({
+      day,
+      entries: entriesOn(occurrences, day) as Shown[],
+      meals: meals.filter((m) => m.date === day),
+    }))
+    .filter(({ entries, meals }) => entries.length > 0 || meals.length > 0);
   const dayName = (day: string) =>
     day === today
       ? t("display.today")
@@ -51,11 +59,12 @@ export function WeekEntries() {
         {t("summary.nextDays")}
       </h2>
       {days.length === 0 && <p className="text-muted">{t("views.nothing")}</p>}
-      {days.map(({ day, entries }) => (
+      {days.map(({ day, entries, meals }) => (
         <div key={day} className="flex flex-col gap-1.5" data-testid={`week-entries-${day}`}>
           <h3 className="text-sm font-semibold text-muted first-letter:uppercase">
             {dayName(day)}
           </h3>
+          <MealsLine day={day} meals={meals} />
           {entries.map((entry) => {
             const span = entry.time.allDay ? null : daySpan(entry.time, day);
             const past = day === today && span !== null && span.end <= nowMinutes;

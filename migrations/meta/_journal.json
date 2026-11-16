@@ -281,6 +281,13 @@
       "when": 1794842709126,
       "tag": "0039_recipes",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "6",
+      "when": 1794843719427,
+      "tag": "0040_meal_plan",
+      "breakpoints": true
     }
   ]
 }

@@ -6,6 +6,7 @@ import { todayIn } from "../../core/plain-date";
 import { searchRecipes, type Recipe } from "../../core/recipe";
 import { useSignedIn } from "../family";
 import { paths } from "../paths";
+import { PlanSwitch } from "../meals/PlanSwitch";
 import { useNow } from "../shell/useNow";
 import { ViewNav } from "../shell/ViewNav";
 import { BUTTON_PRIMARY } from "../ui/button";
@@ -35,6 +36,7 @@ export function RecipesPage() {
         className="mx-auto flex w-full max-w-xl flex-col gap-4 px-4 pb-24"
         data-testid="recipes"
       >
+        <PlanSwitch current="recipes" />
         <div className="flex items-center gap-2">
           <input
             type="search"
