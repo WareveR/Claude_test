@@ -1,7 +1,7 @@
 # Deploying and rolling back
 
 Production is the `family-calendar` Worker on David's Cloudflare account, answering on
-https://calendario.phinest.org (and family-calendar.david-a-pires.workers.dev). It uses the D1
+https://calendario.phinest.org (the old workers.dev address is switched off). It uses the D1
 database `family-calendar` (EU jurisdiction) and the R2 buckets `family-calendar-images` and
 `family-calendar-backups`. Secrets: `SETUP_CODE`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`,
 `VAPID_SUBJECT` and, for email, `RESEND_API_KEY` (see [email.md](email.md)).
