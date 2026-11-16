@@ -487,6 +487,32 @@ export const shoppingItem = sqliteTable("shopping_item", {
 });
 
 /**
+ * One Recipe in the Family's Recipe Book: no dates, never on the calendar. Tags, ingredients and
+ * steps are kept as text (JSON, JSON, one step per line) and read whole, never searched in SQL.
+ */
+export const recipe = sqliteTable("recipe", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  servings: integer("servings").notNull().default(4),
+  /** Total time in minutes; null when not said. */
+  minutes: integer("minutes"),
+  /** JSON array of strings. */
+  tags: text("tags").notNull().default("[]"),
+  /** JSON array of {quantity: number | null, unit, name, pantry}. */
+  ingredients: text("ingredients").notNull().default("[]"),
+  /** One step per line. */
+  steps: text("steps").notNull().default(""),
+  /** A link or a book. */
+  source: text("source").notNull().default(""),
+  notes: text("notes").notNull().default(""),
+  /** R2 key of the photo, shrunk in the browser; images are never overwritten. */
+  photoKey: text("photo_key"),
+  favourite: integer("favourite", { mode: "boolean" }).notNull().default(false),
+  createdAt: text("created_at").notNull(),
+  changedAt: text("changed_at").notNull(),
+});
+
+/**
  * Someone in the Family Tree: to show the children where they come from. Not a Person: never
  * on the calendar, and may have lived long ago.
  */

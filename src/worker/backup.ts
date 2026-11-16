@@ -4,6 +4,7 @@ import { familyNow } from "../core/task";
 import { APP_VERSION } from "../core/version";
 import type { Db } from "./db";
 import { schema } from "./db";
+import { recipePhotoKeys } from "./routes/recipes";
 import { relativePhotoKeys } from "./routes/relatives";
 import { sweepAttachments } from "./routes/attachments";
 
@@ -120,6 +121,7 @@ export async function imageCleanupJob(db: Db, env: Env, now: Date) {
   const used = new Set([
     ...[...photos, ...thumbnails].map((r) => r.key),
     ...(await relativePhotoKeys(db)),
+    ...(await recipePhotoKeys(db)),
   ]);
   const images = await db.select({ key: schema.image.key }).from(schema.image);
   const usedKeys = images.map((i) => i.key).filter((key) => used.has(key));

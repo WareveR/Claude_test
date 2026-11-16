@@ -42,6 +42,7 @@ async function familyWithData() {
   await browser.post("/tasks", { title: "Comprar fato de banho", personIds: [ana.id] });
   await browser.post("/checklists", { name: "Mala", personIds: [ana.id] });
   await browser.post("/shopping/items", { name: "Leite" });
+  await browser.post("/recipes", { name: "Sopa" });
   await browser.post("/feeds", { name: "Trabalho", personIds: [ana.id] });
   await browser.request("PUT", "/family/sleep", { sleepHours: { start: 22, end: 6 } });
   return browser;
@@ -59,6 +60,7 @@ describe("Danger zone", () => {
     expect(await count("task")).toBe(0);
     expect(await count("checklist")).toBe(0);
     expect(await count("shopping_item")).toBe(0);
+    expect(await count("recipe")).toBe(1);
     expect(await count("person")).toBe(1);
     expect(await count("entry")).toBe(2); // Natação and Ana's synced Birthday
     expect(await count("calendar_feed")).toBe(1);
@@ -110,6 +112,7 @@ describe("Danger zone", () => {
         "entries",
         "tasks",
         "shopping",
+        "recipes",
         "persons",
         "entryTypes",
         "templates",
@@ -124,6 +127,7 @@ describe("Danger zone", () => {
       "checklist",
       "person",
       "shopping_item",
+      "recipe",
       "calendar_feed",
     ]) {
       expect(await count(table)).toBe(0);
