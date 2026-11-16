@@ -5,7 +5,7 @@ import { isDeviceKind, type DeviceKind } from "../../core/device-kind";
 import type { Account } from "../auth/account";
 import { isAcceptablePassword, verifyPassword } from "../auth/password";
 import { SESSION_COOKIE } from "../auth/session";
-import { clearFailures, clientIp, recordFailure, retryAfter } from "../auth/throttle";
+import { clearFailures, clientIp, recordFailure, retryAfter, target } from "../auth/throttle";
 import { schema } from "../db";
 import { replacePassword, sendPasswordNotice } from "./recovery";
 import { requireDevice } from "../require-device";
@@ -96,19 +96,19 @@ devicesRoutes.post("/password", async (c) => {
   const db = c.get("db");
   const now = c.get("now");
   const ip = clientIp(c);
-  const wait = await retryAfter(db, ip, now);
+  const wait = await retryAfter(db, ip, target.account(c.get("account").id), now);
   if (wait > 0) return c.json({ error: "too_many_attempts", retryAfter: wait }, 429);
 
   const body = await c.req.json().catch(() => ({}));
   const account = c.get("account");
   if (!(await verifyPassword(String(body.currentPassword ?? ""), account.passwordHash))) {
-    await recordFailure(db, ip, now);
+    await recordFailure(db, ip, target.account(c.get("account").id), now);
     return c.json({ error: "wrong_password" }, 401);
   }
   if (!isAcceptablePassword(body.newPassword)) {
     return c.json({ error: "invalid", field: "newPassword" }, 400);
   }
-  await clearFailures(db, ip);
+  await clearFailures(db, ip, target.account(c.get("account").id));
   await replacePassword(db, account.id, body.newPassword, now);
   await sendPasswordNotice(c.env, db, account);
   deleteCookie(c, SESSION_COOKIE, { path: "/", secure: true, prefix: "host" });

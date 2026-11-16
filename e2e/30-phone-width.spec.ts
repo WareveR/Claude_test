@@ -10,7 +10,17 @@ test("on a phone no view is wider than the screen", async ({ page }) => {
   await expect(page.getByTestId("header-weather")).toBeVisible();
 
   await page.goto("/");
-  for (const view of ["Day", "Week", "Month", "Year", "Agenda", "Tasks", "Shopping", "Summary"]) {
+  for (const view of [
+    "Day",
+    "Week",
+    "Month",
+    "Year",
+    "Agenda",
+    "Tasks",
+    "Shopping",
+    "Recipes",
+    "Summary",
+  ]) {
     if (view === "Summary") await page.goto("/summary");
     else await openView(page, view);
     await page.waitForLoadState("networkidle");

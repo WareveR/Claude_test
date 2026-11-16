@@ -1,4 +1,5 @@
 import {
+  BookOpenText,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -27,7 +28,17 @@ import { focusedDay, setFocusedDay } from "../views/focus";
 import { useCloseOutside } from "../ui/useCloseOutside";
 import { useSwipe } from "../ui/useSwipe";
 
-const VIEWS = ["day", "week", "month", "year", "agenda", "tasks", "shopping", "tree"] as const;
+const VIEWS = [
+  "day",
+  "week",
+  "month",
+  "year",
+  "agenda",
+  "tasks",
+  "shopping",
+  "recipes",
+  "tree",
+] as const;
 
 /** Switches between views and moves through dates, keeping the date in the address. */
 export function ViewNav({
@@ -108,7 +119,9 @@ export function ViewNav({
     tasks && <TasksButton key="tasks" from={tasks.from} to={tasks.to} />,
   ].filter(Boolean);
   const linkTo = (v: (typeof VIEWS)[number]) =>
-    v === "tasks" || v === "shopping" || v === "tree" ? paths[v]() : paths[v](target);
+    v === "tasks" || v === "shopping" || v === "recipes" || v === "tree"
+      ? paths[v]()
+      : paths[v](target);
   // Sticky, so a long stacked page (a phone, a big zoom) can always move on or switch view;
   // above the grid's now line, so the Person Filter panel opens over it.
   return (
@@ -194,11 +207,13 @@ function ViewIcon({ view }: { view: (typeof VIEWS)[number] }) {
       ? ListChecks
       : view === "shopping"
         ? ShoppingCart
-        : view === "tree"
-          ? TreeDeciduous
-          : view === "agenda"
-            ? ListOrdered
-            : null;
+        : view === "recipes"
+          ? BookOpenText
+          : view === "tree"
+            ? TreeDeciduous
+            : view === "agenda"
+              ? ListOrdered
+              : null;
   return (
     <span aria-hidden className="flex">
       {Icon ? (

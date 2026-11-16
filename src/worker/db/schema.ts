@@ -95,7 +95,10 @@ export const signedInDevice = sqliteTable("signed_in_device", {
 /** What a browser's PushSubscription.toJSON() gives. */
 export type PushSubscriptionJson = { endpoint: string; keys: { p256dh: string; auth: string } };
 
-/** Wrong sign-in or setup attempts, per client IP ("ip:…") and for the whole Family ("global"). */
+/**
+ * Wrong sign-in or setup attempts, per client IP ("ip:…") and per target: an email typed at
+ * sign-in ("email:…"), a signed-in Account ("account:…") or the setup code ("setup").
+ */
 export const signInThrottle = sqliteTable("sign_in_throttle", {
   key: text("key").primaryKey(),
   failures: integer("failures").notNull(),
@@ -484,6 +487,32 @@ export const shoppingItem = sqliteTable("shopping_item", {
   /** The shop it is to be bought at, as typed; "" for any shop. */
   store: text("store").notNull().default(""),
   boughtAt: text("bought_at"),
+  createdAt: text("created_at").notNull(),
+  changedAt: text("changed_at").notNull(),
+});
+
+/**
+ * One Recipe in the Family's Recipe Book: no dates, never on the calendar. Tags, ingredients and
+ * steps are kept as text (JSON, JSON, one step per line) and read whole, never searched in SQL.
+ */
+export const recipe = sqliteTable("recipe", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  servings: integer("servings").notNull().default(4),
+  /** Total time in minutes; null when not said. */
+  minutes: integer("minutes"),
+  /** JSON array of strings. */
+  tags: text("tags").notNull().default("[]"),
+  /** JSON array of {quantity: number | null, unit, name, pantry}. */
+  ingredients: text("ingredients").notNull().default("[]"),
+  /** One step per line. */
+  steps: text("steps").notNull().default(""),
+  /** A link or a book. */
+  source: text("source").notNull().default(""),
+  notes: text("notes").notNull().default(""),
+  /** R2 key of the photo, shrunk in the browser; images are never overwritten. */
+  photoKey: text("photo_key"),
+  favourite: integer("favourite", { mode: "boolean" }).notNull().default(false),
   createdAt: text("created_at").notNull(),
   changedAt: text("changed_at").notNull(),
 });

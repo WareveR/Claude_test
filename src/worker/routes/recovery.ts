@@ -5,7 +5,7 @@ import { accountByEmail, EMAIL, normalEmail, ownerAccount, type Account } from "
 import { randomId, randomToken, safeEqual, sha256 } from "../auth/crypto";
 import { hashPassword, isAcceptablePassword, verifyPassword } from "../auth/password";
 import { startSession } from "../auth/session";
-import { clearFailures, clientIp, recordFailure, retryAfter } from "../auth/throttle";
+import { clearFailures, clientIp, recordFailure, retryAfter, target } from "../auth/throttle";
 import type { Db } from "../db";
 import { schema } from "../db";
 import type { TokenPurpose } from "../db/schema";
@@ -196,17 +196,17 @@ recoveryRoutes.post("/setup/password", async (c) => {
   if (!family || !owner || !(await setupCodeChanged(c.env, family))) {
     return c.json({ error: "setup_locked" }, 409);
   }
-  const wait = await retryAfter(db, ip, now);
+  const wait = await retryAfter(db, ip, target.setup, now);
   if (wait > 0) return c.json({ error: "too_many_attempts", retryAfter: wait }, 429);
   const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
   if (!safeEqual(String(body.setupCode ?? ""), c.env.SETUP_CODE)) {
-    await recordFailure(db, ip, now);
+    await recordFailure(db, ip, target.setup, now);
     return c.json({ error: "wrong_setup_code" }, 401);
   }
   if (!isAcceptablePassword(body.password)) {
     return c.json({ error: "invalid", field: "password" }, 400);
   }
-  await clearFailures(db, ip);
+  await clearFailures(db, ip, target.setup);
   await replacePassword(db, owner.id, body.password as string, now);
   await db
     .update(schema.family)
@@ -224,18 +224,18 @@ recoveryEmailRoutes.post("/recovery-email", async (c) => {
   const db = c.get("db");
   const now = c.get("now");
   const ip = clientIp(c);
-  const wait = await retryAfter(db, ip, now);
+  const wait = await retryAfter(db, ip, target.account(c.get("account").id), now);
   if (wait > 0) return c.json({ error: "too_many_attempts", retryAfter: wait }, 429);
   const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
   const family = await theFamily(db);
   const account = c.get("account");
   if (!(await verifyPassword(String(body.password ?? ""), account.passwordHash))) {
-    await recordFailure(db, ip, now);
+    await recordFailure(db, ip, target.account(c.get("account").id), now);
     return c.json({ error: "wrong_password" }, 401);
   }
   const email = normalEmail(body.email);
   if (!EMAIL.test(email)) return c.json({ error: "invalid", field: "email" }, 400);
-  await clearFailures(db, ip);
+  await clearFailures(db, ip, target.account(c.get("account").id));
   if (await accountByEmail(db, email)) return c.json({ error: "email_taken" }, 409);
   const token = await issueToken(db, account.id, "email", now, 24 * HOUR, email);
   const texts = textsFor(family);

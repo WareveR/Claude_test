@@ -1,5 +1,5 @@
 import { env } from "cloudflare:test";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { model } from "../ai";
 import { getDb, schema } from "../db";
 import worker from "../index";
@@ -17,6 +17,10 @@ let answer: (prompt: Prompt) => unknown;
 const realRun = model.run;
 
 beforeEach(() => {
+  // Refresh reads the clock: midday today, so it writes the morning Briefing whenever this runs.
+  const day = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Lisbon" }).format(new Date());
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date(`${day}T11:00:00Z`));
   prompts = [];
   answer = () => ({ segments: [{ text: "A quiet week.", item: null }] });
   model.run = async (_env, input) => {
@@ -25,6 +29,7 @@ beforeEach(() => {
   };
 });
 afterEach(() => {
+  vi.useRealTimers();
   model.run = realRun;
 });
 
