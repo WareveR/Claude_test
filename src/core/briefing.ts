@@ -8,6 +8,7 @@ import { matchesFilter } from "./person-filter";
 import { addDays, daysBetween, formatPlainDate, type PlainDate } from "./plain-date";
 import type { Repetition } from "./repetition";
 import type { ClockChange } from "./clock-change";
+import type { Bin } from "./waste";
 import type { DayWeather, HourWeather } from "./weather";
 
 /** How far ahead the Briefing looks. */
@@ -79,9 +80,11 @@ export type BriefingExtras = {
   weather: BriefingWeather | null;
   /** A change of the clocks in the next 7 days. */
   clockChange: ClockChange | null;
+  /** The bins collected today, to put out tonight; empty when none or none set up. */
+  bins?: Bin[];
 };
 
-export const NO_EXTRAS: BriefingExtras = { weather: null, clockChange: null };
+export const NO_EXTRAS: BriefingExtras = { weather: null, clockChange: null, bins: [] };
 
 /** A piece of Briefing text; one with `link` opens that Entry Occurrence, Task or Checklist. */
 export type Segment = {

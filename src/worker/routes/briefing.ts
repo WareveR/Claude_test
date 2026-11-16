@@ -21,8 +21,9 @@ import {
 import { clockChangeWithin } from "../../core/clock-change";
 import { publicHolidays } from "../../core/holidays";
 import { isLanguage, LANGUAGES, type Language } from "../../core/languages";
-import { addDays, type PlainDate } from "../../core/plain-date";
+import { addDays, weekday, type PlainDate } from "../../core/plain-date";
 import { familyNow } from "../../core/task";
+import { binsOn } from "../../core/waste";
 import { writeBriefing } from "../ai";
 import type { Db } from "../db";
 import { personsBy, schema } from "../db";
@@ -110,6 +111,7 @@ async function readCalendar(db: Db, now: Date) {
   const extras: BriefingExtras = {
     weather,
     clockChange: clockChangeWithin(family.timeZone, today, REWRITE_DAYS),
+    bins: binsOn(family.wasteCollection, weekday(today)),
   };
   // An invited Account that hasn't set its password yet reads nothing, so gets no Briefing.
   const readers: BriefingReader[] = accounts

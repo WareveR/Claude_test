@@ -267,6 +267,23 @@ describe("Briefing", () => {
     expect(editions).toEqual([{ edition: "evening" }]);
   });
 
+  it("says which bin goes out tonight on a collection day", async () => {
+    await familyWithPlans();
+    // 2 October 2026 is a Friday (weekday 4).
+    await env.DB.prepare("UPDATE family SET waste_collection = ?")
+      .bind(
+        JSON.stringify([
+          { bin: "packaging", weekdays: [4] },
+          { bin: "glass", weekdays: [0] },
+        ]),
+      )
+      .run();
+    await runScheduler(new Date("2026-10-02T04:00:00Z"));
+    const sent = JSON.stringify(prompts[0]);
+    expect(sent).toContain("tonight the packaging (the yellow bin) goes out");
+    expect(sent).not.toContain("glass");
+  });
+
   it("needs a signed-in device", async () => {
     await setUpFamily();
     expect((await new TestBrowser("192.0.2.92").get("/briefing")).status).toBe(401);
