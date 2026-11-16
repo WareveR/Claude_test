@@ -1,9 +1,11 @@
-import { BookOpenText, Plus } from "lucide-react";
-import { useState } from "react";
+import { BookOpenText, ListPlus, Plus } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Link, Navigate, useParams } from "react-router";
 import { formatLocale } from "../../core/languages";
 import { MEAL_SLOTS, weekOf, type MealSlot } from "../../core/meal-plan";
+import { shoppingDates, shoppingFromMeals, type MealShoppingLine } from "../../core/meal-shopping";
 import {
   addDays,
   formatPlainDate,
@@ -15,10 +17,14 @@ import {
 import { TODAY_PILL, TODAY_TINT } from "../calendar/today";
 import { useSignedIn } from "../family";
 import { paths } from "../paths";
+import { useRecipes } from "../recipes/model";
+import { refreshShopping, useShoppingItems } from "../shopping/model";
+import { BUTTON } from "../ui/button";
 import { useNow } from "../shell/useNow";
 import { ViewNav } from "../shell/ViewNav";
 import { MealDialog } from "./MealDialog";
-import { useMeals, type Meal } from "./model";
+import { MealShoppingDialog } from "./MealShoppingDialog";
+import { addMealLines, useMeals, type Meal } from "./model";
 import { PlanSwitch } from "./PlanSwitch";
 
 /** The weekly meal plan: any date in the address shows its Monday to Sunday week. */
@@ -40,6 +46,51 @@ function Plan({ date, today }: { date: PlainDate; today: PlainDate }) {
   // The slot being planned; the dialog opens over the week.
   const [editing, setEditing] = useState<{ date: PlainDate; slot: MealSlot } | null>(null);
   const { week, year } = isoWeek(monday);
+
+  // The Meals to buy for: from today in the current week, else the whole week.
+  const queryClient = useQueryClient();
+  const recipes = useRecipes().data;
+  const openItems = useShoppingItems().data;
+  const buyDates = shoppingDates(days, today);
+  const lines = shoppingFromMeals(
+    meals.filter((m) => buyDates.includes(m.date)),
+    recipes ?? [],
+    openItems ?? [],
+    language,
+  );
+  const [shopping, setShopping] = useState(false);
+  const [done, setDone] = useState<{ undo: () => Promise<void> } | null>(null);
+  const [undone, setUndone] = useState(false);
+  useEffect(() => {
+    if (!done && !undone) return;
+    const timer = setTimeout(() => {
+      setDone(null);
+      setUndone(false);
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, [done, undone]);
+  const period = `${formatPlainDate(buyDates[0], locale, { day: "numeric", month: "short" })} – ${formatPlainDate(buyDates[buyDates.length - 1], locale, { day: "numeric", month: "short" })}`;
+  const addToShopping = async (chosen: MealShoppingLine[]) => {
+    const undo = await addMealLines(chosen, language).finally(() => refreshShopping(queryClient));
+    setShopping(false);
+    setUndone(false);
+    setDone({
+      undo: async () => {
+        try {
+          await undo();
+        } finally {
+          await refreshShopping(queryClient);
+        }
+      },
+    });
+  };
+  const undoShopping = async () => {
+    if (!done) return;
+    const { undo } = done;
+    setDone(null);
+    await undo();
+    setUndone(true);
+  };
   return (
     <>
       <ViewNav
@@ -55,6 +106,18 @@ function Plan({ date, today }: { date: PlainDate; today: PlainDate }) {
         aria-label={t("meals.title")}
       >
         <PlanSwitch current="meals" />
+        <div className="flex">
+          <button
+            type="button"
+            className={BUTTON}
+            disabled={lines.length === 0}
+            data-testid="meal-shopping-button"
+            onClick={() => setShopping(true)}
+          >
+            <ListPlus aria-hidden size={16} />
+            {t("meals.shop.button")}
+          </button>
+        </div>
         <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-7">
           {days.map((day) => (
             <li
@@ -83,6 +146,34 @@ function Plan({ date, today }: { date: PlainDate; today: PlainDate }) {
           ))}
         </ul>
       </main>
+      {shopping && (
+        <MealShoppingDialog
+          period={period}
+          lines={lines}
+          onAdd={addToShopping}
+          onClose={() => setShopping(false)}
+        />
+      )}
+      {(done || undone) && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center p-3">
+          <div
+            role="status"
+            className="pointer-events-auto flex flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-lg border border-line bg-surface px-4 py-2 text-sm shadow-lg"
+          >
+            <span>{t(done ? "meals.shop.done" : "meals.shop.undone")}</span>
+            {done && (
+              <>
+                <button type="button" className={BUTTON} onClick={() => void undoShopping()}>
+                  {t("meals.shop.undo")}
+                </button>
+                <Link to={paths.shopping()} className={BUTTON}>
+                  {t("meals.shop.open")}
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+      )}
       {editing && (
         <MealDialog
           key={`${editing.date}-${editing.slot}`}
