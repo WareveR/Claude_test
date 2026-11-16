@@ -19,7 +19,7 @@ export const requireDevice = createMiddleware<AppEnv>(async (c, next) => {
     .select()
     .from(schema.account)
     .where(eq(schema.account.id, device.accountId));
-  if (!account) return c.json({ error: "signed_out" }, 401);
+  if (!account || account.removedAt) return c.json({ error: "signed_out" }, 401);
   c.set("device", device);
   c.set("account", account);
   await next();

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { mailer, type Email } from "../email";
-import { addAccount, EMAIL, setUpFamily, TestBrowser } from "../test/client";
+import { addAccount, EMAIL, PASSWORD, setUpFamily, TestBrowser } from "../test/client";
 
 let outbox: Email[] = [];
 const realSend = mailer.send;
@@ -169,6 +169,75 @@ describe("members", () => {
     expect((await admin.delete(`/members/${id("ana@example.com")}`)).status).toBe(403);
     expect((await admin.delete(`/members/${id("rui@example.com")}`)).status).toBe(204);
     expect((await rui.get("/persons")).status).toBe(401);
+  });
+
+  it("keeps a removed adult's Private items and brings the Account back on restore", async () => {
+    const owner = await setUpFamily();
+    const rui = await addAccount("rui@example.com", "member", "198.51.100.22");
+    const persons = async (name: string) =>
+      ((await (await owner.post("/persons", { name, color: "#e07a5f" })).json()) as { id: string })
+        .id;
+    const ruiPerson = await persons("Rui");
+    const list = (await (await owner.get("/members")).json()) as Member[];
+    const ruiId = list.find((m) => m.email === "rui@example.com")!.id;
+    expect(
+      (await owner.request("PATCH", `/members/${ruiId}`, { personId: ruiPerson })).status,
+    ).toBe(200);
+    const types = (await (await rui.get("/entry-types")).json()) as {
+      id: string;
+      builtinKey: string | null;
+    }[];
+    const time = {
+      allDay: false,
+      startDate: "2026-10-23",
+      startTime: "10:00",
+      endDate: "2026-10-23",
+      endTime: "11:00",
+    };
+    const made = await rui.post("/entries", {
+      title: "Surpresa",
+      entryTypeId: types.find((x) => x.builtinKey === "general")!.id,
+      time,
+      personIds: [],
+      private: true,
+    });
+    expect(made.status).toBe(201);
+
+    expect((await owner.delete(`/members/${ruiId}`)).status).toBe(204);
+    expect((await rui.get("/persons")).status).toBe(401);
+    const signIn = await new TestBrowser("198.51.100.23").post("/session", {
+      email: "rui@example.com",
+      password: PASSWORD,
+    });
+    expect(signIn.status).toBe(401);
+    const after = (await (await owner.get("/members")).json()) as (Member & { removed: boolean })[];
+    expect(after.find((m) => m.id === ruiId)).toMatchObject({ removed: true });
+    // The email stays reserved, and the Person is free for another Account meanwhile.
+    expect(
+      (await owner.post("/members", { email: "rui@example.com", role: "member" })).status,
+    ).toBe(409);
+    const other = await owner.post("/members", {
+      email: "ze@example.com",
+      role: "member",
+      personId: ruiPerson,
+    });
+    expect(other.status).toBe(201);
+
+    const restored = await owner.post(`/members/${ruiId}/restore`);
+    expect(restored.status).toBe(200);
+    expect(await restored.json()).toMatchObject({
+      removed: false,
+      personId: null,
+      personCleared: true,
+    });
+    const back = new TestBrowser("198.51.100.24");
+    expect(
+      (await back.post("/session", { email: "rui@example.com", password: PASSWORD })).status,
+    ).toBe(201);
+    const entries = (await (await back.get("/entries?from=2026-10-01&to=2026-10-31")).json()) as {
+      title: string;
+    }[];
+    expect(entries.map((e) => e.title)).toContain("Surpresa");
   });
 
   it("hands the Family to another adult, and the old Owner becomes an Admin", async () => {

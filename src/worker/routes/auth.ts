@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { isLanguage, isTimeZone } from "../../core/languages";
-import { eq } from "drizzle-orm";
-import { accountByEmail, EMAIL, normalEmail } from "../auth/account";
+import { and, eq, isNull } from "drizzle-orm";
+import { activeAccountByEmail, EMAIL, normalEmail } from "../auth/account";
 import { safeEqual, randomId, sha256 } from "../auth/crypto";
 import {
   hashPassword,
@@ -25,7 +25,10 @@ authRoutes.get("/status", async (c) => {
   const [family] = await db.select().from(schema.family).limit(1);
   const device = family ? await currentDevice(c, db, c.get("now")) : null;
   const [account] = device
-    ? await db.select().from(schema.account).where(eq(schema.account.id, device.accountId))
+    ? await db
+        .select()
+        .from(schema.account)
+        .where(and(eq(schema.account.id, device.accountId), isNull(schema.account.removedAt)))
     : [];
   return c.json({
     familyExists: Boolean(family),
@@ -130,7 +133,7 @@ authRoutes.post("/session", async (c) => {
   const wait = await retryAfter(db, ip, target.email(email), now);
   if (wait > 0) return c.json({ error: "too_many_attempts", retryAfter: wait }, 429);
 
-  const account = await accountByEmail(db, email);
+  const account = await activeAccountByEmail(db, email);
   // An unknown email and a wrong password look the same, so neither leaks who has an Account.
   const password = String(body.password ?? "");
   const matches = await verifyPassword(password, account?.passwordHash || NO_ACCOUNT_HASH);

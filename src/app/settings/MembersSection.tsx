@@ -16,6 +16,8 @@ type Member = {
   personId: string | null;
   /** Invited, but the invite link was not used yet. */
   pending: boolean;
+  /** Removed: can't sign in, keeps what it made, can be restored. */
+  removed: boolean;
 };
 
 const SELECT = "rounded-md border border-line bg-surface px-3 py-2";
@@ -24,15 +26,21 @@ function errorKey(error: Error) {
   if (!(error instanceof ApiError)) return "errors.network";
   const code = error.body.error;
   if (code === "email_taken") return "recovery.emailTaken";
+  if (code === "email_removed") return "members.emailRemoved";
   if (code === "person_taken") return "account.personTaken";
   if (code === "email_failed") return "members.emailFailed";
   if (code === "invalid" && error.body.field === "email") return "setup.invalid.email";
   return "errors.unexpected";
 }
 
-/** The Persons an Account can be for: active ones without another Account. */
+/** The Persons an Account can be for: active ones without another (not removed) Account. */
 function freePersons(persons: Person[], members: Member[], keep: string | null) {
-  const taken = new Set(members.map((m) => m.personId).filter((id) => id && id !== keep));
+  const taken = new Set(
+    members
+      .filter((m) => !m.removed)
+      .map((m) => m.personId)
+      .filter((id) => id && id !== keep),
+  );
   return persons.filter((p) => (!p.archived || p.id === keep) && !taken.has(p.id));
 }
 
@@ -46,20 +54,39 @@ export function MembersSection() {
     enabled: account.role !== "member",
   });
   const persons = usePersons();
+  const [notice, setNotice] = useState<string | null>(null);
   if (account.role === "member") return null;
   const list = members.data ?? [];
+  const active = list.filter((m) => !m.removed);
+  const removed = list.filter((m) => m.removed);
   const everyone = persons.data ?? [];
 
   return (
     <section className="flex flex-col gap-2">
       <h2 className="font-semibold">{t("members.title")}</h2>
       <p className="text-sm text-muted">{t("members.hint")}</p>
+      {notice && (
+        <p role="status" className="text-sm text-muted">
+          {notice}
+        </p>
+      )}
       <ul className="flex flex-col gap-2">
-        {list.map((m) => (
+        {active.map((m) => (
           <MemberRow key={m.id} member={m} members={list} persons={everyone} />
         ))}
       </ul>
       <InviteForm members={list} persons={everyone} />
+      {removed.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <h3 className="text-sm font-semibold">{t("members.removed")}</h3>
+          <p className="text-sm text-muted">{t("members.removedHint")}</p>
+          <ul className="flex flex-col gap-2">
+            {removed.map((m) => (
+              <RemovedRow key={m.id} member={m} persons={everyone} onNotice={setNotice} />
+            ))}
+          </ul>
+        </div>
+      )}
     </section>
   );
 }
@@ -208,6 +235,52 @@ function MemberRow({
           </div>
         )}
       </details>
+    </li>
+  );
+}
+
+function RemovedRow({
+  member,
+  persons,
+  onNotice,
+}: {
+  member: Member;
+  persons: Person[];
+  onNotice: (text: string | null) => void;
+}) {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const restore = useMutation({
+    mutationFn: () =>
+      api<Member & { personCleared: boolean }>(`/members/${member.id}/restore`, {
+        method: "POST",
+        body: {},
+      }),
+    onSuccess: (restored) => {
+      onNotice(restored.personCleared ? t("members.restoredNoPerson") : null);
+      queryClient.invalidateQueries({ queryKey: ["members"] });
+    },
+  });
+  const person = persons.find((p) => p.id === member.personId);
+  return (
+    <li
+      data-testid="removed-member"
+      className="flex flex-col gap-2 rounded-md border border-line px-3 py-2 text-sm"
+    >
+      <div className="flex items-center gap-2">
+        <span className="min-w-0 flex-1 truncate text-muted">
+          {person ? `${person.name} · ${member.email}` : member.email}
+        </span>
+        <button
+          type="button"
+          className={BUTTON}
+          disabled={restore.isPending}
+          onClick={() => restore.mutate()}
+        >
+          {t("members.restore")}
+        </button>
+      </div>
+      {restore.error && <ErrorText>{t(errorKey(restore.error))}</ErrorText>}
     </li>
   );
 }

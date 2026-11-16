@@ -1,7 +1,14 @@
 import { and, eq, gt, gte, isNotNull, isNull } from "drizzle-orm";
 import { Hono, type Context } from "hono";
 import { isLanguage } from "../../core/languages";
-import { accountByEmail, EMAIL, normalEmail, ownerAccount, type Account } from "../auth/account";
+import {
+  accountByEmail,
+  activeAccountByEmail,
+  EMAIL,
+  normalEmail,
+  ownerAccount,
+  type Account,
+} from "../auth/account";
 import { randomId, randomToken, safeEqual, sha256 } from "../auth/crypto";
 import { hashPassword, isAcceptablePassword, verifyPassword } from "../auth/password";
 import { startSession } from "../auth/session";
@@ -115,7 +122,7 @@ async function sendRecovery(c: Context<AppEnv>, email: unknown) {
   const db = c.get("db");
   const now = c.get("now");
   const family = await theFamily(db);
-  const account = family ? await accountByEmail(db, normalEmail(email)) : undefined;
+  const account = family ? await activeAccountByEmail(db, normalEmail(email)) : undefined;
   if (!family || !account) return;
   const recent = await db
     .select({ id: schema.recoveryToken.id })
