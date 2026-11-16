@@ -177,13 +177,29 @@ export type PresentedEntry = ReturnType<typeof present>;
 
 const BLANK = { title: "", location: "", notes: "" };
 
+/** The built-in General type: what a hidden Private item shows instead of its real type. */
+export async function generalTypeId(db: Db) {
+  const [general] = await db
+    .select({ id: schema.entryType.id })
+    .from(schema.entryType)
+    .where(eq(schema.entryType.builtinKey, "general"));
+  return general.id;
+}
+
 /**
  * An Entry as this Account may see it. A Private one it may not see in full keeps only its
  * time, Persons and Repetition, marked hidden; so does an Occurrence edited alone to be Private.
+ * Its type, importance, icon and reminders are blanked too, as they would give the content away.
  */
-export function forViewer(viewer: Account, entry: PresentedEntry) {
+export function forViewer(viewer: Account, entry: PresentedEntry, generalId: string) {
   const hidden = !seesInFull(viewer, entry, entry.personIds);
-  const shown = hidden ? { ...entry, ...BLANK, icon: null, reminders: [] } : entry;
+  const plain = {
+    entryTypeId: generalId,
+    importance: "normal" as Importance,
+    icon: null,
+    reminders: [],
+  };
+  const shown = hidden ? { ...entry, ...BLANK, ...plain } : entry;
   return {
     ...shown,
     hidden,
@@ -198,7 +214,9 @@ export function forViewer(viewer: Account, entry: PresentedEntry) {
               { private: true, createdBy: entry.createdBy },
               override.personIds ?? entry.personIds,
             )));
-      return hideOverride ? { ...e, override: { ...override, ...BLANK, hidden: true } } : e;
+      return hideOverride
+        ? { ...e, override: { ...override, ...BLANK, ...plain, hidden: true } }
+        : e;
     }),
   };
 }
@@ -231,6 +249,7 @@ async function withPersons(db: Db, rows: EntryRow[], viewer: Account) {
   ]);
   const personsOf = groupBy(links, (l) => l.entryId);
   const exceptionsOf = groupBy(exceptions, (e) => e.entryId);
+  const generalId = await generalTypeId(db);
   return rows.map((row) =>
     forViewer(
       viewer,
@@ -239,6 +258,7 @@ async function withPersons(db: Db, rows: EntryRow[], viewer: Account) {
         (personsOf.get(row.id) ?? []).map((l) => l.personId),
         exceptionsOf.get(row.id) ?? [],
       ),
+      generalId,
     ),
   );
 }

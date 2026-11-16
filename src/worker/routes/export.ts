@@ -7,7 +7,7 @@ import { requireDevice } from "../require-device";
 import type { AppEnv } from "../types";
 import type { Account } from "../auth/account";
 import { seesInFull } from "../private";
-import { allEntries, forViewer } from "./entries";
+import { allEntries, forViewer, generalTypeId } from "./entries";
 import { BUSY } from "./feeds";
 
 /**
@@ -61,6 +61,7 @@ type Row = Record<string, unknown>;
  * dates and Persons, like in the calendar.
  */
 function hidePrivate(tables: Record<string, Row[]>, viewer: Account) {
+  const generalId = tables.entry_type.find((t) => t.builtin_key === "general")?.id;
   const personsOf = (links: Row[], key: string) => {
     const map = new Map<string, string[]>();
     for (const l of links)
@@ -77,7 +78,15 @@ function hidePrivate(tables: Record<string, Row[]>, viewer: Account) {
   const hiddenEntries = new Map<string, Row>();
   for (const row of tables.entry) {
     if (sees(row, entryPersons.get(row.id as string) ?? [])) continue;
-    Object.assign(row, { title: "", location: "", notes: "", icon: null });
+    Object.assign(row, {
+      title: "",
+      location: "",
+      notes: "",
+      icon: null,
+      reminders: "[]",
+      entry_type_id: generalId,
+      importance: "normal",
+    });
     hiddenEntries.set(row.id as string, row);
   }
   for (const e of tables.occurrence_exception) {
@@ -89,13 +98,23 @@ function hidePrivate(tables: Record<string, Row[]>, viewer: Account) {
       (override.private === true &&
         entry !== undefined &&
         !sees({ ...entry, private: true }, (override.personIds as string[] | undefined) ?? []));
-    if (hidden) e.override = JSON.stringify({ ...override, title: "", location: "", notes: "" });
+    if (hidden)
+      e.override = e.override = JSON.stringify({
+        ...override,
+        title: "",
+        location: "",
+        notes: "",
+        icon: null,
+        reminders: [],
+        entryTypeId: generalId,
+        importance: "normal",
+      });
   }
   const taskPersons = personsOf(tables.task_person, "task_id");
   const hiddenTasks = new Set<string>();
   for (const row of tables.task) {
     if (sees(row, taskPersons.get(row.id as string) ?? [])) continue;
-    Object.assign(row, { title: "", notes: "" });
+    Object.assign(row, { title: "", notes: "", importance: "normal" });
     hiddenTasks.add(row.id as string);
   }
   // A hidden Entry's or Task's attachments are left out altogether, names included.
@@ -135,14 +154,15 @@ exportRoutes.post("/export/done", async (c) => {
  */
 exportRoutes.get("/export/entries.ics", async (c) => {
   const db = c.get("db");
-  const [[family], entries] = await Promise.all([
+  const [[family], entries, generalId] = await Promise.all([
     db.select().from(schema.family).limit(1),
     allEntries(db),
+    generalTypeId(db),
   ]);
   const busy = BUSY[family.language] ?? BUSY.en;
   const viewer = c.get("account");
   const shown = entries.map((entry) => {
-    const seen = forViewer(viewer, entry);
+    const seen = forViewer(viewer, entry, generalId);
     const exceptions = seen.exceptions.map((e) =>
       e.override?.hidden ? { ...e, override: { ...e.override, title: busy } } : e,
     );
