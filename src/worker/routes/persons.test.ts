@@ -1,3 +1,4 @@
+import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { TestBrowser, setUpFamily } from "../test/client";
 
@@ -100,5 +101,37 @@ describe("photos", () => {
   it("refuses other file types", async () => {
     const browser = await setUpFamily();
     expect((await browser.upload("/images", PNG, "text/html")).status).toBe(415);
+  });
+
+  it("does not serve attachments or unknown keys", async () => {
+    const browser = await setUpFamily();
+    const types = (await (await browser.get("/entry-types")).json()) as { id: string }[];
+    const entry = (await (
+      await browser.post("/entries", {
+        title: "Consulta",
+        entryTypeId: types[0]!.id,
+        time: {
+          allDay: false,
+          startDate: "2026-10-30",
+          startTime: "10:00",
+          endDate: null,
+          endTime: null,
+        },
+        personIds: [],
+      })
+    ).json()) as { id: string };
+    const upload = await browser.request(
+      "POST",
+      `/attachments?entry=${entry.id}`,
+      new TextEncoder().encode("<script>alert(1)</script>"),
+      { "Content-Type": "text/html", "X-File-Name": "x.html" },
+    );
+    expect(upload.status).toBe(201);
+    const { objects } = await env.IMAGES.list({ prefix: "attachments/" });
+    expect(objects).toHaveLength(1);
+
+    const key = encodeURIComponent(objects[0]!.key);
+    expect((await browser.get(`/images/${key}`)).status).toBe(404);
+    expect((await browser.get("/images/never-uploaded")).status).toBe(404);
   });
 });
