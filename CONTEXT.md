@@ -2,6 +2,8 @@
 
 A personal web calendar where one family plans its shared life: birthdays, holidays, events and appointments, viewed by day, week, month or year and filtered by who is involved.
 
+Who can see and change what: [docs/security.md](docs/security.md).
+
 ## Language
 
 **Family**:
