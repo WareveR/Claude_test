@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { BUILT_IN_DEFAULTS, BUILT_IN_TYPES } from "../../core/entry-type";
 import { RESET_PARTS, type ResetPart } from "../../core/reset";
 import { verifyPassword } from "../auth/password";
-import { clearFailures, clientIp, recordFailure, retryAfter } from "../auth/throttle";
+import { clearFailures, clientIp, recordFailure, retryAfter, target } from "../auth/throttle";
 import { snapshot } from "../backup";
 import type { Db } from "../db";
 import { schema } from "../db";
@@ -116,7 +116,7 @@ resetRoutes.post("/reset", requireOwner, async (c) => {
   const db = c.get("db");
   const now = c.get("now");
   const ip = clientIp(c);
-  const wait = await retryAfter(db, ip, now);
+  const wait = await retryAfter(db, ip, target.account(c.get("account").id), now);
   if (wait > 0) return c.json({ error: "too_many_attempts", retryAfter: wait }, 429);
 
   const body = await c.req.json().catch(() => ({}));
@@ -125,10 +125,10 @@ resetRoutes.post("/reset", requireOwner, async (c) => {
     return c.json({ error: "invalid", field: "parts" }, 400);
   }
   if (!(await verifyPassword(String(body.password ?? ""), c.get("account").passwordHash))) {
-    await recordFailure(db, ip, now);
+    await recordFailure(db, ip, target.account(c.get("account").id), now);
     return c.json({ error: "wrong_password" }, 401);
   }
-  await clearFailures(db, ip);
+  await clearFailures(db, ip, target.account(c.get("account").id));
   if (body.check === true) return c.body(null, 204);
 
   await c.env.BACKUPS.put(

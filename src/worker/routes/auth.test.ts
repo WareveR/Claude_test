@@ -108,19 +108,35 @@ describe("sign-in", () => {
     expect(await blocked.json()).toMatchObject({ retryAfter: 1 });
   });
 
-  it("counts wrong attempts for the whole Family too", async () => {
+  it("does not let wrong attempts on one email lock out the rest of the Family", async () => {
     await setUpFamily();
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 20; i++) {
       await new TestBrowser(`203.0.113.${100 + i}`).post("/session", {
-        email: EMAIL,
+        email: "someone.else@example.com",
         password: "wrong one",
       });
     }
-    const other = await new TestBrowser("203.0.113.200").post("/session", {
+    const owner = await new TestBrowser("203.0.113.200").post("/session", {
       email: EMAIL,
       password: PASSWORD,
     });
-    expect(other.status).toBe(429);
+    expect(owner.status).toBe(201);
+  });
+
+  it("slows down guesses at one email from many places after 10 wrong attempts", async () => {
+    await setUpFamily();
+    for (let i = 0; i < 10; i++) {
+      const res = await new TestBrowser(`203.0.113.${100 + i}`).post("/session", {
+        email: EMAIL.toUpperCase(),
+        password: "wrong one",
+      });
+      expect(res.status).toBe(401);
+    }
+    const next = await new TestBrowser("203.0.113.200").post("/session", {
+      email: EMAIL,
+      password: PASSWORD,
+    });
+    expect(next.status).toBe(429);
   });
 
   it("ends a session after a year without use", async () => {

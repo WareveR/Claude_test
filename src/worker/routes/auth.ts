@@ -10,7 +10,7 @@ import {
   verifyPassword,
 } from "../auth/password";
 import { currentDevice, endSession, startSession } from "../auth/session";
-import { clearFailures, clientIp, recordFailure, retryAfter } from "../auth/throttle";
+import { clearFailures, clientIp, recordFailure, retryAfter, target } from "../auth/throttle";
 import { schema } from "../db";
 import type { AppEnv } from "../types";
 import { seedBuiltInTypes } from "./entry-types";
@@ -72,12 +72,12 @@ authRoutes.post("/setup", async (c) => {
   const [existing] = await db.select({ id: schema.family.id }).from(schema.family).limit(1);
   if (existing) return c.json({ error: "setup_locked" }, 409);
 
-  const wait = await retryAfter(db, ip, now);
+  const wait = await retryAfter(db, ip, target.setup, now);
   if (wait > 0) return c.json({ error: "too_many_attempts", retryAfter: wait }, 429);
 
   const body = await c.req.json().catch(() => ({}));
   if (!c.env.SETUP_CODE || !safeEqual(String(body.setupCode ?? ""), c.env.SETUP_CODE)) {
-    await recordFailure(db, ip, now);
+    await recordFailure(db, ip, target.setup, now);
     return c.json({ error: "wrong_setup_code" }, 401);
   }
   const name = typeof body.name === "string" ? body.name.trim() : "";
@@ -113,7 +113,7 @@ authRoutes.post("/setup", async (c) => {
     ...seedBuiltInTypes(db, now.toISOString()),
     ...seedBuiltInTemplates(db, now.toISOString()),
   ]);
-  await clearFailures(db, ip);
+  await clearFailures(db, ip, target.setup);
   await startSession(c, db, now, ownerId);
   return c.json({ ok: true }, 201);
 });
@@ -125,19 +125,20 @@ authRoutes.post("/session", async (c) => {
   const [family] = await db.select().from(schema.family).limit(1);
   if (!family) return c.json({ error: "no_family" }, 409);
 
-  const wait = await retryAfter(db, ip, now);
+  const body = await c.req.json().catch(() => ({}));
+  const email = normalEmail(body.email);
+  const wait = await retryAfter(db, ip, target.email(email), now);
   if (wait > 0) return c.json({ error: "too_many_attempts", retryAfter: wait }, 429);
 
-  const body = await c.req.json().catch(() => ({}));
-  const account = await accountByEmail(db, normalEmail(body.email));
+  const account = await accountByEmail(db, email);
   // An unknown email and a wrong password look the same, so neither leaks who has an Account.
   const password = String(body.password ?? "");
   const matches = await verifyPassword(password, account?.passwordHash || NO_ACCOUNT_HASH);
   if (!account || !matches) {
-    await recordFailure(db, ip, now);
+    await recordFailure(db, ip, target.email(email), now);
     return c.json({ error: "wrong_password" }, 401);
   }
-  await clearFailures(db, ip);
+  await clearFailures(db, ip, target.email(email));
   await startSession(c, db, now, account.id);
   return c.json({ ok: true }, 201);
 });

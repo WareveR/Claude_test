@@ -1,7 +1,7 @@
 import { and, eq, ne } from "drizzle-orm";
 import { Hono } from "hono";
 import { verifyPassword } from "../auth/password";
-import { clearFailures, clientIp, recordFailure, retryAfter } from "../auth/throttle";
+import { clearFailures, clientIp, recordFailure, retryAfter, target } from "../auth/throttle";
 import { schema } from "../db";
 import { requireDevice } from "../require-device";
 import type { AppEnv } from "../types";
@@ -42,13 +42,13 @@ accountRoutes.post("/account/password-check", async (c) => {
   const db = c.get("db");
   const now = c.get("now");
   const ip = clientIp(c);
-  const wait = await retryAfter(db, ip, now);
+  const wait = await retryAfter(db, ip, target.account(c.get("account").id), now);
   if (wait > 0) return c.json({ error: "too_many_attempts", retryAfter: wait }, 429);
   const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
   if (!(await verifyPassword(String(body.password ?? ""), c.get("account").passwordHash))) {
-    await recordFailure(db, ip, now);
+    await recordFailure(db, ip, target.account(c.get("account").id), now);
     return c.json({ error: "wrong_password" }, 401);
   }
-  await clearFailures(db, ip);
+  await clearFailures(db, ip, target.account(c.get("account").id));
   return c.body(null, 204);
 });
