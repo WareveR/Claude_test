@@ -153,7 +153,7 @@ test("open goes to the place said, on the day said", async ({ page }) => {
 
 test("read the summary shows the Briefing, or says there is none", async ({ page }) => {
   await signIn(page);
-  await page.route("**/api/briefing", (route) =>
+  await page.route(/\/api\/briefing\?mine=1$/, (route) =>
     route.fulfill({
       json: {
         segments: [{ text: "Sunny today." }, { text: " Dinner at 8." }],
