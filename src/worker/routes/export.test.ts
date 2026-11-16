@@ -1,7 +1,7 @@
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { tableNames } from "../backup";
-import { setUpFamily, TestBrowser } from "../test/client";
+import { addAccount, setUpFamily, TestBrowser } from "../test/client";
 import { EXPORTED, NOT_EXPORTED } from "./export";
 
 type Export = { format: string; tables: Record<string, Record<string, unknown>[]> };
@@ -60,6 +60,28 @@ describe("Export", () => {
     }
     expect(data.tables).not.toHaveProperty("signed_in_device");
     expect(data.tables).not.toHaveProperty("error_log");
+  });
+
+  it("shows other Accounts' emails and roles only to the Owner and Admins", async () => {
+    const owner = await setUpFamily();
+    const admin = await addAccount("admin@example.com", "admin", "198.51.100.21");
+    const member = await addAccount("member@example.com", "member", "198.51.100.22");
+    const emails = async (browser: TestBrowser) => {
+      const data = (await (await browser.get("/export")).json()) as Export;
+      const text = JSON.stringify(data);
+      for (const secret of ["password_hash", "session_hash", "token_hash"]) {
+        expect(text).not.toContain(secret);
+      }
+      return data.tables.account.map((a) => [a.email, a.role]);
+    };
+    const all = [
+      ["david@example.com", "owner"],
+      ["admin@example.com", "admin"],
+      ["member@example.com", "member"],
+    ];
+    expect(await emails(owner)).toEqual(expect.arrayContaining(all));
+    expect(await emails(admin)).toEqual(expect.arrayContaining(all));
+    expect(await emails(member)).toEqual([["member@example.com", "member"]]);
   });
 
   it("downloads every Entry as .ics, Private ones in full", async () => {
