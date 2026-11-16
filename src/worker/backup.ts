@@ -20,6 +20,7 @@ const SKIPPED_TABLES = new Set([
   "d1_migrations",
   "sign_in_throttle",
   "usage_count",
+  "signed_in_device",
   "recovery_token",
   "scheduler_run",
   "weather_cache",

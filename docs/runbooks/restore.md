@@ -64,7 +64,7 @@ The Scheduler writes the whole database to the `family-calendar-backups` bucket 
    npx wrangler d1 execute family-calendar --remote --file=restore.sql
    ```
 
-4. Check the app. Signed-in Devices come back as they were that night, so a device signed in later must sign in again. Person photos and Entry Type thumbnails come back as long as the Backup is less than 30 days old: images unused for 30 days are deleted, and older Backups may name some of those. A missing image shows no picture; set it again in the app.
+4. Check the app. After a restore everyone signs in again on every device, because sessions are not backed up. Person photos and Entry Type thumbnails come back as long as the Backup is less than 30 days old: images unused for 30 days are deleted, and older Backups may name some of those. A missing image shows no picture; set it again in the app.
 
 The database keeps its current schema: migrations only ever add columns, so an older Backup still fits, and newer columns get their defaults.
 
