@@ -7,6 +7,7 @@ import {
   forAccount,
   forEdition,
   forPerson,
+  logistics,
   publicOnly,
   weekOf,
   type BriefingInput,
@@ -352,5 +353,68 @@ describe("editions", () => {
       "Pay the school",
       "Swimming",
     ]);
+  });
+});
+
+describe("logistics", () => {
+  const at = (id: string, personIds: string[], start: string, end: string, date = "2026-10-05") =>
+    entry({
+      id,
+      title: id,
+      personIds,
+      time: { allDay: false, startDate: date, startTime: start, endDate: date, endTime: end },
+    });
+  const names = new Map([
+    ["mum", "Mãe"],
+    ["dad", "Pai"],
+    ["kid", "Bia"],
+  ]);
+  const adults = new Set(["mum", "dad"]);
+
+  it("finds a Person's clash and a child with no adult free", () => {
+    const candidates = briefingCandidates(
+      input({
+        personNames: names,
+        entries: [
+          at("Meeting", ["mum"], "17:00", "18:30"),
+          at("Gym", ["dad"], "17:30", "18:30"),
+          at("Swimming", ["kid"], "18:00", "19:00"),
+          at("Dentist", ["dad"], "18:00", "18:45"),
+          at("Football", ["kid"], "20:00", "21:00"),
+        ],
+      }),
+    );
+    const found = logistics(candidates, TODAY, adults);
+    expect(found.clashes).toEqual([
+      { person: "Pai", date: "2026-10-05", first: "Gym", second: "Dentist", time: "18:00" },
+    ]);
+    expect(found.unaccompanied).toEqual([
+      { title: "Swimming", persons: ["Bia"], date: "2026-10-05", time: "18:00" },
+    ]);
+    expect(found.fullDays).toEqual([{ date: "2026-10-05", entries: 5 }]);
+    expect(found.fullWeek).toBe(false);
+  });
+
+  it("finds nothing when the times don't meet, and a full week by its full days", () => {
+    const quiet = briefingCandidates(
+      input({
+        personNames: names,
+        entries: [at("Meeting", ["mum"], "09:00", "10:00"), at("Gym", ["mum"], "10:00", "11:00")],
+      }),
+    );
+    expect(logistics(quiet, TODAY, adults)).toEqual({
+      clashes: [],
+      unaccompanied: [],
+      fullDays: [],
+      fullWeek: false,
+    });
+    const busy = briefingCandidates(
+      input({
+        entries: ["2026-10-03", "2026-10-04", "2026-10-05"].flatMap((date) =>
+          [9, 10, 11, 12, 13].map((h) => at(`${date}-${h}`, [], `${h}:00`, `${h}:30`, date)),
+        ),
+      }),
+    );
+    expect(logistics(busy, TODAY, adults).fullWeek).toBe(true);
   });
 });

@@ -4,6 +4,7 @@ import {
   NO_EXTRAS,
   type BriefingExtras,
   type Edition,
+  type Logistics,
   type BriefingWeather,
   type Candidate,
   type Segment,
@@ -213,6 +214,25 @@ function describeBins(bins: Bin[] | undefined) {
   return `Rubbish collection: tonight the ${bins.map((b) => BIN_NAMES[b]).join(" and ")} goes out.`;
 }
 
+/** Clashes, children with no adult free and very full days, as plain facts. */
+function describeLogistics(logistics: Logistics | undefined, locale: string) {
+  if (!logistics) return "";
+  const day = (date: PlainDate) => formatPlainDate(date, locale, { weekday: "long" });
+  const lines = [
+    ...logistics.clashes.map(
+      (c) =>
+        `Clash: ${c.person} has "${c.first}" and "${c.second}" at the same time on ${day(c.date)} around ${c.time}.`,
+    ),
+    ...logistics.unaccompanied.map(
+      (u) =>
+        `Logistics: "${u.title}" for ${u.persons.join(", ")} on ${day(u.date)} at ${u.time}, while every adult is busy then: who takes them?`,
+    ),
+    ...logistics.fullDays.map((f) => `Full day: ${day(f.date)} has ${f.entries} entries.`),
+    logistics.fullWeek ? "The coming week is very full." : "",
+  ];
+  return lines.filter(Boolean).join("\n");
+}
+
 /** How the host sounds, in the Briefing's own language. */
 const EXAMPLES: Record<Language, string> = {
   "pt-PT": [
@@ -279,8 +299,9 @@ export function briefingPrompt(
         "3. A change of the clocks, when given: say the day and what happens to the time, as in the example. The rubbish collection, when given: one short sentence saying which bin goes out tonight, as in the example.",
         "4. Today: what is on today, with its time.",
         "5. The coming days: only the HIGH importance items and what needs getting ready (a trip, a party, a birthday within the next month with a reminder to prepare it, a public holiday with a question on how to make the most of it); group or skip the routine ones. What to prepare: the tasks and lists that prepare for these, with their progress, in a few words.",
-        "6. Tasks: say how many are overdue and name only the most important; when there are overdue tasks, ask whether to do them today, move them or drop them.",
-        "7. Sign off with one short, cheerful sentence, like a radio host closing the show.",
+        "6. Clashes, logistics and full days, when given: point each out briefly as something to sort out (who takes whom, what to move), and when the week is very full say so with a word of encouragement.",
+        "7. Tasks: say how many are overdue and name only the most important; when there are overdue tasks, ask whether to do them today, move them or drop them.",
+        "8. Sign off with one short, cheerful sentence, like a radio host closing the show.",
         "Link the items with natural radio transitions instead of listing them. Say dates relative to today (today, tomorrow, on Friday, next week, at the end of the month). Warm, cheerful, short sentences; use only facts given here and never invent events.",
         'Answer as JSON {"segments":[{"text":"...","item":n}]}: split the sentences into pieces so that each piece names at most one item, give that item\'s number in "item", and null for pieces that name none. Joined in order, the pieces must read as the whole text. A new paragraph starts with a piece whose text begins with "\\n\\n".',
       ].join(" "),
@@ -292,6 +313,7 @@ export function briefingPrompt(
         describeWeather(extras.weather, today),
         describeClockChange(extras.clockChange, locale),
         describeBins(extras.bins),
+        describeLogistics(extras.logistics, locale),
         candidates.length > 0
           ? candidates.map((c, i) => describe(c, i, language)).join("\n")
           : "Nothing is planned.",
@@ -346,7 +368,7 @@ function eveningPrompt(
         "1. Tomorrow's weather, only when given, as a practical tip for the morning (a coat, an umbrella).",
         "2. Tomorrow: what is on, with its time; for the first thing that needs leaving home, say its time and place and remind them to leave in good time. Never make up how long the trip takes.",
         "3. What to get ready tonight: the tasks and lists for tomorrow or that prepare for tomorrow's items, with their progress, and anything still left to do today; the rubbish collection, when given, as a reminder to put that bin out tonight.",
-        "4. Only if something HIGH importance is coming in the next days, one sentence about it.",
+        "4. Only if something HIGH importance is coming in the next days, one sentence about it; a clash or a child with no adult free tomorrow, when given, as something to sort out tonight.",
         "5. Close with one short, gentle good-night sentence.",
         "Say dates relative to today (tomorrow, on Friday). Use only facts given here and never invent events.",
         'Answer as JSON {"segments":[{"text":"...","item":n}]}: split the sentences into pieces so that each piece names at most one item, give that item\'s number in "item", and null for pieces that name none. Joined in order, the pieces must read as the whole text. A new paragraph starts with a piece whose text begins with "\\n\\n".',
@@ -358,6 +380,7 @@ function eveningPrompt(
         `Today is ${day(today)}; this briefing is about tomorrow, ${day(addDays(today, 1))}.`,
         describeWeather(extras.weather, today, "evening"),
         describeBins(extras.bins),
+        describeLogistics(extras.logistics, locale),
         candidates.length > 0
           ? candidates.map((c, i) => describe(c, i, language, "evening")).join("\n")
           : "Nothing is planned.",
