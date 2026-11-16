@@ -69,6 +69,12 @@ export const account = sqliteTable("account", {
   dev: integer("dev", { mode: "boolean" }).notNull().default(false),
   createdAt: text("created_at").notNull(),
   changedAt: text("changed_at").notNull(),
+  /**
+   * When an Owner or Admin removed the Account. It can't sign in, and its Person is free for
+   * another Account, but the row stays so its Private items keep their creator and it can be
+   * restored.
+   */
+  removedAt: text("removed_at"),
 });
 
 /** A browser that signed in with an Account. Only the session token's hash is kept. */

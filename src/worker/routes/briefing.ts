@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { Hono } from "hono";
 import { createMiddleware } from "hono/factory";
 import {
@@ -67,7 +67,8 @@ async function readCalendar(db: Db, now: Date) {
           personId: schema.account.personId,
           passwordHash: schema.account.passwordHash,
         })
-        .from(schema.account),
+        .from(schema.account)
+        .where(isNull(schema.account.removedAt)),
       import("date-holidays").then((m) => m.default),
       briefingWeather(db, now),
     ]);

@@ -1,4 +1,4 @@
-import { and, eq, ne } from "drizzle-orm";
+import { and, eq, isNull, ne } from "drizzle-orm";
 import { Hono, type Context } from "hono";
 import { accountByEmail, EMAIL, normalEmail, type Account } from "../auth/account";
 import { randomId } from "../auth/crypto";
@@ -34,13 +34,17 @@ function member(account: Account) {
     dev: account.dev,
     personId: account.personId,
     pending: isPending(account),
+    removed: Boolean(account.removedAt),
   };
 }
 
 const isInvitedRole = (value: unknown): value is Exclude<Role, "owner"> =>
   value === "admin" || value === "member";
 
-/** Checks a Person can be given to this Account: it exists, is not archived and has no other Account. */
+/**
+ * Checks a Person can be given to this Account: it exists, is not archived and no other Account
+ * has it (a removed Account's Person is free).
+ */
 async function personProblem(db: Db, personId: unknown, accountId: string | null) {
   if (personId === null) return null;
   if (typeof personId !== "string") return "invalid";
@@ -53,9 +57,11 @@ async function personProblem(db: Db, personId: unknown, accountId: string | null
     .select({ id: schema.account.id })
     .from(schema.account)
     .where(
-      accountId
-        ? and(eq(schema.account.personId, personId), ne(schema.account.id, accountId))
-        : eq(schema.account.personId, personId),
+      and(
+        eq(schema.account.personId, personId),
+        isNull(schema.account.removedAt),
+        accountId ? ne(schema.account.id, accountId) : undefined,
+      ),
     );
   return taken ? "person_taken" : null;
 }
@@ -128,7 +134,9 @@ memberRoutes.post("/members", requireAdmin, async (c) => {
   const personId = body.personId ?? null;
   const problem = await personProblem(db, personId, null);
   if (problem) return personError(c, problem);
-  if (await accountByEmail(db, email)) return c.json({ error: "email_taken" }, 409);
+  const existing = await accountByEmail(db, email);
+  if (existing?.removedAt) return c.json({ error: "email_removed", id: existing.id }, 409);
+  if (existing) return c.json({ error: "email_taken" }, 409);
   const account: Account = {
     id: randomId(),
     personId: personId as string | null,
@@ -138,6 +146,7 @@ memberRoutes.post("/members", requireAdmin, async (c) => {
     dev: body.dev === true,
     createdAt: now,
     changedAt: now,
+    removedAt: null,
   };
   await db.insert(schema.account).values(account);
   const emailSent = await sendInvite(c, account);
@@ -193,6 +202,7 @@ memberRoutes.post("/members/:id/reset", requireAdmin, async (c) => {
   const db = c.get("db");
   const target = await accountById(db, c.req.param("id"));
   if (!target) return c.json({ error: "not_found" }, 404);
+  if (target.removedAt) return c.json({ error: "removed" }, 409);
   let sent: boolean;
   if (isPending(target)) {
     sent = await sendInvite(c, target);
@@ -209,7 +219,10 @@ memberRoutes.post("/members/:id/reset", requireAdmin, async (c) => {
   return c.body(null, 204);
 });
 
-/** Removes an adult's Account and signs out their devices; what they made stays. */
+/**
+ * Removes an adult's Account: it signs out everywhere and can't sign in or recover its password,
+ * but stays listed as removed, keeping what it made, its Private items included, until restored.
+ */
 memberRoutes.delete("/members/:id", requireAdmin, async (c) => {
   const db = c.get("db");
   const target = await accountById(db, c.req.param("id"));
@@ -217,8 +230,38 @@ memberRoutes.delete("/members/:id", requireAdmin, async (c) => {
   if (target.role === "owner" || target.id === c.get("account").id) {
     return c.json({ error: "forbidden" }, 403);
   }
-  await db.delete(schema.account).where(eq(schema.account.id, target.id));
+  if (target.removedAt) return c.body(null, 204);
+  const now = c.get("now").toISOString();
+  await db.batch([
+    db
+      .update(schema.account)
+      .set({ removedAt: now, changedAt: now })
+      .where(eq(schema.account.id, target.id)),
+    db.delete(schema.signedInDevice).where(eq(schema.signedInDevice.accountId, target.id)),
+    db.delete(schema.recoveryToken).where(eq(schema.recoveryToken.accountId, target.id)),
+  ]);
   return c.body(null, 204);
+});
+
+/**
+ * Brings a removed Account back as it was. Its Person comes back too unless another Account has
+ * it by now; then it comes back without one, and `personCleared` says so.
+ */
+memberRoutes.post("/members/:id/restore", requireAdmin, async (c) => {
+  const db = c.get("db");
+  const target = await accountById(db, c.req.param("id"));
+  if (!target) return c.json({ error: "not_found" }, 404);
+  if (!target.removedAt) return c.json(member(target));
+  const personCleared =
+    target.personId !== null && (await personProblem(db, target.personId, target.id)) !== null;
+  const restored = {
+    ...target,
+    personId: personCleared ? null : target.personId,
+    removedAt: null,
+    changedAt: c.get("now").toISOString(),
+  };
+  await db.update(schema.account).set(restored).where(eq(schema.account.id, target.id));
+  return c.json({ ...member(restored), personCleared });
 });
 
 /** The Owner hands the Family to another adult who has signed in, and becomes an Admin. */
@@ -227,7 +270,9 @@ memberRoutes.post("/members/:id/owner", requireOwner, async (c) => {
   const me = c.get("account");
   const target = await accountById(db, c.req.param("id"));
   if (!target) return c.json({ error: "not_found" }, 404);
-  if (target.id === me.id || isPending(target)) return c.json({ error: "invalid" }, 400);
+  if (target.id === me.id || isPending(target) || target.removedAt) {
+    return c.json({ error: "invalid" }, 400);
+  }
   const now = c.get("now").toISOString();
   await db.batch([
     db

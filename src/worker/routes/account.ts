@@ -1,4 +1,4 @@
-import { and, eq, ne } from "drizzle-orm";
+import { and, eq, isNull, ne } from "drizzle-orm";
 import { Hono } from "hono";
 import { verifyPassword } from "../auth/password";
 import { clearFailures, clientIp, recordFailure, retryAfter, target } from "../auth/throttle";
@@ -28,7 +28,13 @@ accountRoutes.put("/account/person", async (c) => {
   const [taken] = await db
     .select({ id: schema.account.id })
     .from(schema.account)
-    .where(and(eq(schema.account.personId, personId), ne(schema.account.id, account.id)));
+    .where(
+      and(
+        eq(schema.account.personId, personId),
+        ne(schema.account.id, account.id),
+        isNull(schema.account.removedAt),
+      ),
+    );
   if (taken) return c.json({ error: "person_taken" }, 409);
   await db
     .update(schema.account)

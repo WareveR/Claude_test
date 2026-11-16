@@ -1,0 +1,1 @@
+ALTER TABLE `account` ADD `removed_at` text;
