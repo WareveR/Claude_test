@@ -500,3 +500,49 @@ export function logistics(
     fullWeek: fullDays.length >= FULL_WEEK_DAYS || week.length >= FULL_WEEK_ENTRIES,
   };
 }
+
+/** An hour with at least this chance of rain is worth an umbrella. */
+export const RAIN_LIKELY = 40;
+/** Colder or hotter than this during an Entry is worth a word. */
+const COLD = 5;
+const HOT = 32;
+
+/** The weather during one of the Briefing's Entries, when worth a word. */
+export type EntryWeather = {
+  /** The candidate's position in the list the model reads. */
+  item: number;
+  rain: number;
+  temp: number;
+  code: number;
+};
+
+/**
+ * Rain likely, cold or heat during the timed Entries of the given days (today's in the morning,
+ * tomorrow's in the evening): the worst hour from the Entry's start to its end. The model decides
+ * which are outdoors (a training, a match, a picnic) and only mentions those.
+ */
+export function weatherDuring(
+  candidates: Candidate[],
+  hours: HourWeather[],
+  dates: PlainDate[],
+): EntryWeather[] {
+  const out: EntryWeather[] = [];
+  for (const [item, c] of candidates.entries()) {
+    if (c.kind !== "entry" || !c.time || !c.end || !dates.includes(c.date)) continue;
+    const start = `${c.date}T${c.time.slice(0, 2)}:00`;
+    const end = `${c.date}T${c.end}`;
+    const during = hours.filter((h) => h.time >= start && h.time < end);
+    if (during.length === 0) continue;
+    const wettest = during.reduce((a, b) => (b.rain > a.rain ? b : a));
+    const temps = during.map((h) => h.temp);
+    const cold = Math.min(...temps);
+    const hot = Math.max(...temps);
+    if (wettest.rain >= RAIN_LIKELY) {
+      out.push({ item, rain: wettest.rain, temp: wettest.temp, code: wettest.code });
+    } else if (cold <= COLD || hot >= HOT) {
+      const temp = cold <= COLD ? cold : hot;
+      out.push({ item, rain: wettest.rain, temp, code: wettest.code });
+    }
+  }
+  return out;
+}

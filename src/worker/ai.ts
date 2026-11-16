@@ -2,6 +2,8 @@ import { VOICE_PLACES } from "../core/voice-open";
 import {
   candidateLink,
   NO_EXTRAS,
+  RAIN_LIKELY,
+  weatherDuring,
   type BriefingExtras,
   type Edition,
   type Logistics,
@@ -132,8 +134,6 @@ const SKY: Record<WeatherKind, string> = {
   fog: "fog",
 };
 
-/** An hour with at least this chance of rain is worth an umbrella. */
-const RAIN_LIKELY = 40;
 /** Tomorrow is only worth a word when its high differs from today's by this much, or its sky turns. */
 const NOTABLE_CHANGE = 3;
 
@@ -212,6 +212,22 @@ const BIN_NAMES: Record<Bin, string> = {
 function describeBins(bins: Bin[] | undefined) {
   if (!bins || bins.length === 0) return "";
   return `Rubbish collection: tonight the ${bins.map((b) => BIN_NAMES[b]).join(" and ")} goes out.`;
+}
+
+/** The weather during the day's timed Entries, when rain, cold or heat is worth a word. */
+function describeEntryWeather(
+  candidates: Candidate[],
+  weather: BriefingWeather | null,
+  date: PlainDate,
+) {
+  if (!weather) return "";
+  const lines = weatherDuring(candidates, weather.hours, [date]).map(
+    (w) =>
+      `During item ${w.item} "${candidates[w.item].title}": ${SKY[weatherKind(w.code)]}, ${w.rain}% chance of rain, about ${Math.round(w.temp)} degrees.`,
+  );
+  return lines.length > 0
+    ? `Weather during these items (mention it only for ones held outdoors, such as a training, a match, a walk or a picnic, with a practical tip):\n${lines.join("\n")}`
+    : "";
 }
 
 /** Clashes, children with no adult free and very full days, as plain facts. */
@@ -295,7 +311,7 @@ export function briefingPrompt(
         `Sound like these examples (not facts, only the tone): ${EXAMPLES[language]}`,
         "In this order, leaving out what has nothing to say:",
         "1. Open with what day today is, in a lively way, in a few words.",
-        "2. The weather, only when given: one or two natural sentences, never a forecast read out. Today's sky and roughly how warm; an umbrella tip only when rain is likely, saying roughly when; tomorrow only when given, as a tip (a jumper when colder). No other numbers.",
+        '2. The weather, only when given: one or two natural sentences, never a forecast read out. Today\'s sky and roughly how warm; an umbrella tip only when rain is likely, saying roughly when; tomorrow only when given, as a tip (a jumper when colder). When rain, cold or heat is given during an item held outdoors (a training, a match, a walk), say it with that item as a tip ("take the raincoat to football at 6"). No other numbers.',
         "3. A change of the clocks, when given: say the day and what happens to the time, as in the example. The rubbish collection, when given: one short sentence saying which bin goes out tonight, as in the example.",
         "4. Today: what is on today, with its time.",
         "5. The coming days: only the HIGH importance items and what needs getting ready (a trip, a party, a birthday within the next month with a reminder to prepare it, a public holiday with a question on how to make the most of it); group or skip the routine ones. What to prepare: the tasks and lists that prepare for these, with their progress, in a few words.",
@@ -314,6 +330,7 @@ export function briefingPrompt(
         describeClockChange(extras.clockChange, locale),
         describeBins(extras.bins),
         describeLogistics(extras.logistics, locale),
+        describeEntryWeather(candidates, extras.weather, today),
         candidates.length > 0
           ? candidates.map((c, i) => describe(c, i, language)).join("\n")
           : "Nothing is planned.",
@@ -365,7 +382,7 @@ function eveningPrompt(
         "Keep it short: about 90 words, in two or three short paragraphs, warm and calm.",
         `Sound like these examples (not facts, only the tone): ${EVENING_EXAMPLES[language]}`,
         "In this order, leaving out what has nothing to say:",
-        "1. Tomorrow's weather, only when given, as a practical tip for the morning (a coat, an umbrella).",
+        "1. Tomorrow's weather, only when given, as a practical tip for the morning (a coat, an umbrella); when rain, cold or heat is given during an item held outdoors, say it with that item.",
         "2. Tomorrow: what is on, with its time; for the first thing that needs leaving home, say its time and place and remind them to leave in good time. Never make up how long the trip takes.",
         "3. What to get ready tonight: the tasks and lists for tomorrow or that prepare for tomorrow's items, with their progress, and anything still left to do today; the rubbish collection, when given, as a reminder to put that bin out tonight.",
         "4. Only if something HIGH importance is coming in the next days, one sentence about it; a clash or a child with no adult free tomorrow, when given, as something to sort out tonight.",
@@ -381,6 +398,7 @@ function eveningPrompt(
         describeWeather(extras.weather, today, "evening"),
         describeBins(extras.bins),
         describeLogistics(extras.logistics, locale),
+        describeEntryWeather(candidates, extras.weather, addDays(today, 1)),
         candidates.length > 0
           ? candidates.map((c, i) => describe(c, i, language, "evening")).join("\n")
           : "Nothing is planned.",

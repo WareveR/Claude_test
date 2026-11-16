@@ -9,6 +9,7 @@ import {
   forPerson,
   logistics,
   publicOnly,
+  weatherDuring,
   weekOf,
   type BriefingInput,
 } from "./briefing";
@@ -416,5 +417,55 @@ describe("logistics", () => {
       }),
     );
     expect(logistics(busy, TODAY, adults).fullWeek).toBe(true);
+  });
+});
+
+describe("weatherDuring", () => {
+  const hour = (time: string, rain: number, temp = 15) => ({ time, code: 61, temp, rain });
+  it("tells rain, cold or heat during the day's timed Entries only", () => {
+    const candidates = briefingCandidates(
+      input({
+        entries: [
+          entry({
+            id: "f",
+            title: "Football",
+            time: {
+              allDay: false,
+              startDate: TODAY,
+              startTime: "18:30",
+              endDate: TODAY,
+              endTime: "20:00",
+            },
+          }),
+          entry({
+            id: "m",
+            title: "Meeting",
+            time: {
+              allDay: false,
+              startDate: TODAY,
+              startTime: "09:00",
+              endDate: TODAY,
+              endTime: "10:00",
+            },
+          }),
+          entry({
+            id: "a",
+            title: "Holiday",
+            time: { allDay: true, startDate: TODAY, endDate: TODAY },
+          }),
+        ],
+      }),
+    );
+    const hours = [
+      hour(`${TODAY}T09:00`, 10),
+      hour(`${TODAY}T18:00`, 20),
+      hour(`${TODAY}T19:00`, 70, 12),
+      hour(`${TODAY}T20:00`, 90),
+    ];
+    const found = weatherDuring(candidates, hours, [TODAY]);
+    expect(found).toEqual([
+      { item: candidates.findIndex((c) => c.title === "Football"), rain: 70, temp: 12, code: 61 },
+    ]);
+    expect(weatherDuring(candidates, hours, ["2026-10-03"])).toEqual([]);
   });
 });
