@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { addDays, addMonths, daysBetween, weekday, type PlainDate } from "./plain-date";
 import { isRepetition, occurrenceDates, type Repetition } from "./repetition";
 
 const never = { type: "never" } as const;
@@ -92,6 +93,61 @@ describe("occurrenceDates", () => {
     expect(
       occurrenceDates("2026-10-05", rep({ frequency: "daily" }), "2026-09-01", "2026-09-30"),
     ).toEqual([]);
+  });
+});
+
+/** Walks every day from the series start: slow, but plainly right. */
+function naiveDates(start: PlainDate, r: Repetition, from: PlainDate, to: PlainDate) {
+  const all: PlainDate[] = [];
+  if (r.frequency === "monthly" || r.frequency === "yearly") {
+    const step = (r.frequency === "monthly" ? 1 : 12) * r.interval;
+    for (let k = 0; addMonths(start, k * step) <= to; k++) all.push(addMonths(start, k * step));
+  } else {
+    const days = r.weekdays ?? [weekday(start)];
+    const monday = addDays(start, -weekday(start));
+    for (let date = start; date <= to; date = addDays(date, 1)) {
+      const repeats =
+        r.frequency === "daily"
+          ? daysBetween(start, date) % r.interval === 0
+          : days.includes(weekday(date)) &&
+            Math.floor(daysBetween(monday, date) / 7) % r.interval === 0;
+      if (repeats) all.push(date);
+    }
+  }
+  const ended = all.filter(
+    (date, i) =>
+      (r.end.type !== "until" || date <= r.end.date) && (r.end.type !== "count" || i < r.end.count),
+  );
+  return ended.filter((date) => date >= from);
+}
+
+describe("occurrenceDates against a day-by-day walk", () => {
+  // A fixed seed keeps failures reproducible.
+  let seed = 7;
+  const random = (n: number) => {
+    seed = (seed * 1103515245 + 12345) % 2 ** 31;
+    return Math.floor((seed / 2 ** 31) * n);
+  };
+  const frequencies = ["daily", "weekly", "monthly", "yearly"] as const;
+
+  it("gives the same dates for random series and windows", () => {
+    for (let i = 0; i < 800; i++) {
+      const start = addDays("2018-01-01", random(3000));
+      const frequency = frequencies[i % 4];
+      const end: Repetition["end"] = [
+        never,
+        { type: "until", date: addDays(start, random(1500)) } as const,
+        { type: "count", count: 1 + random(60) } as const,
+      ][random(3)];
+      const r = rep({ frequency, interval: 1 + random(4), end });
+      if (frequency === "weekly" && random(2)) r.weekdays = [random(7), random(7), random(7)];
+      // Windows land before, around, inside and well after the series.
+      const from = addDays(start, random(4000) - 500);
+      const to = addDays(from, random(120));
+      expect(occurrenceDates(start, r, from, to), JSON.stringify({ start, r, from, to })).toEqual(
+        naiveDates(start, r, from, to),
+      );
+    }
   });
 });
 
