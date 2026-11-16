@@ -476,6 +476,48 @@ export async function mayChangeEntry(db: Db, viewer: Account, row: EntryRow) {
   );
 }
 
+/**
+ * Whether this Account may change or delete the series' Occurrences on `date` (or, with
+ * `following`, from `date` on): the series itself must not be hidden from it, and neither may
+ * any Occurrence there that was edited alone to be Private.
+ */
+async function mayChangeOccurrences(
+  db: Db,
+  viewer: Account,
+  row: EntryRow,
+  date: string,
+  following = false,
+) {
+  if (!(await mayChangeEntry(db, viewer, row))) return false;
+  const exceptions = await db
+    .select({ override: schema.occurrenceException.override })
+    .from(schema.occurrenceException)
+    .where(
+      and(
+        eq(schema.occurrenceException.entryId, row.id),
+        following
+          ? gte(schema.occurrenceException.originalDate, date)
+          : eq(schema.occurrenceException.originalDate, date),
+      ),
+    );
+  const privateOnes = exceptions
+    .map((e) => e.override as { private?: boolean; personIds?: string[] } | null)
+    .filter((o) => o?.private);
+  if (privateOnes.length === 0) return true;
+  const links = await db
+    .select({ personId: schema.entryPerson.personId })
+    .from(schema.entryPerson)
+    .where(eq(schema.entryPerson.entryId, row.id));
+  const seriesPersonIds = links.map((l) => l.personId);
+  return privateOnes.every((o) =>
+    seesInFull(
+      viewer,
+      { private: true, createdBy: row.createdBy },
+      o!.personIds ?? seriesPersonIds,
+    ),
+  );
+}
+
 /** Whether `date` is one of the series' Occurrences. */
 function isOccurrence(row: EntryRow, date: string) {
   if (!row.repetition || !isPlainDate(date)) return false;
@@ -498,7 +540,9 @@ entryRoutes.put("/entries/:id/occurrences/:date", async (c) => {
   const { id, date } = c.req.param();
   const row = await loadEntry(db, id);
   if (!row || !isOccurrence(row, date)) return c.json({ error: "not_found" }, 404);
-  if (!(await mayChangeEntry(db, c.get("account"), row))) return c.json({ error: "private" }, 403);
+  if (!(await mayChangeOccurrences(db, c.get("account"), row, date))) {
+    return c.json({ error: "private" }, 403);
+  }
   if (row.birthdayPersonId) return c.json({ error: "birthday_locked" }, 409);
   const parsed = await parseEntry(db, await c.req.json().catch(() => ({})));
   if (!parsed.values) return c.json({ error: "invalid", ...parsed }, 400);
@@ -526,7 +570,9 @@ entryRoutes.delete("/entries/:id/occurrences/:date", async (c) => {
   const { id, date } = c.req.param();
   const row = await loadEntry(db, id);
   if (!row || !isOccurrence(row, date)) return c.json({ error: "not_found" }, 404);
-  if (!(await mayChangeEntry(db, c.get("account"), row))) return c.json({ error: "private" }, 403);
+  if (!(await mayChangeOccurrences(db, c.get("account"), row, date))) {
+    return c.json({ error: "private" }, 403);
+  }
   if (row.birthdayPersonId) return c.json({ error: "birthday_locked" }, 409);
   await db
     .insert(schema.occurrenceException)
@@ -547,7 +593,9 @@ entryRoutes.post("/entries/:id/following/:date", async (c) => {
   const { id, date } = c.req.param();
   const row = await loadEntry(db, id);
   if (!row || !isOccurrence(row, date)) return c.json({ error: "not_found" }, 404);
-  if (!(await mayChangeEntry(db, c.get("account"), row))) return c.json({ error: "private" }, 403);
+  if (!(await mayChangeOccurrences(db, c.get("account"), row, date, true))) {
+    return c.json({ error: "private" }, 403);
+  }
   if (row.birthdayPersonId) return c.json({ error: "birthday_locked" }, 409);
   const parsed = await parseEntry(db, await c.req.json().catch(() => ({})));
   if (!parsed.values) return c.json({ error: "invalid", ...parsed }, 400);
@@ -602,7 +650,9 @@ entryRoutes.delete("/entries/:id/following/:date", async (c) => {
   const { id, date } = c.req.param();
   const row = await loadEntry(db, id);
   if (!row || !isOccurrence(row, date)) return c.json({ error: "not_found" }, 404);
-  if (!(await mayChangeEntry(db, c.get("account"), row))) return c.json({ error: "private" }, 403);
+  if (!(await mayChangeOccurrences(db, c.get("account"), row, date, true))) {
+    return c.json({ error: "private" }, 403);
+  }
   if (row.birthdayPersonId) return c.json({ error: "birthday_locked" }, 409);
   const oldEnd = endBefore(row, date);
   if (date === row.startDate || (oldEnd.end.type === "count" && oldEnd.end.count === 0)) {
