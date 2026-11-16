@@ -40,14 +40,21 @@ export function escapeText(value: string): string {
     .replace(/\r?\n/g, "\\n");
 }
 
+/** The UTF-8 length of one character (a code point, as `for…of` yields them). */
+function utf8Length(char: string): number {
+  const code = char.codePointAt(0)!;
+  return code < 0x80 ? 1 : code < 0x800 ? 2 : code < 0x10000 ? 3 : 4;
+}
+
 /** Folds a content line at 75 octets, never splitting a UTF-8 character (§3.1). */
 export function foldLine(line: string): string {
-  const encoder = new TextEncoder();
+  // Most lines are short ASCII and need no folding: a feed holds thousands of them.
+  if (line.length <= 75 && !/[^\x20-\x7e]/.test(line)) return line;
   const out: string[] = [];
   let current = "";
   let size = 0;
   for (const char of line) {
-    const bytes = encoder.encode(char).length;
+    const bytes = utf8Length(char);
     const limit = out.length === 0 ? 75 : 74; // continuation lines start with a space
     if (size + bytes > limit) {
       out.push(current);
