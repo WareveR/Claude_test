@@ -95,7 +95,10 @@ export const signedInDevice = sqliteTable("signed_in_device", {
 /** What a browser's PushSubscription.toJSON() gives. */
 export type PushSubscriptionJson = { endpoint: string; keys: { p256dh: string; auth: string } };
 
-/** Wrong sign-in or setup attempts, per client IP ("ip:…") and for the whole Family ("global"). */
+/**
+ * Wrong sign-in or setup attempts, per client IP ("ip:…") and per target: an email typed at
+ * sign-in ("email:…"), a signed-in Account ("account:…") or the setup code ("setup").
+ */
 export const signInThrottle = sqliteTable("sign_in_throttle", {
   key: text("key").primaryKey(),
   failures: integer("failures").notNull(),
