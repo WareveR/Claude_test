@@ -133,7 +133,12 @@ exportRoutes.get("/export", async (c) => {
   for (const [name, hidden] of Object.entries(EXPORTED)) {
     for (const row of tables[name]) for (const column of hidden) delete row[column];
   }
-  hidePrivate(tables, c.get("account"));
+  const viewer = c.get("account");
+  // Other Accounts' emails and roles are for the Owner and Admins; a Member gets only their own.
+  if (viewer.role !== "owner" && viewer.role !== "admin") {
+    tables.account = tables.account.filter((a) => a.id === viewer.id);
+  }
+  hidePrivate(tables, viewer);
   return c.json({
     format: "family-calendar-export",
     version: 1,
