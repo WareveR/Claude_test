@@ -59,7 +59,12 @@ export function useDeleteRecipe() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api(`/recipes/${id}`, { method: "DELETE" }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: RECIPES }),
+    // The Meals that named it stay, as text.
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: RECIPES }),
+        queryClient.invalidateQueries({ queryKey: ["meals"] }),
+      ]),
   });
 }
 

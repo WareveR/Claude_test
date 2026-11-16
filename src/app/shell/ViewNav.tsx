@@ -40,6 +40,11 @@ const VIEWS = [
   "tree",
 ] as const;
 
+/** The Meal plan is part of the recipe book's view: its icon shows on both, though not on its path. */
+function active(v: (typeof VIEWS)[number], view: string, isActive: boolean) {
+  return v === "recipes" ? view === "recipes" || view === "meals" : isActive;
+}
+
 /** Switches between views and moves through dates, keeping the date in the address. */
 export function ViewNav({
   date,
@@ -70,7 +75,7 @@ export function ViewNav({
   // "Today" stays in the view it is pressed in: this week, this month, this year.
   const view = pathname.split("/")[1];
   const todayPath =
-    view === "week" || view === "month" || view === "year" || view === "agenda"
+    view === "week" || view === "month" || view === "year" || view === "agenda" || view === "meals"
       ? paths[view](today)
       : paths.day(today);
   // Another view opens on the day in focus, kept from view to view while this one shows it.
@@ -144,7 +149,7 @@ export function ViewNav({
               aria-label={t(`views.${v}`)}
               data-help={`view.${v}`}
               className={({ isActive }) =>
-                `flex items-center px-2.5 py-1 text-sm ${isActive ? "bg-accent text-accent-ink" : ""}`
+                `flex items-center px-2.5 py-1 text-sm ${active(v, view, isActive) ? "bg-accent text-accent-ink" : ""}`
               }
             >
               <ViewIcon view={v} />
@@ -235,7 +240,7 @@ function ViewsMenu({
 }) {
   const { t } = useTranslation();
   const ref = useCloseOutside();
-  const current = VIEWS.find((v) => v === view);
+  const current = VIEWS.find((v) => v === (view === "meals" ? "recipes" : view));
   return (
     <details ref={ref} className="relative shrink-0">
       <summary
@@ -256,7 +261,7 @@ function ViewsMenu({
               if (ref.current) ref.current.open = false;
             }}
             className={({ isActive }) =>
-              `flex items-center gap-3 rounded px-2 py-1.5 ${isActive ? "bg-accent text-accent-ink" : "hover:bg-line/60"}`
+              `flex items-center gap-3 rounded px-2 py-1.5 ${active(v, view, isActive) ? "bg-accent text-accent-ink" : "hover:bg-line/60"}`
             }
           >
             <span className="flex w-5 justify-center">

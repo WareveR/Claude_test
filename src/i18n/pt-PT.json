@@ -1504,6 +1504,38 @@
       "quick": "Rápida"
     }
   },
+  "meals": {
+    "title": "Ementa da semana",
+    "switchPlan": "Ementa",
+    "switchRecipes": "Receitas",
+    "slots": {
+      "lunch": "Almoço",
+      "dinner": "Jantar"
+    },
+    "add": "Adicionar",
+    "servingsCount_one": "{{count}} porção",
+    "servingsCount_other": "{{count}} porções",
+    "openRecipe": "Abrir a receita {{name}}",
+    "editTitle": "{{slot}}, {{day}}",
+    "recipe": "Receita",
+    "search": "Procurar receitas",
+    "noRecipes": "Nenhuma receita corresponde. Escreve em baixo o que está planeado.",
+    "never": "Nunca planeada",
+    "last": "Última vez: {{date}}",
+    "text": "Ou escreve o que está planeado",
+    "textHint": "Qualquer coisa: um prato, restos, jantar fora",
+    "chips": {
+      "leftovers": "Restos",
+      "eatingOut": "Jantar fora"
+    },
+    "servings": "Porções",
+    "fewer": "Menos porções",
+    "more": "Mais porções",
+    "noServings": "Não indicadas",
+    "save": "Guardar",
+    "remove": "Tirar",
+    "line": "Refeições do dia"
+  },
   "reset": {
     "title": "Zona de perigo",
     "hint": "Apaga para sempre o que marcar. As contas e os aparelhos com sessão ficam.",
@@ -1513,6 +1545,7 @@
       "tasks": "Tarefas e listas",
       "shopping": "Lista de compras",
       "recipes": "Receitas",
+      "meals": "Ementa",
       "persons": "Pessoas",
       "entryTypes": "Tipos de entrada",
       "templates": "Listas pré-definidas",
@@ -1525,6 +1558,7 @@
       "tasks": "Todas as Tarefas, com os seus itens e rondas.",
       "shopping": "Os itens da lista e o histórico das sugestões.",
       "recipes": "Todas as receitas do livro de receitas, com as fotos.",
+      "meals": "Todas as refeições planeadas na ementa da semana.",
       "persons": "As Pessoas, as alcunhas e os seus aniversários. As Entradas e Tarefas ficam para a Família.",
       "entryTypes": "Os tipos criados saem (as suas Entradas passam a Geral) e os de origem voltam ao início.",
       "templates": "As listas criadas saem e as de origem voltam ao início.",

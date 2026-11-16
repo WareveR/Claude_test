@@ -31,6 +31,7 @@ import { useHolidays } from "../holidays/model";
 import { useDayNotes, useSunTimes } from "../layers/model";
 import { SunriseIcon, SunsetIcon } from "../weather/WeatherIcon";
 import { useSignedIn } from "../family";
+import { DayMeals } from "../meals/MealsLine";
 import { usePersons } from "../persons/model";
 import { useNow } from "../shell/useNow";
 import { paths } from "../paths";
@@ -119,28 +120,32 @@ export function DayView() {
             <CalendarGrid
               days={[date]}
               // The weather shares the day's own row: the day's, then hour by hour.
-              dayExtra={() =>
-                weatherShown && (
-                  <>
-                    <DayWeather weather={weather} />
-                    <div data-testid="day-hours" className="w-full empty:hidden">
-                      {hours.length > 0 ? (
-                        <HourlyStrip hours={hours} lead={<SunTimes day={date} />} />
-                      ) : (
-                        <div className="flex items-center gap-3 empty:hidden">
-                          <SunTimes day={date} />
-                          {/* Said only for a day with weather but no hours kept. */}
-                          {weather && (
-                            <p data-testid="no-hours" className="text-sm font-normal text-muted">
-                              {t("views.noHours")}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )
-              }
+              dayExtra={() => (
+                <>
+                  {weatherShown && (
+                    <>
+                      <DayWeather weather={weather} />
+                      <div data-testid="day-hours" className="w-full empty:hidden">
+                        {hours.length > 0 ? (
+                          <HourlyStrip hours={hours} lead={<SunTimes day={date} />} />
+                        ) : (
+                          <div className="flex items-center gap-3 empty:hidden">
+                            <SunTimes day={date} />
+                            {/* Said only for a day with weather but no hours kept. */}
+                            {weather && (
+                              <p data-testid="no-hours" className="text-sm font-normal text-muted">
+                                {t("views.noHours")}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                  {/* The day's meals, one discreet line; nothing when none are planned. */}
+                  <DayMeals day={date} className="w-full" />
+                </>
+              )}
             />
           </div>
         )}

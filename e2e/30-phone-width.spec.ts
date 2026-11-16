@@ -19,9 +19,11 @@ test("on a phone no view is wider than the screen", async ({ page }) => {
     "Tasks",
     "Shopping",
     "Recipes",
+    "Meals",
     "Summary",
   ]) {
     if (view === "Summary") await page.goto("/summary");
+    else if (view === "Meals") await page.goto("/meals/2026-11-16");
     else await openView(page, view);
     await page.waitForLoadState("networkidle");
     const sideways = await page.evaluate(

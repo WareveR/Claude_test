@@ -95,8 +95,13 @@ createRoot(document.getElementById("root")!).render(
       client={queryClient}
       persistOptions={persistOptions}
       // The stored copy can predate the last save by up to a second: calendar ranges read from it
-      // show at once but are asked for again, however recently they were loaded.
-      onSuccess={() => queryClient.invalidateQueries({ queryKey: ["entries"] })}
+      // show at once but are asked for again, however recently they were loaded; so are the meals.
+      onSuccess={() =>
+        Promise.all([
+          queryClient.invalidateQueries({ queryKey: ["entries"] }),
+          queryClient.invalidateQueries({ queryKey: ["meals"] }),
+        ])
+      }
     >
       <CrashBoundary>
         <App />

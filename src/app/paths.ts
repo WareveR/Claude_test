@@ -13,6 +13,7 @@ export const paths = {
   tasks: () => "/tasks",
   shopping: () => "/shopping",
   recipes: () => "/recipes",
+  meals: (date: string) => `/meals/${date}`,
   recipe: (id: string) => `/recipes/${id}`,
   newRecipe: () => "/recipes/new",
   editRecipe: (id: string) => `/recipes/${id}/edit`,

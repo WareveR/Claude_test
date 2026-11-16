@@ -1504,6 +1504,38 @@
       "quick": "Quick"
     }
   },
+  "meals": {
+    "title": "Meal plan",
+    "switchPlan": "Meal plan",
+    "switchRecipes": "Recipes",
+    "slots": {
+      "lunch": "Lunch",
+      "dinner": "Dinner"
+    },
+    "add": "Add",
+    "servingsCount_one": "{{count}} serving",
+    "servingsCount_other": "{{count}} servings",
+    "openRecipe": "Open the recipe {{name}}",
+    "editTitle": "{{slot}}, {{day}}",
+    "recipe": "Recipe",
+    "search": "Search recipes",
+    "noRecipes": "No recipe matches. Write what is planned below.",
+    "never": "Never planned",
+    "last": "Last: {{date}}",
+    "text": "Or write what is planned",
+    "textHint": "Anything: a dish, leftovers, eating out",
+    "chips": {
+      "leftovers": "Leftovers",
+      "eatingOut": "Eating out"
+    },
+    "servings": "Servings",
+    "fewer": "Fewer servings",
+    "more": "More servings",
+    "noServings": "Not said",
+    "save": "Save",
+    "remove": "Remove",
+    "line": "Meals of the day"
+  },
   "reset": {
     "title": "Danger zone",
     "hint": "Deletes what you tick for good. The accounts and the signed-in devices stay.",
@@ -1513,6 +1545,7 @@
       "tasks": "Tasks and lists",
       "shopping": "Shopping list",
       "recipes": "Recipes",
+      "meals": "Meal plan",
       "persons": "People",
       "entryTypes": "Entry types",
       "templates": "Predefined lists",
@@ -1525,6 +1558,7 @@
       "tasks": "Every task, with its items and rounds.",
       "shopping": "The list's items and the history behind its suggestions.",
       "recipes": "Every recipe in the recipe book, with its photo.",
+      "meals": "Every planned meal of the weekly meal plan.",
       "persons": "The people, their nicknames and birthdays. Their entries and tasks stay, for the whole family.",
       "entryTypes": "Types you made go (their entries become General) and the built-in ones are reset.",
       "templates": "Lists you made go and the built-in ones are reset.",
