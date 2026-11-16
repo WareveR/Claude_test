@@ -101,6 +101,21 @@ describe("Private per person", () => {
     expect(next).toMatchObject({ title: "", hidden: true });
   });
 
+  it("does not let someone else give items to a Private Task", async () => {
+    const { david, carla } = await family();
+    const { id } = (await (
+      await carla.post("/tasks", { title: "Marcar dentista", dueDate: "2026-10-23", private: true })
+    ).json()) as Item;
+    const res = await david.post(`/tasks/${id}/with-items`);
+    expect(res.status).toBe(403);
+    const text = await res.text();
+    expect(JSON.parse(text)).toEqual({ error: "private" });
+    expect(text).not.toContain("Marcar dentista");
+    const own = (await (await carla.get("/tasks")).json()) as Item[];
+    expect(own).toHaveLength(1);
+    expect(own[0]).toMatchObject({ id, title: "Marcar dentista", hidden: false });
+  });
+
   it("leaves hidden Private items out of a voice change and blanks them in the Export", async () => {
     const { david, rui, ids, typeId } = await family();
     await david.post("/entries", {
