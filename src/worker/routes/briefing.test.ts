@@ -229,6 +229,39 @@ describe("Briefing", () => {
     ]);
   });
 
+  it("is written again from 19:00 as the evening edition, about tomorrow", async () => {
+    const { browser } = await familyWithPlans();
+    const types = (await (await browser.get("/entry-types")).json()) as { id: string }[];
+    await browser.post("/entries", {
+      title: "Swimming",
+      entryTypeId: types[0].id,
+      location: "Piscinas do Jamor",
+      time: {
+        allDay: false,
+        startDate: "2026-10-03",
+        startTime: "08:30",
+        endDate: "2026-10-03",
+        endTime: "09:30",
+      },
+      personIds: [],
+    });
+    await runScheduler(new Date("2026-10-02T04:00:00Z")); // 05:00 in Lisbon
+    const morning = prompts.length;
+    expect(JSON.stringify(prompts)).not.toContain("Piscinas do Jamor");
+    await runScheduler(new Date("2026-10-02T17:45:00Z")); // 18:45
+    expect(prompts).toHaveLength(morning);
+    await runScheduler(new Date("2026-10-02T18:00:00Z")); // 19:00
+    await runScheduler(new Date("2026-10-02T18:15:00Z"));
+    expect(prompts).toHaveLength(morning * 2);
+    const evening = JSON.stringify(prompts.slice(morning));
+    expect(evening).toContain("evening briefing");
+    expect(evening).toContain('at \\"Piscinas do Jamor\\"');
+    const editions = (
+      await env.DB.prepare("SELECT DISTINCT edition FROM briefing").all<{ edition: string }>()
+    ).results;
+    expect(editions).toEqual([{ edition: "evening" }]);
+  });
+
   it("needs a signed-in device", async () => {
     await setUpFamily();
     expect((await new TestBrowser("192.0.2.92").get("/briefing")).status).toBe(401);

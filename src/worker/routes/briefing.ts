@@ -5,7 +5,9 @@ import {
   BRIEFING_DAYS,
   briefingCandidates,
   countdown,
+  editionAt,
   forAccount,
+  forEdition,
   forPerson,
   MAX_CANDIDATES,
   publicOnly,
@@ -14,6 +16,7 @@ import {
   type BriefingExtras,
   type BriefingReader,
   type Candidate,
+  type Edition,
 } from "../../core/briefing";
 import { clockChangeWithin } from "../../core/clock-change";
 import { publicHolidays } from "../../core/holidays";
@@ -41,7 +44,8 @@ type Person = { id: string; name: string; archived: boolean };
 /** Everything the Briefings are written from, read once. */
 async function readCalendar(db: Db, now: Date) {
   const [family] = await db.select().from(schema.family).limit(1);
-  const { today } = familyNow(family.timeZone, now);
+  const { today, minutes } = familyNow(family.timeZone, now);
+  const edition = editionAt(minutes);
   const [entries, tasks, taskLinks, checklists, persons, accounts, Holidays, weather] =
     await Promise.all([
       allEntries(db),
@@ -73,7 +77,12 @@ async function readCalendar(db: Db, now: Date) {
       exceptions: e.exceptions.map((x) => ({
         date: x.date,
         skipped: x.skipped,
-        override: x.override as { title?: string; private?: boolean; personIds?: string[] } | null,
+        override: x.override as {
+          title?: string;
+          location?: string;
+          private?: boolean;
+          personIds?: string[];
+        } | null,
       })),
     })),
     tasks: tasks.map((t) => ({
@@ -106,10 +115,24 @@ async function readCalendar(db: Db, now: Date) {
   const readers: BriefingReader[] = accounts
     .filter((a) => a.passwordHash !== "")
     .map((a) => ({ id: a.id, personId: a.personId }));
-  return { family, today, persons: persons as Person[], readers, candidatesIn, extras };
+  return {
+    family,
+    today,
+    edition,
+    persons: persons as Person[],
+    readers,
+    candidatesIn,
+    extras,
+  };
 }
 
-function scopeCandidates(all: Candidate[], scope: string, readers: BriefingReader[]) {
+function scopeCandidates(
+  all: Candidate[],
+  scope: string,
+  readers: BriefingReader[],
+  today: PlainDate,
+  edition: Edition,
+) {
   const reader = scope.startsWith(ACCOUNT)
     ? readers.find((r) => ACCOUNT + r.id === scope)
     : undefined;
@@ -118,7 +141,7 @@ function scopeCandidates(all: Candidate[], scope: string, readers: BriefingReade
     : scope === FAMILY
       ? publicOnly(all)
       : forPerson(all, scope);
-  return picked.slice(0, MAX_CANDIDATES);
+  return forEdition(picked, today, edition).slice(0, MAX_CANDIDATES);
 }
 
 /** The name the model speaks to in a scope's Briefing: the Person's, or the Account's Person's. */
@@ -139,9 +162,18 @@ async function writeOne(
   language: Language,
   candidates: Candidate[],
   extras: BriefingExtras,
+  edition: Edition,
   personName?: string,
 ) {
-  const written = await writeBriefing(env, candidates, today, language, extras, personName);
+  const written = await writeBriefing(
+    env,
+    candidates,
+    today,
+    language,
+    extras,
+    personName,
+    edition,
+  );
   const row = {
     scope,
     language,
@@ -149,6 +181,7 @@ async function writeOne(
     fallback: !written,
     writtenAt: now.toISOString(),
     week: weekOf(candidates, today),
+    edition,
   };
   await db
     .insert(schema.briefing)
@@ -160,6 +193,7 @@ async function writeOne(
         fallback: row.fallback,
         writtenAt: row.writtenAt,
         week: row.week,
+        edition: row.edition,
       },
     });
   return row;
@@ -173,10 +207,10 @@ export async function writeScopeBriefing(
   scope: string,
   language: Language,
 ) {
-  const { today, persons, readers, candidatesIn, extras } = await readCalendar(db, now);
+  const { today, edition, persons, readers, candidatesIn, extras } = await readCalendar(db, now);
   const name = nameOf(scope, persons, readers);
-  const candidates = scopeCandidates(candidatesIn(language), scope, readers);
-  return writeOne(db, env, now, today, scope, language, candidates, extras, name);
+  const candidates = scopeCandidates(candidatesIn(language), scope, readers, today, edition);
+  return writeOne(db, env, now, today, scope, language, candidates, extras, edition, name);
 }
 
 /** The languages Briefings are kept in: the Family Language and every Signed-in Device's. */
@@ -189,18 +223,25 @@ async function languagesInUse(db: Db, familyLanguage: string): Promise<Language[
 }
 
 /**
- * Scheduler: from 05:00 Family time, every Briefing once a day (the Family's, each
- * non-archived Person's and each Account's own, in each language in use). After that, when an Entry or Task changed, the
- * Briefings whose next 7 days look different are rewritten, so a burst of edits causes one rewrite.
+ * Scheduler: from 05:00 Family time every Briefing is written as the morning edition (the
+ * Family's, each non-archived Person's and each Account's own, in each language in use), and from
+ * 19:00 again as the evening edition, about tomorrow. In between, when an Entry or Task changed,
+ * the Briefings whose next 7 days look different are rewritten in the current edition, so a burst
+ * of edits causes one rewrite.
  */
 export async function briefingJob(db: Db, env: Env, now: Date) {
   const [family] = await db.select().from(schema.family).limit(1);
   if (!family) return;
   const { today, minutes } = familyNow(family.timeZone, now);
   if (minutes < DAWN_HOUR * 60) return;
+  const edition = editionAt(minutes);
   const claimed = await db
     .insert(schema.schedulerRun)
-    .values({ job: "briefing", key: today, at: now.toISOString() })
+    .values({
+      job: "briefing",
+      key: edition === "evening" ? `${today}-evening` : today,
+      at: now.toISOString(),
+    })
     .onConflictDoNothing()
     .returning();
   const daily = claimed.length > 0;
@@ -222,7 +263,13 @@ export async function briefingJob(db: Db, env: Env, now: Date) {
   for (const language of languages) {
     const all = calendar.candidatesIn(language);
     for (const { scope, name } of scopes) {
-      const candidates = scopeCandidates(all, scope, calendar.readers);
+      const candidates = scopeCandidates(
+        all,
+        scope,
+        calendar.readers,
+        calendar.today,
+        calendar.edition,
+      );
       if (!daily) {
         const row = stored.find((r) => r.scope === scope && r.language === language);
         if (row && row.week === weekOf(candidates, calendar.today)) continue;
@@ -236,6 +283,7 @@ export async function briefingJob(db: Db, env: Env, now: Date) {
         language,
         candidates,
         calendar.extras,
+        calendar.edition,
         name,
       );
     }
@@ -261,7 +309,14 @@ async function stored(db: Db, scope: string, language: string) {
 }
 
 function present(row: Awaited<ReturnType<typeof stored>>) {
-  return row && { segments: row.segments, fallback: row.fallback, writtenAt: row.writtenAt };
+  return (
+    row && {
+      segments: row.segments,
+      fallback: row.fallback,
+      writtenAt: row.writtenAt,
+      edition: row.edition,
+    }
+  );
 }
 
 /** Which language this device reads the Briefing in. */

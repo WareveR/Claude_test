@@ -274,6 +274,13 @@
       "when": 1793360021215,
       "tag": "0038_attachments",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "6",
+      "when": 1794843004916,
+      "tag": "0039_evening_briefing",
+      "breakpoints": true
     }
   ]
 }

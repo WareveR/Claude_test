@@ -10,7 +10,7 @@ import type { EntryTypeDefaults, Importance, ReminderOffset } from "../../core/e
 import type { DeviceKind } from "../../core/device-kind";
 import type { HolidayPlace } from "../../core/holidays";
 import type { Repetition } from "../../core/repetition";
-import type { Segment } from "../../core/briefing";
+import type { Edition, Segment } from "../../core/briefing";
 import type { DayWeather, Forecast, HourWeather } from "../../core/weather";
 import type { WasteCollection } from "../../core/waste";
 
@@ -441,7 +441,7 @@ export const weatherDay = sqliteTable(
   (t) => [primaryKey({ columns: [t.locationId, t.date] })],
 );
 
-/** The latest Briefing per scope ("family" or a Person's id) and language. */
+/** The latest Briefing per scope ("family", a Person's id or "account:<id>") and language. */
 export const briefing = sqliteTable(
   "briefing",
   {
@@ -453,6 +453,8 @@ export const briefing = sqliteTable(
     writtenAt: text("written_at").notNull(),
     /** What the next 7 days looked like when written; a change means a rewrite. */
     week: text("week").notNull().default(""),
+    /** "morning" (from 05:00, about today) or "evening" (from 19:00, about tomorrow). */
+    edition: text("edition").$type<Edition>().notNull().default("morning"),
   },
   (t) => [primaryKey({ columns: [t.scope, t.language] })],
 );

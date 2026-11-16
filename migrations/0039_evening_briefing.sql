@@ -1,0 +1,1 @@
+ALTER TABLE `briefing` ADD `edition` text DEFAULT 'morning' NOT NULL;

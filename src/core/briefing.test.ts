@@ -3,7 +3,9 @@ import {
   briefingCandidates,
   briefingSentences,
   countdown,
+  editionAt,
   forAccount,
+  forEdition,
   forPerson,
   publicOnly,
   weekOf,
@@ -326,5 +328,29 @@ describe("briefingSentences", () => {
         true,
       ),
     ).toEqual(["Dentist, tomorrow (Tue 27 Oct)", "Book the vet, in 3 days (Thu 29 Oct)"]);
+  });
+});
+
+describe("editions", () => {
+  it("turns to the evening edition at 19:00", () => {
+    expect(editionAt(18 * 60 + 59)).toBe("morning");
+    expect(editionAt(19 * 60)).toBe("evening");
+  });
+
+  it("leaves today's Entries out of the evening edition, not today's Tasks", () => {
+    const candidates = briefingCandidates(
+      input({
+        entries: [
+          entry({ time: { allDay: true, startDate: TODAY, endDate: TODAY } }),
+          entry({ id: "e2", title: "Swimming" }),
+        ],
+        tasks: [task({ dueDate: TODAY })],
+      }),
+    );
+    expect(forEdition(candidates, TODAY, "morning")).toHaveLength(3);
+    expect(forEdition(candidates, TODAY, "evening").map((c) => c.title)).toEqual([
+      "Pay the school",
+      "Swimming",
+    ]);
   });
 });
