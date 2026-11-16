@@ -14,14 +14,28 @@ import { applyHelpLevel } from "./help/level";
 import "./index.css";
 import { BUTTON } from "./ui/button";
 
+/** The queries other devices change all day, so a screen left open keeps up with them. */
+const LIVE = new Set([
+  "entries",
+  "entry",
+  "tasks",
+  "task",
+  "checklists",
+  "checklist",
+  "shopping",
+  "briefing",
+  "weather",
+]);
+
 const queryClient: QueryClient = new QueryClient({
   defaultOptions: {
     queries: {
       // An answer like 401 or 404 won't change by asking again.
       retry: (failures, error) =>
         !(error instanceof ApiError && error.status < 500) && failures < 3,
-      // Refresh every minute and on focus; there is no live connection.
-      refetchInterval: 60_000,
+      // There is no live connection: what the Family changes all day refreshes every minute,
+      // the rest every five, and everything on focus. Each refresh is a Worker request.
+      refetchInterval: (query) => (LIVE.has(String(query.queryKey[0])) ? 60_000 : 300_000),
       refetchOnWindowFocus: true,
       // Kept as long as the offline copy, so it can be read without a connection.
       gcTime: persistOptions.maxAge,

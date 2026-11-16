@@ -54,6 +54,19 @@ describe("text", () => {
     for (const line of lines) expect(new TextEncoder().encode(line).length).toBeLessThanOrEqual(75);
     expect(lines.map((l, i) => (i ? l.slice(1) : l)).join("")).toBe(`SUMMARY:${"ã".repeat(60)}`);
   });
+
+  it("folds mixed text, emoji and long ASCII the same way, and leaves short lines as they are", () => {
+    expect(foldLine("SUMMARY:Dentist")).toBe("SUMMARY:Dentist");
+    for (const text of [
+      `DESCRIPTION:${"a".repeat(200)}`,
+      `SUMMARY:${"Festa 🎉 ção ".repeat(20)}`,
+    ]) {
+      const lines = foldLine(text).split("\r\n");
+      for (const line of lines)
+        expect(new TextEncoder().encode(line).length).toBeLessThanOrEqual(75);
+      expect(lines.map((l, i) => (i ? l.slice(1) : l)).join("")).toBe(text);
+    }
+  });
 });
 
 describe("RRULE", () => {
