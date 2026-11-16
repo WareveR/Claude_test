@@ -64,6 +64,31 @@ describe("PlainDate", () => {
     ).toBe("02/10/2026");
     expect(formatPlainDate("2026-10-02", "en-GB", { weekday: "long" })).toBe("Friday");
   });
+
+  it("gives the same answers on repeat calls, whose formatters are reused", () => {
+    // Every hour of a year, across both clock changes, in zones either side of UTC.
+    for (const timeZone of ["Europe/Lisbon", "America/New_York", "Asia/Kolkata"]) {
+      for (let hour = 0; hour < 365 * 24; hour += 7) {
+        const now = new Date(Date.UTC(2026, 0, 1) + hour * 3_600_000);
+        const fresh = new Intl.DateTimeFormat("en-GB", {
+          timeZone,
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          hourCycle: "h23",
+        }).formatToParts(now);
+        const get = (type: string) => fresh.find((p) => p.type === type)!.value;
+        expect(todayIn(timeZone, now)).toBe(`${get("year")}-${get("month")}-${get("day")}`);
+        expect(minutesNowIn(timeZone, now)).toBe(Number(get("hour")) * 60 + Number(get("minute")));
+      }
+    }
+    // Different languages and options must not share a formatter.
+    expect(formatPlainDate("2026-10-02", "pt-PT", { weekday: "long" })).toBe("sexta-feira");
+    expect(formatPlainDate("2026-10-02", "en-GB", { weekday: "short" })).toBe("Fri");
+    expect(formatPlainDate("2026-10-02", "en-GB", { weekday: "long" })).toBe("Friday");
+  });
 });
 
 describe("formatMonthRange", () => {

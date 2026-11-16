@@ -33,7 +33,12 @@ export function clockChangeWithin(
     Date.parse(`${today}T00:00:00Z`) -
     offsetAt(format, Date.parse(`${today}T12:00:00Z`)) * 60 * 1000;
   let before = offsetAt(format, start);
-  for (let ms = start + STEP; ms <= start + days * DAY; ms += STEP) {
+  // Each Intl call is costly: find the day the offset changes on, then scan only that day.
+  let dayStart = start;
+  while (dayStart < start + days * DAY && offsetAt(format, dayStart + DAY) === before) {
+    dayStart += DAY;
+  }
+  for (let ms = dayStart + STEP; ms <= start + days * DAY; ms += STEP) {
     const after = offsetAt(format, ms);
     if (after !== before) {
       const old = wallClock(ms, before);

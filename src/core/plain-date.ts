@@ -60,9 +60,19 @@ export function startOfMonth(date: PlainDate): PlainDate {
   return `${date.slice(0, 7)}-01`;
 }
 
+const formats = new Map<string, Intl.DateTimeFormat>();
+
+/** A formatter made once per language and options: making one costs far more than using it. */
+function cachedFormat(language: string, options: Intl.DateTimeFormatOptions) {
+  const key = `${language} ${JSON.stringify(options)}`;
+  let format = formats.get(key);
+  if (!format) formats.set(key, (format = new Intl.DateTimeFormat(language, options)));
+  return format;
+}
+
 /** Today's date on the wall clocks of the given time zone. */
 export function todayIn(timeZone: string, now: Date = new Date()): PlainDate {
-  const parts = new Intl.DateTimeFormat("en-CA", {
+  const parts = cachedFormat("en-CA", {
     timeZone,
     year: "numeric",
     month: "2-digit",
@@ -78,7 +88,7 @@ export function formatPlainDate(
   language: string,
   options: Intl.DateTimeFormatOptions,
 ): string {
-  return new Intl.DateTimeFormat(language, { ...options, timeZone: "UTC" }).format(toUtc(date));
+  return cachedFormat(language, { ...options, timeZone: "UTC" }).format(toUtc(date));
 }
 
 /** The ISO week a date falls in (weeks start on Monday; week 1 holds the year's first Thursday). */
@@ -116,7 +126,7 @@ export function formatMonthRange(
   // Built from the month names: Intl's ranges put "de" before the year in Portuguese and are all
   // digits when short in some languages ("09/2026 – 10/2026").
   const name = (d: PlainDate) =>
-    new Intl.DateTimeFormat(language, { month, timeZone: "UTC" }).format(toUtc(d));
+    cachedFormat(language, { month, timeZone: "UTC" }).format(toUtc(d));
   const [fromYear, toYear] = [from.slice(0, 4), to.slice(0, 4)];
   if (fromYear !== toYear) return `${name(from)} ${fromYear} – ${name(to)} ${toYear}`;
   if (from.slice(0, 7) === to.slice(0, 7)) return `${name(from)} ${toYear}`;
@@ -125,7 +135,7 @@ export function formatMonthRange(
 
 /** Minutes since midnight on the wall clocks of the given time zone. */
 export function minutesNowIn(timeZone: string, now: Date = new Date()): number {
-  const parts = new Intl.DateTimeFormat("en-GB", {
+  const parts = cachedFormat("en-GB", {
     timeZone,
     hour: "2-digit",
     minute: "2-digit",
