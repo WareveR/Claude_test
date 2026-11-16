@@ -2,7 +2,7 @@ import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { restoreSql } from "../core/restore-sql";
 import { snapshot } from "./backup";
-import { setUpFamily } from "./test/client";
+import { EMAIL, PASSWORD, setUpFamily } from "./test/client";
 
 /** Runs restore SQL the way `wrangler d1 execute --file` does: every statement, in order. */
 async function execute(sql: string) {
@@ -26,6 +26,10 @@ describe("restore", () => {
     await browser.post("/persons", { name: "Rui", color: "#3d405b" });
 
     await execute(restoreSql(JSON.parse(JSON.stringify(backup))));
+    // Signed-in Devices are not in the Backup, and the restore's Account rows cascade to them:
+    // the device must sign in again.
+    expect((await browser.get("/persons")).status).toBe(401);
+    expect((await browser.post("/session", { email: EMAIL, password: PASSWORD })).status).toBe(201);
     const persons = (await (await browser.get("/persons")).json()) as { name: string }[];
     expect(persons.map((p) => p.name)).toEqual(["Ana O'Neill"]);
     const tasks = (await (await browser.get("/tasks")).json()) as {
@@ -33,8 +37,6 @@ describe("restore", () => {
       personIds: string[];
     }[];
     expect(tasks).toMatchObject([{ title: "Comprar pão; leite", personIds: [ana.id] }]);
-    // The same session still works: Signed-in Devices are part of the Backup.
-    expect((await browser.get("/status")).status).toBe(200);
   });
 
   it("writes NULL, numbers and quoted text", () => {

@@ -31,6 +31,7 @@ describe("nightly Backup", () => {
     expect(backup.tables.person.map((p) => p.name)).toEqual(["Ana"]);
     expect(backup.tables.entry_type.length).toBeGreaterThan(0);
     expect(backup.tables).not.toHaveProperty("sign_in_throttle");
+    expect(backup.tables).not.toHaveProperty("signed_in_device");
     expect(backup.tables).not.toHaveProperty("d1_migrations");
 
     await env.BACKUPS.delete("nightly/2026-10-02.json");
