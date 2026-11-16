@@ -28,6 +28,8 @@ export type Candidate = {
   id: string | null;
   date: PlainDate;
   time: string | null;
+  /** When a timed Entry ends that day ("24:00" when it runs past midnight), to spot clashes. */
+  end?: string;
   title: string;
   /** Where an Entry takes place, so the evening Briefing can say when to leave. */
   location?: string;
@@ -82,6 +84,8 @@ export type BriefingExtras = {
   clockChange: ClockChange | null;
   /** The bins collected today, to put out tonight; empty when none or none set up. */
   bins?: Bin[];
+  /** Clashes and full days in the next 7 days, from this Briefing's own candidates. */
+  logistics?: Logistics;
 };
 
 export const NO_EXTRAS: BriefingExtras = { weather: null, clockChange: null, bins: [] };
@@ -147,6 +151,26 @@ export type BriefingInput = {
 
 const RANK: Record<Importance, number> = { high: 0, normal: 1, low: 2 };
 
+/** A timed Entry without an end is taken to last this long. */
+const DEFAULT_MINUTES = 60;
+
+function toMinutes(time: string) {
+  const [h, m] = time.split(":").map(Number);
+  return h * 60 + m;
+}
+
+function fromMinutes(minutes: number) {
+  const m = Math.min(minutes, 24 * 60);
+  return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+}
+
+/** When a timed Occurrence ends on its first day. */
+function endOf(time: Extract<EntryTime, { allDay: false }>) {
+  if (time.endDate && time.endDate > time.startDate) return "24:00";
+  if (time.endTime && time.endTime > time.startTime) return time.endTime;
+  return fromMinutes(toMinutes(time.startTime) + DEFAULT_MINUTES);
+}
+
 /**
  * What is coming up in the next 60 days, never notes: Entry
  * Occurrences (Birthdays with their age), Tasks overdue or due, Checklists still open with
@@ -179,6 +203,7 @@ export function briefingCandidates(input: BriefingInput, max = MAX_CANDIDATES): 
         id: entry.id,
         date,
         time: o.time.allDay || date !== o.time.startDate ? null : o.time.startTime,
+        ...(!o.time.allDay && date === o.time.startDate ? { end: endOf(o.time) } : {}),
         title: birthdayTitle(fields.title, age),
         ...(fields.location ? { location: fields.location } : {}),
         persons: names(fields.personIds),
@@ -391,4 +416,87 @@ export function briefingSentences(segments: Segment[], fallback: boolean): strin
     .split(/\n+|(?<=[.!?…])\s+/)
     .map((s) => s.trim())
     .filter(Boolean);
+}
+
+/** A day with this many Entries is a full one. */
+export const FULL_DAY = 5;
+/** A week with this many full days, or this many Entries, is a very full one. */
+export const FULL_WEEK_DAYS = 3;
+export const FULL_WEEK_ENTRIES = 20;
+
+/** What the next 7 days need sorting out, for the Briefing to point out. */
+export type Logistics = {
+  /** One Person with two Entries at the same time. */
+  clashes: { person: string; date: PlainDate; first: string; second: string; time: string }[];
+  /**
+   * An Entry only for Persons without an Account (children, mostly) while every Person with an
+   * Account is busy: who takes them?
+   */
+  unaccompanied: { title: string; persons: string[]; date: PlainDate; time: string }[];
+  /** Days with at least FULL_DAY Entries. */
+  fullDays: { date: PlainDate; entries: number }[];
+  /** The week as a whole is very full. */
+  fullWeek: boolean;
+};
+
+const overlaps = (a: Candidate, b: Candidate) =>
+  a.date === b.date && a.time! < b.end! && b.time! < a.end!;
+
+/**
+ * Clashes, children left without an adult and very full days in the next 7 days, from the
+ * Briefing's own candidates (so a Briefing never hints at a Private item it can't name).
+ * `adults` are the Persons with an Account.
+ */
+export function logistics(
+  candidates: Candidate[],
+  today: PlainDate,
+  adults: Set<string>,
+): Logistics {
+  const last = addDays(today, REWRITE_DAYS - 1);
+  const week = candidates.filter((c) => c.kind === "entry" && c.date >= today && c.date <= last);
+  const timed = week.filter((c) => c.time && c.end);
+  const clashes: Logistics["clashes"] = [];
+  const seen = new Set<string>();
+  for (const [i, a] of timed.entries()) {
+    for (const b of timed.slice(i + 1)) {
+      if (!overlaps(a, b)) continue;
+      for (const [k, id] of a.personIds.entries()) {
+        const key = `${id}|${a.id}|${b.id}|${a.date}`;
+        if (!b.personIds.includes(id) || seen.has(key)) continue;
+        seen.add(key);
+        const time = a.time! < b.time! ? b.time! : a.time!;
+        clashes.push({
+          person: a.persons[k] ?? "",
+          date: a.date,
+          first: a.title,
+          second: b.title,
+          time,
+        });
+      }
+    }
+  }
+  const unaccompanied: Logistics["unaccompanied"] = [];
+  if (adults.size > 0) {
+    for (const c of timed) {
+      if (c.personIds.length === 0 || c.personIds.some((id) => adults.has(id))) continue;
+      const busy = [...adults].every((adult) =>
+        timed.some((o) => o !== c && o.personIds.includes(adult) && overlaps(o, c)),
+      );
+      if (busy) {
+        unaccompanied.push({ title: c.title, persons: c.persons, date: c.date, time: c.time! });
+      }
+    }
+  }
+  const perDay = new Map<PlainDate, number>();
+  for (const c of week) perDay.set(c.date, (perDay.get(c.date) ?? 0) + 1);
+  const fullDays = [...perDay]
+    .filter(([, n]) => n >= FULL_DAY)
+    .map(([date, entries]) => ({ date, entries }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+  return {
+    clashes,
+    unaccompanied,
+    fullDays,
+    fullWeek: fullDays.length >= FULL_WEEK_DAYS || week.length >= FULL_WEEK_ENTRIES,
+  };
 }

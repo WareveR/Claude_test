@@ -9,6 +9,7 @@ import {
   forAccount,
   forEdition,
   forPerson,
+  logistics,
   MAX_CANDIDATES,
   publicOnly,
   REWRITE_DAYS,
@@ -128,6 +129,10 @@ async function readCalendar(db: Db, now: Date) {
   };
 }
 
+/**
+ * A scope's candidates, cut to what the model reads, and the clashes and full days among all of
+ * them. Persons with an Account count as the adults who can take the others.
+ */
 function scopeCandidates(
   all: Candidate[],
   scope: string,
@@ -143,7 +148,12 @@ function scopeCandidates(
     : scope === FAMILY
       ? publicOnly(all)
       : forPerson(all, scope);
-  return forEdition(picked, today, edition).slice(0, MAX_CANDIDATES);
+  const shown = forEdition(picked, today, edition);
+  const adults = new Set(readers.flatMap((r) => (r.personId ? [r.personId] : [])));
+  return {
+    candidates: shown.slice(0, MAX_CANDIDATES),
+    logistics: logistics(shown, today, adults),
+  };
 }
 
 /** The name the model speaks to in a scope's Briefing: the Person's, or the Account's Person's. */
@@ -211,8 +221,20 @@ export async function writeScopeBriefing(
 ) {
   const { today, edition, persons, readers, candidatesIn, extras } = await readCalendar(db, now);
   const name = nameOf(scope, persons, readers);
-  const candidates = scopeCandidates(candidatesIn(language), scope, readers, today, edition);
-  return writeOne(db, env, now, today, scope, language, candidates, extras, edition, name);
+  const picked = scopeCandidates(candidatesIn(language), scope, readers, today, edition);
+  const scopeExtras = { ...extras, logistics: picked.logistics };
+  return writeOne(
+    db,
+    env,
+    now,
+    today,
+    scope,
+    language,
+    picked.candidates,
+    scopeExtras,
+    edition,
+    name,
+  );
 }
 
 /** The languages Briefings are kept in: the Family Language and every Signed-in Device's. */
@@ -265,7 +287,7 @@ export async function briefingJob(db: Db, env: Env, now: Date) {
   for (const language of languages) {
     const all = calendar.candidatesIn(language);
     for (const { scope, name } of scopes) {
-      const candidates = scopeCandidates(
+      const { candidates, logistics } = scopeCandidates(
         all,
         scope,
         calendar.readers,
@@ -284,7 +306,7 @@ export async function briefingJob(db: Db, env: Env, now: Date) {
         scope,
         language,
         candidates,
-        calendar.extras,
+        { ...calendar.extras, logistics },
         calendar.edition,
         name,
       );
