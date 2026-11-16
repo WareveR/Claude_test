@@ -20,6 +20,11 @@ export default defineConfig({
             miniflare: {
               bindings: {
                 SETUP_CODE: "test-setup-code",
+                // Local-only VAPID pair from .dev.vars.example, so tests run on a fresh checkout.
+                VAPID_PUBLIC_KEY:
+                  "BP-YVRiIWVoBJIPIZA7r8Nw-fdctXup0sb6GNwIctouAvyH2meZz9b8d8AqtMaativsR95XTEy-vnmLBBfyQWeo",
+                VAPID_PRIVATE_KEY: "gdWrDjYbXXjpht4mfRPqOJgErQkmORrr6iubA6JcNz0",
+                VAPID_SUBJECT: "mailto:calendar@example.com",
                 TEST_MIGRATIONS: await readD1Migrations("migrations"),
               },
             },
