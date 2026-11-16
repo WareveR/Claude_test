@@ -80,6 +80,50 @@ describe("Private per person", () => {
     );
   });
 
+  it("does not let someone who can't see a Private Occurrence change or skip it", async () => {
+    const { david, carla, rui, ids, typeId } = await family();
+    const weekly = { frequency: "weekly", interval: 1, end: { type: "never" } };
+    const { id } = (await (
+      await david.post("/entries", {
+        title: "Ginásio",
+        entryTypeId: typeId,
+        time: TIME,
+        repetition: weekly,
+        personIds: [ids.david],
+      })
+    ).json()) as Item;
+    const on = (date: string, extra: object = {}) => ({
+      title: "Consulta",
+      entryTypeId: typeId,
+      time: { ...TIME, startDate: date, endDate: date },
+      repetition: weekly,
+      personIds: [ids.carla],
+      ...extra,
+    });
+    const made = await carla.request(
+      "PUT",
+      `/entries/${id}/occurrences/2026-10-30`,
+      on("2026-10-30", { private: true }),
+    );
+    expect(made.status).toBe(200);
+
+    expect(
+      (await rui.request("PUT", `/entries/${id}/occurrences/2026-10-30`, on("2026-10-30"))).status,
+    ).toBe(403);
+    expect((await rui.delete(`/entries/${id}/occurrences/2026-10-30`)).status).toBe(403);
+    expect((await rui.post(`/entries/${id}/following/2026-10-23`, on("2026-10-23"))).status).toBe(
+      403,
+    );
+    expect((await rui.delete(`/entries/${id}/following/2026-10-23`)).status).toBe(403);
+    // Other Occurrences and the ones after it stay open to him.
+    expect(
+      (await rui.request("PUT", `/entries/${id}/occurrences/2026-11-06`, on("2026-11-06"))).status,
+    ).toBe(200);
+    expect((await rui.delete(`/entries/${id}/following/2026-11-06`)).status).toBe(204);
+    // Its Person still can.
+    expect((await carla.delete(`/entries/${id}/occurrences/2026-10-30`)).status).toBe(204);
+  });
+
   it("hides a Private Task the same way, and keeps it hidden when it repeats", async () => {
     const { david, carla } = await family();
     const { id } = (await (
