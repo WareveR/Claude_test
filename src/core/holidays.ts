@@ -24,6 +24,36 @@ export function isHolidayPlaces(value: unknown): value is HolidayPlace[] {
 /** `date-holidays` itself, passed in so the browser can load it lazily. */
 export type HolidayLibrary = typeof Holidays;
 
+type Holiday = ReturnType<Holidays["getHolidays"]>[number];
+
+// Building a calendar and working out a year's rules are slow and give the same answer each
+// time, so both are kept, per library, for as long as the Worker or the page lives.
+const caches = new WeakMap<
+  HolidayLibrary,
+  { calendars: Map<string, Holidays>; years: Map<string, Holiday[]> }
+>();
+
+function holidaysIn(Library: HolidayLibrary, place: HolidayPlace, year: number, lang: string) {
+  let cache = caches.get(Library);
+  if (!cache) caches.set(Library, (cache = { calendars: new Map(), years: new Map() }));
+  const placeKey = `${place.country}/${place.state ?? ""}/${place.region ?? ""}`;
+  const yearKey = `${placeKey} ${year} ${lang}`;
+  let list = cache.years.get(yearKey);
+  if (list) return list;
+  let calendar = cache.calendars.get(placeKey);
+  if (!calendar) {
+    calendar = new Library({
+      country: place.country,
+      ...(place.state ? { state: place.state } : {}),
+      ...(place.region ? { region: place.region } : {}),
+    });
+    cache.calendars.set(placeKey, calendar);
+  }
+  list = calendar.getHolidays(year, lang) || [];
+  cache.years.set(yearKey, list);
+  return list;
+}
+
 /**
  * Public Holidays in a date window, both ends included, by date: their names in the device's
  * language, without repeats when several places share a day.
@@ -38,13 +68,8 @@ export function publicHolidays(
   const lang = language.slice(0, 2);
   const out = new Map<PlainDate, string[]>();
   for (const place of places) {
-    const calendar = new Library({
-      country: place.country,
-      ...(place.state ? { state: place.state } : {}),
-      ...(place.region ? { region: place.region } : {}),
-    });
     for (let year = Number(from.slice(0, 4)); year <= Number(to.slice(0, 4)); year++) {
-      for (const holiday of calendar.getHolidays(year, lang) || []) {
+      for (const holiday of holidaysIn(Library, place, year, lang)) {
         const date = holiday.date.slice(0, 10);
         if (holiday.type !== "public" || date < from || date > to) continue;
         const names = out.get(date) ?? [];

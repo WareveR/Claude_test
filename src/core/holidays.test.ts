@@ -40,6 +40,37 @@ describe("Public Holidays", () => {
     expect(days.get("2026-12-25")).toEqual(["Christmas Day"]);
   });
 
+  it("gives the same holidays as a fresh calendar on every call", () => {
+    const places = [
+      { country: "PT" },
+      { country: "ES", state: "MD" },
+      { country: "DE", state: "BY" },
+    ];
+    for (const language of ["pt-PT", "en", "pt-PT"]) {
+      for (const [from, to] of [
+        ["2026-01-01", "2026-12-31"],
+        ["2026-12-20", "2028-01-10"],
+        ["2026-01-01", "2026-12-31"],
+      ]) {
+        const fresh = new Map<string, string[]>();
+        for (const place of places) {
+          const calendar = new Holidays(place.country, place.state ?? "");
+          for (let year = +from.slice(0, 4); year <= +to.slice(0, 4); year++) {
+            for (const h of calendar.getHolidays(year, language.slice(0, 2))) {
+              const date = h.date.slice(0, 10);
+              if (h.type !== "public" || date < from || date > to) continue;
+              const names = fresh.get(date) ?? [];
+              if (!names.includes(h.name)) names.push(h.name);
+              fresh.set(date, names);
+            }
+          }
+        }
+        const days = publicHolidays(Holidays, places, from, to, language);
+        expect([...days].sort()).toEqual([...fresh].sort());
+      }
+    }
+  });
+
   it("validates the Family's holiday places", () => {
     expect(isHolidayPlaces([{ country: "PT" }, { country: "ES", state: "MD" }])).toBe(true);
     expect(isHolidayPlaces([{ country: "portugal" }])).toBe(false);
