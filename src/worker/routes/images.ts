@@ -1,3 +1,4 @@
+import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { randomToken } from "../auth/crypto";
 import { schema } from "../db";
@@ -28,11 +29,20 @@ imageRoutes.post("/images", async (c) => {
   return c.json({ key }, 201);
 });
 
+/**
+ * Only keys registered in the image table are served: the bucket also holds attachments, which
+ * must never be opened through here (an HTML one would run on the app's origin).
+ */
 imageRoutes.get("/images/:key", async (c) => {
-  const object = await c.env.IMAGES.get(c.req.param("key"));
+  const key = c.req.param("key");
+  if (key.includes("/")) return c.json({ error: "not_found" }, 404);
+  const [row] = await c.get("db").select().from(schema.image).where(eq(schema.image.key, key));
+  if (!row || !TYPES.has(row.contentType)) return c.json({ error: "not_found" }, 404);
+  const object = await c.env.IMAGES.get(key);
   if (!object) return c.json({ error: "not_found" }, 404);
   return c.body(object.body, 200, {
-    "Content-Type": object.httpMetadata?.contentType ?? "application/octet-stream",
+    "Content-Type": row.contentType,
+    "X-Content-Type-Options": "nosniff",
     // Keys are never reused, so a browser may keep an image for good.
     "Cache-Control": "private, max-age=31536000, immutable",
   });
