@@ -1,6 +1,7 @@
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import worker from "../index";
+import { ATTACHMENTS_TOTAL_BYTES } from "../usage";
 import { addAccount, setUpFamily, type TestBrowser } from "../test/client";
 
 type Attachment = { id: string; name: string; contentType: string; size: number };
@@ -112,6 +113,19 @@ describe("attachments", () => {
     expect(empty.status).toBe(413);
     expect((await attach(david, "", "x.jpg")).status).toBe(400);
     expect((await attach(david, "entry=nope", "x.jpg")).status).toBe(404);
+  });
+
+  it("refuses a file once all attachments together would pass the family's quota", async () => {
+    const david = await setUpFamily();
+    const id = await newEntry(david);
+    expect((await attach(david, `entry=${id}`, "a.jpg")).status).toBe(201);
+    await env.DB.prepare("UPDATE attachment SET size = ?")
+      .bind(ATTACHMENTS_TOTAL_BYTES - 4)
+      .run();
+    expect((await attach(david, `entry=${id}`, "b.jpg")).status).toBe(201);
+    const over = await attach(david, `entry=${id}`, "c.jpg");
+    expect(over.status).toBe(413);
+    expect(await over.json()).toEqual({ error: "invalid", field: "quota" });
   });
 
   it("sweeps the files of a deleted Entry at night", async () => {

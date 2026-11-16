@@ -106,6 +106,17 @@ export const signInThrottle = sqliteTable("sign_in_throttle", {
   lastFailureAt: text("last_failure_at").notNull(),
 });
 
+/**
+ * How often something limited was used in its current window: "ai:<account id>" per day,
+ * "errors:<device id>" per hour. Counting only; never backed up or exported.
+ */
+export const usageCount = sqliteTable("usage_count", {
+  key: text("key").primaryKey(),
+  /** The day ("2026-11-16") or hour ("2026-11-16T12") the count belongs to. */
+  window: text("window").notNull(),
+  count: integer("count").notNull(),
+});
+
 /** Someone in the Family whom Entries and Tasks can be for. Archived Persons stay on old items. */
 export const person = sqliteTable("person", {
   id: text("id").primaryKey(),

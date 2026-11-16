@@ -58,6 +58,15 @@ describe("Error Log", () => {
     expect(log[0].deviceName).toEqual(expect.any(String));
   });
 
+  it("stops logging a device's errors after 60 in an hour", async () => {
+    const browser = await setUpFamily();
+    for (let i = 0; i < 60; i++) {
+      const code = `ERR-${String(i).padStart(4, "0")}`.replace(/\d/g, (d) => "ABCDEFGHJK"[+d]);
+      expect((await browser.post("/errors", anError(code))).status).toBe(204);
+    }
+    expect((await browser.post("/errors", anError("ERR-ZZZZ"))).status).toBe(429);
+  });
+
   it("needs a signed-in device", async () => {
     await setUpFamily();
     const stranger = new TestBrowser("203.0.113.70");

@@ -46,6 +46,7 @@ export const NOT_EXPORTED = new Set([
   "d1_migrations",
   "signed_in_device",
   "sign_in_throttle",
+  "usage_count",
   "recovery_token",
   "error_log",
   "scheduler_run",
