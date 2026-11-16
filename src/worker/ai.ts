@@ -3,13 +3,14 @@ import {
   candidateLink,
   NO_EXTRAS,
   type BriefingExtras,
+  type Edition,
   type BriefingWeather,
   type Candidate,
   type Segment,
 } from "../core/briefing";
 import type { ClockChange } from "../core/clock-change";
 import type { Language } from "../core/languages";
-import { formatPlainDate, type PlainDate } from "../core/plain-date";
+import { addDays, formatPlainDate, type PlainDate } from "../core/plain-date";
 import { weatherKind, type HourWeather, type WeatherKind } from "../core/weather";
 
 /**
@@ -101,7 +102,7 @@ const BRIEFING_SCHEMA = {
   required: ["segments"],
 };
 
-function describe(c: Candidate, i: number, language: Language) {
+function describe(c: Candidate, i: number, language: Language, edition: Edition = "morning") {
   const locale = language === "en" ? "en-GB" : "pt-PT";
   const date = formatPlainDate(c.date, locale, { weekday: "long", day: "numeric", month: "long" });
   const parts = [
@@ -110,6 +111,7 @@ function describe(c: Candidate, i: number, language: Language) {
     `"${c.title}"`,
     c.detail === "overdue" ? `overdue since ${date}` : `${date}${c.time ? ` ${c.time}` : ""}`,
     c.persons.length > 0 ? `for ${c.persons.join(", ")}` : "",
+    edition === "evening" && c.location ? `at "${c.location}"` : "",
     c.detail && c.detail !== "overdue" ? `progress ${c.detail}` : "",
     c.prepares ? `prepares for "${c.prepares}"` : "",
     c.importance === "high" ? "HIGH importance" : "",
@@ -135,9 +137,9 @@ const NOTABLE_CHANGE = 3;
 
 const WET: WeatherKind[] = ["rain", "showers", "thunder", "snow"];
 
-/** When rain is likely today, "around 17:00" or "from 15:00 to 18:00"; empty when it isn't. */
-function rainHours(hours: HourWeather[]) {
-  const wet = hours.filter((h) => h.rain >= RAIN_LIKELY);
+/** When rain is likely on a day, "around 17:00" or "from 15:00 to 18:00"; empty when it isn't. */
+function rainHours(hours: HourWeather[], date: PlainDate) {
+  const wet = hours.filter((h) => h.time.startsWith(date) && h.rain >= RAIN_LIKELY);
   if (wet.length === 0) return "";
   const from = wet[0].time.slice(11, 16);
   const to = wet[wet.length - 1].time.slice(11, 16);
@@ -148,12 +150,26 @@ function rainHours(hours: HourWeather[]) {
  * The weather as the few facts worth a sentence, not the full forecast: today's sky and high, when
  * rain is likely, and tomorrow only when it turns colder, warmer, wet or dry.
  */
-function describeWeather(weather: BriefingWeather | null, today: PlainDate) {
+function describeWeather(
+  weather: BriefingWeather | null,
+  today: PlainDate,
+  edition: Edition = "morning",
+) {
   if (!weather) return "";
   const [now, next] = weather.days.filter((d) => d.date >= today).slice(0, 2);
+  if (edition === "evening") {
+    // In the evening only tomorrow matters: its sky, how cold the morning is, and rain.
+    if (!next) return "";
+    const rain = rainHours(weather.hours, next.date);
+    const parts = [
+      `tomorrow ${SKY[weatherKind(next.code)]}, from about ${Math.round(next.min)} to ${Math.round(next.max)} degrees`,
+      rain ? `rain likely ${rain}` : "",
+    ];
+    return `Weather in ${weather.place}: ${parts.filter(Boolean).join("; ")}.`;
+  }
   if (!now || now.date !== today) return "";
   const sky = weatherKind(now.code);
-  const rain = rainHours(weather.hours);
+  const rain = rainHours(weather.hours, today);
   const parts = [
     `today ${SKY[sky]}, about ${Math.round(now.max)} degrees`,
     rain ? `rain likely ${rain}` : "",
@@ -216,7 +232,11 @@ export function briefingPrompt(
   language: Language,
   personName?: string,
   extras: BriefingExtras = NO_EXTRAS,
+  edition: Edition = "morning",
 ) {
+  if (edition === "evening") {
+    return eveningPrompt(candidates, today, language, personName, extras);
+  }
   const locale = language === "en" ? "en-GB" : "pt-PT";
   const day = formatPlainDate(today, locale, {
     weekday: "long",
@@ -264,6 +284,71 @@ export function briefingPrompt(
   ];
 }
 
+/** How the evening host sounds, in the Briefing's own language. */
+const EVENING_EXAMPLES: Record<Language, string> = {
+  "pt-PT": [
+    "«Amanhã a primeira coisa é a natação da Ana às 8h30 nas piscinas: convém sair de casa com tempo.»",
+    "«Deixem hoje a mochila pronta, que a lista da visita de estudo ainda vai em 3 de 5.»",
+    "«Amanhã acorda frio, uns 8 graus de manhã, e pode chover à tarde: casacos e guarda-chuva à porta.»",
+  ].join(" "),
+  en: [
+    '"First thing tomorrow is Ana\'s swimming at 8:30 at the pool, so leave in good time."',
+    '"Get the school bag ready tonight: the trip list is still at 3 of 5."',
+    '"Tomorrow starts cold, about 8 degrees, and rain is likely in the afternoon: coats and umbrellas by the door."',
+  ].join(" "),
+};
+
+/**
+ * The evening Briefing, from 19:00: a calm look at tomorrow before bed, with what to get ready
+ * tonight and when the day starts, so nobody leaves late.
+ */
+function eveningPrompt(
+  candidates: Candidate[],
+  today: PlainDate,
+  language: Language,
+  personName: string | undefined,
+  extras: BriefingExtras,
+) {
+  const locale = language === "en" ? "en-GB" : "pt-PT";
+  const day = (date: PlainDate) =>
+    formatPlainDate(date, locale, { weekday: "long", day: "numeric", month: "long" });
+  return [
+    {
+      role: "system",
+      content: [
+        `You are the family's personal assistant and you tell the evening briefing, a calm look at tomorrow before bed, in ${LANGUAGE_NAMES[language]}.`,
+        personName
+          ? `This briefing is for ${personName}: speak to them, about what is theirs and what the whole family does.`
+          : "This briefing is for the whole family: speak to all of them.",
+        "It is shown on screen and also read aloud by a speech synthesiser, so write flowing spoken sentences, never lists, bullets, emojis, symbols or abbreviations that read badly aloud.",
+        "Do not greet: the app says the greeting just before your text.",
+        "Keep it short: about 90 words, in two or three short paragraphs, warm and calm.",
+        `Sound like these examples (not facts, only the tone): ${EVENING_EXAMPLES[language]}`,
+        "In this order, leaving out what has nothing to say:",
+        "1. Tomorrow's weather, only when given, as a practical tip for the morning (a coat, an umbrella).",
+        "2. Tomorrow: what is on, with its time; for the first thing that needs leaving home, say its time and place and remind them to leave in good time. Never make up how long the trip takes.",
+        "3. What to get ready tonight: the tasks and lists for tomorrow or that prepare for tomorrow's items, with their progress, and anything still left to do today.",
+        "4. Only if something HIGH importance is coming in the next days, one sentence about it.",
+        "5. Close with one short, gentle good-night sentence.",
+        "Say dates relative to today (tomorrow, on Friday). Use only facts given here and never invent events.",
+        'Answer as JSON {"segments":[{"text":"...","item":n}]}: split the sentences into pieces so that each piece names at most one item, give that item\'s number in "item", and null for pieces that name none. Joined in order, the pieces must read as the whole text. A new paragraph starts with a piece whose text begins with "\\n\\n".',
+      ].join(" "),
+    },
+    {
+      role: "user",
+      content: [
+        `Today is ${day(today)}; this briefing is about tomorrow, ${day(addDays(today, 1))}.`,
+        describeWeather(extras.weather, today, "evening"),
+        candidates.length > 0
+          ? candidates.map((c, i) => describe(c, i, language, "evening")).join("\n")
+          : "Nothing is planned.",
+      ]
+        .filter(Boolean)
+        .join("\n\n"),
+    },
+  ];
+}
+
 /** Checks the model's answer; anything off makes it null. */
 export function parseBriefing(response: unknown, candidates: Candidate[]): Segment[] | null {
   let value = response;
@@ -303,11 +388,12 @@ export async function writeBriefing(
   language: Language,
   extras: BriefingExtras,
   personName?: string,
+  edition: Edition = "morning",
 ): Promise<Segment[] | null> {
   if (candidates.length === 0 && !extras.weather && !extras.clockChange) return null;
   try {
     const result = await model.run(env, {
-      messages: briefingPrompt(candidates, today, language, personName, extras),
+      messages: briefingPrompt(candidates, today, language, personName, extras, edition),
       response_format: { type: "json_schema", json_schema: BRIEFING_SCHEMA },
       // Several paragraphs as JSON pieces run well past the default 256 tokens.
       max_tokens: BRIEFING_TOKENS,

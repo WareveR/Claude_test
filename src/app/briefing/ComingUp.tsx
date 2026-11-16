@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Play, RefreshCw, Square } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { briefingSentences, type Segment } from "../../core/briefing";
+import { briefingSentences, type Edition, type Segment } from "../../core/briefing";
 import { addDays, todayIn } from "../../core/plain-date";
 import { isOverdue } from "../../core/task";
 import { api } from "../api";
@@ -15,7 +15,13 @@ import { useMoveTask, type Task } from "../tasks/model";
 import { BUTTON } from "../ui/button";
 import { canSpeak, speak, stopSpeaking } from "../voice/speech";
 
-type Briefing = { segments: Segment[]; fallback: boolean; writtenAt: string } | null;
+type Briefing = {
+  segments: Segment[];
+  fallback: boolean;
+  writtenAt: string;
+  /** The evening one, from 19:00, is about tomorrow. */
+  edition?: Edition;
+} | null;
 
 type Open = { id: string; date: string } | null;
 
@@ -159,6 +165,9 @@ export function ComingUp({ readOnly = false }: { readOnly?: boolean }) {
       <div className="flex flex-wrap items-center gap-2">
         <h2 id="coming-up-title" className="flex-1 text-xl font-bold">
           {t("comingUp.title")}
+          {data?.edition === "evening" && (
+            <span className="ml-2 text-sm font-normal text-muted">{t("briefing.forTomorrow")}</span>
+          )}
         </h2>
         {!readOnly && !person && (
           <div role="group" aria-label={t("briefing.whose")} className="flex">

@@ -262,7 +262,9 @@ export async function briefingWeather(db: Db, now: Date): Promise<BriefingWeathe
   if (now.getTime() - Date.parse(cache.fetchedAt) > SHOWN_FOR) return null;
   const today = placeClock(cache.forecast.utcOffset, now).slice(0, 10);
   const days = cache.forecast.daily.filter((d) => d.date >= today).slice(0, 2);
-  const hours = cache.forecast.hourly.filter((h) => h.time.startsWith(today));
+  // Today's and tomorrow's hours: the evening Briefing tells tomorrow's rain.
+  const dates = days.map((d) => d.date);
+  const hours = cache.forecast.hourly.filter((h) => dates.includes(h.time.slice(0, 10)));
   return days.length > 0 ? { place: location.name, days, hours } : null;
 }
 
