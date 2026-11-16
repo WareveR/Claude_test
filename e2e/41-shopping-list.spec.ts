@@ -34,11 +34,18 @@ async function addItem(page: Page, name: string) {
   await expect(box).toHaveValue("");
 }
 
-async function setDetails(page: Page, name: string, details: { quantity?: string; shop?: string }) {
+async function setDetails(
+  page: Page,
+  name: string,
+  details: { quantity?: string; shop?: string; urgent?: boolean },
+) {
   await page.getByRole("button", { name: `Details of ${name}` }).click();
   const editor = page.getByTestId("shopping-editor");
   if (details.quantity !== undefined) await editor.getByLabel("Quantity").fill(details.quantity);
   if (details.shop !== undefined) await editor.getByLabel("Shop").fill(details.shop);
+  if (details.urgent !== undefined) {
+    await editor.getByRole("switch", { name: /Urgent/ }).setChecked(details.urgent);
+  }
   // The list updates at once; wait for the server too, so a reload finds the change.
   const saved = page.waitForResponse(
     (r) => r.url().includes("/api/shopping/items/") && r.request().method() === "PATCH",
@@ -67,7 +74,8 @@ test("the Shopping List adds items into sections, filters by shop and ticks what
   await setDetails(page, `Leite ${MARK}`, { quantity: "2", shop: `Lidl ${MARK}` });
   await expect(itemRow(page, `Leite ${MARK}`)).toContainText("· 2");
   await expect(itemRow(page, `Leite ${MARK}`)).toContainText(`Lidl ${MARK}`);
-  await setDetails(page, `Pão ${MARK}`, { shop: `Aldi ${MARK}` });
+  await setDetails(page, `Pão ${MARK}`, { shop: `Aldi ${MARK}`, urgent: true });
+  await expect(itemRow(page, `Pão ${MARK}`)).toContainText("Urgent");
 
   // Each item sits under its section, worked out from its name.
   await expect(page.getByRole("region", { name: "Fruit and veg" })).toContainText(

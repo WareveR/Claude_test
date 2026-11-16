@@ -140,7 +140,7 @@ describe("Briefing", () => {
     expect(prompt.max_tokens).toBeGreaterThan(256);
   });
 
-  it("is a short radio show: the weather in a few facts, no shopping list", async () => {
+  it("is a short radio show: the weather in a few facts, only urgent shopping", async () => {
     const { browser } = await familyWithPlans();
     const db = getDb(env.DB);
     const now = new Date().toISOString();
@@ -174,12 +174,13 @@ describe("Briefing", () => {
       attemptedAt: now,
     });
     await db.insert(schema.shoppingItem).values(
-      ["Milk", "Eggs"].map((name) => ({
+      ["Milk", "Eggs", "Bread", "Nappies"].map((name) => ({
         id: name,
         name,
         createdAt: now,
         changedAt: now,
-        boughtAt: name === "Eggs" ? now : null,
+        urgent: name === "Bread" || name === "Nappies",
+        boughtAt: name === "Eggs" || name === "Nappies" ? now : null,
       })),
     );
     await browser.post("/briefing/refresh");
@@ -191,6 +192,8 @@ describe("Briefing", () => {
       "Weather in Lisboa: today sunny, about 24 degrees; rain likely from 17:00 to 18:00; tomorrow colder, about 19 degrees.",
     );
     expect(user.content).not.toContain("Milk");
+    expect(user.content).toContain('Urgent on the shopping list: "Bread".');
+    expect(user.content).not.toContain("Nappies");
     expect(user.content).not.toContain("km/h");
     expect(system.content).toContain("about 120 words");
     expect(system.content).toContain("agasalho");

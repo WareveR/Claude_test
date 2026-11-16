@@ -19,7 +19,7 @@ import { Field, TextInput } from "../screens/form";
 import { useNow } from "../shell/useNow";
 import { ViewNav } from "../shell/ViewNav";
 import { BUTTON, BUTTON_DANGER, BUTTON_PRIMARY } from "../ui/button";
-import { Tick } from "../ui/Toggle";
+import { Switch, Tick } from "../ui/Toggle";
 import {
   newItemId,
   setStoreFilter,
@@ -422,6 +422,11 @@ function ItemRow({
         />
         <span className="flex min-w-0 flex-1 flex-col">
           <span className={`break-words ${bought ? "text-muted line-through" : ""}`}>
+            {item.urgent && !bought && (
+              <span className="mr-1.5 rounded-full border border-overdue px-1.5 align-middle text-xs font-semibold text-overdue">
+                {t("shopping.urgent")}
+              </span>
+            )}
             {item.name}
             {item.quantity && <span className="text-muted"> · {item.quantity}</span>}
           </span>
@@ -471,9 +476,10 @@ function ItemEditor({
   const [quantity, setQuantity] = useState(item.quantity);
   const [note, setNote] = useState(item.note);
   const [store, setStore] = useState(item.store);
+  const [urgent, setUrgent] = useState(item.urgent);
   function submit(e: FormEvent) {
     e.preventDefault();
-    const fields: ItemChange = { quantity, note, store };
+    const fields: ItemChange = { quantity, note, store, urgent };
     if (name.trim()) fields.name = name;
     change.mutate({ id: item.id, change: fields });
     onDone();
@@ -508,6 +514,10 @@ function ItemEditor({
       <Field label={t("shopping.note")}>
         <TextInput value={note} onChange={(e) => setNote(e.target.value)} />
       </Field>
+      <label className="flex items-center gap-2 text-sm">
+        <Switch checked={urgent} onChange={(e) => setUrgent(e.target.checked)} />
+        {t("shopping.urgentHint")}
+      </label>
       <div className="flex justify-end gap-2">
         <button type="button" className={BUTTON} onClick={onDone}>
           {t("shopping.cancel")}

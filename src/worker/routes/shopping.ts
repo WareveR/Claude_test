@@ -2,7 +2,7 @@ import { desc, eq, gte, isNotNull, isNull, or } from "drizzle-orm";
 import { Hono } from "hono";
 import { rankSuggestions } from "../../core/shopping";
 import { randomId } from "../auth/crypto";
-import { schema } from "../db";
+import { schema, type Db } from "../db";
 import { MAX_NOTES_LENGTH, MAX_TITLE_LENGTH } from "../limits";
 import { requireDevice } from "../require-device";
 import type { AppEnv } from "../types";
@@ -30,6 +30,18 @@ function parseFields(body: Record<string, unknown>, needName: boolean) {
   return { values };
 }
 
+/** An urgent item added, changed, bought or removed: the Briefing may need rewriting. */
+async function markBriefings(db: Db) {
+  await db.insert(schema.briefingPending).values({ id: 1 }).onConflictDoNothing();
+}
+
+/** `urgent`, when present, must be true or false. */
+function parseUrgent(body: Record<string, unknown>) {
+  if (body.urgent === undefined) return { values: {} };
+  if (typeof body.urgent !== "boolean") return { field: "urgent" };
+  return { values: { urgent: body.urgent } };
+}
+
 function present(row: typeof schema.shoppingItem.$inferSelect) {
   return {
     id: row.id,
@@ -37,6 +49,7 @@ function present(row: typeof schema.shoppingItem.$inferSelect) {
     quantity: row.quantity,
     note: row.note,
     store: row.store,
+    urgent: row.urgent,
     boughtAt: row.boughtAt,
     createdAt: row.createdAt,
     changedAt: row.changedAt,
@@ -88,6 +101,8 @@ shoppingRoutes.post("/shopping/items", async (c) => {
   const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
   const parsed = parseFields(body, true);
   if (!parsed.values) return c.json({ error: "invalid", field: parsed.field }, 400);
+  const urgent = parseUrgent(body);
+  if (!urgent.values) return c.json({ error: "invalid", field: urgent.field }, 400);
   const id = body.id ?? randomId();
   if (typeof id !== "string" || !ID.test(id)) return c.json({ error: "invalid", field: "id" }, 400);
   const [taken] = await db
@@ -98,8 +113,16 @@ shoppingRoutes.post("/shopping/items", async (c) => {
   const now = c.get("now").toISOString();
   const [row] = await db
     .insert(schema.shoppingItem)
-    .values({ ...parsed.values, name: parsed.values.name!, id, createdAt: now, changedAt: now })
+    .values({
+      ...parsed.values,
+      ...urgent.values,
+      name: parsed.values.name!,
+      id,
+      createdAt: now,
+      changedAt: now,
+    })
     .returning();
+  if (row.urgent) await markBriefings(db);
   return c.json(present(row), 201);
 });
 
@@ -116,6 +139,8 @@ shoppingRoutes.patch("/shopping/items/:id", async (c) => {
   if (body.bought !== undefined && typeof body.bought !== "boolean") {
     return c.json({ error: "invalid", field: "bought" }, 400);
   }
+  const urgent = parseUrgent(body);
+  if (!urgent.values) return c.json({ error: "invalid", field: urgent.field }, 400);
   const [existing] = await db
     .select()
     .from(schema.shoppingItem)
@@ -126,9 +151,10 @@ shoppingRoutes.patch("/shopping/items/:id", async (c) => {
     body.bought === undefined ? existing.boughtAt : body.bought ? (existing.boughtAt ?? now) : null;
   const [row] = await db
     .update(schema.shoppingItem)
-    .set({ ...parsed.values, boughtAt, changedAt: now })
+    .set({ ...parsed.values, ...urgent.values, boughtAt, changedAt: now })
     .where(eq(schema.shoppingItem.id, id))
     .returning();
+  if (existing.urgent || row.urgent) await markBriefings(db);
   return c.json(present(row));
 });
 
@@ -138,7 +164,8 @@ shoppingRoutes.delete("/shopping/items/:id", async (c) => {
     .get("db")
     .delete(schema.shoppingItem)
     .where(eq(schema.shoppingItem.id, c.req.param("id")))
-    .returning({ id: schema.shoppingItem.id });
+    .returning({ id: schema.shoppingItem.id, urgent: schema.shoppingItem.urgent });
   if (deleted.length === 0) return c.json({ error: "not_found" }, 404);
+  if (deleted[0].urgent) await markBriefings(c.get("db"));
   return c.body(null, 204);
 });

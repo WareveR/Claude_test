@@ -1448,7 +1448,9 @@
     "addFromText": "Add to the shopping list: {{names}}",
     "alreadyOnList": "Already on the shopping list: {{names}}",
     "added": "Added to the shopping list: {{names}}",
-    "open": "Open shopping list"
+    "open": "Open shopping list",
+    "urgent": "Urgent",
+    "urgentHint": "Urgent: the Briefing mentions it"
   },
   "recipes": {
     "title": "Recipe book",

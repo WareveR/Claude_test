@@ -20,6 +20,7 @@ function item(name: string, more: Partial<ShoppingItem> = {}): ShoppingItem {
     name,
     quantity: "",
     note: "",
+    urgent: false,
     store: "",
     boughtAt: null,
     createdAt: "2026-10-01T10:00:00.000Z",

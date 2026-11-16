@@ -35,7 +35,9 @@ function useRefresh() {
   };
 }
 
-export type NewItem = Pick<ShoppingItem, "name" | "quantity" | "note" | "store">;
+export type NewItem = Pick<ShoppingItem, "name" | "quantity" | "note" | "store"> & {
+  urgent?: boolean;
+};
 
 /**
  * Adds an item; it shows at once under an id the device picks, so it can be ticked or changed
@@ -52,7 +54,7 @@ export function useAddItem() {
       const now = new Date().toISOString();
       queryClient.setQueryData<ShoppingItem[]>(ITEMS, (items) => [
         ...(items ?? []),
-        { ...item, boughtAt: null, createdAt: now, changedAt: now },
+        { urgent: false, ...item, boughtAt: null, createdAt: now, changedAt: now },
       ]);
     },
     onSettled: refresh,
