@@ -1,4 +1,11 @@
-import { addDays, daysInMonth, isPlainDate, weekday, type PlainDate } from "./plain-date";
+import {
+  addDays,
+  daysBetween,
+  daysInMonth,
+  isPlainDate,
+  weekday,
+  type PlainDate,
+} from "./plain-date";
 
 /** How an Entry (or Task, or Checklist) repeats: plain fields, never RRULE text (#37). */
 export type Repetition = {
@@ -67,16 +74,21 @@ export function occurrenceDates(
     produced++;
     if (date >= from) out.push(date);
   };
+  // Without a count, the dates before `from` change nothing, so each loop starts at the last
+  // step on or before the window instead of at a series start that may be years back.
+  const skip = (steps: number) => (limit === Infinity ? Math.max(0, Math.floor(steps)) : 0);
 
   if (frequency === "daily") {
-    for (let date = start; date <= until && produced < limit; date = addDays(date, interval)) {
+    const first = addDays(start, skip(daysBetween(start, from) / interval) * interval);
+    for (let date = first; date <= until && produced < limit; date = addDays(date, interval)) {
       emit(date);
     }
   } else if (frequency === "weekly") {
     const days = [...new Set(repetition.weekdays ?? [weekday(start)])].sort();
     const firstMonday = addDays(start, -weekday(start));
+    const weeks = skip(daysBetween(firstMonday, from) / (7 * interval)) * 7 * interval;
     for (
-      let monday = firstMonday;
+      let monday = addDays(firstMonday, weeks);
       monday <= until && produced < limit;
       monday = addDays(monday, 7 * interval)
     ) {
@@ -88,7 +100,9 @@ export function occurrenceDates(
     }
   } else {
     const step = frequency === "monthly" ? interval : 12 * interval;
-    for (let k = 0; produced < limit; k++) {
+    const [series, view] = [parts(start), parts(from)];
+    const months = (view.y - series.y) * 12 + view.m - series.m;
+    for (let k = skip(months / step); produced < limit; k++) {
       const date = nthMonthly(start, k * step);
       if (date > until) break;
       emit(date);
