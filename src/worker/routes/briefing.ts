@@ -19,7 +19,7 @@ import { addDays, type PlainDate } from "../../core/plain-date";
 import { familyNow } from "../../core/task";
 import { writeBriefing } from "../ai";
 import type { Db } from "../db";
-import { schema } from "../db";
+import { personsBy, schema } from "../db";
 import { requireDevice } from "../require-device";
 import type { AppEnv } from "../types";
 import { allEntries } from "./entries";
@@ -52,6 +52,7 @@ async function readCalendar(db: Db, now: Date) {
     import("date-holidays").then((m) => m.default),
     briefingWeather(db, now),
   ]);
+  const personsOfTask = personsBy(taskLinks, (l) => l.taskId);
   const input = {
     today,
     entries: entries.map((e) => ({
@@ -64,7 +65,7 @@ async function readCalendar(db: Db, now: Date) {
     })),
     tasks: tasks.map((t) => ({
       ...t,
-      personIds: taskLinks.filter((l) => l.taskId === t.id).map((l) => l.personId),
+      personIds: personsOfTask.get(t.id) ?? [],
     })),
     checklists,
     personNames: new Map(persons.map((p) => [p.id, p.name])),
@@ -204,7 +205,10 @@ export async function briefingJob(db: Db, env: Env, now: Date) {
   }
 }
 
-/** After an Entry or Task changes, the next Scheduler run checks whether the Briefings are stale. */
+/**
+ * After an Entry or Task changes, the next 15-minute Scheduler run checks whether the Briefings
+ * are stale.
+ */
 export const markBriefingsStale = createMiddleware<AppEnv>(async (c, next) => {
   await next();
   if (c.req.method === "GET" || c.res.status >= 400) return;

@@ -5,8 +5,8 @@ import { getDb, schema } from "./db";
 import worker from "./index";
 import { setUpFamily } from "./test/client";
 
-function runScheduler(at: string) {
-  const controller = { scheduledTime: new Date(at).getTime(), cron: "*/5 * * * *" };
+function runScheduler(at: string, cron = "*/15 * * * *") {
+  const controller = { scheduledTime: new Date(at).getTime(), cron };
   return worker.scheduled(controller as ScheduledController, env);
 }
 
@@ -36,6 +36,14 @@ describe("nightly Backup", () => {
     await env.BACKUPS.delete("nightly/2026-10-02.json");
     await runScheduler("2026-10-02T02:10:00Z");
     expect(await keys("nightly/")).toEqual([]);
+  });
+
+  it("leaves the Backup to the quarter-hour trigger; the 5-minute one only sends Reminders", async () => {
+    await setUpFamily();
+    await runScheduler("2026-10-02T02:05:00Z", "*/5 * * * *");
+    expect(await keys("nightly/")).toEqual([]);
+    await runScheduler("2026-10-02T02:15:00Z");
+    expect(await keys("nightly/")).toEqual(["nightly/2026-10-02.json"]);
   });
 
   it("keeps 30 nightly copies and the first of each month for 12 months", async () => {

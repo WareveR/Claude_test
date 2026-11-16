@@ -8,7 +8,7 @@ import { familyNow, nextRepeat } from "../../core/task";
 import { wouldNestInItself } from "../../core/task-tree";
 import { randomId } from "../auth/crypto";
 import type { Db } from "../db";
-import { inParts, schema } from "../db";
+import { inParts, personsBy, schema } from "../db";
 import { announceLater } from "../announce";
 import type { Account } from "../auth/account";
 import { seesInFull } from "../private";
@@ -121,8 +121,9 @@ async function present(db: Db, rows: TaskRow[], viewer: Account) {
     rows.map((r) => r.id),
     (ids) => db.select().from(schema.taskPerson).where(inArray(schema.taskPerson.taskId, ids)),
   );
+  const personsOf = personsBy(links, (l) => l.taskId);
   return rows.map((row) => {
-    const personIds = links.filter((l) => l.taskId === row.id).map((l) => l.personId);
+    const personIds = personsOf.get(row.id) ?? [];
     const hidden = !seesInFull(viewer, row, personIds);
     return {
       id: row.id,

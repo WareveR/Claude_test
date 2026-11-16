@@ -1,4 +1,17 @@
-import { and, eq, gte, inArray, isNotNull, isNull, like, lte, ne, or, sql } from "drizzle-orm";
+import {
+  and,
+  eq,
+  gte,
+  inArray,
+  isNotNull,
+  isNull,
+  like,
+  lte,
+  ne,
+  or,
+  sql,
+  type SQL,
+} from "drizzle-orm";
 import { Hono } from "hono";
 import { entryTimeProblem, isClockTime, type EntryTime } from "../../core/entry-time";
 import { ICONS, IMPORTANCES, type Importance } from "../../core/entry-type";
@@ -6,7 +19,7 @@ import { addDays, isPlainDate } from "../../core/plain-date";
 import { isRepetition, occurrenceDates, type Repetition } from "../../core/repetition";
 import { randomId } from "../auth/crypto";
 import type { Db } from "../db";
-import { inParts, schema } from "../db";
+import { inParts, personsBy, schema } from "../db";
 import { dropUntouchedPreparation, prepareEntry } from "../preparation";
 import { announceLater } from "../announce";
 import type { Account } from "../auth/account";
@@ -230,19 +243,25 @@ async function withPersons(db: Db, rows: EntryRow[], viewer: Account) {
   );
 }
 
-/** Every Entry with its Persons and exceptions, for the Calendar Feed. */
-export async function allEntries(db: Db) {
+/**
+ * Every Entry with its Persons and exceptions, for the Calendar Feed; `only` narrows it to the
+ * Entries matching a condition, and reads only their Persons and exceptions.
+ */
+export async function allEntries(db: Db, only?: SQL) {
+  const ids = only && db.select({ id: schema.entry.id }).from(schema.entry).where(only);
   const [rows, links, exceptions] = await Promise.all([
-    db.select().from(schema.entry),
-    db.select().from(schema.entryPerson),
-    db.select().from(schema.occurrenceException),
+    db.select().from(schema.entry).where(only),
+    db
+      .select()
+      .from(schema.entryPerson)
+      .where(ids && inArray(schema.entryPerson.entryId, ids)),
+    db
+      .select()
+      .from(schema.occurrenceException)
+      .where(ids && inArray(schema.occurrenceException.entryId, ids)),
   ]);
-  const personsOf = new Map<string, string[]>();
-  for (const l of links)
-    personsOf.set(l.entryId, [...(personsOf.get(l.entryId) ?? []), l.personId]);
-  const exceptionsOf = new Map<string, ExceptionRow[]>();
-  for (const e of exceptions)
-    exceptionsOf.set(e.entryId, [...(exceptionsOf.get(e.entryId) ?? []), e]);
+  const personsOf = personsBy(links, (l) => l.entryId);
+  const exceptionsOf = groupBy(exceptions, (e) => e.entryId);
   return rows.map((row) =>
     present(row, personsOf.get(row.id) ?? [], exceptionsOf.get(row.id) ?? []),
   );
