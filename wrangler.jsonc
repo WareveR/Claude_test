@@ -35,6 +35,7 @@
     "OPEN_METEO_FORECAST_URL": "https://api.open-meteo.com",
     "OPEN_METEO_GEOCODING_URL": "https://geocoding-api.open-meteo.com",
   },
-  "triggers": { "crons": ["*/5 * * * *"] },
+  // Reminders every 5 minutes, the other Scheduler jobs every 15 (src/worker/index.ts).
+  "triggers": { "crons": ["*/5 * * * *", "*/15 * * * *"] },
   "observability": { "enabled": true },
 }

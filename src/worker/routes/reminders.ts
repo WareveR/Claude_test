@@ -1,4 +1,4 @@
-import { and, eq, isNotNull, lt } from "drizzle-orm";
+import { and, between, eq, inArray, isNotNull, isNull, lt, or, sql } from "drizzle-orm";
 import { clockTime } from "../../core/entry-time";
 import { isLanguage } from "../../core/languages";
 import {
@@ -12,7 +12,7 @@ import {
 } from "../../core/reminders";
 import { familyNow } from "../../core/task";
 import type { Db } from "../db";
-import { schema } from "../db";
+import { personsBy, schema } from "../db";
 import { pusher, vapidKeys } from "../push";
 import { allEntries } from "./entries";
 
@@ -35,16 +35,33 @@ function linkOf(reminder: DueReminder) {
 }
 
 async function dueBetween(db: Db, from: string, to: string) {
+  // Only what can remind in the window is read: this runs every 5 minutes, and parsing every
+  // Entry and Task each time costs more CPU than the free plan gives one run.
+  const [fromDate, toDate] = [from.slice(0, 10), to.slice(0, 10)];
+  const { task, taskPerson, checklist } = schema;
+  const startingChecklists = and(
+    eq(checklist.remindAtStart, true),
+    between(checklist.startDate, fromDate, toDate),
+  );
+  const wanted = or(
+    and(isNull(task.checklistId), isNull(task.doneAt), between(task.dueDate, fromDate, toDate)),
+    inArray(
+      task.checklistId,
+      db.select({ id: checklist.id }).from(checklist).where(startingChecklists),
+    ),
+  );
   const [entries, tasks, links, checklists] = await Promise.all([
-    allEntries(db),
-    db.select().from(schema.task),
-    db.select().from(schema.taskPerson),
-    db.select().from(schema.checklist),
+    allEntries(db, sql`json_array_length(${schema.entry.reminders}) > 0`),
+    db.select().from(task).where(wanted),
+    db
+      .select({ taskId: taskPerson.taskId, personId: taskPerson.personId })
+      .from(taskPerson)
+      .innerJoin(task, eq(task.id, taskPerson.taskId))
+      .where(wanted),
+    db.select().from(checklist).where(startingChecklists),
   ]);
-  const withPersons = tasks.map((t) => ({
-    ...t,
-    personIds: links.filter((l) => l.taskId === t.id).map((l) => l.personId),
-  }));
+  const personsOf = personsBy(links, (l) => l.taskId);
+  const withPersons = tasks.map((t) => ({ ...t, personIds: personsOf.get(t.id) ?? [] }));
   return [
     ...entryReminders(entries, from, to),
     ...taskReminders(withPersons, from, to),
@@ -53,7 +70,7 @@ async function dueBetween(db: Db, from: string, to: string) {
 }
 
 /**
- * Scheduler, every run: sends the Entry, Task and Checklist Reminders due since the last run to the devices with Reminders
+ * Scheduler, every 5 minutes: sends the Entry, Task and Checklist Reminders due since the last run to the devices with Reminders
  * on whose Persons match (Family-wide items go to every such device), each only once. Expired
  * push subscriptions are removed.
  */

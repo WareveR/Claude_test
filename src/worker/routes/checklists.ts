@@ -14,7 +14,7 @@ import { isRepetition, type Repetition } from "../../core/repetition";
 import { familyNow } from "../../core/task";
 import { randomId } from "../auth/crypto";
 import type { Db } from "../db";
-import { inParts, schema } from "../db";
+import { inParts, personsBy, schema } from "../db";
 import { requireDevice } from "../require-device";
 import { settleChecklist } from "../task-tree";
 import type { AppEnv } from "../types";
@@ -98,6 +98,7 @@ async function present(db: Db, rows: ChecklistRow[]) {
         .where(inArray(schema.checklistRound.checklistId, part)),
     )
   ).sort((a, b) => b.closedAt.localeCompare(a.closedAt));
+  const personsOf = personsBy(links, (l) => l.checklistId);
   return rows.map((row) => ({
     id: row.id,
     name: row.name,
@@ -106,7 +107,7 @@ async function present(db: Db, rows: ChecklistRow[]) {
     repetition: row.repetition ?? null,
     remindAtStart: row.remindAtStart,
     entryId: row.entryId,
-    personIds: links.filter((l) => l.checklistId === row.id).map((l) => l.personId),
+    personIds: personsOf.get(row.id) ?? [],
     rounds: rounds
       .filter((r) => r.checklistId === row.id)
       .map((r) => ({ label: r.label, done: r.done, total: r.total })),

@@ -18,3 +18,17 @@ export async function inParts<T>(
   for (let i = 0; i < ids.length; i += size) out.push(...(await read(ids.slice(i, i + size))));
   return out;
 }
+
+/** The Person ids of link rows, by the row they link: one pass, instead of a scan per row. */
+export function personsBy<L extends { personId: string }>(
+  links: L[],
+  owner: (link: L) => string,
+): Map<string, string[]> {
+  const out = new Map<string, string[]>();
+  for (const link of links) {
+    const persons = out.get(owner(link));
+    if (persons) persons.push(link.personId);
+    else out.set(owner(link), [link.personId]);
+  }
+  return out;
+}

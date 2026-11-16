@@ -42,7 +42,7 @@ import {
 import { forStore } from "../../core/shopping";
 import { readVoice, transcribe } from "../ai";
 import { randomId } from "../auth/crypto";
-import { schema, type Db } from "../db";
+import { personsBy, schema, type Db } from "../db";
 import { requireDevice } from "../require-device";
 import type { AppEnv } from "../types";
 import { allEntries } from "./entries";
@@ -125,9 +125,10 @@ async function allTasks(db: Db) {
     db.select().from(schema.task),
     db.select().from(schema.taskPerson),
   ]);
+  const personsOf = personsBy(links, (l) => l.taskId);
   return tasks.map((t) => ({
     ...t,
-    personIds: links.filter((l) => l.taskId === t.id).map((l) => l.personId),
+    personIds: personsOf.get(t.id) ?? [],
   }));
 }
 

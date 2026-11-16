@@ -123,7 +123,7 @@ describe("attachments", () => {
     const later = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
     later.setUTCHours(4, 5, 0, 0);
     await worker.scheduled(
-      { scheduledTime: later.getTime(), cron: "*/5 * * * *" } as ScheduledController,
+      { scheduledTime: later.getTime(), cron: "*/15 * * * *" } as ScheduledController,
       env,
     );
     expect(await env.IMAGES.get(object.key)).toBeNull();

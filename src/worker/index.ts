@@ -7,24 +7,33 @@ import { weatherJob } from "./routes/weather";
 import { briefingJob } from "./routes/briefing";
 import { reminderJob } from "./routes/reminders";
 
-/** Scheduler jobs, in order; a failing job goes to the Error Log and the others still run. */
-const JOBS: Record<string, (db: Db, env: Env, now: Date) => Promise<void>> = {
-  reminders: reminderJob,
-  "checklist-rounds": (db, _env, now) => startDueRounds(db, now),
-  weather: weatherJob,
-  briefing: briefingJob,
-  backup: backupJob,
-  "image-cleanup": imageCleanupJob,
-  "error-summary": errorSummaryJob,
+type Job = (db: Db, env: Env, now: Date) => Promise<void>;
+
+/**
+ * Scheduler jobs by Cron Trigger, in order; a failing job goes to the Error Log and the others
+ * still run. Only Reminders need every 5 minutes: the rest decide by the clock and are happy
+ * with a quarter-hour, which keeps the frequent run within the free plan's CPU time.
+ */
+const SCHEDULES: Record<string, Record<string, Job>> = {
+  "*/5 * * * *": { reminders: reminderJob },
+  "*/15 * * * *": {
+    "checklist-rounds": (db, _env, now) => startDueRounds(db, now),
+    weather: weatherJob,
+    briefing: briefingJob,
+    backup: backupJob,
+    "image-cleanup": imageCleanupJob,
+    "error-summary": errorSummaryJob,
+  },
 };
 
 export default {
   fetch: app.fetch,
-  /** One Cron Trigger every 5 minutes; each job decides by the clock whether it's due. */
+  /** Runs the jobs of the Cron Trigger that fired; an unknown one (a manual run) runs them all. */
   async scheduled(controller, env) {
     const db = getDb(env.DB);
     const now = new Date(controller.scheduledTime);
-    for (const [name, job] of Object.entries(JOBS)) {
+    const jobs = SCHEDULES[controller.cron] ?? Object.assign({}, ...Object.values(SCHEDULES));
+    for (const [name, job] of Object.entries<Job>(jobs)) {
       try {
         await job(db, env, now);
       } catch (error) {

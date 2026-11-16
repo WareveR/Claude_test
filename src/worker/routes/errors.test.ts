@@ -29,7 +29,7 @@ const anError = (code: string, at = new Date().toISOString()) => ({
 });
 
 function runScheduler(at: string) {
-  const controller = { scheduledTime: new Date(at).getTime(), cron: "*/5 * * * *" };
+  const controller = { scheduledTime: new Date(at).getTime(), cron: "*/15 * * * *" };
   return worker.scheduled(controller as ScheduledController, env);
 }
 

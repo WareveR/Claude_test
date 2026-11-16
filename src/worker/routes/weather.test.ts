@@ -95,7 +95,7 @@ type Weather = {
 } | null;
 
 function runScheduler(at: Date) {
-  const controller = { scheduledTime: at.getTime(), cron: "*/5 * * * *" };
+  const controller = { scheduledTime: at.getTime(), cron: "*/15 * * * *" };
   return worker.scheduled(controller as ScheduledController, env);
 }
 

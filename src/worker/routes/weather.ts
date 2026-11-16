@@ -22,7 +22,7 @@ import type { AppEnv } from "../types";
 const HOUR = 60 * 60 * 1000;
 /** A forecast older than this is no longer shown: stale weather must not mislead. */
 const SHOWN_FOR = 24 * HOUR;
-/** The Scheduler runs every 5 minutes; this keeps fetching to once an hour. */
+/** The weather job runs every 15 minutes; this keeps fetching to once an hour. */
 const REFRESH_EVERY = 55 * 60 * 1000;
 const TIMEOUT = 10_000;
 

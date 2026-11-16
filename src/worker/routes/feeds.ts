@@ -4,7 +4,7 @@ import { calendar, type FeedEntry } from "../../core/ics";
 import { matchesFilter } from "../../core/person-filter";
 import { randomId, randomToken, sha256 } from "../auth/crypto";
 import type { Db } from "../db";
-import { schema } from "../db";
+import { personsBy, schema } from "../db";
 import { requireDevice } from "../require-device";
 import type { AppEnv } from "../types";
 import { allEntries } from "./entries";
@@ -22,11 +22,12 @@ async function listFeeds(db: Db) {
     db.select().from(schema.calendarFeed).orderBy(schema.calendarFeed.createdAt),
     db.select().from(schema.calendarFeedPerson),
   ]);
+  const personsOf = personsBy(links, (l) => l.feedId);
   return feeds.map((feed) => ({
     id: feed.id,
     name: feed.name,
     familyWide: feed.familyWide,
-    personIds: links.filter((l) => l.feedId === feed.id).map((l) => l.personId),
+    personIds: personsOf.get(feed.id) ?? [],
     createdAt: feed.createdAt,
     replacedAt: feed.replacedAt,
   }));

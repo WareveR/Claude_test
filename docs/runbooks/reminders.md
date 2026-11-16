@@ -31,6 +31,7 @@ open Settings › Reminders and allow notifications again.
 
 ## How sending works
 
-The Scheduler runs every 5 minutes. It sends the Reminders due since its last run (at most an
+The Scheduler's 5-minute Cron Trigger runs only this job; its other jobs run on a second,
+15-minute one (see `wrangler.jsonc`). It sends the Reminders due since its last run (at most an
 hour back, so a long outage doesn't flood phones), records each in `reminder_sent` so none goes
 twice, and removes subscriptions the push service reports as gone (404 or 410).
