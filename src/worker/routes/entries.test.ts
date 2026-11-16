@@ -92,6 +92,27 @@ describe("Entries", () => {
     expect((await browser.post("/entries", { ...bad, title: "" })).status).toBe(400);
   });
 
+  it("refuses a title over 200 characters but takes exactly 200", async () => {
+    const { browser, appointment } = await family();
+    const bad = dentist(appointment, []);
+    const tooLong = await browser.post("/entries", { ...bad, title: "a".repeat(201) });
+    expect(tooLong.status).toBe(400);
+    expect(await tooLong.json()).toMatchObject({ error: "invalid", field: "title" });
+    const exact = await browser.post("/entries", { ...bad, title: "a".repeat(200) });
+    expect(exact.status).toBe(201);
+  });
+
+  it("refuses a location over 500 characters and notes over 10 000", async () => {
+    const { browser, appointment } = await family();
+    const bad = dentist(appointment, []);
+    const place = await browser.post("/entries", { ...bad, location: "a".repeat(501) });
+    expect(await place.json()).toMatchObject({ error: "invalid", field: "location" });
+    const notes = await browser.post("/entries", { ...bad, notes: "a".repeat(10_001) });
+    expect(await notes.json()).toMatchObject({ error: "invalid", field: "notes" });
+    const exact = await browser.post("/entries", { ...bad, notes: "a".repeat(10_000) });
+    expect(exact.status).toBe(201);
+  });
+
   it("lists the Entries overlapping a window", async () => {
     const { browser, appointment } = await family();
     await browser.post("/entries", dentist(appointment, []));

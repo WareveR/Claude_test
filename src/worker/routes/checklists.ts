@@ -19,6 +19,7 @@ import { requireDevice } from "../require-device";
 import { settleChecklist } from "../task-tree";
 import type { AppEnv } from "../types";
 import { moveAttachments } from "./attachments";
+import { MAX_TITLE_LENGTH } from "../limits";
 import { personMentionChecks } from "./persons";
 import { mayChangeTask } from "./tasks";
 
@@ -31,7 +32,7 @@ type ChecklistRow = typeof schema.checklist.$inferSelect;
  */
 async function parseChecklist(db: Db, body: Record<string, unknown>, today: string) {
   const name = typeof body.name === "string" ? body.name.trim() : "";
-  if (!name) return { field: "name" };
+  if (!name || name.length > MAX_TITLE_LENGTH) return { field: "name" };
   const date = (v: unknown) => (v === null || v === undefined ? null : v);
   let startDate = date(body.startDate);
   const endDate = date(body.endDate);

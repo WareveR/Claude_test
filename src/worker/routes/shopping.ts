@@ -3,10 +3,10 @@ import { Hono } from "hono";
 import { rankSuggestions } from "../../core/shopping";
 import { randomId } from "../auth/crypto";
 import { schema } from "../db";
+import { MAX_NOTES_LENGTH, MAX_TITLE_LENGTH } from "../limits";
 import { requireDevice } from "../require-device";
 import type { AppEnv } from "../types";
 
-const MAX_TEXT = 200;
 /** Ids a device may pick itself, so its new item shows (and can be ticked) before the answer. */
 const ID = /^[A-Za-z0-9_-]{8,64}$/;
 /** Bought items come back for two days; the browser keeps those of today in the Family Time Zone. */
@@ -22,7 +22,8 @@ function parseFields(body: Record<string, unknown>, needName: boolean) {
   for (const field of ["name", "quantity", "note", "store"] as const) {
     if (body[field] === undefined) continue;
     const value = body[field];
-    if (typeof value !== "string" || value.trim().length > MAX_TEXT) return { field };
+    const max = field === "note" ? MAX_NOTES_LENGTH : MAX_TITLE_LENGTH;
+    if (typeof value !== "string" || value.trim().length > max) return { field };
     values[field] = value.trim();
   }
   if ((needName || values.name !== undefined) && !values.name) return { field: "name" };

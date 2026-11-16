@@ -11,6 +11,7 @@ import type { Db } from "../db";
 import { inParts, personsBy, schema } from "../db";
 import { announceLater } from "../announce";
 import type { Account } from "../auth/account";
+import { MAX_NOTES_LENGTH, MAX_TITLE_LENGTH } from "../limits";
 import { seesInFull } from "../private";
 import { requireDevice } from "../require-device";
 import { settleChecklist } from "../task-tree";
@@ -37,7 +38,9 @@ export type TaskInput = {
 /** Validates a whole Task; returns the bad field's name or the clean values. */
 async function parseTask(db: Db, body: Record<string, unknown>) {
   const title = typeof body.title === "string" ? body.title.trim() : "";
-  if (!title) return { field: "title" };
+  if (!title || title.length > MAX_TITLE_LENGTH) return { field: "title" };
+  const notes = typeof body.notes === "string" ? body.notes.trim() : "";
+  if (notes.length > MAX_NOTES_LENGTH) return { field: "notes" };
   const dueDate = body.dueDate ?? null;
   if (dueDate !== null && (typeof dueDate !== "string" || !isPlainDate(dueDate))) {
     return { field: "dueDate" };
@@ -95,7 +98,7 @@ async function parseTask(db: Db, body: Record<string, unknown>) {
   return {
     values: {
       title,
-      notes: typeof body.notes === "string" ? body.notes.trim() : "",
+      notes,
       dueDate: dueDate as string | null,
       dueTime: dueTime as string | null,
       personIds: personIds as string[],

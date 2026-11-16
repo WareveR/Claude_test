@@ -82,6 +82,17 @@ describe("Shopping List", () => {
     );
   });
 
+  it("refuses a name over 200 characters but takes exactly 200, and notes over 10 000", async () => {
+    const browser = await setUpFamily();
+    const tooLong = await browser.post("/shopping/items", { name: "a".repeat(201) });
+    expect(tooLong.status).toBe(400);
+    expect(await tooLong.json()).toMatchObject({ error: "invalid", field: "name" });
+    const exact = await browser.post("/shopping/items", { name: "a".repeat(200) });
+    expect(exact.status).toBe(201);
+    const notes = await browser.post("/shopping/items", { name: "Ovos", note: "a".repeat(10_001) });
+    expect(await notes.json()).toMatchObject({ error: "invalid", field: "note" });
+  });
+
   it("suggests names from the history, most often first, with their latest shop", async () => {
     const browser = await setUpFamily();
     for (const [name, store] of [
