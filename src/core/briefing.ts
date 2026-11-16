@@ -28,6 +28,8 @@ export type Candidate = {
   date: PlainDate;
   time: string | null;
   title: string;
+  /** Where an Entry takes place, so the evening Briefing can say when to leave. */
+  location?: string;
   persons: string[];
   /** Who it is for, to pick a Person's Briefing; never sent to the model. Empty is Family-wide. */
   personIds: string[];
@@ -43,7 +45,33 @@ export type Candidate = {
   prepares?: string;
 };
 
-/** The Family's weather for today and tomorrow, and today's hours, which the Briefing opens with. */
+/**
+ * Which Briefing is current: the morning one from 05:00 is about today and the coming days; the
+ * evening one from 19:00 is about tomorrow, what to get ready tonight and when to leave.
+ */
+export type Edition = "morning" | "evening";
+/** The evening Briefing is written from this hour, Family time. */
+export const EVENING_HOUR = 19;
+
+/** The edition current at this many minutes past midnight, Family time. */
+export function editionAt(minutes: number): Edition {
+  return minutes >= EVENING_HOUR * 60 ? "evening" : "morning";
+}
+
+/**
+ * What the evening Briefing tells: today's Entries are over by then, so only what is still to do
+ * today, anything overdue, and from tomorrow on.
+ */
+export function forEdition(
+  candidates: Candidate[],
+  today: PlainDate,
+  edition: Edition,
+): Candidate[] {
+  if (edition === "morning") return candidates;
+  return candidates.filter((c) => c.date !== today || c.kind === "task" || c.kind === "checklist");
+}
+
+/** The Family's weather for today and tomorrow, and their hours, which the Briefing opens with. */
 export type BriefingWeather = { place: string; days: DayWeather[]; hours: HourWeather[] };
 
 /** What else the Briefing may tell besides the candidates; none of it is Private. */
@@ -64,6 +92,7 @@ export type Segment = {
 type BriefingEntry = {
   id: string;
   title: string;
+  location?: string;
   time: EntryTime;
   importance: Importance;
   private: boolean;
@@ -72,7 +101,12 @@ type BriefingEntry = {
   repetition: Repetition | null;
   birthdayPersonId?: string | null;
   birthYearKnown?: boolean;
-  exceptions: OccurrenceException<{ title?: string; private?: boolean; personIds?: string[] }>[];
+  exceptions: OccurrenceException<{
+    title?: string;
+    location?: string;
+    private?: boolean;
+    personIds?: string[];
+  }>[];
 };
 
 type BriefingTask = {
@@ -143,6 +177,7 @@ export function briefingCandidates(input: BriefingInput, max = MAX_CANDIDATES): 
         date,
         time: o.time.allDay || date !== o.time.startDate ? null : o.time.startTime,
         title: birthdayTitle(fields.title, age),
+        ...(fields.location ? { location: fields.location } : {}),
         persons: names(fields.personIds),
         personIds: fields.personIds,
         importance: entry.importance,

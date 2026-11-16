@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "df592663-734f-45c7-b3ea-8b08a8161a5e",
+  "id": "a23d0d11-040c-407f-932a-f44c8da86506",
   "prevId": "c14155d8-d012-43f9-bd05-3ed8e11bc2d8",
   "tables": {
     "account": {
@@ -271,6 +271,14 @@
           "notNull": true,
           "autoincrement": false,
           "default": "''"
+        },
+        "edition": {
+          "name": "edition",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'morning'"
         }
       },
       "indexes": {},
@@ -1267,96 +1275,6 @@
       },
       "indexes": {},
       "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "meal": {
-      "name": "meal",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "date": {
-          "name": "date",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "slot": {
-          "name": "slot",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "recipe_id": {
-          "name": "recipe_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "text": {
-          "name": "text",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "''"
-        },
-        "servings": {
-          "name": "servings",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "changed_at": {
-          "name": "changed_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "meal_date_slot_idx": {
-          "name": "meal_date_slot_idx",
-          "columns": [
-            "date",
-            "slot"
-          ],
-          "isUnique": true
-        }
-      },
-      "foreignKeys": {
-        "meal_recipe_id_recipe_id_fk": {
-          "name": "meal_recipe_id_recipe_id_fk",
-          "tableFrom": "meal",
-          "tableTo": "recipe",
-          "columnsFrom": [
-            "recipe_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}

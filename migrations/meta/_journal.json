@@ -285,8 +285,15 @@
     {
       "idx": 40,
       "version": "6",
-      "when": 1794843719427,
-      "tag": "0040_meal_plan",
+      "when": 1794860016152,
+      "tag": "0040_evening_briefing",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "6",
+      "when": 1794861001533,
+      "tag": "0041_meal_plan",
       "breakpoints": true
     }
   ]

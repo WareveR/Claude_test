@@ -576,7 +576,8 @@
     "evening": "Good evening!",
     "whose": "Whose briefing",
     "mine": "For me",
-    "family": "Family"
+    "family": "Family",
+    "forTomorrow": "for tomorrow"
   },
   "comingUp": {
     "title": "Coming up",
