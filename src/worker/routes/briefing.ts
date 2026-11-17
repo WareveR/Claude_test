@@ -48,7 +48,7 @@ async function readCalendar(db: Db, now: Date) {
   const [family] = await db.select().from(schema.family).limit(1);
   const { today, minutes } = familyNow(family.timeZone, now);
   const edition = editionAt(minutes);
-  const [entries, tasks, taskLinks, checklists, persons, accounts, Holidays, weather] =
+  const [entries, tasks, taskLinks, checklists, persons, accounts, Holidays, weather, lifts] =
     await Promise.all([
       allEntries(db),
       db.select().from(schema.task),
@@ -71,12 +71,16 @@ async function readCalendar(db: Db, now: Date) {
         .where(isNull(schema.account.removedAt)),
       import("date-holidays").then((m) => m.default),
       briefingWeather(db, now),
+      db.select().from(schema.entryLift),
     ]);
   const personsOfTask = personsBy(taskLinks, (l) => l.taskId);
   const input = {
     today,
     entries: entries.map((e) => ({
       ...e,
+      lift: lifts
+        .filter((l) => l.entryId === e.id)
+        .map((l) => ({ dropOffId: l.dropOffId, pickUpId: l.pickUpId }))[0],
       exceptions: e.exceptions.map((x) => ({
         date: x.date,
         skipped: x.skipped,

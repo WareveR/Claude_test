@@ -39,6 +39,7 @@ export const EXPORTED: Record<string, string[]> = {
   note: [],
   contact: [],
   countdown_mark: [],
+  entry_lift: [],
   points_entry: [],
   points_goal: [],
   medication: [],
@@ -141,6 +142,7 @@ function hidePrivate(tables: Record<string, Row[]>, viewer: Account) {
   tables.medication_dose = tables.medication_dose.filter(
     (d) => !hiddenMeds.has(d.medication_id as string),
   );
+  tables.entry_lift = tables.entry_lift.filter((l) => !hiddenEntries.has(l.entry_id as string));
   // A hidden Entry's or Task's attachments are left out altogether, names included.
   tables.attachment = tables.attachment.filter(
     (a) => !hiddenEntries.has(a.entry_id as string) && !hiddenTasks.has(a.task_id as string),

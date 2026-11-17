@@ -1,3 +1,4 @@
+import { liftClashes, liftMissing, type LiftRole } from "./lifts";
 import { birthdayAge, birthdayTitle } from "./birthday";
 import { checklistProgress, roundEnd } from "./checklist";
 import type { Importance } from "./entry-type";
@@ -46,6 +47,8 @@ export type Candidate = {
   detail?: "overdue" | `${number}/${number}`;
   /** The title of the Entry a Task or Checklist prepares for, when that Entry is coming up. */
   prepares?: string;
+  /** An Entry's Lift: who takes and who picks up (names, "" for nobody yet), and their ids. */
+  lift?: { dropOff: string; pickUp: string; dropOffId: string | null; pickUpId: string | null };
 };
 
 /**
@@ -108,6 +111,8 @@ type BriefingEntry = {
   repetition: Repetition | null;
   birthdayPersonId?: string | null;
   birthYearKnown?: boolean;
+  /** Who takes its Persons and who picks them up, when it needs a Lift. */
+  lift?: { dropOffId: string | null; pickUpId: string | null };
   exceptions: OccurrenceException<{
     title?: string;
     location?: string;
@@ -210,6 +215,15 @@ export function briefingCandidates(input: BriefingInput, max = MAX_CANDIDATES): 
         personIds: fields.personIds,
         importance: entry.importance,
         ...(fields.private ? { private: { createdBy: entry.createdBy ?? null } } : {}),
+        ...(entry.lift
+          ? {
+              lift: {
+                dropOff: entry.lift.dropOffId ? (names([entry.lift.dropOffId])[0] ?? "") : "",
+                pickUp: entry.lift.pickUpId ? (names([entry.lift.pickUpId])[0] ?? "") : "",
+                ...entry.lift,
+              },
+            }
+          : {}),
       });
     }
   }
@@ -433,6 +447,17 @@ export type Logistics = {
    * Account is busy: who takes them?
    */
   unaccompanied: { title: string; persons: string[]; date: PlainDate; time: string }[];
+  /**
+   * An Entry needing a Lift with nobody yet to take or pick up its Persons, or whose taker or
+   * picker has something else on at that moment.
+   */
+  lifts: {
+    title: string;
+    date: PlainDate;
+    time: string;
+    missing: LiftRole[];
+    busy: { role: LiftRole; person: string; title: string }[];
+  }[];
   /** Days with at least FULL_DAY Entries. */
   fullDays: { date: PlainDate; entries: number }[];
   /** The week as a whole is very full. */
@@ -475,10 +500,39 @@ export function logistics(
       }
     }
   }
+  const lifts: Logistics["lifts"] = [];
+  for (const c of timed) {
+    if (!c.lift) continue;
+    const { lift } = c;
+    const others = timed
+      .filter((o) => o.date === c.date)
+      .map((o) => ({
+        id: o.id ?? "",
+        title: o.title,
+        personIds: o.personIds,
+        start: o.time!,
+        end: o.end!,
+      }));
+    const busy = liftClashes(
+      { entryId: c.id ?? "", dropOffId: lift.dropOffId, pickUpId: lift.pickUpId },
+      { start: c.time!, end: c.end! },
+      others,
+    ).map((b) => ({
+      role: b.role,
+      person: b.role === "dropOff" ? lift.dropOff : lift.pickUp,
+      title: b.title,
+    }));
+    const missing = liftMissing(lift);
+    if (missing.length > 0 || busy.length > 0) {
+      lifts.push({ title: c.title, date: c.date, time: c.time!, missing, busy });
+    }
+  }
   const unaccompanied: Logistics["unaccompanied"] = [];
   if (adults.size > 0) {
     for (const c of timed) {
       if (c.personIds.length === 0 || c.personIds.some((id) => adults.has(id))) continue;
+      // A Lift says who takes them: "lifts" speaks of it instead.
+      if (c.lift) continue;
       const busy = [...adults].every((adult) =>
         timed.some((o) => o !== c && o.personIds.includes(adult) && overlaps(o, c)),
       );
@@ -496,6 +550,7 @@ export function logistics(
   return {
     clashes,
     unaccompanied,
+    lifts,
     fullDays,
     fullWeek: fullDays.length >= FULL_WEEK_DAYS || week.length >= FULL_WEEK_ENTRIES,
   };

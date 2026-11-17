@@ -379,6 +379,13 @@
       "when": 1794906417845,
       "tag": "0053_contracts",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "6",
+      "when": 1794906880331,
+      "tag": "0054_lifts",
+      "breakpoints": true
     }
   ]
 }

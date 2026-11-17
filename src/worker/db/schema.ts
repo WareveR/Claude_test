@@ -615,6 +615,19 @@ export const countdownMark = sqliteTable("countdown_mark", {
 });
 
 /**
+ * The Lift of an Entry: who takes its Persons there and who picks them up; none yet when null.
+ * Its row means the Entry needs one, so the calendar says while someone is missing.
+ */
+export const entryLift = sqliteTable("entry_lift", {
+  entryId: text("entry_id")
+    .primaryKey()
+    .references(() => entry.id, { onDelete: "cascade" }),
+  dropOffId: text("drop_off_id").references(() => person.id, { onDelete: "set null" }),
+  pickUpId: text("pick_up_id").references(() => person.id, { onDelete: "set null" }),
+  changedAt: text("changed_at").notNull(),
+});
+
+/**
  * Points a Person earned (a Task with points ticked done) or spent (a reward given: negative).
  * A Person's points are the sum of their lines.
  */
