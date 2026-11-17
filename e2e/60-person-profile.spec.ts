@@ -59,7 +59,7 @@ test("an animal's page keeps its chip and food and puts the food on the shopping
   await page.getByText("Profile", { exact: true }).click();
   await page.getByLabel("Species").fill("Cão");
   await page.getByLabel("Food").fill("Ração x60");
-  await page.getByRole("button", { name: "Save" }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page).toHaveURL(/\/settings\/family$/);
 
   const persons = (await (await page.request.get("/api/persons")).json()) as {
