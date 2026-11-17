@@ -1598,7 +1598,8 @@
       "errors": "Error log",
       "tree": "Family tree",
       "medications": "Medication",
-      "gifts": "Gift ideas"
+      "gifts": "Gift ideas",
+      "contracts": "Bills and contracts"
     },
     "details": {
       "entries": "Every entry, Private ones included. People's birthdays stay as long as the people do.",
@@ -1615,7 +1616,8 @@
       "errors": "Every logged error.",
       "tree": "The tree's people, their links and stories.",
       "medications": "Every medication and the record of doses taken.",
-      "gifts": "Every gift idea, given or not."
+      "gifts": "Every gift idea, given or not.",
+      "contracts": "Every bill and contract; Tasks to pay already made stay."
     },
     "all": "Tick everything: start again as a new family",
     "none": "Untick everything",
@@ -2034,5 +2036,51 @@
     "show_one": "See ideas for {{count}} Person",
     "show_other": "See ideas for {{count}} People",
     "hide": "Hide"
+  },
+  "contracts": {
+    "title": "Bills and contracts",
+    "add": "Add a bill or contract",
+    "hint": "A bill paid by hand makes a repeating Task to pay it; by direct debit it only shows as a notice on the Summary. Renewals are warned of 30 days ahead.",
+    "name": "Name",
+    "nameHint": "Electricity, internet, car insurance",
+    "provider": "Provider",
+    "amount": "Amount (€)",
+    "frequency": "Payment",
+    "frequencies": {
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "none": "No fixed payment"
+    },
+    "payDay": "Pay day",
+    "payMonth": "Month",
+    "payment": "How it is paid",
+    "payments": {
+      "manual": "By hand",
+      "debit": "Direct debit"
+    },
+    "paymentHints": {
+      "manual": "Makes a repeating Task to pay it.",
+      "debit": "Only a notice on the Summary in the week of the debit."
+    },
+    "renewal": "Renews or ends on (optional)",
+    "notes": "Notes",
+    "next": {
+      "manual": "pay on {{date}}",
+      "debit": "debit on {{date}}"
+    },
+    "notices": "Bills",
+    "notice": {
+      "renewal": "{{name}} renews or ends on {{date}}: still time to compare.",
+      "debit": "{{name}} direct debit{{amount}} on {{date}}"
+    },
+    "save": "Save",
+    "delete": "Delete",
+    "bad": {
+      "name": "Write the name.",
+      "amount": "Write the amount in euros, like 45.50.",
+      "payDay": "The day goes from 1 to 31.",
+      "payMonth": "Pick the month.",
+      "renewalDate": "Not a valid date."
+    }
   }
 }

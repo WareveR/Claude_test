@@ -17,6 +17,7 @@ import type { WasteCollection } from "../../core/waste";
 import type { PersonKind, PersonProfile } from "../../core/person-profile";
 import type { Rotation } from "../../core/rotation";
 import type { GiftOccasion } from "../../core/gifts";
+import type { ContractFrequency, ContractPayment } from "../../core/contracts";
 
 /**
  * The one Family of this installation (ADR-0001) and its Family-wide settings.
@@ -689,6 +690,28 @@ export const giftIdea = sqliteTable("gift_idea", {
   occasion: text("occasion").$type<GiftOccasion>().notNull().default("any"),
   givenOn: text("given_on"),
   createdBy: text("created_by").references(() => account.id, { onDelete: "set null" }),
+  createdAt: text("created_at").notNull(),
+  changedAt: text("changed_at").notNull(),
+});
+
+/**
+ * A Contract or bill the Family pays. One paid by hand keeps a repeating Task to pay it, found
+ * by its series; one paid by direct debit only shows as a notice.
+ */
+export const contract = sqliteTable("contract", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  provider: text("provider").notNull().default(""),
+  /** In cents. */
+  amount: integer("amount"),
+  frequency: text("frequency").$type<ContractFrequency>().notNull().default("monthly"),
+  payment: text("payment").$type<ContractPayment>().notNull().default("manual"),
+  payDay: integer("pay_day"),
+  payMonth: integer("pay_month"),
+  renewalDate: text("renewal_date"),
+  notes: text("notes").notNull().default(""),
+  /** The series of the Task that pays it, while it is paid by hand. */
+  taskSeriesId: text("task_series_id"),
   createdAt: text("created_at").notNull(),
   changedAt: text("changed_at").notNull(),
 });

@@ -22,6 +22,7 @@ import { FeedsSection } from "./FeedsSection";
 import { PersonsSection } from "../persons/PersonsSection";
 import { ContactsSection } from "../contacts/ContactsSection";
 import { ChristmasGifts } from "../gifts/Gifts";
+import { ContractsSection } from "../contracts/Contracts";
 import { AccountSection } from "./AccountSection";
 import { MembersSection } from "./MembersSection";
 import { DevicesSection } from "./DevicesSection";
@@ -113,6 +114,7 @@ function AreaContent({ area }: { area: Area }) {
           {admin && <SleepSection />}
           <ContactsSection />
           <ChristmasGifts />
+          <ContractsSection />
           <EntryTypesSection />
           <TemplatesSection />
         </>
