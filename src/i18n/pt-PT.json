@@ -1923,5 +1923,18 @@
     "tomorrow": "amanhã",
     "days_one": "{{count}} dia",
     "days_other": "{{count}} dias"
+  },
+  "freeTime": {
+    "title": "Encontrar hora livre",
+    "who": "Quem",
+    "length": "Quanto tempo",
+    "minutes_one": "{{count}} min",
+    "minutes_other": "{{count}} min",
+    "hours_one": "{{count}} hora",
+    "hours_other": "{{count}} horas",
+    "hint": "Fora das horas de sono. As Entradas Privadas contam como ocupadas; as de dia inteiro não.",
+    "none": "Ninguém fica livre ao mesmo tempo esta semana.",
+    "plan": "Marcar aqui",
+    "close": "Fechar"
   }
 }

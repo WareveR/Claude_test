@@ -102,6 +102,10 @@ _Avoid_: Address book entry, provider
 The days to go to something the Family looks forward to, shown on the Wall above the Notes: the soonest three of the Entries marked "Count the days on the Wall" (from the Entry's details), every Birthday, and Christmas, which need no marking. An Entry under way counts as today. A Private Entry can't be marked and never shows there.
 _Avoid_: Timer, days left
 
+**Free Time**:
+The stretches in which chosen Persons have no timed Entry, nor the whole Family, outside the Sleeping Hours and after now. The week view's "Find free time" button shows them for its week, for the Persons the views are narrowed to (or everyone), at least 30 minutes to 3 hours long, and a stretch opens a new Entry there for those Persons. Asked by voice ("quando é que estamos todos livres?"), the next stretches of an hour in the coming 7 days are said back, for the Persons named or everyone. Private Entries count as busy, only their times used; all-day Entries don't fill the hours.
+_Avoid_: Availability, free slot
+
 **Display Mode**:
 A per-device setting for a screen used as a wall display (typically a tablet): the screen stays awake, text is larger, the view returns to today after a few minutes without touch and rolls over at midnight, editing controls are hidden except ticking a Task done, and Private Entries and Tasks show only as "Private". Display Mode is entered from the "Wall" tab of the view switcher and left with the Wall switch in the header, which asks the password of the Account the device is signed in with, so a child at a wall tablet can't reach everything that Account sees; each device can switch that question off in its own Settings, which the Wall hides. It is not a separate access level.
 _Avoid_: Kiosk, read-only mode, wall mode
