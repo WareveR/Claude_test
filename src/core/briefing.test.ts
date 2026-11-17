@@ -396,6 +396,31 @@ describe("logistics", () => {
     expect(found.fullWeek).toBe(false);
   });
 
+  it("finds a Lift with nobody to pick up, and a taker who is busy", () => {
+    const swimming = {
+      ...at("Swimming", ["kid"], "18:00", "19:00"),
+      lift: { dropOffId: "mum", pickUpId: null },
+    };
+    const candidates = briefingCandidates(
+      input({
+        personNames: names,
+        entries: [at("Meeting", ["mum"], "17:00", "18:30"), swimming],
+      }),
+    );
+    const found = logistics(candidates, TODAY, adults);
+    expect(found.lifts).toEqual([
+      {
+        title: "Swimming",
+        date: "2026-10-05",
+        time: "18:00",
+        missing: ["pickUp"],
+        busy: [{ role: "dropOff", person: "Mãe", title: "Meeting" }],
+      },
+    ]);
+    // With a Lift, "who takes them?" is the Lift's to say.
+    expect(found.unaccompanied).toEqual([]);
+  });
+
   it("finds nothing when the times don't meet, and a full week by its full days", () => {
     const quiet = briefingCandidates(
       input({
@@ -406,6 +431,7 @@ describe("logistics", () => {
     expect(logistics(quiet, TODAY, adults)).toEqual({
       clashes: [],
       unaccompanied: [],
+      lifts: [],
       fullDays: [],
       fullWeek: false,
     });

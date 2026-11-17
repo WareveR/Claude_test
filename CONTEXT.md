@@ -126,6 +126,10 @@ _Avoid_: Wishlist, present
 A bill or service the Family pays (electricity, internet, insurance), with its provider, amount, how often (monthly, yearly or no fixed payment), pay day and renewal date, in Settings › Family. One paid by hand keeps one repeating Task to pay it, retitled with it, moved only when its pay day changes, and removed when it goes to direct debit or is deleted (ticked ones stay). One paid by direct debit has no Task: the Summary shows it the week it goes out. A renewal shows on the Summary from 30 days before.
 _Avoid_: Subscription, expense
 
+**Lift**:
+Who takes ("leva") an Entry's Persons there and who picks them up ("vai buscar"), usually for a child's Entry; set on a timed Entry for all its Occurrences, either still "nobody yet". While someone is missing the Entry carries a car mark on the calendar; its details warn when the taker has something else on at the start, or the picker at the end; and the Briefing names who takes and picks up, who is still needed, and those clashes. An Entry with a Lift is left out of "who takes them?". A hidden Private Entry's Lift is hidden with it.
+_Avoid_: Ride, carpool, transport
+
 **Display Mode**:
 A per-device setting for a screen used as a wall display (typically a tablet): the screen stays awake, text is larger, the view returns to today after a few minutes without touch and rolls over at midnight, editing controls are hidden except ticking a Task done, and Private Entries and Tasks show only as "Private". Display Mode is entered from the "Wall" tab of the view switcher and left with the Wall switch in the header, which asks the password of the Account the device is signed in with, so a child at a wall tablet can't reach everything that Account sees; each device can switch that question off in its own Settings, which the Wall hides. It is not a separate access level.
 _Avoid_: Kiosk, read-only mode, wall mode

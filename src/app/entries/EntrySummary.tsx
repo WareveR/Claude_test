@@ -16,6 +16,7 @@ import { EntryPreparation } from "./EntryPreparation";
 import { EntryContacts } from "../contacts/MatchedContacts";
 import { CountdownSwitch } from "../countdown/Countdowns";
 import { BirthdayGifts } from "../gifts/Gifts";
+import { LiftBox } from "../lifts/Lifts";
 import { Attachments } from "../attachments/Attachments";
 import { occurrenceValues, useEntry } from "./model";
 
@@ -156,6 +157,7 @@ export function EntrySummary({
       )}
       {hidden && shown.hidden && !discreet && personList}
       {!discreet && !shown.hidden && !shown.private && <CountdownSwitch entryId={id} />}
+      {!discreet && !shown.hidden && <LiftBox entryId={id} time={shown.time} />}
       {!discreet && !shown.hidden && entry.data.birthdayPersonId && (
         <BirthdayGifts personId={entry.data.birthdayPersonId} />
       )}

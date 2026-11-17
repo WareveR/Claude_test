@@ -116,6 +116,8 @@ function describe(c: Candidate, i: number, language: Language, edition: Edition 
     c.detail === "overdue" ? `overdue since ${date}` : `${date}${c.time ? ` ${c.time}` : ""}`,
     c.persons.length > 0 ? `for ${c.persons.join(", ")}` : "",
     edition === "evening" && c.location ? `at "${c.location}"` : "",
+    c.lift?.dropOff ? `${c.lift.dropOff} takes them` : "",
+    c.lift?.pickUp ? `${c.lift.pickUp} picks them up` : "",
     c.detail && c.detail !== "overdue" ? `progress ${c.detail}` : "",
     c.prepares ? `prepares for "${c.prepares}"` : "",
     c.importance === "high" ? "HIGH importance" : "",
@@ -243,6 +245,17 @@ function describeLogistics(logistics: Logistics | undefined, locale: string) {
       (u) =>
         `Logistics: "${u.title}" for ${u.persons.join(", ")} on ${day(u.date)} at ${u.time}, while every adult is busy then: who takes them?`,
     ),
+    ...logistics.lifts.flatMap((l) => [
+      ...(l.missing.length > 0
+        ? [
+            `Lift: nobody yet ${l.missing.map((m) => (m === "dropOff" ? "to take them to" : "to pick them up from")).join(" or ")} "${l.title}" on ${day(l.date)} at ${l.time}: who can?`,
+          ]
+        : []),
+      ...l.busy.map(
+        (b) =>
+          `Lift clash: ${b.person} should ${b.role === "dropOff" ? "take them to" : "pick them up from"} "${l.title}" on ${day(l.date)} but has "${b.title}" then.`,
+      ),
+    ]),
     ...logistics.fullDays.map((f) => `Full day: ${day(f.date)} has ${f.entries} entries.`),
     logistics.fullWeek ? "The coming week is very full." : "",
   ];

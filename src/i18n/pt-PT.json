@@ -2082,5 +2082,22 @@
       "payMonth": "Escolhe o mês.",
       "renewalDate": "Data inválida."
     }
+  },
+  "lifts": {
+    "title": "Boleias",
+    "needs": "Precisa de boleia",
+    "dropOff": "Leva",
+    "pickUp": "Vai buscar",
+    "nobody": "Ninguém ainda",
+    "none": "Não precisa de boleia",
+    "missingMark": "Falta quem leve ou vá buscar",
+    "missing": {
+      "dropOff": "Ainda falta quem leve.",
+      "pickUp": "Ainda falta quem vá buscar."
+    },
+    "busy": {
+      "dropOff": "{{name}} tem «{{title}}» à hora de levar.",
+      "pickUp": "{{name}} tem «{{title}}» à hora de ir buscar."
+    }
   }
 }

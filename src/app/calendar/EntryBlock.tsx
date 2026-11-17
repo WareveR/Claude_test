@@ -8,6 +8,9 @@ import { entryPath, type Entry, type Shown } from "../entries/model";
 import type { Person } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
 import { Icon } from "../ui/Icon";
+import { LiftMissingMark } from "../lifts/Lifts";
+import { useLifts } from "../lifts/model";
+import { liftMissing as missingOf } from "../../core/lifts";
 
 /** How Importance shows: High bolder, Low lighter (assembly default). */
 export function importanceClass(entry: Pick<Entry, "importance">) {
@@ -59,10 +62,14 @@ export function EntryBlock({
   const people = entry.personIds
     .map((id) => persons.find((p) => p.id === id))
     .filter((p): p is Person => Boolean(p));
-  const marks = (entry.repetition || entry.private || people.length > 0) && (
+  const lift = useLifts().get(entry.id);
+  // A Lift still missing someone shows, except on the wall for a Private Entry.
+  const liftMissing = !discreet && lift !== undefined && missingOf(lift).length > 0;
+  const marks = (entry.repetition || entry.private || people.length > 0 || liftMissing) && (
     <>
       {entry.repetition && <Repeat aria-hidden size={10} strokeWidth={2} />}
       {entry.private && <Lock aria-hidden size={10} strokeWidth={2} />}
+      {liftMissing && <LiftMissingMark />}
       {people.length > 0 && (
         <span className="flex -space-x-1">
           {people.map((p) => (

@@ -2082,5 +2082,22 @@
       "payMonth": "Pick the month.",
       "renewalDate": "Not a valid date."
     }
+  },
+  "lifts": {
+    "title": "Lifts",
+    "needs": "Needs a lift",
+    "dropOff": "Takes",
+    "pickUp": "Picks up",
+    "nobody": "Nobody yet",
+    "none": "No lift needed",
+    "missingMark": "Someone still needed to take or pick up",
+    "missing": {
+      "dropOff": "Nobody to take them yet.",
+      "pickUp": "Nobody to pick them up yet."
+    },
+    "busy": {
+      "dropOff": "{{name}} has “{{title}}” when it's time to take them.",
+      "pickUp": "{{name}} has “{{title}}” when it's time to pick them up."
+    }
   }
 }
