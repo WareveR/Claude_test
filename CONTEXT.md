@@ -114,6 +114,10 @@ _Avoid_: Roster, schedule, chore wheel
 What a Person earns for doing Tasks, meant for children's chores and allowance: a Task may be worth up to 100 points, which each of its Persons earns when it is ticked done and loses again if it is unticked; deleting the Task keeps them. On their page a Person may save for a goal (so many points) and a reward ("cinema", "5 €"); "Reward given" spends the goal. Everyone saving for something shows on the Wall with how far they are.
 _Avoid_: Score, stars, credits
 
+**Medication**:
+A medicine one Person takes: its name, dose ("5 ml"), the times of day and the days of the treatment (to an end date, or on until changed). A Medication is Private by default: then only the Account that added it and the Account of its Person see it, its doses and its Reminders, which name nothing ("Medication at 08:00"); for everyone else it does not exist. Each dose is due at its time and is ticked Taken on the Person's page, on the Summary, or straight from its Reminder's "Taken" button.
+_Avoid_: Prescription, pill, drug
+
 **Display Mode**:
 A per-device setting for a screen used as a wall display (typically a tablet): the screen stays awake, text is larger, the view returns to today after a few minutes without touch and rolls over at midnight, editing controls are hidden except ticking a Task done, and Private Entries and Tasks show only as "Private". Display Mode is entered from the "Wall" tab of the view switcher and left with the Wall switch in the header, which asks the password of the Account the device is signed in with, so a child at a wall tablet can't reach everything that Account sees; each device can switch that question off in its own Settings, which the Wall hides. It is not a separate access level.
 _Avoid_: Kiosk, read-only mode, wall mode

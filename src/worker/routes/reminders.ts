@@ -10,11 +10,13 @@ import {
   wallClock,
   type DueReminder,
 } from "../../core/reminders";
+import { dosesBetween, doseReminder } from "../../core/medication";
 import { familyNow } from "../../core/task";
 import type { Db } from "../db";
 import { personsBy, schema } from "../db";
 import { pusher, vapidKeys } from "../push";
 import { allEntries } from "./entries";
+import { presentMedication, seesMedication } from "./medications";
 
 /** After downtime, Reminders older than this are dropped rather than sent late. */
 const CATCH_UP_MS = 60 * 60 * 1000;
@@ -70,7 +72,8 @@ async function dueBetween(db: Db, from: string, to: string) {
 }
 
 /**
- * Scheduler, every 5 minutes: sends the Entry, Task and Checklist Reminders due since the last run to the devices with Reminders
+ * Scheduler, every 5 minutes: sends the Entry, Task and Checklist Reminders and the Medication
+ * doses due since the last run to the devices with Reminders
  * on whose Persons match (Family-wide items go to every such device), each only once. Expired
  * push subscriptions are removed.
  */
@@ -101,7 +104,9 @@ export async function reminderJob(db: Db, env: Env, now: Date) {
   const to = familyWallClock(family.timeZone, now);
   if (from >= to) return;
   const due = await dueBetween(db, from, to);
-  if (due.length === 0) return;
+  const meds = await db.select().from(schema.medication);
+  const doses = dosesBetween(meds.map(presentMedication), from, to);
+  if (due.length === 0 && doses.length === 0) return;
 
   const devices = await db
     .select()
@@ -138,6 +143,57 @@ export async function reminderJob(db: Db, env: Env, now: Date) {
         if (result.gone) gone.add(device.id);
       } catch (error) {
         console.warn("push failed", error);
+      }
+    }
+  }
+  if (doses.length > 0) {
+    const [accounts, persons] = await Promise.all([
+      db.select({ id: schema.account.id, personId: schema.account.personId }).from(schema.account),
+      db.select({ id: schema.person.id, name: schema.person.name }).from(schema.person),
+    ]);
+    for (const dose of doses) {
+      const key = `medication:${dose.medication.id}:${dose.date}T${dose.time}`;
+      const claimed = await db
+        .insert(schema.reminderSent)
+        .values({ key, sentAt: now.toISOString() })
+        .onConflictDoNothing()
+        .returning();
+      if (claimed.length === 0) continue;
+      const row = meds.find((m) => m.id === dose.medication.id)!;
+      const personName = persons.find((p) => p.id === row.personId)?.name ?? "";
+      for (const device of devices) {
+        if (gone.has(device.id) || !device.pushSubscription) continue;
+        if (!remindsDevice(device, [row.personId])) continue;
+        // A Private Medication reminds only the Accounts that see it.
+        const account = accounts.find((a) => a.id === device.accountId);
+        if (!account || !seesMedication(account, row)) continue;
+        const language = isLanguage(device.language)
+          ? device.language
+          : isLanguage(family.language)
+            ? family.language
+            : "pt-PT";
+        const text = doseReminder(dose, personName, language);
+        try {
+          const result = await pusher.send(
+            env,
+            device.pushSubscription,
+            {
+              title: text.title,
+              url: `/settings/persons/${row.personId}`,
+              tag: key,
+              action: {
+                title: text.taken,
+                post: `/api/medications/${row.id}/doses`,
+                date: dose.date,
+                time: dose.time,
+              },
+            },
+            now,
+          );
+          if (result.gone) gone.add(device.id);
+        } catch (error) {
+          console.warn("push failed", error);
+        }
       }
     }
   }

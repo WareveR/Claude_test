@@ -41,6 +41,8 @@ export const EXPORTED: Record<string, string[]> = {
   countdown_mark: [],
   points_entry: [],
   points_goal: [],
+  medication: [],
+  medication_dose: [],
   relative: [],
   relative_parent: [],
   relative_partner: [],
@@ -125,6 +127,16 @@ function hidePrivate(tables: Record<string, Row[]>, viewer: Account) {
     Object.assign(row, { title: "", notes: "", importance: "normal" });
     hiddenTasks.add(row.id as string);
   }
+  // A hidden Private Medication is left out altogether, with its doses.
+  const hiddenMeds = new Set(
+    tables.medication
+      .filter((row) => !sees(row, [row.person_id as string]))
+      .map((row) => row.id as string),
+  );
+  tables.medication = tables.medication.filter((row) => !hiddenMeds.has(row.id as string));
+  tables.medication_dose = tables.medication_dose.filter(
+    (d) => !hiddenMeds.has(d.medication_id as string),
+  );
   // A hidden Entry's or Task's attachments are left out altogether, names included.
   tables.attachment = tables.attachment.filter(
     (a) => !hiddenEntries.has(a.entry_id as string) && !hiddenTasks.has(a.task_id as string),

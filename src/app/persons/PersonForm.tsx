@@ -9,6 +9,7 @@ import { PersonAvatar } from "./PersonAvatar";
 import { RelationSection } from "./RelationSection";
 import { PersonContacts } from "../contacts/MatchedContacts";
 import { PersonPoints } from "../points/Points";
+import { PersonMedications } from "../medications/Medications";
 import { readyToEdit } from "../offline/fresh";
 import {
   EMPTY_PROFILE,
@@ -263,6 +264,7 @@ function PersonForm({ person }: { person?: Person }) {
       </form>
       {person && !animal && <RelationSection person={person} />}
       {person && <PersonContacts personId={person.id} />}
+      {person && <PersonMedications personId={person.id} />}
       {person && !animal && <PersonPoints personId={person.id} />}
       {person && (
         <div className="flex flex-col gap-2 border-t border-line pt-4">

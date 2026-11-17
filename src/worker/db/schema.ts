@@ -637,6 +637,44 @@ export const pointsGoal = sqliteTable("points_goal", {
 });
 
 /**
+ * A Medication one Person takes, with its dose and times of day, until an end date or until
+ * changed. Private by default: only its creator and the Accounts of its Person see it.
+ */
+export const medication = sqliteTable("medication", {
+  id: text("id").primaryKey(),
+  personId: text("person_id")
+    .notNull()
+    .references(() => person.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  dose: text("dose").notNull().default(""),
+  /** Times of day ("08:00"), in order. */
+  times: text("times", { mode: "json" }).$type<string[]>().notNull(),
+  startDate: text("start_date").notNull(),
+  endDate: text("end_date"),
+  private: integer("private", { mode: "boolean" }).notNull().default(true),
+  notes: text("notes").notNull().default(""),
+  createdBy: text("created_by").references(() => account.id, { onDelete: "set null" }),
+  createdAt: text("created_at").notNull(),
+  changedAt: text("changed_at").notNull(),
+});
+
+/** A dose taken: one Medication at the date and time it was due, and who said so. */
+export const medicationDose = sqliteTable(
+  "medication_dose",
+  {
+    id: text("id").primaryKey(),
+    medicationId: text("medication_id")
+      .notNull()
+      .references(() => medication.id, { onDelete: "cascade" }),
+    date: text("date").notNull(),
+    time: text("time").notNull(),
+    takenAt: text("taken_at").notNull(),
+    takenBy: text("taken_by").references(() => account.id, { onDelete: "set null" }),
+  },
+  (t) => [uniqueIndex("medication_dose_due").on(t.medicationId, t.date, t.time)],
+);
+
+/**
  * Someone in the Family Tree: to show the children where they come from. Not a Person: never
  * on the calendar, and may have lived long ago.
  */
