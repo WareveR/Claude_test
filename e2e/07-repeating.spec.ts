@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { signIn } from "./helpers";
+import { openMoreOptions, signIn } from "./helpers";
 
 test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 
@@ -7,6 +7,7 @@ test("a weekly Entry on two weekdays shows every week", async ({ page }) => {
   await signIn(page);
   await page.goto("/entries/new?date=2026-10-06&time=18:00");
   await page.getByLabel("Title").fill("Karate");
+  await openMoreOptions(page);
   await page.getByLabel("Repeats").selectOption("weekly");
   await page.getByLabel("Thu").check();
   await page.getByLabel("Ends").selectOption("count");

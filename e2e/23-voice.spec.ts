@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { signIn } from "./helpers";
+import { signIn, openMoreOptions } from "./helpers";
 
 test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 
@@ -162,6 +162,7 @@ test("a Task with items saves as one with them, and Edit opens the form with the
   await again.getByRole("button", { name: "Edit" }).click();
   await expect(page).toHaveURL(/\/tasks\/new$/);
   await expect(page.getByLabel("Title")).toHaveValue("Voice pack the car");
+  await openMoreOptions(page);
   await expect(page.getByRole("switch", { name: "With items" })).toBeChecked();
   await expect(page.getByLabel("Items (one per line)")).toHaveValue("Voice tent\nVoice torch");
   await page.getByRole("button", { name: "Save" }).click();

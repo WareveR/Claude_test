@@ -45,3 +45,14 @@ export function lisbonDate(days = 0, now = Date.now()) {
   date.setUTCDate(date.getUTCDate() + days);
   return date.toISOString().slice(0, 10);
 }
+
+/** Opens a form's "More options", where its less used fields are folded; no-op if open or absent. */
+export async function openMoreOptions(page: Page) {
+  const more = page.getByTestId("more-options");
+  // Right after a click that opens a form, it may still be on its way.
+  await more.waitFor({ timeout: 3000 }).catch(() => {});
+  if ((await more.count()) === 0) return;
+  if (!(await more.evaluate((el) => el.hasAttribute("open")))) {
+    await more.locator("summary").click();
+  }
+}

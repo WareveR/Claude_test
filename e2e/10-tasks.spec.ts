@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { signIn, lisbonDate } from "./helpers";
+import { signIn, lisbonDate, openMoreOptions } from "./helpers";
 
 test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 
@@ -52,6 +52,7 @@ test("overdue Tasks say how late they are; high importance comes first on its da
   await page.getByRole("link", { name: "New task" }).click();
   await page.getByLabel("Title").fill("Pay the rent");
   await page.getByLabel("Due date (optional)").fill(lisbonDate(5));
+  await openMoreOptions(page);
   await page.getByLabel("Importance").selectOption("high");
   await page.getByRole("button", { name: "Save" }).click();
 
@@ -68,6 +69,7 @@ test("ticking a repeating Task brings up the next one", async ({ page }) => {
   await page.getByRole("link", { name: "New task" }).click();
   await page.getByLabel("Title").fill("Water the plants");
   await page.getByLabel("Due date (optional)").fill(lisbonDate(-3));
+  await openMoreOptions(page);
   await page.getByLabel("Repeats").selectOption("weekly");
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page).toHaveURL(/\/tasks$/);
@@ -83,6 +85,7 @@ test("a Task can have a background colour, shown on its row", async ({ page }) =
   await page.goto("/tasks");
   await page.getByRole("link", { name: "New task" }).click();
   await page.getByLabel("Title").fill("Paint the fence");
+  await openMoreOptions(page);
   await page.getByRole("radio", { name: "Colour 3" }).click();
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page).toHaveURL(/\/tasks$/);

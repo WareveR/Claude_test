@@ -20,6 +20,7 @@ import { paths } from "../paths";
 import { usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
 import { ErrorText, Field, FormActions, TextInput } from "../screens/form";
+import { MoreOptions } from "../screens/MoreOptions";
 import { IconPicker } from "../ui/IconPicker";
 import { occurrenceValues, saveEntry, useEntry, type Entry, type EntryDraft } from "./model";
 import { ScopeDialog, type Scope } from "./ScopeDialog";
@@ -261,6 +262,16 @@ function EntryForm({
     (a, b) => a - b,
   );
   const saveError = save.error instanceof ApiError ? save.error.body : null;
+  // The folded fields that hold something, so a closed panel still says so.
+  const moreSet = [
+    draft.repetition,
+    draft.importance !== "normal",
+    draft.location,
+    draft.notes,
+    draft.icon,
+    draft.reminders.length > 0,
+    draft.private,
+  ].filter(Boolean).length;
 
   return (
     <main className="mx-auto flex w-full max-w-xl flex-col gap-4 p-4">
@@ -401,12 +412,6 @@ function EntryForm({
             </>
           )}
 
-          <RepetitionFields
-            value={draft.repetition}
-            start={draft.time.startDate}
-            onChange={(repetition) => set({ repetition })}
-          />
-
           <fieldset className="flex flex-col gap-1 text-sm">
             <legend className="mb-1 font-medium" data-help="persons" data-help-field="">
               {t("entries.persons")}
@@ -445,90 +450,100 @@ function EntryForm({
             )}
         </fieldset>
 
-        <Field label={t("entries.importance")} help="importance">
-          <select
-            className={INPUT}
-            value={draft.importance}
-            onChange={(e) => set({ importance: e.target.value as EntryDraft["importance"] })}
-          >
-            {IMPORTANCES.map((i) => (
-              <option key={i} value={i}>
-                {t(`importance.${i}`)}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label={t("entries.location")}>
-          <TextInput value={draft.location} onChange={(e) => set({ location: e.target.value })} />
-        </Field>
-        <Field label={t("entries.notes")}>
-          <textarea
-            className={INPUT}
-            rows={3}
-            value={draft.notes}
-            onChange={(e) => set({ notes: e.target.value })}
-          />
-        </Field>
-        {entry ? (
-          <Attachments owner={`entry=${entry.id}`} />
-        ) : (
-          <Attachments owner={null} pending={pending} onPending={setPending} />
-        )}
+        <MoreOptions set={moreSet}>
+          {/* A synced Birthday repeats as its Person's does. */}
+          <fieldset disabled={Boolean(synced)} className="contents">
+            <RepetitionFields
+              value={draft.repetition}
+              start={draft.time.startDate}
+              onChange={(repetition) => set({ repetition })}
+            />
+          </fieldset>
+          <Field label={t("entries.importance")} help="importance">
+            <select
+              className={INPUT}
+              value={draft.importance}
+              onChange={(e) => set({ importance: e.target.value as EntryDraft["importance"] })}
+            >
+              {IMPORTANCES.map((i) => (
+                <option key={i} value={i}>
+                  {t(`importance.${i}`)}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label={t("entries.location")}>
+            <TextInput value={draft.location} onChange={(e) => set({ location: e.target.value })} />
+          </Field>
+          <Field label={t("entries.notes")}>
+            <textarea
+              className={INPUT}
+              rows={3}
+              value={draft.notes}
+              onChange={(e) => set({ notes: e.target.value })}
+            />
+          </Field>
+          {entry ? (
+            <Attachments owner={`entry=${entry.id}`} />
+          ) : (
+            <Attachments owner={null} pending={pending} onPending={setPending} />
+          )}
 
-        <fieldset className="flex flex-col gap-1 text-sm">
-          <legend className="mb-1 font-medium">{t("entries.icon")}</legend>
-          <IconPicker
-            value={draft.icon}
-            onChange={(icon) => {
-              setIconPicked(true);
-              set({ icon });
-            }}
-            before={
-              <label className="relative cursor-pointer">
-                <input
-                  type="radio"
-                  name="icon"
-                  checked={draft.icon === null}
-                  onChange={() => {
-                    setIconPicked(true);
-                    set({ icon: null });
-                  }}
-                  className="peer sr-only"
-                />
-                <span className="flex h-10 items-center rounded-md px-2 text-xs peer-checked:bg-accent peer-checked:text-accent-ink">
-                  {t("entries.typeIcon")}
-                </span>
-              </label>
-            }
-          />
-        </fieldset>
+          <fieldset className="flex flex-col gap-1 text-sm">
+            <legend className="mb-1 font-medium">{t("entries.icon")}</legend>
+            <IconPicker
+              value={draft.icon}
+              onChange={(icon) => {
+                setIconPicked(true);
+                set({ icon });
+              }}
+              before={
+                <label className="relative cursor-pointer">
+                  <input
+                    type="radio"
+                    name="icon"
+                    checked={draft.icon === null}
+                    onChange={() => {
+                      setIconPicked(true);
+                      set({ icon: null });
+                    }}
+                    className="peer sr-only"
+                  />
+                  <span className="flex h-10 items-center rounded-md px-2 text-xs peer-checked:bg-accent peer-checked:text-accent-ink">
+                    {t("entries.typeIcon")}
+                  </span>
+                </label>
+              }
+            />
+          </fieldset>
 
-        <fieldset className="flex flex-col gap-1 text-sm">
-          <legend className="mb-1 font-medium">{t("entries.reminders")}</legend>
-          <div className="flex flex-wrap gap-3">
-            {reminderChoices.map((minutes) => (
-              <Chip
-                key={minutes}
-                checked={draft.reminders.includes(minutes)}
-                onChange={(e) =>
-                  set({
-                    reminders: e.target.checked
-                      ? [...draft.reminders, minutes]
-                      : draft.reminders.filter((r) => r !== minutes),
-                  })
-                }
-              >
-                {reminderLabel(minutes, t)}
-              </Chip>
-            ))}
-          </div>
-        </fieldset>
+          <fieldset className="flex flex-col gap-1 text-sm">
+            <legend className="mb-1 font-medium">{t("entries.reminders")}</legend>
+            <div className="flex flex-wrap gap-3">
+              {reminderChoices.map((minutes) => (
+                <Chip
+                  key={minutes}
+                  checked={draft.reminders.includes(minutes)}
+                  onChange={(e) =>
+                    set({
+                      reminders: e.target.checked
+                        ? [...draft.reminders, minutes]
+                        : draft.reminders.filter((r) => r !== minutes),
+                    })
+                  }
+                >
+                  {reminderLabel(minutes, t)}
+                </Chip>
+              ))}
+            </div>
+          </fieldset>
 
-        <label className="flex items-center gap-2 text-sm">
-          <Switch checked={draft.private} onChange={(e) => set({ private: e.target.checked })} />
-          {t("entries.private")}
-        </label>
-        <p className="-mt-3 text-xs text-muted">{t("entries.privateHint")}</p>
+          <label className="flex items-center gap-2 text-sm">
+            <Switch checked={draft.private} onChange={(e) => set({ private: e.target.checked })} />
+            {t("entries.private")}
+          </label>
+          <p className="-mt-3 text-xs text-muted">{t("entries.privateHint")}</p>
+        </MoreOptions>
 
         {saveError && (
           <ErrorText>

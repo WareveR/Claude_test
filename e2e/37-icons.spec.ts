@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { signIn } from "./helpers";
+import { signIn, openMoreOptions } from "./helpers";
 
 test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 
@@ -7,6 +7,7 @@ test("icons come in groups and are found by name", async ({ page }) => {
   await signIn(page);
   await page.goto("/week/2026-12-07");
   await page.getByRole("link", { name: "New", exact: true }).click();
+  await openMoreOptions(page);
   const picker = page.getByTestId("icon-picker");
 
   // A group at a time.
@@ -26,6 +27,7 @@ test("icons come in groups and are found by name", async ({ page }) => {
   await expect(page).not.toHaveURL(/\/entries\/new/);
   await page.getByTestId("day-column-2026-12-08").getByTestId("entry").click();
   await page.getByRole("dialog").getByRole("link", { name: "Edit" }).click();
+  await openMoreOptions(page);
   // Opened on the chosen icon's group.
   await expect(page.getByRole("tab", { name: "Beauty and wellbeing" })).toHaveAttribute(
     "aria-selected",
@@ -39,6 +41,7 @@ test("a new Entry takes the icon its title names until one is picked", async ({ 
   await page.goto("/week/2026-12-07");
   await page.getByRole("link", { name: "New", exact: true }).click();
   await page.getByLabel("Title").fill("Gym with Rui");
+  await openMoreOptions(page);
   await expect(page.getByRole("radio", { name: "Gym", exact: true })).toBeChecked();
   await page.getByLabel("Title").fill("Dinner");
   await expect(page.getByRole("radio", { name: "The type's" })).toBeChecked();

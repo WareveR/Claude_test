@@ -1,11 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
-import { signIn } from "./helpers";
+import { openMoreOptions, signIn } from "./helpers";
 
 test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 
 async function addEntry(page: Page, date: string, title: string, notes: string) {
   await page.goto(`/entries/new?date=${date}`);
   await page.getByLabel("Title").fill(title);
+  await openMoreOptions(page);
   await page.getByLabel("Notes").fill(notes);
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page).not.toHaveURL(/\/entries\//);
