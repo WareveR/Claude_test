@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Importance } from "../../core/entry-type";
 import type { Repetition } from "../../core/repetition";
 import type { Rotation } from "../../core/rotation";
+import type { TaskColor } from "../../core/task-color";
 import { api } from "../api";
 import { fromList } from "../offline/from-list";
 import i18n from "../i18n";
@@ -18,6 +19,8 @@ export type Task = {
   hidden?: boolean;
   /** High ones come first among Tasks due at the same time. */
   importance: Importance;
+  /** Its background colour; null for none. */
+  color: TaskColor | null;
   doneAt: string | null;
   repetition: Repetition | null;
   /** The Persons who take turns at a repeating Task. */
@@ -44,6 +47,7 @@ export type TaskDraft = Pick<
   | "personIds"
   | "private"
   | "importance"
+  | "color"
   | "repetition"
   | "rotation"
   | "points"

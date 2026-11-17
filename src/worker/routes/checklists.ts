@@ -10,6 +10,7 @@ import {
   shiftRound,
 } from "../../core/checklist";
 import { isPlainDate } from "../../core/plain-date";
+import { parseTaskColor, type TaskColor } from "../../core/task-color";
 import { isRepetition, type Repetition } from "../../core/repetition";
 import { familyNow } from "../../core/task";
 import { randomId } from "../auth/crypto";
@@ -61,6 +62,9 @@ async function parseChecklist(db: Db, body: Record<string, unknown>, today: stri
   }
   const remindAtStart = body.remindAtStart ?? true;
   if (typeof remindAtStart !== "boolean") return { field: "remindAtStart" };
+  // Absent, a change keeps the colour it had.
+  const color = parseTaskColor(body);
+  if (!color.ok) return { field: "color" };
   const personIds = Array.isArray(body.personIds) ? [...new Set(body.personIds)] : [];
   if (!personIds.every((p) => typeof p === "string")) return { field: "personIds" };
   if (personIds.length > 0) {
@@ -78,6 +82,7 @@ async function parseChecklist(db: Db, body: Record<string, unknown>, today: stri
       repetition: repetition as Repetition | null,
       remindAtStart,
       entryId: entryId as string | null,
+      color: color.color,
       personIds: personIds as string[],
     },
   };
@@ -109,6 +114,7 @@ async function present(db: Db, rows: ChecklistRow[]) {
     repetition: row.repetition ?? null,
     remindAtStart: row.remindAtStart,
     entryId: row.entryId,
+    color: row.color,
     personIds: personsOf.get(row.id) ?? [],
     rounds: rounds
       .filter((r) => r.checklistId === row.id)
@@ -216,6 +222,7 @@ export async function createChecklist(
     repetition: Repetition | null;
     remindAtStart: boolean;
     entryId: string | null;
+    color?: TaskColor | null;
     personIds: string[];
   },
   items: string[],
@@ -356,6 +363,7 @@ checklistRoutes.post("/tasks/:id/with-items", async (c) => {
       repetition: fields.repetition,
       remindAtStart: fields.remindAtStart,
       entryId: fields.entryId,
+      color: task.color,
       createdAt: now,
       changedAt: now,
     }),

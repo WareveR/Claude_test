@@ -15,6 +15,7 @@ import { paths } from "../paths";
 import { usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
 import { ErrorText, Field, FormActions, TextInput } from "../screens/form";
+import { ColorChoice } from "../ui/ColorChoice";
 import { useChecklist, type Checklist, type ChecklistDraft } from "./model";
 import { templateText } from "../../core/checklist-template";
 import { useTemplates } from "./templates";
@@ -70,6 +71,7 @@ function ChecklistForm({
         repetition: null,
         remindAtStart: true,
         entryId: entry?.id ?? null,
+        color: null,
         personIds: [],
       },
   );
@@ -249,6 +251,7 @@ function ChecklistForm({
           </div>
           <p className="text-xs text-muted">{t("checklists.personsHint")}</p>
         </fieldset>
+        <ColorChoice value={draft.color ?? null} onChange={(color) => set({ color })} />
 
         {save.error && <ErrorText>{t("errors.unexpected")}</ErrorText>}
         <FormActions

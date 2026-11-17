@@ -2,6 +2,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, BookmarkPlus, ChevronDown, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
+import type { TaskColor } from "../../core/task-color";
+import { ColorChoice, tint } from "../ui/ColorChoice";
 import { Attachments } from "../attachments/Attachments";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
 import { checklistProgress, isChecklistTaskOverdue } from "../../core/checklist";
@@ -83,7 +85,10 @@ function ChecklistDetail({ checklist, items: all }: { checklist: Checklist; item
       className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-4 p-4 pb-0"
       data-testid="checklist-detail"
     >
-      <div className="flex items-start gap-3">
+      <div
+        className={`flex items-start gap-3 ${checklist.color ? "-mx-2 rounded-md p-2" : ""}`}
+        style={tint(checklist.color)}
+      >
         <div className="flex min-w-0 flex-1 flex-col">
           <h1 className="text-xl font-semibold break-words">{checklist.name}</h1>
           {period && (
@@ -243,7 +248,13 @@ function useRemoveWithUndo() {
   };
 }
 
-type ItemPatch = { title: string; notes: string; parentId: string | null; personIds: string[] };
+type ItemPatch = {
+  title: string;
+  notes: string;
+  parentId: string | null;
+  personIds: string[];
+  color: TaskColor | null;
+};
 
 /** Saves an item's name, note, place and Persons; its other stored fields go back as they were. */
 function itemBody(task: Task, patch: ItemPatch) {
@@ -257,6 +268,7 @@ function itemBody(task: Task, patch: ItemPatch) {
     private: task.private,
     repetition: null,
     checklistId: task.checklistId,
+    color: patch.color,
   };
 }
 
@@ -312,9 +324,9 @@ function ItemRow({ task, tree }: { task: Task; tree: TreeContext }) {
   return (
     <li>
       <div
-        className="flex cursor-grab items-center gap-3 bg-bg py-2 select-none"
+        className={`flex cursor-grab items-center gap-3 bg-bg py-2 select-none ${task.color ? "rounded-md px-2" : ""}`}
         data-testid="checklist-item"
-        style={swipe.style}
+        style={{ ...tint(task.color), ...swipe.style }}
         {...swipe.handlers}
       >
         <Tick
@@ -394,11 +406,12 @@ function ItemEditor({ task, tree, onDone }: { task: Task; tree: TreeContext; onD
   const [notes, setNotes] = useState(task.notes);
   const [parentId, setParentId] = useState(task.parentId ?? "");
   const [personIds, setPersonIds] = useState(task.personIds);
+  const [color, setColor] = useState(task.color ?? null);
   const save = useMutation({
     mutationFn: () =>
       api(`/tasks/${task.id}`, {
         method: "PUT",
-        body: itemBody(task, { title, notes, parentId: parentId || null, personIds }),
+        body: itemBody(task, { title, notes, parentId: parentId || null, personIds, color }),
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["tasks"] });
@@ -447,6 +460,7 @@ function ItemEditor({ task, tree, onDone }: { task: Task; tree: TreeContext; onD
             ))}
         </div>
       </fieldset>
+      <ColorChoice value={color} onChange={setColor} />
       {save.error && <ErrorText>{t("errors.unexpected")}</ErrorText>}
       <div className="flex justify-end gap-2">
         <button type="button" className={BUTTON} onClick={onDone}>

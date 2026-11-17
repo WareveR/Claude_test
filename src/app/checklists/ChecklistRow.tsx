@@ -6,6 +6,7 @@ import type { FamilyNow } from "../../core/task";
 import type { Task } from "../tasks/model";
 import type { Checklist } from "./model";
 import { usePeriodText } from "./period";
+import { tint } from "../ui/ColorChoice";
 
 /** A Checklist as one row with its progress; selecting it opens the Checklist with its items. */
 export function ChecklistRow({
@@ -28,7 +29,8 @@ export function ChecklistRow({
     <li
       data-testid="checklist"
       data-drop-checklist={checklist.id}
-      className={`rounded-md transition-colors ${dropTarget ? "bg-accent/15 ring-2 ring-accent" : ""}`}
+      className={`rounded-md transition-colors ${dropTarget ? "bg-accent/15 ring-2 ring-accent" : ""} ${checklist.color ? "px-2" : ""}`}
+      style={dropTarget ? undefined : tint(checklist.color)}
     >
       <Link to={`/checklists/${checklist.id}`} className="flex items-center gap-2 py-2">
         <span className="flex min-w-0 flex-1 flex-col">
