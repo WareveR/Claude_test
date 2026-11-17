@@ -24,6 +24,32 @@ describe("Persons", () => {
     expect(list.map((p) => p.name)).toEqual(["Ana"]);
   });
 
+  it("keeps a profile sheet, empty until filled in", async () => {
+    const browser = await setUpFamily();
+    const ana = (await (await browser.post("/persons", ANA)).json()) as Person & {
+      profile: Record<string, unknown>;
+    };
+    expect(ana.profile).toEqual({
+      clothes: "",
+      shoes: "",
+      allergies: [],
+      doctor: "",
+      school: "",
+      notes: "",
+    });
+    const res = await browser.request("PATCH", `/persons/${ana.id}`, {
+      profile: { shoes: " 34 ", allergies: ["amendoim", " ", "ovo"], doctor: "Dra. Lopes" },
+    });
+    expect(res.status).toBe(200);
+    const [stored] = (await (await browser.get("/persons")).json()) as (typeof ana)[];
+    expect(stored.profile).toMatchObject({ shoes: "34", allergies: ["amendoim", "ovo"] });
+    // The other details stay as they were.
+    expect(stored).toMatchObject({ name: "Ana", nicknames: ["Aninhas"] });
+    const bad = await browser.request("PATCH", `/persons/${ana.id}`, { profile: { shoes: 34 } });
+    expect(bad.status).toBe(400);
+    expect(await bad.json()).toEqual({ error: "invalid", field: "profile.shoes" });
+  });
+
   it("needs a name and a valid colour and date", async () => {
     const browser = await setUpFamily();
     expect((await browser.post("/persons", { ...ANA, name: " " })).status).toBe(400);

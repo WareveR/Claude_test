@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import type { PersonProfile } from "../../core/person-profile";
 import { api } from "../api";
 
 export type Person = {
@@ -9,6 +10,7 @@ export type Person = {
   dateOfBirth: string | null;
   nicknames: string[];
   archived: boolean;
+  profile: PersonProfile;
 };
 
 export { PERSON_COLORS } from "../../core/person-colors";

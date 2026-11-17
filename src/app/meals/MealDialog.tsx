@@ -9,6 +9,7 @@ import { useSignedIn } from "../family";
 import { useRecipes, useTagLabel } from "../recipes/model";
 import { BUTTON, BUTTON_DANGER, BUTTON_PRIMARY } from "../ui/button";
 import { useMeals, useRemoveMeal, useSetMeal } from "./model";
+import { AllergyWarnings } from "../persons/AllergyWarnings";
 
 /** Days of the plan read each side of the day, to say when each Recipe was planned last. */
 const HISTORY_DAYS = 30;
@@ -136,6 +137,7 @@ export function MealDialog({
             </li>
           ))}
         </ul>
+        {chosen && <AllergyWarnings ingredients={chosen.ingredients.map((i) => i.name)} />}
         <label className="flex flex-col gap-1 text-sm font-medium">
           {t("meals.text")}
           <input

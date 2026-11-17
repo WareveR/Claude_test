@@ -14,6 +14,7 @@ import type { Repetition } from "../../core/repetition";
 import type { Edition, Segment } from "../../core/briefing";
 import type { DayWeather, Forecast, HourWeather } from "../../core/weather";
 import type { WasteCollection } from "../../core/waste";
+import type { PersonProfile } from "../../core/person-profile";
 
 /**
  * The one Family of this installation (ADR-0001) and its Family-wide settings.
@@ -132,6 +133,8 @@ export const person = sqliteTable("person", {
   photoKey: text("photo_key"),
   dateOfBirth: text("date_of_birth"),
   archived: integer("archived", { mode: "boolean" }).notNull().default(false),
+  /** The profile sheet: sizes, allergies, doctor, school and notes (PersonProfile). */
+  profile: text("profile", { mode: "json" }).$type<Partial<PersonProfile>>().notNull().default({}),
   createdAt: text("created_at").notNull(),
   changedAt: text("changed_at").notNull(),
 });
