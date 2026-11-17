@@ -1597,7 +1597,8 @@
       "settings": "Definições da família",
       "errors": "Registo de erros",
       "tree": "Árvore da família",
-      "medications": "Medicação"
+      "medications": "Medicação",
+      "gifts": "Ideias de prenda"
     },
     "details": {
       "entries": "Todas as Entradas, as Privadas incluídas. Os aniversários das Pessoas ficam enquanto elas ficarem.",
@@ -1613,7 +1614,8 @@
       "settings": "Feriados, lixo, meteorologia, horas de sono e feeds de calendário.",
       "errors": "Todos os erros registados.",
       "tree": "As pessoas da árvore, as suas ligações e histórias.",
-      "medications": "Todos os medicamentos e o registo das tomas."
+      "medications": "Todos os medicamentos e o registo das tomas.",
+      "gifts": "Todas as ideias de prenda, dadas ou não."
     },
     "all": "Marcar tudo: recomeçar como família nova",
     "none": "Desmarcar tudo",
@@ -2011,5 +2013,26 @@
       "endDate": "O fim tem de ser depois do início.",
       "personId": "Escolhe uma Pessoa."
     }
+  },
+  "gifts": {
+    "title": "Ideias de prenda",
+    "hint": "A própria Pessoa nunca vê estas ideias.",
+    "idea": "Ideia de prenda",
+    "occasion": "Para quando",
+    "link": "Ligação da loja (opcional)",
+    "add": "Juntar ideia",
+    "occasions": {
+      "any": "Qualquer altura",
+      "birthday": "Aniversário",
+      "christmas": "Natal"
+    },
+    "givenFor": "{{text}} já foi dada",
+    "openLink": "Abrir a loja de {{text}}",
+    "delete": "Apagar {{text}}",
+    "christmas": "Prendas de Natal",
+    "none": "Ainda não há ideias de prenda para o Natal.",
+    "show_one": "Ver ideias para {{count}} Pessoa",
+    "show_other": "Ver ideias para {{count}} Pessoas",
+    "hide": "Esconder"
   }
 }

@@ -1597,7 +1597,8 @@
       "settings": "Family settings",
       "errors": "Error log",
       "tree": "Family tree",
-      "medications": "Medication"
+      "medications": "Medication",
+      "gifts": "Gift ideas"
     },
     "details": {
       "entries": "Every entry, Private ones included. People's birthdays stay as long as the people do.",
@@ -1613,7 +1614,8 @@
       "settings": "Holidays, bins, weather, sleeping hours and calendar feeds.",
       "errors": "Every logged error.",
       "tree": "The tree's people, their links and stories.",
-      "medications": "Every medication and the record of doses taken."
+      "medications": "Every medication and the record of doses taken.",
+      "gifts": "Every gift idea, given or not."
     },
     "all": "Tick everything: start again as a new family",
     "none": "Untick everything",
@@ -2011,5 +2013,26 @@
       "endDate": "The end must be after the start.",
       "personId": "Pick a Person."
     }
+  },
+  "gifts": {
+    "title": "Gift ideas",
+    "hint": "The Person themselves never sees these ideas.",
+    "idea": "Gift idea",
+    "occasion": "For when",
+    "link": "Shop link (optional)",
+    "add": "Add idea",
+    "occasions": {
+      "any": "Any time",
+      "birthday": "Birthday",
+      "christmas": "Christmas"
+    },
+    "givenFor": "{{text}} given",
+    "openLink": "Open the shop for {{text}}",
+    "delete": "Delete {{text}}",
+    "christmas": "Christmas gifts",
+    "none": "No gift ideas for Christmas yet.",
+    "show_one": "See ideas for {{count}} Person",
+    "show_other": "See ideas for {{count}} People",
+    "hide": "Hide"
   }
 }
