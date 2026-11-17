@@ -250,7 +250,22 @@
     "delete": "Delete",
     "confirmDelete": "Delete {{name}} for good?",
     "inUse": "Entries or Tasks mention this Person. Archive them instead.",
-    "keepBirthday": "Keep {{name}}'s Birthday on the calendar, for the whole Family? Cancel removes it."
+    "keepBirthday": "Keep {{name}}'s Birthday on the calendar, for the whole Family? Cancel removes it.",
+    "profile": {
+      "title": "Profile",
+      "clothes": "Clothes size",
+      "shoes": "Shoe size",
+      "allergies": "Allergies",
+      "allergiesHint": "peanut, egg",
+      "allergiesNote": "Separated by commas. Recipes warn when an ingredient mentions one.",
+      "doctor": "Doctor",
+      "doctorHint": "Dr Ana Lopes, 912 345 678",
+      "school": "School",
+      "schoolHint": "Primary school, year 3",
+      "notes": "Notes",
+      "warning": "Mind the allergies",
+      "warningLine": "{{person}}: {{allergy}} ({{ingredient}})"
+    }
   },
   "entryTypes": {
     "title": "Entry Types",

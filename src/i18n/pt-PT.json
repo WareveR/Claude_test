@@ -250,7 +250,22 @@
     "delete": "Apagar",
     "confirmDelete": "Apagar {{name}} de vez?",
     "inUse": "Há entradas ou tarefas com esta pessoa. Arquiva-a em vez de a apagar.",
-    "keepBirthday": "Manter o Aniversário de {{name}} no calendário, para toda a Família? Cancelar remove-o."
+    "keepBirthday": "Manter o Aniversário de {{name}} no calendário, para toda a Família? Cancelar remove-o.",
+    "profile": {
+      "title": "Ficha",
+      "clothes": "Tamanho de roupa",
+      "shoes": "Número de calçado",
+      "allergies": "Alergias",
+      "allergiesHint": "amendoim, ovo",
+      "allergiesNote": "Separadas por vírgulas. As receitas avisam quando um ingrediente as menciona.",
+      "doctor": "Médico",
+      "doctorHint": "Dra. Ana Lopes, 912 345 678",
+      "school": "Escola",
+      "schoolHint": "EB Sá de Miranda, 3.º B",
+      "notes": "Notas",
+      "warning": "Atenção a alergias",
+      "warningLine": "{{person}}: {{allergy}} ({{ingredient}})"
+    }
   },
   "entryTypes": {
     "title": "Tipos de entrada",

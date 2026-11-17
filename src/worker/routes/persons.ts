@@ -1,6 +1,7 @@
 import { asc, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { isPlainDate } from "../../core/plain-date";
+import { parseProfile, readProfile, type PersonProfile } from "../../core/person-profile";
 import { randomId } from "../auth/crypto";
 import { detachBirthday, syncBirthday, syncedBirthday } from "../birthdays";
 import type { Db } from "../db";
@@ -17,6 +18,7 @@ export type PersonInput = {
   dateOfBirth: string | null;
   nicknames: string[];
   archived: boolean;
+  profile: PersonProfile;
 };
 
 /** Validates a full or partial Person; returns the bad field's name or the clean values. */
@@ -51,6 +53,11 @@ function parsePerson(body: Record<string, unknown>, partial: boolean) {
     out.nicknames = [...new Set(names)];
   }
   if ("archived" in body) out.archived = Boolean(body.archived);
+  if ("profile" in body) {
+    const parsed = parseProfile(body.profile);
+    if ("field" in parsed) return { field: parsed.field };
+    out.profile = parsed.profile;
+  }
   return { values: out };
 }
 
@@ -64,6 +71,7 @@ async function listPersons(db: Db) {
     photoKey: p.photoKey,
     dateOfBirth: p.dateOfBirth,
     archived: p.archived,
+    profile: readProfile(p.profile),
     nicknames: nicknames.filter((n) => n.personId === p.id).map((n) => n.nickname),
   }));
 }
@@ -98,6 +106,7 @@ personRoutes.post("/persons", async (c) => {
       photoKey: v.photoKey ?? null,
       dateOfBirth: v.dateOfBirth ?? null,
       archived: v.archived ?? false,
+      profile: v.profile ?? {},
       createdAt: now,
       changedAt: now,
     }),

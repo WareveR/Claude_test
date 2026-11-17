@@ -9,6 +9,7 @@ import { paths } from "../paths";
 import { useNow } from "../shell/useNow";
 import { ViewNav } from "../shell/ViewNav";
 import { BUTTON, BUTTON_DANGER } from "../ui/button";
+import { AllergyWarnings } from "../persons/AllergyWarnings";
 import { useChangeRecipe, useDeleteRecipe, useRecipes, useTagLabel } from "./model";
 
 /** One Recipe to cook from, its quantities scaled to the servings shown. */
@@ -113,6 +114,7 @@ function RecipeView({ recipe }: { recipe: Recipe }) {
           <Plus aria-hidden size={18} />
         </button>
       </div>
+      <AllergyWarnings ingredients={recipe.ingredients.map((i) => i.name)} />
       {recipe.ingredients.length > 0 && (
         <section aria-label={t("recipes.ingredients")}>
           <h2 className="text-xs font-semibold tracking-wide text-muted uppercase">

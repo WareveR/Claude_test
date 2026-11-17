@@ -8,6 +8,7 @@ import { PERSON_COLORS, uploadPhoto, usePersons, type Person } from "./model";
 import { PersonAvatar } from "./PersonAvatar";
 import { RelationSection } from "./RelationSection";
 import { readyToEdit } from "../offline/fresh";
+import { EMPTY_PROFILE, MAX_PROFILE_FIELD, MAX_PROFILE_NOTES } from "../../core/person-profile";
 import { BUTTON, BUTTON_DANGER } from "../ui/button";
 
 export function PersonPage() {
@@ -35,6 +36,10 @@ function PersonForm({ person }: { person?: Person }) {
     dateOfBirth: person?.dateOfBirth ?? given?.dateOfBirth ?? "",
     nicknames: person?.nicknames.join(", ") ?? given?.nicknames.join(", ") ?? "",
   });
+  const [profile, setProfile] = useState({
+    ...(person?.profile ?? EMPTY_PROFILE),
+    allergies: (person?.profile.allergies ?? []).join(", "),
+  });
   const [uploading, setUploading] = useState(false);
   const done = async () => {
     await queryClient.invalidateQueries({ queryKey: ["persons"] });
@@ -50,6 +55,7 @@ function PersonForm({ person }: { person?: Person }) {
         photoKey: form.photoKey,
         dateOfBirth: form.dateOfBirth || null,
         nicknames: form.nicknames.split(","),
+        profile: { ...profile, allergies: profile.allergies.split(",") },
       };
       return person
         ? api(`/persons/${person.id}`, { method: "PATCH", body })
@@ -154,6 +160,48 @@ function PersonForm({ person }: { person?: Person }) {
           />
         </Field>
         <p className="-mt-2 text-xs text-muted">{t("persons.nicknamesHint")}</p>
+        <details
+          data-testid="person-profile"
+          open={Object.values(person?.profile ?? {}).some((v) => v.length > 0)}
+          className="rounded-md border border-line"
+        >
+          <summary className="cursor-pointer px-3 py-2 font-medium">
+            {t("persons.profile.title")}
+          </summary>
+          <div className="flex flex-col gap-3 px-3 pb-3">
+            <div className="grid grid-cols-2 gap-3">
+              {(["clothes", "shoes"] as const).map((key) => (
+                <Field key={key} label={t(`persons.profile.${key}`)}>
+                  <TextInput
+                    value={profile[key]}
+                    maxLength={MAX_PROFILE_FIELD}
+                    onChange={(e) => setProfile({ ...profile, [key]: e.target.value })}
+                  />
+                </Field>
+              ))}
+            </div>
+            {(["allergies", "doctor", "school"] as const).map((key) => (
+              <Field key={key} label={t(`persons.profile.${key}`)}>
+                <TextInput
+                  value={profile[key]}
+                  maxLength={key === "allergies" ? 1000 : MAX_PROFILE_FIELD}
+                  placeholder={t(`persons.profile.${key}Hint`)}
+                  onChange={(e) => setProfile({ ...profile, [key]: e.target.value })}
+                />
+              </Field>
+            ))}
+            <p className="-mt-2 text-xs text-muted">{t("persons.profile.allergiesNote")}</p>
+            <Field label={t("persons.profile.notes")}>
+              <textarea
+                rows={3}
+                value={profile.notes}
+                maxLength={MAX_PROFILE_NOTES}
+                onChange={(e) => setProfile({ ...profile, notes: e.target.value })}
+                className="w-full rounded-md border border-line bg-surface px-3 py-2 text-base"
+              />
+            </Field>
+          </div>
+        </details>
         {save.error && <ErrorText>{t("errors.unexpected")}</ErrorText>}
         <FormActions
           busy={save.isPending || uploading}
