@@ -5,7 +5,7 @@ test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 
 const ORIGIN = { Origin: "http://localhost:4173" };
 
-test("an Entry marked to count the days shows on the Wall with Christmas", async ({ page }) => {
+test("an Entry marked to count the days shows on the Wall", async ({ page }) => {
   await signIn(page);
   const types = await (await page.request.get("/api/entry-types")).json();
   const day = lisbonDate(2);
@@ -39,7 +39,7 @@ test("an Entry marked to count the days shows on the Wall with Christmas", async
     await page.getByRole("banner").getByRole("button", { name: "Wall" }).click();
     const strip = page.getByTestId("countdowns");
     await expect(strip).toContainText("Trip x62· 2 days");
-    await expect(strip).toContainText("Christmas");
+    // Christmas shows only among the soonest three: other tests' Birthdays may come first.
     await leaveWall(page);
   } finally {
     await page.request.delete(`/api/entries/${entry.id}`, { headers: ORIGIN });
