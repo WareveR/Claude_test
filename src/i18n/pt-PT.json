@@ -1576,6 +1576,7 @@
       "recipes": "Receitas",
       "meals": "Ementa",
       "notes": "Recados",
+      "contacts": "Contactos",
       "persons": "Pessoas",
       "entryTypes": "Tipos de entrada",
       "templates": "Listas pré-definidas",
@@ -1590,6 +1591,7 @@
       "recipes": "Todas as receitas do livro de receitas, com as fotos.",
       "meals": "Todas as refeições planeadas na ementa da semana.",
       "notes": "Todos os recados afixados no Mural.",
+      "contacts": "Todos os contactos úteis da família.",
       "persons": "As Pessoas, as alcunhas e os seus aniversários. As Entradas e Tarefas ficam para a Família.",
       "entryTypes": "Os tipos criados saem (as suas Entradas passam a Geral) e os de origem voltam ao início.",
       "templates": "As listas criadas saem e as de origem voltam ao início.",
@@ -1891,5 +1893,26 @@
     },
     "save": "Afixar",
     "remove": "Tirar o recado \"{{text}}\""
+  },
+  "contacts": {
+    "title": "Contactos úteis",
+    "add": "Novo contacto",
+    "name": "Nome",
+    "role": "Papel",
+    "roleHint": "Pediatra, escola, canalizador",
+    "phone": "Telefone",
+    "email": "Email",
+    "person": "De quem",
+    "everyone": "Da família toda",
+    "notes": "Notas",
+    "save": "Guardar",
+    "delete": "Apagar contacto",
+    "call": "Ligar a {{name}}",
+    "write": "Escrever a {{name}}",
+    "bad": {
+      "phone": "O telefone só pode ter algarismos, espaços e +.",
+      "email": "O email não parece válido.",
+      "name": "Falta o nome."
+    }
   }
 }

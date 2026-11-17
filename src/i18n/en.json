@@ -1576,6 +1576,7 @@
       "recipes": "Recipes",
       "meals": "Meal plan",
       "notes": "Notes",
+      "contacts": "Contacts",
       "persons": "People",
       "entryTypes": "Entry types",
       "templates": "Predefined lists",
@@ -1590,6 +1591,7 @@
       "recipes": "Every recipe in the recipe book, with its photo.",
       "meals": "Every planned meal of the weekly meal plan.",
       "notes": "Every note on the Wall.",
+      "contacts": "Every useful contact of the Family.",
       "persons": "The people, their nicknames and birthdays. Their entries and tasks stay, for the whole family.",
       "entryTypes": "Types you made go (their entries become General) and the built-in ones are reset.",
       "templates": "Lists you made go and the built-in ones are reset.",
@@ -1891,5 +1893,26 @@
     },
     "save": "Put up",
     "remove": "Take down the note \"{{text}}\""
+  },
+  "contacts": {
+    "title": "Useful contacts",
+    "add": "New contact",
+    "name": "Name",
+    "role": "Role",
+    "roleHint": "Paediatrician, school, plumber",
+    "phone": "Phone",
+    "email": "Email",
+    "person": "Whose",
+    "everyone": "The whole family's",
+    "notes": "Notes",
+    "save": "Save",
+    "delete": "Delete contact",
+    "call": "Call {{name}}",
+    "write": "Write to {{name}}",
+    "bad": {
+      "phone": "A phone takes only digits, spaces and +.",
+      "email": "That email doesn't look right.",
+      "name": "The name is missing."
+    }
   }
 }

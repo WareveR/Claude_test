@@ -582,6 +582,22 @@ export const note = sqliteTable("note", {
 });
 
 /**
+ * Someone the Family calls or writes to: the paediatrician, the school, the plumber. Optionally
+ * one Person's own (their doctor). Not a Person: never on the calendar.
+ */
+export const contact = sqliteTable("contact", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  role: text("role").notNull().default(""),
+  phone: text("phone").notNull().default(""),
+  email: text("email").notNull().default(""),
+  personId: text("person_id").references(() => person.id, { onDelete: "set null" }),
+  notes: text("notes").notNull().default(""),
+  createdAt: text("created_at").notNull(),
+  changedAt: text("changed_at").notNull(),
+});
+
+/**
  * Someone in the Family Tree: to show the children where they come from. Not a Person: never
  * on the calendar, and may have lived long ago.
  */

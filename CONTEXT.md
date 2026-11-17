@@ -94,6 +94,10 @@ _Avoid_: Session, user, client
 A short message one Family member puts up on the Wall for the others ("há sopa no frigorífico"), like paper on the fridge: its text, a paper colour, who wrote it (their Account's Person), and how long it stays up (today, until tomorrow, or until someone takes it down). Any Account writes or takes one down, in Display Mode too, from the Wall or by voice ("deixa um recado: há sopa", up until tomorrow). Not an Entry: it has no time and is never on the calendar.
 _Avoid_: Message, post-it, reminder
 
+**Contact**:
+Someone the Family calls or writes to, kept in Settings › Family: a name, a role ("Pediatra", "Escola", "Canalizador"), a phone and an email with buttons to call and write, notes, and optionally the Person whose Contact it is (their doctor), shown on that Person's page. An Entry whose title or place names a Contact's name or role, as whole words, offers that Contact's buttons. Not a Person: never on the calendar.
+_Avoid_: Address book entry, provider
+
 **Display Mode**:
 A per-device setting for a screen used as a wall display (typically a tablet): the screen stays awake, text is larger, the view returns to today after a few minutes without touch and rolls over at midnight, editing controls are hidden except ticking a Task done, and Private Entries and Tasks show only as "Private". Display Mode is entered from the "Wall" tab of the view switcher and left with the Wall switch in the header, which asks the password of the Account the device is signed in with, so a child at a wall tablet can't reach everything that Account sees; each device can switch that question off in its own Settings, which the Wall hides. It is not a separate access level.
 _Avoid_: Kiosk, read-only mode, wall mode
