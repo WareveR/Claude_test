@@ -44,6 +44,7 @@ export const EXPORTED: Record<string, string[]> = {
   medication: [],
   medication_dose: [],
   gift_idea: [],
+  contract: [],
   relative: [],
   relative_parent: [],
   relative_partner: [],

@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { TodayTasks } from "../briefing/ComingUp";
 import { TodayPanel } from "../shell/SidePanel";
 import { TodayDoses } from "../medications/Medications";
+import { ContractNotices } from "../contracts/Contracts";
 import { WeekEntries } from "./WeekEntries";
 
 /**
@@ -23,6 +24,7 @@ export function SummaryPage() {
       <div className="flex min-w-0 flex-col gap-3">
         <WeekEntries />
         <TodayDoses />
+        <ContractNotices />
         <TodayTasks />
       </div>
     </main>

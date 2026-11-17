@@ -372,6 +372,13 @@
       "when": 1794905938465,
       "tag": "0052_gift_ideas",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "6",
+      "when": 1794906417845,
+      "tag": "0053_contracts",
+      "breakpoints": true
     }
   ]
 }

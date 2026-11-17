@@ -12,6 +12,7 @@ export const RESET_PARTS = [
   "contacts",
   "medications",
   "gifts",
+  "contracts",
   "tree",
   "persons",
   "entryTypes",

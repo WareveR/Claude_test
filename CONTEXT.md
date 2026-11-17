@@ -122,6 +122,10 @@ _Avoid_: Prescription, pill, drug
 Something to give one Person, for their Birthday, for Christmas or any time, with an optional shop link; ticked "given" once given, and kept so the same thing isn't given twice. Every Account sees and changes Gift Ideas except the Account of the Person they are for, which never sees them, can't add one for itself, and never gets them in its Export. They show on that Person's page, on their Birthday Entry and in Settings › Family's Christmas list; never on the Wall.
 _Avoid_: Wishlist, present
 
+**Contract**:
+A bill or service the Family pays (electricity, internet, insurance), with its provider, amount, how often (monthly, yearly or no fixed payment), pay day and renewal date, in Settings › Family. One paid by hand keeps one repeating Task to pay it, retitled with it, moved only when its pay day changes, and removed when it goes to direct debit or is deleted (ticked ones stay). One paid by direct debit has no Task: the Summary shows it the week it goes out. A renewal shows on the Summary from 30 days before.
+_Avoid_: Subscription, expense
+
 **Display Mode**:
 A per-device setting for a screen used as a wall display (typically a tablet): the screen stays awake, text is larger, the view returns to today after a few minutes without touch and rolls over at midnight, editing controls are hidden except ticking a Task done, and Private Entries and Tasks show only as "Private". Display Mode is entered from the "Wall" tab of the view switcher and left with the Wall switch in the header, which asks the password of the Account the device is signed in with, so a child at a wall tablet can't reach everything that Account sees; each device can switch that question off in its own Settings, which the Wall hides. It is not a separate access level.
 _Avoid_: Kiosk, read-only mode, wall mode

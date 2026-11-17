@@ -1598,7 +1598,8 @@
       "errors": "Registo de erros",
       "tree": "Árvore da família",
       "medications": "Medicação",
-      "gifts": "Ideias de prenda"
+      "gifts": "Ideias de prenda",
+      "contracts": "Contas e contratos"
     },
     "details": {
       "entries": "Todas as Entradas, as Privadas incluídas. Os aniversários das Pessoas ficam enquanto elas ficarem.",
@@ -1615,7 +1616,8 @@
       "errors": "Todos os erros registados.",
       "tree": "As pessoas da árvore, as suas ligações e histórias.",
       "medications": "Todos os medicamentos e o registo das tomas.",
-      "gifts": "Todas as ideias de prenda, dadas ou não."
+      "gifts": "Todas as ideias de prenda, dadas ou não.",
+      "contracts": "Todas as contas e contratos; as tarefas para pagar já criadas ficam."
     },
     "all": "Marcar tudo: recomeçar como família nova",
     "none": "Desmarcar tudo",
@@ -2034,5 +2036,51 @@
     "show_one": "Ver ideias para {{count}} Pessoa",
     "show_other": "Ver ideias para {{count}} Pessoas",
     "hide": "Esconder"
+  },
+  "contracts": {
+    "title": "Contas e contratos",
+    "add": "Adicionar conta ou contrato",
+    "hint": "Uma conta paga à mão cria uma tarefa repetida para a pagar; por débito direto aparece só como aviso no Resumo. A renovação avisa 30 dias antes.",
+    "name": "Nome",
+    "nameHint": "Luz, internet, seguro do carro",
+    "provider": "Fornecedor",
+    "amount": "Valor (€)",
+    "frequency": "Pagamento",
+    "frequencies": {
+      "monthly": "Mensal",
+      "yearly": "Anual",
+      "none": "Sem pagamento fixo"
+    },
+    "payDay": "Dia do pagamento",
+    "payMonth": "Mês",
+    "payment": "Como se paga",
+    "payments": {
+      "manual": "À mão",
+      "debit": "Débito direto"
+    },
+    "paymentHints": {
+      "manual": "Cria uma tarefa para pagar, que se repete.",
+      "debit": "Só avisa no Resumo na semana do débito."
+    },
+    "renewal": "Renova ou termina a (opcional)",
+    "notes": "Notas",
+    "next": {
+      "manual": "pagar a {{date}}",
+      "debit": "débito a {{date}}"
+    },
+    "notices": "Contas",
+    "notice": {
+      "renewal": "{{name}} renova ou termina a {{date}}: ainda há tempo para comparar.",
+      "debit": "Débito de {{name}}{{amount}} a {{date}}"
+    },
+    "save": "Guardar",
+    "delete": "Apagar",
+    "bad": {
+      "name": "Escreve o nome.",
+      "amount": "Escreve o valor em euros, como 45,50.",
+      "payDay": "O dia vai de 1 a 31.",
+      "payMonth": "Escolhe o mês.",
+      "renewalDate": "Data inválida."
+    }
   }
 }
