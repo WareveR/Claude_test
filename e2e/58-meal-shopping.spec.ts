@@ -120,7 +120,7 @@ test("the meal plan adds the week's ingredients to the shopping list, summed, an
   await expect(item).toContainText("800 g");
   await expect(item).toContainText(`${fish}, ${soup}`);
 
-  // Undo puts the first quantity back.
+  // Undo puts the first quantity back. Wait for the open items, or the lines look new.
   await page.goto(`/meals/${today}`);
   await page.getByTestId("meal-shopping-button").click();
   await expect(sheet.getByTestId("meal-shopping-existing").first()).toContainText(
