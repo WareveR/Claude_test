@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import type { PersonProfile } from "../../core/person-profile";
+import type { PersonKind, PersonProfile } from "../../core/person-profile";
 import { api } from "../api";
 
 export type Person = {
@@ -11,6 +11,7 @@ export type Person = {
   nicknames: string[];
   archived: boolean;
   profile: PersonProfile;
+  kind: PersonKind;
 };
 
 export { PERSON_COLORS } from "../../core/person-colors";

@@ -100,7 +100,7 @@ voiceRoutes.post("/voice", async (c) => {
       await freeTimeAnswer({
         db,
         sentence,
-        persons: active,
+        persons: active.filter((p) => p.kind !== "animal"),
         nicknames,
         speakerId: viewer.personId,
         family,

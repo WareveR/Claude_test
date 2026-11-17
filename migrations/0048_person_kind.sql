@@ -1,0 +1,1 @@
+ALTER TABLE `person` ADD `kind` text DEFAULT 'person' NOT NULL;

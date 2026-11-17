@@ -264,7 +264,21 @@
       "schoolHint": "Primary school, year 3",
       "notes": "Notes",
       "warning": "Mind the allergies",
-      "warningLine": "{{person}}: {{allergy}} ({{ingredient}})"
+      "warningLine": "{{person}}: {{allergy}} ({{ingredient}})",
+      "species": "Species",
+      "breed": "Breed",
+      "chip": "Microchip no.",
+      "chipHint": "941000012345678",
+      "food": "Food",
+      "foodHint": "Royal Canin Mini 2 kg",
+      "addFood": "Put \"{{food}}\" on the shopping list",
+      "foodAdded": "On the shopping list",
+      "vetHint": "The vet goes in Useful contacts, as this animal's contact."
+    },
+    "kind": "This is a",
+    "kinds": {
+      "person": "Person",
+      "animal": "Animal"
     }
   },
   "entryTypes": {

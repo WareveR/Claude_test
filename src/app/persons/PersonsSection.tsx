@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { PawPrint, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { usePersons } from "./model";
@@ -19,6 +19,9 @@ export function PersonsSection() {
             >
               <PersonAvatar person={person} />
               <span>{person.name}</span>
+              {person.kind === "animal" && (
+                <PawPrint aria-label={t("persons.kinds.animal")} size={16} className="text-muted" />
+              )}
               {person.archived && <span className="text-xs">{t("persons.archived")}</span>}
             </Link>
           </li>

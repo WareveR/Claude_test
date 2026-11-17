@@ -13,6 +13,7 @@ describe("Person profile", () => {
   it("names the bad field", () => {
     expect(parseProfile("x")).toEqual({ field: "profile" });
     expect(parseProfile({ shoes: 34 })).toEqual({ field: "profile.shoes" });
+    expect(parseProfile({ chip: "x".repeat(201) })).toEqual({ field: "profile.chip" });
     expect(parseProfile({ allergies: "ovo" })).toEqual({ field: "profile.allergies" });
     expect(parseProfile({ allergies: Array.from({ length: 21 }, (_, i) => `a${i}`) })).toEqual({
       field: "profile.allergies",

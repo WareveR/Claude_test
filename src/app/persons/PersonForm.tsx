@@ -9,7 +9,13 @@ import { PersonAvatar } from "./PersonAvatar";
 import { RelationSection } from "./RelationSection";
 import { PersonContacts } from "../contacts/MatchedContacts";
 import { readyToEdit } from "../offline/fresh";
-import { EMPTY_PROFILE, MAX_PROFILE_FIELD, MAX_PROFILE_NOTES } from "../../core/person-profile";
+import {
+  EMPTY_PROFILE,
+  MAX_PROFILE_FIELD,
+  MAX_PROFILE_NOTES,
+  type PersonKind,
+} from "../../core/person-profile";
+import { addShoppingItems, refreshShopping } from "../shopping/model";
 import { BUTTON, BUTTON_DANGER } from "../ui/button";
 
 export function PersonPage() {
@@ -41,6 +47,9 @@ function PersonForm({ person }: { person?: Person }) {
     ...(person?.profile ?? EMPTY_PROFILE),
     allergies: (person?.profile.allergies ?? []).join(", "),
   });
+  const [kind, setKind] = useState<PersonKind>(person?.kind ?? "person");
+  const animal = kind === "animal";
+  const [foodAdded, setFoodAdded] = useState(false);
   const [uploading, setUploading] = useState(false);
   const done = async () => {
     await queryClient.invalidateQueries({ queryKey: ["persons"] });
@@ -57,6 +66,7 @@ function PersonForm({ person }: { person?: Person }) {
         dateOfBirth: form.dateOfBirth || null,
         nicknames: form.nicknames.split(","),
         profile: { ...profile, allergies: profile.allergies.split(",") },
+        kind,
       };
       return person
         ? api(`/persons/${person.id}`, { method: "PATCH", body })
@@ -117,6 +127,22 @@ function PersonForm({ person }: { person?: Person }) {
             </button>
           )}
         </div>
+        <div role="radiogroup" aria-label={t("persons.kind")} className="flex gap-2">
+          {(["person", "animal"] as const).map((k) => (
+            <button
+              key={k}
+              type="button"
+              role="radio"
+              aria-checked={kind === k}
+              onClick={() => setKind(k)}
+              className={`min-h-9 rounded-full border px-3 py-1 text-sm ${
+                kind === k ? "border-accent bg-accent text-accent-ink" : "border-line bg-surface"
+              }`}
+            >
+              {t(`persons.kinds.${k}`)}
+            </button>
+          ))}
+        </div>
         <Field label={t("persons.name")}>
           <TextInput
             required
@@ -171,17 +197,22 @@ function PersonForm({ person }: { person?: Person }) {
           </summary>
           <div className="flex flex-col gap-3 px-3 pb-3">
             <div className="grid grid-cols-2 gap-3">
-              {(["clothes", "shoes"] as const).map((key) => (
-                <Field key={key} label={t(`persons.profile.${key}`)}>
-                  <TextInput
-                    value={profile[key]}
-                    maxLength={MAX_PROFILE_FIELD}
-                    onChange={(e) => setProfile({ ...profile, [key]: e.target.value })}
-                  />
-                </Field>
-              ))}
+              {(animal ? (["species", "breed"] as const) : (["clothes", "shoes"] as const)).map(
+                (key) => (
+                  <Field key={key} label={t(`persons.profile.${key}`)}>
+                    <TextInput
+                      value={profile[key]}
+                      maxLength={MAX_PROFILE_FIELD}
+                      onChange={(e) => setProfile({ ...profile, [key]: e.target.value })}
+                    />
+                  </Field>
+                ),
+              )}
             </div>
-            {(["allergies", "doctor", "school"] as const).map((key) => (
+            {(animal
+              ? (["chip", "food", "allergies"] as const)
+              : (["allergies", "doctor", "school"] as const)
+            ).map((key) => (
               <Field key={key} label={t(`persons.profile.${key}`)}>
                 <TextInput
                   value={profile[key]}
@@ -192,6 +223,24 @@ function PersonForm({ person }: { person?: Person }) {
               </Field>
             ))}
             <p className="-mt-2 text-xs text-muted">{t("persons.profile.allergiesNote")}</p>
+            {animal && person && person.profile.food && (
+              <button
+                type="button"
+                className={`${BUTTON} self-start`}
+                disabled={foodAdded}
+                onClick={() =>
+                  void addShoppingItems([{ name: person.profile.food }]).then(() => {
+                    setFoodAdded(true);
+                    void refreshShopping(queryClient);
+                  })
+                }
+              >
+                {foodAdded
+                  ? t("persons.profile.foodAdded")
+                  : t("persons.profile.addFood", { food: person.profile.food })}
+              </button>
+            )}
+            {animal && <p className="text-xs text-muted">{t("persons.profile.vetHint")}</p>}
             <Field label={t("persons.profile.notes")}>
               <textarea
                 rows={3}
@@ -211,7 +260,7 @@ function PersonForm({ person }: { person?: Person }) {
           onCancel={() => navigate("/settings/family")}
         />
       </form>
-      {person && <RelationSection person={person} />}
+      {person && !animal && <RelationSection person={person} />}
       {person && <PersonContacts personId={person.id} />}
       {person && (
         <div className="flex flex-col gap-2 border-t border-line pt-4">
