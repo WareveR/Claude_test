@@ -1,5 +1,6 @@
 import { and, desc, eq, inArray, isNull, ne } from "drizzle-orm";
 import { Hono } from "hono";
+import { parseTaskColor, type TaskColor } from "../../core/task-color";
 import { isClockTime } from "../../core/entry-time";
 import { IMPORTANCES, type Importance } from "../../core/entry-type";
 import { isPlainDate } from "../../core/plain-date";
@@ -36,6 +37,8 @@ export type TaskInput = {
   entryId: string | null;
   importance: Importance;
   points: number;
+  /** Undefined keeps what the Task had. */
+  color: TaskColor | null | undefined;
 };
 
 /** Validates a whole Task; returns the bad field's name or the clean values. */
@@ -99,6 +102,8 @@ async function parseTask(db: Db, body: Record<string, unknown>) {
   }
   const importance = body.importance ?? "normal";
   if (!IMPORTANCES.includes(importance as Importance)) return { field: "importance" };
+  const color = parseTaskColor(body);
+  if (!color.ok) return { field: "color" };
   const points = body.points ?? 0;
   if (!Number.isInteger(points) || (points as number) < 0 || (points as number) > MAX_POINTS) {
     return { field: "points" };
@@ -129,6 +134,7 @@ async function parseTask(db: Db, body: Record<string, unknown>) {
       entryId: entryId as string | null,
       importance: importance as Importance,
       points: points as number,
+      color: color.color,
     } satisfies TaskInput,
   };
 }
@@ -164,6 +170,7 @@ async function present(db: Db, rows: TaskRow[], viewer: Account) {
       parentId: row.parentId,
       entryId: row.entryId,
       importance: hidden ? "normal" : row.importance,
+      color: hidden ? null : row.color,
       points: row.points,
       createdAt: row.createdAt,
       changedAt: row.changedAt,
@@ -348,6 +355,7 @@ taskRoutes.post("/tasks/:id/done", async (c) => {
           private: existing.private,
           createdBy: existing.createdBy,
           importance: existing.importance,
+          color: existing.color,
           points: existing.points,
           entryId: existing.entryId,
           repetition: next.repetition,

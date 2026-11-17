@@ -201,6 +201,46 @@ describe("Checklists", () => {
     expect((await browser.get(`/tasks/${task.id}`)).status).toBe(404);
   });
 
+  it("keeps a colour for the list and one for each item; a Task's goes with it into a list", async () => {
+    const { browser } = await family();
+    const blue = "#bbdefb";
+    const pink = "#f8bbd0";
+    const list = (await (
+      await browser.post("/checklists", { name: "Trip", color: blue, items: ["Tickets"] })
+    ).json()) as Checklist & { color: string | null };
+    expect(list.color).toBe(blue);
+    const withoutColor: Partial<typeof list> = { ...list };
+    delete withoutColor.color;
+    const renamed = (await (
+      await browser.request("PUT", `/checklists/${list.id}`, { ...withoutColor, name: "Holiday" })
+    ).json()) as { color: string | null };
+    expect(renamed.color).toBe(blue);
+    expect(
+      (await browser.request("PUT", `/checklists/${list.id}`, { ...list, color: "blue" })).status,
+    ).toBe(400);
+
+    const items = (await (await browser.get("/tasks")).json()) as {
+      id: string;
+      title: string;
+      checklistId: string;
+      color: string | null;
+    }[];
+    const tickets = items.find((i) => i.title === "Tickets")!;
+    expect(tickets.color).toBeNull();
+    const painted = (await (
+      await browser.request("PUT", `/tasks/${tickets.id}`, { ...tickets, color: pink })
+    ).json()) as { color: string | null };
+    expect(painted.color).toBe(pink);
+
+    const task = (await (
+      await browser.post("/tasks", { title: "Garden", color: pink })
+    ).json()) as { id: string };
+    const turned = (await (await browser.post(`/tasks/${task.id}/with-items`, {})).json()) as {
+      color: string | null;
+    };
+    expect(turned.color).toBe(pink);
+  });
+
   it("links Checklists and loose Tasks to an Entry, until the Entry is deleted", async () => {
     const { browser } = await family();
     const types = (await (await browser.get("/entry-types")).json()) as { id: string }[];

@@ -12,6 +12,7 @@ import { PersonAvatar } from "../persons/PersonAvatar";
 import { useTick, type Task } from "./model";
 import { Tick } from "../ui/Toggle";
 import { TurnSwap } from "./TurnSwap";
+import { tint } from "../ui/ColorChoice";
 
 /** One Task with its tick box; done ones are struck through. */
 export function TaskRow({
@@ -50,7 +51,11 @@ export function TaskRow({
         .join(" · ")
     : null;
   return (
-    <li className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2" data-testid="task">
+    <li
+      className={`flex flex-wrap items-center gap-x-3 gap-y-1 py-2 ${task.color ? "rounded-md px-2" : ""}`}
+      style={tint(task.color)}
+      data-testid="task"
+    >
       <Tick
         className="-my-2 -ml-2"
         aria-label={t("tasks.tick", { title: task.title })}

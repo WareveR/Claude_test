@@ -77,3 +77,15 @@ test("ticking a repeating Task brings up the next one", async ({ page }) => {
   await expect(page.getByRole("region", { name: "Upcoming" })).toContainText("Water the plants");
   await expect(page.getByRole("region", { name: "Overdue" })).not.toContainText("Water the plants");
 });
+
+test("a Task can have a background colour, shown on its row", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/tasks");
+  await page.getByRole("link", { name: "New task" }).click();
+  await page.getByLabel("Title").fill("Paint the fence");
+  await page.getByRole("radio", { name: "Colour 3" }).click();
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page).toHaveURL(/\/tasks$/);
+  const row = page.getByTestId("task").filter({ hasText: "Paint the fence" });
+  await expect(row).toHaveAttribute("style", /background-color/);
+});

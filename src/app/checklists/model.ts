@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import type { Repetition } from "../../core/repetition";
+import type { TaskColor } from "../../core/task-color";
 import { api } from "../api";
 
 export type Checklist = {
@@ -11,6 +12,8 @@ export type Checklist = {
   remindAtStart: boolean;
   /** The Entry this Checklist prepares for, if any. */
   entryId: string | null;
+  /** Its background colour; null for none. Each item has its own. */
+  color: TaskColor | null;
   personIds: string[];
   rounds: { label: string; done: number; total: number }[];
   createdAt: string;
@@ -19,7 +22,14 @@ export type Checklist = {
 
 export type ChecklistDraft = Pick<
   Checklist,
-  "name" | "startDate" | "endDate" | "repetition" | "remindAtStart" | "entryId" | "personIds"
+  | "name"
+  | "startDate"
+  | "endDate"
+  | "repetition"
+  | "remindAtStart"
+  | "entryId"
+  | "color"
+  | "personIds"
 >;
 
 export function useChecklists() {

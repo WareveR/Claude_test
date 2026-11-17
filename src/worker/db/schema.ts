@@ -278,6 +278,8 @@ export const task = sqliteTable("task", {
   entryId: text("entry_id").references(() => entry.id, { onDelete: "set null" }),
   /** High comes first among the Tasks due the same day. */
   importance: text("importance").$type<Importance>().notNull().default("normal"),
+  /** Its background, one of TASK_COLORS; null for none. */
+  color: text("color"),
   /** Points each of its Persons earns when it is ticked done; 0 earns none. */
   points: integer("points").notNull().default(0),
   createdAt: text("created_at").notNull(),
@@ -313,6 +315,8 @@ export const checklist = sqliteTable("checklist", {
   remindAtStart: integer("remind_at_start", { mode: "boolean" }).notNull().default(true),
   /** The Entry this Checklist prepares for, such as a party or a trip, shown with it. */
   entryId: text("entry_id").references(() => entry.id, { onDelete: "set null" }),
+  /** Its background, one of TASK_COLORS; null for none. Each item has its own. */
+  color: text("color"),
   createdAt: text("created_at").notNull(),
   changedAt: text("changed_at").notNull(),
 });

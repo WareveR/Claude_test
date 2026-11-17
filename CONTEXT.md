@@ -136,6 +136,7 @@ _Avoid_: Kiosk, read-only mode, wall mode
 
 **Task**:
 Something to get done, separate from an Entry: a title, optional notes, an optional due date (with an optional time), any number of Persons (none = the whole Family) and a done state that any device can tick or undo. It has no Entry Type or Importance. A repeating Task follows a Repetition; ticking it brings up the next one, and only the oldest undone one shows. A Task is overdue once its due day ends (or its due time passes) in the Family Time Zone. Dated Tasks appear on their due day in the calendar views. A loose Task may prepare for one Entry, like a Checklist, and shows in that Entry's Preparation. A Task may belong to one Checklist, as one of its items: then it is only a title, a done state, optional Persons and a short note, may hold items of its own, never shows on its own and has no due date, notes, Private or Reminder of its own.
+A Task, a Task with items and each of its items may have its own background colour, from the Notes' paper colours; none by default, and a hidden Private Task shows none.
 _Avoid_: To-do, chore, reminder
 
 **Checklist**:

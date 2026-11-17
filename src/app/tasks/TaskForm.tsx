@@ -18,6 +18,7 @@ import { RotationFields } from "./RotationFields";
 import { usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
 import { ErrorText, Field, FormActions, TextInput } from "../screens/form";
+import { ColorChoice } from "../ui/ColorChoice";
 import { paths } from "../paths";
 import { useTask, type Task, type TaskDraft } from "./model";
 import { readyToEdit } from "../offline/fresh";
@@ -62,7 +63,12 @@ function TaskForm({ task }: { task?: Task }) {
   const given = state?.values;
   const [draft, setDraft] = useState<TaskDraft>(
     () =>
-      (task && { ...task, rotation: task.rotation ?? null, points: task.points ?? 0 }) ?? {
+      (task && {
+        ...task,
+        rotation: task.rotation ?? null,
+        points: task.points ?? 0,
+        color: task.color ?? null,
+      }) ?? {
         title: "",
         notes: "",
         dueDate: date && isPlainDate(date) ? date : null,
@@ -70,6 +76,7 @@ function TaskForm({ task }: { task?: Task }) {
         personIds: [],
         private: false,
         importance: "normal",
+        color: null,
         repetition: null,
         rotation: null,
         points: 0,
@@ -139,7 +146,7 @@ function TaskForm({ task }: { task?: Task }) {
       if (!task) {
         const created = await api<{ id: string }>("/checklists", {
           method: "POST",
-          body: { ...checklistFromTask(draft), items },
+          body: { ...checklistFromTask(draft), color: draft.color, items },
         });
         await sendPending(`checklist=${created.id}`);
         return created;
@@ -309,6 +316,7 @@ function TaskForm({ task }: { task?: Task }) {
           </div>
           <p className="text-xs text-muted">{t("tasks.familyWideHint")}</p>
         </fieldset>
+        <ColorChoice value={draft.color} onChange={(color) => set({ color })} />
         {task ? (
           <Attachments owner={`task=${task.id}`} />
         ) : (

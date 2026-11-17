@@ -69,6 +69,34 @@ describe("Tasks", () => {
     expect((await browser.post("/tasks", { title: "x", importance: "urgent" })).status).toBe(400);
   });
 
+  it("keeps a background colour, kept by a change that doesn't mention it, and copied on repeat", async () => {
+    const { browser } = await family();
+    const yellow = "#fff59d";
+    const task = (await (
+      await browser.post("/tasks", {
+        title: "Bins",
+        color: yellow,
+        dueDate: "2026-01-05",
+        repetition: { frequency: "weekly", interval: 1, end: { type: "never" } },
+      })
+    ).json()) as Task & { color: string | null };
+    expect(task.color).toBe(yellow);
+    const withoutColor: Partial<typeof task> = { ...task };
+    delete withoutColor.color;
+    const moved = (await (
+      await browser.request("PUT", `/tasks/${task.id}`, { ...withoutColor, dueDate: "2026-01-12" })
+    ).json()) as Task & { color: string | null };
+    expect(moved.color).toBe(yellow);
+    await browser.post(`/tasks/${task.id}/done`);
+    const tasks = (await (await browser.get("/tasks")).json()) as (Task & { color: string })[];
+    expect(tasks.map((t) => t.color)).toEqual([yellow, yellow]);
+    const cleared = (await (
+      await browser.request("PUT", `/tasks/${task.id}`, { ...task, color: null })
+    ).json()) as Task & { color: string | null };
+    expect(cleared.color).toBeNull();
+    expect((await browser.post("/tasks", { title: "x", color: "red" })).status).toBe(400);
+  });
+
   it("refuses a Task without a title or with a time but no date", async () => {
     const { browser } = await family();
     expect(await (await browser.post("/tasks", { title: " " })).json()).toMatchObject({
