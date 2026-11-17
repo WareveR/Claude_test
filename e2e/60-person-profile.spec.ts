@@ -31,7 +31,7 @@ test("a Person's profile keeps sizes and allergies, and a Recipe warns about the
     await page.getByText("Profile", { exact: true }).click();
     await page.getByLabel("Shoe size").fill("34");
     await page.getByLabel("Allergies").fill("amendoim, ovo");
-    await page.getByRole("button", { name: "Save" }).click();
+    await page.getByRole("button", { name: "Save", exact: true }).click();
     await expect(page).toHaveURL(/\/settings\/family$/);
 
     await page.goto(`/settings/persons/${person.id}`);
