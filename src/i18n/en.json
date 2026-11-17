@@ -1560,6 +1560,7 @@
       "shopping": "Shopping list",
       "recipes": "Recipes",
       "meals": "Meal plan",
+      "notes": "Notes",
       "persons": "People",
       "entryTypes": "Entry types",
       "templates": "Predefined lists",
@@ -1573,6 +1574,7 @@
       "shopping": "The list's items and the history behind its suggestions.",
       "recipes": "Every recipe in the recipe book, with its photo.",
       "meals": "Every planned meal of the weekly meal plan.",
+      "notes": "Every note on the Wall.",
       "persons": "The people, their nicknames and birthdays. Their entries and tasks stay, for the whole family.",
       "entryTypes": "Types you made go (their entries become General) and the built-in ones are reset.",
       "templates": "Lists you made go and the built-in ones are reset.",
@@ -1858,5 +1860,21 @@
       "sibling": "brother or sister",
       "other": "another relation"
     }
+  },
+  "notes": {
+    "title": "Notes",
+    "add": "Leave a note",
+    "text": "Note",
+    "textHint": "Soup in the fridge",
+    "color": "Paper colour",
+    "colorN": "Colour {{n}}",
+    "keep": "Stays up until",
+    "keeps": {
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "removed": "Someone takes it down"
+    },
+    "save": "Put up",
+    "remove": "Take down the note \"{{text}}\""
   }
 }

@@ -90,6 +90,10 @@ _Avoid_: Sign-up, registration
 A browser or device signed in to one Account, holding a session that lasts a year from its last use. Each one is listed and can be signed out on its own: a Member sees their own devices, the Owner and Admins see everyone's. Changing an Account's password signs out all of that Account's devices. A device that is signed out, or finds it has been, deletes its offline copy of the calendar at once.
 _Avoid_: Session, user, client
 
+**Note**:
+A short message one Family member puts up on the Wall for the others ("há sopa no frigorífico"), like paper on the fridge: its text, a paper colour, who wrote it (their Account's Person), and how long it stays up (today, until tomorrow, or until someone takes it down). Any Account writes or takes one down, in Display Mode too, from the Wall or by voice ("deixa um recado: há sopa", up until tomorrow). Not an Entry: it has no time and is never on the calendar.
+_Avoid_: Message, post-it, reminder
+
 **Display Mode**:
 A per-device setting for a screen used as a wall display (typically a tablet): the screen stays awake, text is larger, the view returns to today after a few minutes without touch and rolls over at midnight, editing controls are hidden except ticking a Task done, and Private Entries and Tasks show only as "Private". Display Mode is entered from the "Wall" tab of the view switcher and left with the Wall switch in the header, which asks the password of the Account the device is signed in with, so a child at a wall tablet can't reach everything that Account sees; each device can switch that question off in its own Settings, which the Wall hides. It is not a separate access level.
 _Avoid_: Kiosk, read-only mode, wall mode

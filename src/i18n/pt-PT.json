@@ -1560,6 +1560,7 @@
       "shopping": "Lista de compras",
       "recipes": "Receitas",
       "meals": "Ementa",
+      "notes": "Recados",
       "persons": "Pessoas",
       "entryTypes": "Tipos de entrada",
       "templates": "Listas pré-definidas",
@@ -1573,6 +1574,7 @@
       "shopping": "Os itens da lista e o histórico das sugestões.",
       "recipes": "Todas as receitas do livro de receitas, com as fotos.",
       "meals": "Todas as refeições planeadas na ementa da semana.",
+      "notes": "Todos os recados afixados no Mural.",
       "persons": "As Pessoas, as alcunhas e os seus aniversários. As Entradas e Tarefas ficam para a Família.",
       "entryTypes": "Os tipos criados saem (as suas Entradas passam a Geral) e os de origem voltam ao início.",
       "templates": "As listas criadas saem e as de origem voltam ao início.",
@@ -1858,5 +1860,21 @@
       "sibling": "irmão ou irmã",
       "other": "outra relação"
     }
+  },
+  "notes": {
+    "title": "Recados",
+    "add": "Deixar um recado",
+    "text": "Recado",
+    "textHint": "Há sopa no frigorífico",
+    "color": "Cor do papel",
+    "colorN": "Cor {{n}}",
+    "keep": "Fica até",
+    "keeps": {
+      "today": "Hoje",
+      "tomorrow": "Amanhã",
+      "removed": "Alguém tirar"
+    },
+    "save": "Afixar",
+    "remove": "Tirar o recado \"{{text}}\""
   }
 }
