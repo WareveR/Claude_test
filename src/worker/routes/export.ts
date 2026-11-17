@@ -38,6 +38,7 @@ export const EXPORTED: Record<string, string[]> = {
   meal: [],
   note: [],
   contact: [],
+  countdown_mark: [],
   relative: [],
   relative_parent: [],
   relative_partner: [],
