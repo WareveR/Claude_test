@@ -22,6 +22,8 @@ export type Task = {
   repetition: Repetition | null;
   /** The Persons who take turns at a repeating Task. */
   rotation: Rotation | null;
+  /** Points each of its Persons earns when it is ticked done. */
+  points: number;
   seriesId: string | null;
   /** The Checklist this Task belongs to, if any. */
   checklistId: string | null;
@@ -44,6 +46,7 @@ export type TaskDraft = Pick<
   | "importance"
   | "repetition"
   | "rotation"
+  | "points"
   | "checklistId"
   | "entryId"
 >;
@@ -91,6 +94,7 @@ export function useMoveTask() {
           importance: task.importance,
           repetition: task.repetition,
           rotation: task.rotation,
+          points: task.points,
           checklistId: task.checklistId,
           parentId: task.parentId,
           entryId: task.entryId,
@@ -114,7 +118,12 @@ export function useTick() {
         ),
       );
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ["tasks"] }),
+    onSettled: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["tasks"] }),
+        // A Task with points earns them, or takes them back.
+        queryClient.invalidateQueries({ queryKey: ["points"] }),
+      ]),
   });
 }
 

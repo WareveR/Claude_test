@@ -351,6 +351,13 @@
       "when": 1794904513588,
       "tag": "0049_task_rotation",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "6",
+      "when": 1794904826157,
+      "tag": "0050_points",
+      "breakpoints": true
     }
   ]
 }

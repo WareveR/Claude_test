@@ -1963,5 +1963,21 @@
     "turnOf": "{{name}}'s turn",
     "swap": "Swap the turn",
     "swapWith": "Give the turn to {{name}}"
+  },
+  "points": {
+    "title": "Points",
+    "board": "Points",
+    "of": "{{name}}'s points",
+    "have_one": "Has {{count}} point.",
+    "have_other": "Has {{count}} points.",
+    "goal": "Goal",
+    "reward": "Reward",
+    "rewardHint": "Trip to the cinema, £5",
+    "saveGoal": "Save goal",
+    "redeem": "Reward given",
+    "hint": "Tasks with points add them to whoever does them. Giving the reward takes the goal off. With a goal, it shows on the Wall.",
+    "taskPoints": "Points when done",
+    "plus_one": "+{{count}} point",
+    "plus_other": "+{{count}} points"
   }
 }

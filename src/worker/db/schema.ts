@@ -276,6 +276,8 @@ export const task = sqliteTable("task", {
   entryId: text("entry_id").references(() => entry.id, { onDelete: "set null" }),
   /** High comes first among the Tasks due the same day. */
   importance: text("importance").$type<Importance>().notNull().default("normal"),
+  /** Points each of its Persons earns when it is ticked done; 0 earns none. */
+  points: integer("points").notNull().default(0),
   createdAt: text("created_at").notNull(),
   changedAt: text("changed_at").notNull(),
 });
@@ -608,6 +610,30 @@ export const countdownMark = sqliteTable("countdown_mark", {
     .primaryKey()
     .references(() => entry.id, { onDelete: "cascade" }),
   createdAt: text("created_at").notNull(),
+});
+
+/**
+ * Points a Person earned (a Task with points ticked done) or spent (a reward given: negative).
+ * A Person's points are the sum of their lines.
+ */
+export const pointsEntry = sqliteTable("points_entry", {
+  id: text("id").primaryKey(),
+  personId: text("person_id")
+    .notNull()
+    .references(() => person.id, { onDelete: "cascade" }),
+  points: integer("points").notNull(),
+  /** The Task that earned them; unticking it takes them back. Kept when the Task is deleted. */
+  taskId: text("task_id").references(() => task.id, { onDelete: "set null" }),
+  createdAt: text("created_at").notNull(),
+});
+
+/** What a Person saves points for: so many points, and the reward ("ida ao cinema", "5 €"). */
+export const pointsGoal = sqliteTable("points_goal", {
+  personId: text("person_id")
+    .primaryKey()
+    .references(() => person.id, { onDelete: "cascade" }),
+  goal: integer("goal").notNull(),
+  reward: text("reward").notNull().default(""),
 });
 
 /**

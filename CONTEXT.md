@@ -110,6 +110,10 @@ _Avoid_: Availability, free slot
 The Persons who take turns at a repeating Task, in the order picked: with "each time" the next Person gets each new Task of the series, with "each week" the turn goes by the week the Task is due. The Task is always for whoever's turn it is, shown as "Rui's turn"; the turn can be given to another Person of the Rotation for this time only, and the next Task goes on by the plan.
 _Avoid_: Roster, schedule, chore wheel
 
+**Points**:
+What a Person earns for doing Tasks, meant for children's chores and allowance: a Task may be worth up to 100 points, which each of its Persons earns when it is ticked done and loses again if it is unticked; deleting the Task keeps them. On their page a Person may save for a goal (so many points) and a reward ("cinema", "5 €"); "Reward given" spends the goal. Everyone saving for something shows on the Wall with how far they are.
+_Avoid_: Score, stars, credits
+
 **Display Mode**:
 A per-device setting for a screen used as a wall display (typically a tablet): the screen stays awake, text is larger, the view returns to today after a few minutes without touch and rolls over at midnight, editing controls are hidden except ticking a Task done, and Private Entries and Tasks show only as "Private". Display Mode is entered from the "Wall" tab of the view switcher and left with the Wall switch in the header, which asks the password of the Account the device is signed in with, so a child at a wall tablet can't reach everything that Account sees; each device can switch that question off in its own Settings, which the Wall hides. It is not a separate access level.
 _Avoid_: Kiosk, read-only mode, wall mode

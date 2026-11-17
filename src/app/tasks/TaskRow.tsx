@@ -88,6 +88,11 @@ export function TaskRow({
         )}
       </Wrapper>
       {task.rotation && !done && !wall && <TurnSwap task={task} persons={persons} />}
+      {task.points > 0 && (
+        <span className="shrink-0 text-xs font-semibold text-accent" data-testid="task-points">
+          {t("points.plus", { count: task.points })}
+        </span>
+      )}
       <span className="flex -space-x-1">
         {task.personIds.map((id) => {
           const person = persons.find((p) => p.id === id);

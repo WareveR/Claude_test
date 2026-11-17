@@ -62,7 +62,7 @@ function TaskForm({ task }: { task?: Task }) {
   const given = state?.values;
   const [draft, setDraft] = useState<TaskDraft>(
     () =>
-      (task && { ...task, rotation: task.rotation ?? null }) ?? {
+      (task && { ...task, rotation: task.rotation ?? null, points: task.points ?? 0 }) ?? {
         title: "",
         notes: "",
         dueDate: date && isPlainDate(date) ? date : null,
@@ -72,6 +72,7 @@ function TaskForm({ task }: { task?: Task }) {
         importance: "normal",
         repetition: null,
         rotation: null,
+        points: 0,
         checklistId: null,
         entryId: entry,
         ...given,
@@ -328,6 +329,21 @@ function TaskForm({ task }: { task?: Task }) {
                   </option>
                 ))}
               </select>
+            </Field>
+            <Field label={t("points.taskPoints")}>
+              <TextInput
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={100}
+                value={draft.points ? String(draft.points) : ""}
+                placeholder="0"
+                onChange={(e) =>
+                  set({
+                    points: Math.max(0, Math.min(100, Math.floor(Number(e.target.value) || 0))),
+                  })
+                }
+              />
             </Field>
             <Field label={t("entries.notes")}>
               <textarea

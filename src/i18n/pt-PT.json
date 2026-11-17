@@ -1963,5 +1963,21 @@
     "turnOf": "Vez de {{name}}",
     "swap": "Trocar a vez",
     "swapWith": "Dar a vez a {{name}}"
+  },
+  "points": {
+    "title": "Pontos",
+    "board": "Pontos",
+    "of": "Pontos de {{name}}",
+    "have_one": "Tem {{count}} ponto.",
+    "have_other": "Tem {{count}} pontos.",
+    "goal": "Objetivo",
+    "reward": "Recompensa",
+    "rewardHint": "Ida ao cinema, 5 €",
+    "saveGoal": "Guardar objetivo",
+    "redeem": "Recompensa entregue",
+    "hint": "As tarefas com pontos somam-nos a quem as faz. Entregar a recompensa desconta o objetivo. Com objetivo, aparece no Mural.",
+    "taskPoints": "Pontos ao fazer",
+    "plus_one": "+{{count}} ponto",
+    "plus_other": "+{{count}} pontos"
   }
 }

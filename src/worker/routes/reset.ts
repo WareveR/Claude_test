@@ -45,7 +45,7 @@ export async function resetSteps(db: Db, parts: Set<ResetPart>, now: string) {
     steps.push(db.delete(schema.entry).where(isNull(schema.entry.birthdayPersonId)));
   }
   if (parts.has("tasks")) {
-    steps.push(db.delete(schema.task), db.delete(schema.checklist));
+    steps.push(db.delete(schema.pointsEntry), db.delete(schema.task), db.delete(schema.checklist));
   }
   if (parts.has("shopping")) steps.push(db.delete(schema.shoppingItem));
   // Deleting only the Recipes leaves their Meals as text (the foreign key sets the Recipe to none).
