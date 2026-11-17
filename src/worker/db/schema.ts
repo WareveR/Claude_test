@@ -15,6 +15,7 @@ import type { Edition, Segment } from "../../core/briefing";
 import type { DayWeather, Forecast, HourWeather } from "../../core/weather";
 import type { WasteCollection } from "../../core/waste";
 import type { PersonKind, PersonProfile } from "../../core/person-profile";
+import type { Rotation } from "../../core/rotation";
 
 /**
  * The one Family of this installation (ADR-0001) and its Family-wide settings.
@@ -256,6 +257,8 @@ export const task = sqliteTable("task", {
   doneAt: text("done_at"),
   /** A repeating Task brings up the next one when ticked; needs a due date. */
   repetition: text("repetition", { mode: "json" }).$type<Repetition | null>(),
+  /** A repeating Task's Rotation: the Persons who take turns at it (Rotation). */
+  rotation: text("rotation", { mode: "json" }).$type<Rotation | null>(),
   /** Links the Tasks of one repeating series. */
   seriesId: text("series_id"),
   /** The Task whose tick created this one; undoing that tick removes it if still untouched. */

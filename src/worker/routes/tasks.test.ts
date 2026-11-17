@@ -292,3 +292,68 @@ describe("Many Tasks", () => {
     expect(((await list.json()) as Task[]).length).toBe(120);
   });
 });
+
+describe("Tasks that take turns", () => {
+  const weekly = { frequency: "weekly", interval: 1, end: { type: "never" } };
+
+  async function chore(browser: TestBrowser, personIds: string[], every = "turn") {
+    const res = await browser.post("/tasks", {
+      title: "Pôr a loiça",
+      dueDate: "2026-11-16",
+      personIds: [],
+      repetition: weekly,
+      rotation: { personIds, every, turn: 1, anchor: "2026-11-16" },
+    });
+    expect(res.status).toBe(201);
+    return (await res.json()) as Task & { rotation: unknown };
+  }
+
+  it("go to whoever's turn it is, then the next Person each time", async () => {
+    const { browser, ana } = await family();
+    const rui = (await (
+      await browser.post("/persons", { name: "Rui", color: "#81b29a" })
+    ).json()) as { id: string };
+    const task = await chore(browser, [ana.id, rui.id]);
+    expect(task.personIds).toEqual([rui.id]);
+
+    await browser.post(`/tasks/${task.id}/done`);
+    const tasks = (await (await browser.get("/tasks")).json()) as (Task & {
+      rotation: { turn: number };
+    })[];
+    const next = tasks.find((t) => t.id !== task.id && !t.doneAt)!;
+    expect(next.personIds).toEqual([ana.id]);
+    expect(next.rotation.turn).toBe(0);
+  });
+
+  it("can be swapped to another Person of the Rotation, this time only", async () => {
+    const { browser, ana } = await family();
+    const rui = (await (
+      await browser.post("/persons", { name: "Rui", color: "#81b29a" })
+    ).json()) as { id: string };
+    const task = await chore(browser, [ana.id, rui.id]);
+    const swapped = await browser.post(`/tasks/${task.id}/turn`, { personId: ana.id });
+    expect(((await swapped.json()) as Task).personIds).toEqual([ana.id]);
+    expect((await browser.post(`/tasks/${task.id}/turn`, { personId: "x" })).status).toBe(400);
+    // Ticked, the next one is still Ana's by the plan.
+    await browser.post(`/tasks/${task.id}/done`);
+    const tasks = (await (await browser.get("/tasks")).json()) as Task[];
+    expect(tasks.find((t) => !t.doneAt)?.personIds).toEqual([ana.id]);
+  });
+
+  it("need a repetition and Persons that exist", async () => {
+    const { browser, ana } = await family();
+    const bad = await browser.post("/tasks", {
+      title: "X",
+      dueDate: "2026-11-16",
+      rotation: { personIds: [ana.id, "ghost"], every: "turn", turn: 0, anchor: "2026-11-16" },
+      repetition: weekly,
+    });
+    expect(bad.status).toBe(400);
+    const noRepeat = await browser.post("/tasks", {
+      title: "X",
+      dueDate: "2026-11-16",
+      rotation: { personIds: [ana.id, ana.id], every: "turn", turn: 0, anchor: "2026-11-16" },
+    });
+    expect(noRepeat.status).toBe(400);
+  });
+});

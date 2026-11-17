@@ -11,6 +11,7 @@ import type { Person } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
 import { useTick, type Task } from "./model";
 import { Tick } from "../ui/Toggle";
+import { TurnSwap } from "./TurnSwap";
 
 /** One Task with its tick box; done ones are struck through. */
 export function TaskRow({
@@ -86,6 +87,7 @@ export function TaskRow({
           </span>
         )}
       </Wrapper>
+      {task.rotation && !done && !wall && <TurnSwap task={task} persons={persons} />}
       <span className="flex -space-x-1">
         {task.personIds.map((id) => {
           const person = persons.find((p) => p.id === id);

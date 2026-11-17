@@ -4,6 +4,7 @@ import { isClockTime } from "../../core/entry-time";
 import { IMPORTANCES, type Importance } from "../../core/entry-type";
 import { isPlainDate } from "../../core/plain-date";
 import { isRepetition, type Repetition } from "../../core/repetition";
+import { isRotation, nextRotation, turnFor, type Rotation } from "../../core/rotation";
 import { familyNow, nextRepeat } from "../../core/task";
 import { wouldNestInItself } from "../../core/task-tree";
 import { randomId } from "../auth/crypto";
@@ -28,6 +29,7 @@ export type TaskInput = {
   personIds: string[];
   private: boolean;
   repetition: Repetition | null;
+  rotation: Rotation | null;
   checklistId: string | null;
   section: string;
   parentId: string | null;
@@ -84,6 +86,16 @@ async function parseTask(db: Db, body: Record<string, unknown>) {
   ) {
     return { field: "repetition" };
   }
+  // Only a repeating Task takes turns, among Persons that exist.
+  const rotation = body.rotation ?? null;
+  if (rotation !== null) {
+    if (!isRotation(rotation) || repetition === null) return { field: "rotation" };
+    const found = await db
+      .select({ id: schema.person.id })
+      .from(schema.person)
+      .where(inArray(schema.person.id, rotation.personIds));
+    if (found.length !== rotation.personIds.length) return { field: "rotation" };
+  }
   const importance = body.importance ?? "normal";
   if (!IMPORTANCES.includes(importance as Importance)) return { field: "importance" };
   const personIds = Array.isArray(body.personIds) ? [...new Set(body.personIds)] : [];
@@ -104,6 +116,7 @@ async function parseTask(db: Db, body: Record<string, unknown>) {
       personIds: personIds as string[],
       private: Boolean(body.private),
       repetition: repetition as Repetition | null,
+      rotation: rotation as Rotation | null,
       checklistId: checklistId as string | null,
       // Items nest instead of having sections (migration 0027).
       section: "",
@@ -139,6 +152,7 @@ async function present(db: Db, rows: TaskRow[], viewer: Account) {
       hidden,
       doneAt: row.doneAt,
       repetition: row.repetition ?? null,
+      rotation: row.rotation ?? null,
       seriesId: row.seriesId,
       checklistId: row.checklistId,
       parentId: row.parentId,
@@ -201,7 +215,9 @@ taskRoutes.post("/tasks", async (c) => {
   const db = c.get("db");
   const parsed = await parseTask(db, await c.req.json().catch(() => ({})));
   if (!parsed.values) return c.json({ error: "invalid", field: parsed.field }, 400);
-  const { personIds, ...fields } = parsed.values;
+  const { personIds: given, ...fields } = parsed.values;
+  // A Task that takes turns is for whoever's turn it is.
+  const personIds = fields.rotation ? [turnFor(fields.rotation, fields.dueDate!)] : given;
   const id = randomId();
   const now = c.get("now").toISOString();
   await db.batch([
@@ -230,9 +246,19 @@ taskRoutes.put("/tasks/:id", async (c) => {
   if (!existing) return c.json({ error: "not_found" }, 404);
   if (!(await mayChangeTask(db, c.get("account"), existing)))
     return c.json({ error: "private" }, 403);
-  const parsed = await parseTask(db, await c.req.json().catch(() => ({})));
+  const body = await c.req.json().catch(() => ({}));
+  const parsed = await parseTask(db, body);
   if (!parsed.values) return c.json({ error: "invalid", field: parsed.field }, 400);
-  const { personIds, ...fields } = parsed.values;
+  const { personIds: given, ...fields } = parsed.values;
+  // A change that doesn't mention the Rotation (moving the Task, a voice change) keeps it,
+  // as long as the Task still repeats.
+  if (!("rotation" in body))
+    fields.rotation = fields.repetition ? (existing.rotation ?? null) : null;
+  // A new or changed Rotation gives the Task to whoever's turn it is; otherwise a swap stays.
+  const personIds =
+    fields.rotation && JSON.stringify(fields.rotation) !== JSON.stringify(existing.rotation ?? null)
+      ? [turnFor(fields.rotation, fields.dueDate!)]
+      : given;
   if (fields.checklistId) {
     const items = await db
       .select({ id: schema.task.id, parentId: schema.task.parentId, doneAt: schema.task.doneAt })
@@ -300,6 +326,7 @@ taskRoutes.post("/tasks/:id/done", async (c) => {
         .from(schema.taskPerson)
         .where(eq(schema.taskPerson.taskId, id));
       const nextId = randomId();
+      const rotation = existing.rotation ?? null;
       await db.batch([
         tick,
         db.insert(schema.task).values({
@@ -313,6 +340,7 @@ taskRoutes.post("/tasks/:id/done", async (c) => {
           importance: existing.importance,
           entryId: existing.entryId,
           repetition: next.repetition,
+          rotation: rotation && nextRotation(rotation),
           seriesId: existing.seriesId ?? existing.id,
           repeatOf: id,
           createdAt: at,
@@ -321,7 +349,8 @@ taskRoutes.post("/tasks/:id/done", async (c) => {
         ...personLinks(
           db,
           nextId,
-          links.map((l) => l.personId),
+          // The next one is the next Person's turn; a swap made on this one doesn't carry over.
+          rotation ? [turnFor(nextRotation(rotation), next.dueDate)] : links.map((l) => l.personId),
         ),
         ...(existing.seriesId
           ? []
@@ -329,6 +358,33 @@ taskRoutes.post("/tasks/:id/done", async (c) => {
       ]);
     }
   }
+  return c.json(await presentOne(db, id, c.get("account")));
+});
+
+/** Gives a Task that takes turns to another Person of its Rotation, this time only. */
+taskRoutes.post("/tasks/:id/turn", async (c) => {
+  const db = c.get("db");
+  const id = c.req.param("id");
+  const [existing] = await db.select().from(schema.task).where(eq(schema.task.id, id));
+  if (!existing) return c.json({ error: "not_found" }, 404);
+  if (!(await mayChangeTask(db, c.get("account"), existing)))
+    return c.json({ error: "private" }, 403);
+  const body = (await c.req.json().catch(() => ({}))) as { personId?: unknown };
+  if (
+    !existing.rotation ||
+    typeof body.personId !== "string" ||
+    !existing.rotation.personIds.includes(body.personId)
+  ) {
+    return c.json({ error: "invalid", field: "personId" }, 400);
+  }
+  await db.batch([
+    db
+      .update(schema.task)
+      .set({ changedAt: c.get("now").toISOString() })
+      .where(eq(schema.task.id, id)),
+    db.delete(schema.taskPerson).where(eq(schema.taskPerson.taskId, id)),
+    ...personLinks(db, id, [body.personId]),
+  ]);
   return c.json(await presentOne(db, id, c.get("account")));
 });
 
