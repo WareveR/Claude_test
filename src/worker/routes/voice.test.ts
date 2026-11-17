@@ -1103,6 +1103,31 @@ describe("Voice Entry: Shopping List", () => {
   });
 });
 
+describe("Voice Entry: Notes", () => {
+  it("reads a Note without the model and saves nothing until applied", async () => {
+    const { browser } = await family();
+    const res = await browser.post("/voice", { sentence: "deixa um recado: há sopa" });
+    const body = (await res.json()) as {
+      outcome: string;
+      plan: {
+        kind: string;
+        summary: string;
+        apply: { all: { method: string; path: string; body: unknown }[] };
+        undo: { path: string }[];
+      };
+    };
+    expect(body.outcome).toBe("change");
+    expect(body.plan).toMatchObject({ kind: "note", summary: "Recado: Há sopa", scope: "all" });
+    expect(prompts).toHaveLength(0);
+    expect(await (await browser.get("/notes")).json()).toEqual([]);
+
+    const [post] = body.plan.apply.all;
+    expect((await browser.request(post.method, post.path, post.body)).status).toBe(201);
+    expect(await (await browser.get("/notes")).json()).toMatchObject([{ text: "Há sopa" }]);
+    expect((await browser.delete(body.plan.undo[0].path)).status).toBe(204);
+  });
+});
+
 describe("Voice Entry: corrections", () => {
   it("gives the model what was said after the readback, and skips the shopping shortcut", async () => {
     const { browser } = await family();

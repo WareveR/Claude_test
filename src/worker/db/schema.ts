@@ -560,6 +560,25 @@ export const meal = sqliteTable(
 );
 
 /**
+ * A Note left on the Wall for the rest of the Family ("há sopa"), like paper on the fridge. Not an
+ * Entry. It shows until the end of `until` (a plain day in the Family Time Zone), or until someone
+ * removes it when that is null.
+ */
+export const note = sqliteTable("note", {
+  id: text("id").primaryKey(),
+  text: text("text").notNull(),
+  /** One of NOTE_COLORS. */
+  color: text("color").notNull(),
+  /** YYYY-MM-DD, the last day it shows; null until removed. */
+  until: text("until"),
+  /** Who wrote it; its Person's name is shown as the author. */
+  authorAccountId: text("author_account_id").references(() => account.id, {
+    onDelete: "set null",
+  }),
+  createdAt: text("created_at").notNull(),
+});
+
+/**
  * Someone in the Family Tree: to show the children where they come from. Not a Person: never
  * on the calendar, and may have lived long ago.
  */

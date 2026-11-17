@@ -38,7 +38,7 @@ type Proposal = { kind: Kind; values: object; summary: string; form?: TaskWithIt
 type Create = Proposal & { outcome: "create"; more?: Proposal[] };
 type Req = { method: "PUT" | "POST" | "PATCH" | "DELETE"; path: string; body?: unknown };
 type Plan = {
-  kind: "entry" | "task" | "shopping" | "checklist" | "relative";
+  kind: "entry" | "task" | "shopping" | "checklist" | "relative" | "note";
   id: string;
   date: string | null;
   label: string;
@@ -250,6 +250,7 @@ export function VoiceEntry() {
       queryClient.invalidateQueries({ queryKey: ["checklist-templates"] }),
       refreshShopping(queryClient),
       queryClient.invalidateQueries({ queryKey: ["relatives"] }),
+      queryClient.invalidateQueries({ queryKey: ["notes"] }),
     ]);
 
   const openForm = (kind: "entry" | "task", values: object) => {

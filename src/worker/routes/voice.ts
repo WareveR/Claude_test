@@ -9,6 +9,8 @@ import { AI_CALLS_PER_DAY, day, withinLimit } from "../usage";
 import { requireDevice } from "../require-device";
 import type { AppEnv } from "../types";
 import { readShoppingPhrase } from "../../core/shopping-phrase";
+import { readNotePhrase } from "../../core/notes";
+import { noteCommand } from "../voice/notes";
 import { briefingCommand, openCommand } from "../voice/navigation";
 import { questionCommand, weatherCommand } from "../voice/agenda";
 import { changeCommand } from "../voice/change";
@@ -69,6 +71,12 @@ voiceRoutes.post("/voice", async (c) => {
   const shopping =
     corrections.length === 0 && !NAMES_SHOP.test(sentence) && readShoppingPhrase(sentence);
   if (shopping) return c.json(await shoppingAnswer(db, shopping));
+  // "deixa um recado: há sopa" needs no model either.
+  const note = corrections.length === 0 && readNotePhrase(sentence);
+  if (note) {
+    const said = c.get("device").language;
+    return c.json(noteCommand(note, isLanguage(said) ? said : "pt-PT"));
+  }
   const loaded = await loadAll(db, c.get("account"));
   const { family, persons, nicknames, types, templates, tasks, checklists, relatives } = loaded;
   const { entries } = loaded;
