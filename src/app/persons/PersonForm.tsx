@@ -10,6 +10,7 @@ import { RelationSection } from "./RelationSection";
 import { PersonContacts } from "../contacts/MatchedContacts";
 import { PersonPoints } from "../points/Points";
 import { PersonMedications } from "../medications/Medications";
+import { PersonGifts } from "../gifts/Gifts";
 import { readyToEdit } from "../offline/fresh";
 import {
   EMPTY_PROFILE,
@@ -265,6 +266,7 @@ function PersonForm({ person }: { person?: Person }) {
       {person && !animal && <RelationSection person={person} />}
       {person && <PersonContacts personId={person.id} />}
       {person && <PersonMedications personId={person.id} />}
+      {person && !animal && <PersonGifts personId={person.id} />}
       {person && !animal && <PersonPoints personId={person.id} />}
       {person && (
         <div className="flex flex-col gap-2 border-t border-line pt-4">

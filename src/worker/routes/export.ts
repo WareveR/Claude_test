@@ -43,6 +43,7 @@ export const EXPORTED: Record<string, string[]> = {
   points_goal: [],
   medication: [],
   medication_dose: [],
+  gift_idea: [],
   relative: [],
   relative_parent: [],
   relative_partner: [],
@@ -127,6 +128,8 @@ function hidePrivate(tables: Record<string, Row[]>, viewer: Account) {
     Object.assign(row, { title: "", notes: "", importance: "normal" });
     hiddenTasks.add(row.id as string);
   }
+  // Gift Ideas for the viewer's own Person are left out: they are surprises.
+  tables.gift_idea = tables.gift_idea.filter((g) => g.person_id !== viewer.personId);
   // A hidden Private Medication is left out altogether, with its doses.
   const hiddenMeds = new Set(
     tables.medication

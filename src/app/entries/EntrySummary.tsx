@@ -15,6 +15,7 @@ import { EntryShopping } from "../shopping/EntryShopping";
 import { EntryPreparation } from "./EntryPreparation";
 import { EntryContacts } from "../contacts/MatchedContacts";
 import { CountdownSwitch } from "../countdown/Countdowns";
+import { BirthdayGifts } from "../gifts/Gifts";
 import { Attachments } from "../attachments/Attachments";
 import { occurrenceValues, useEntry } from "./model";
 
@@ -155,6 +156,9 @@ export function EntrySummary({
       )}
       {hidden && shown.hidden && !discreet && personList}
       {!discreet && !shown.hidden && !shown.private && <CountdownSwitch entryId={id} />}
+      {!discreet && !shown.hidden && entry.data.birthdayPersonId && (
+        <BirthdayGifts personId={entry.data.birthdayPersonId} />
+      )}
       {!discreet && !shown.hidden && <EntryPreparation entryId={id} readOnly />}
       {!discreet && !shown.hidden && (
         <Attachments owner={`entry=${id}`} readOnly className="border-t border-line pt-3" />

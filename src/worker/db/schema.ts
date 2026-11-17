@@ -16,6 +16,7 @@ import type { DayWeather, Forecast, HourWeather } from "../../core/weather";
 import type { WasteCollection } from "../../core/waste";
 import type { PersonKind, PersonProfile } from "../../core/person-profile";
 import type { Rotation } from "../../core/rotation";
+import type { GiftOccasion } from "../../core/gifts";
 
 /**
  * The one Family of this installation (ADR-0001) and its Family-wide settings.
@@ -673,6 +674,24 @@ export const medicationDose = sqliteTable(
   },
   (t) => [uniqueIndex("medication_dose_due").on(t.medicationId, t.date, t.time)],
 );
+
+/**
+ * A Gift Idea for one Person: a Birthday, Christmas or any time. Never shown to the Account of
+ * the Person it is for.
+ */
+export const giftIdea = sqliteTable("gift_idea", {
+  id: text("id").primaryKey(),
+  personId: text("person_id")
+    .notNull()
+    .references(() => person.id, { onDelete: "cascade" }),
+  text: text("text").notNull(),
+  link: text("link").notNull().default(""),
+  occasion: text("occasion").$type<GiftOccasion>().notNull().default("any"),
+  givenOn: text("given_on"),
+  createdBy: text("created_by").references(() => account.id, { onDelete: "set null" }),
+  createdAt: text("created_at").notNull(),
+  changedAt: text("changed_at").notNull(),
+});
 
 /**
  * Someone in the Family Tree: to show the children where they come from. Not a Person: never
