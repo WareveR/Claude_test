@@ -264,7 +264,21 @@
       "schoolHint": "EB Sá de Miranda, 3.º B",
       "notes": "Notas",
       "warning": "Atenção a alergias",
-      "warningLine": "{{person}}: {{allergy}} ({{ingredient}})"
+      "warningLine": "{{person}}: {{allergy}} ({{ingredient}})",
+      "species": "Espécie",
+      "breed": "Raça",
+      "chip": "N.º do chip",
+      "chipHint": "941000012345678",
+      "food": "Ração",
+      "foodHint": "Ração Royal Canin Mini 2 kg",
+      "addFood": "Pôr \"{{food}}\" na lista de compras",
+      "foodAdded": "Na lista de compras",
+      "vetHint": "O veterinário entra em Contactos úteis, como contacto deste animal."
+    },
+    "kind": "É uma",
+    "kinds": {
+      "person": "Pessoa",
+      "animal": "Animal"
     }
   },
   "entryTypes": {

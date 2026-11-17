@@ -48,3 +48,39 @@ test("a Person's profile keeps sizes and allergies, and a Recipe warns about the
     await page.request.delete(`/api/persons/${person.id}`, { headers: ORIGIN });
   }
 });
+
+test("an animal's page keeps its chip and food and puts the food on the shopping list", async ({
+  page,
+}) => {
+  await signIn(page);
+  await page.goto("/settings/persons/new");
+  await page.getByRole("radio", { name: "Animal" }).click();
+  await page.getByLabel("Name", { exact: true }).fill("Bolinhas x60");
+  await page.getByText("Profile", { exact: true }).click();
+  await page.getByLabel("Species").fill("Cão");
+  await page.getByLabel("Food").fill("Ração x60");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page).toHaveURL(/\/settings\/family$/);
+
+  const persons = (await (await page.request.get("/api/persons")).json()) as {
+    id: string;
+    name: string;
+    kind: string;
+  }[];
+  const bolinhas = persons.find((p) => p.name === "Bolinhas x60")!;
+  expect(bolinhas.kind).toBe("animal");
+  try {
+    await page.goto(`/settings/persons/${bolinhas.id}`);
+    await page.getByRole("button", { name: 'Put "Ração x60" on the shopping list' }).click();
+    await expect(page.getByRole("button", { name: "On the shopping list" })).toBeDisabled();
+    const items = (await (await page.request.get("/api/shopping/items")).json()) as {
+      id: string;
+      name: string;
+    }[];
+    const food = items.find((i) => i.name === "Ração x60");
+    expect(food).toBeDefined();
+    await page.request.delete(`/api/shopping/items/${food!.id}`, { headers: ORIGIN });
+  } finally {
+    await page.request.delete(`/api/persons/${bolinhas.id}`, { headers: ORIGIN });
+  }
+});

@@ -36,7 +36,12 @@ describe("Persons", () => {
       doctor: "",
       school: "",
       notes: "",
+      species: "",
+      breed: "",
+      chip: "",
+      food: "",
     });
+    expect(ana).toMatchObject({ kind: "person" });
     const res = await browser.request("PATCH", `/persons/${ana.id}`, {
       profile: { shoes: " 34 ", allergies: ["amendoim", " ", "ovo"], doctor: "Dra. Lopes" },
     });

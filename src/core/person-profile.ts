@@ -16,7 +16,21 @@ export type PersonProfile = {
   /** School, year and class. */
   school: string;
   notes: string;
+  /** An animal's: "Cão", "Gato". */
+  species: string;
+  breed: string;
+  /** The microchip number. */
+  chip: string;
+  /** What it eats, put on the Shopping List from its page. */
+  food: string;
 };
+
+/** A Person is someone, or one of the Family's animals (the dog, the cat). */
+export type PersonKind = "person" | "animal";
+
+export function isPersonKind(value: unknown): value is PersonKind {
+  return value === "person" || value === "animal";
+}
 
 export const EMPTY_PROFILE: PersonProfile = {
   clothes: "",
@@ -25,6 +39,10 @@ export const EMPTY_PROFILE: PersonProfile = {
   doctor: "",
   school: "",
   notes: "",
+  species: "",
+  breed: "",
+  chip: "",
+  food: "",
 };
 
 export const MAX_PROFILE_FIELD = 200;
@@ -32,7 +50,16 @@ export const MAX_PROFILE_NOTES = 2000;
 export const MAX_ALLERGIES = 20;
 export const MAX_ALLERGY = 60;
 
-const SHORT_FIELDS = ["clothes", "shoes", "doctor", "school"] as const;
+const SHORT_FIELDS = [
+  "clothes",
+  "shoes",
+  "doctor",
+  "school",
+  "species",
+  "breed",
+  "chip",
+  "food",
+] as const;
 
 /** The profile sent by the browser, cleaned; or the name of the first bad field. */
 export function parseProfile(value: unknown): { profile: PersonProfile } | { field: string } {

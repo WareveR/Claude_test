@@ -337,6 +337,13 @@
       "when": 1794903463840,
       "tag": "0047_countdowns",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "6",
+      "when": 1794904137491,
+      "tag": "0048_person_kind",
+      "breakpoints": true
     }
   ]
 }

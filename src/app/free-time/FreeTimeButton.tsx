@@ -52,12 +52,14 @@ function FreeTimeDialog({
   const locale = formatLocale(language);
   const navigate = useNavigate();
   const titleId = useId();
-  const persons = (usePersons().data ?? []).filter((p) => !p.archived);
+  // Only people: the dog is free whenever the Family is.
+  const persons = (usePersons().data ?? []).filter((p) => !p.archived && p.kind !== "animal");
   const filter = usePersonFilter();
   // The Persons the views are narrowed to, or everyone.
-  const [chosen, setChosen] = useState<string[]>(() =>
-    filter.personIds.length > 0 ? filter.personIds : persons.map((p) => p.id),
-  );
+  const [chosen, setChosen] = useState<string[]>(() => {
+    const filtered = persons.filter((p) => filter.personIds.includes(p.id));
+    return (filtered.length > 0 ? filtered : persons).map((p) => p.id);
+  });
   const [minutes, setMinutes] = useState(60);
   const occurrences = useOccurrences(from, to).data;
   useEffect(() => {
