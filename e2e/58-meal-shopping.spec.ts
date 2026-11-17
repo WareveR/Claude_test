@@ -123,6 +123,9 @@ test("the meal plan adds the week's ingredients to the shopping list, summed, an
   // Undo puts the first quantity back.
   await page.goto(`/meals/${today}`);
   await page.getByTestId("meal-shopping-button").click();
+  await expect(sheet.getByTestId("meal-shopping-existing").first()).toContainText(
+    "already on the list",
+  );
   await sheet.getByRole("button", { name: "Add 3" }).click();
   await page.getByRole("status").getByRole("button", { name: "Undo" }).click();
   await expect(page.getByRole("status")).toContainText("Undone");
