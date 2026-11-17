@@ -1950,5 +1950,18 @@
     "none": "Nobody is free at the same time this week.",
     "plan": "Plan it here",
     "close": "Close"
+  },
+  "rotation": {
+    "title": "Take turns",
+    "every": "The turn passes",
+    "everyOptions": {
+      "turn": "Each time",
+      "week": "Each week"
+    },
+    "hint": "Pick in order; the first starts. The task is for whoever's turn it is.",
+    "needsTwo": "Pick at least two people to take turns.",
+    "turnOf": "{{name}}'s turn",
+    "swap": "Swap the turn",
+    "swapWith": "Give the turn to {{name}}"
   }
 }

@@ -106,6 +106,10 @@ _Avoid_: Timer, days left
 The stretches in which chosen Persons have no timed Entry, nor the whole Family, outside the Sleeping Hours and after now. The week view's "Find free time" button shows them for its week, for the Persons the views are narrowed to (or everyone), at least 30 minutes to 3 hours long, and a stretch opens a new Entry there for those Persons. Asked by voice ("quando é que estamos todos livres?"), the next stretches of an hour in the coming 7 days are said back, for the Persons named or everyone. Private Entries count as busy, only their times used; all-day Entries don't fill the hours.
 _Avoid_: Availability, free slot
 
+**Rotation**:
+The Persons who take turns at a repeating Task, in the order picked: with "each time" the next Person gets each new Task of the series, with "each week" the turn goes by the week the Task is due. The Task is always for whoever's turn it is, shown as "Rui's turn"; the turn can be given to another Person of the Rotation for this time only, and the next Task goes on by the plan.
+_Avoid_: Roster, schedule, chore wheel
+
 **Display Mode**:
 A per-device setting for a screen used as a wall display (typically a tablet): the screen stays awake, text is larger, the view returns to today after a few minutes without touch and rolls over at midnight, editing controls are hidden except ticking a Task done, and Private Entries and Tasks show only as "Private". Display Mode is entered from the "Wall" tab of the view switcher and left with the Wall switch in the header, which asks the password of the Account the device is signed in with, so a child at a wall tablet can't reach everything that Account sees; each device can switch that question off in its own Settings, which the Wall hides. It is not a separate access level.
 _Avoid_: Kiosk, read-only mode, wall mode

@@ -14,6 +14,7 @@ import { LinkedEntry } from "../entries/EntryPreparation";
 import { KindSwitch, useNewKind, type Carried } from "../entries/NewKind";
 import { ConvertButton } from "../entries/ConvertButton";
 import { RepetitionFields } from "../entries/RepetitionFields";
+import { RotationFields } from "./RotationFields";
 import { usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
 import { ErrorText, Field, FormActions, TextInput } from "../screens/form";
@@ -61,7 +62,7 @@ function TaskForm({ task }: { task?: Task }) {
   const given = state?.values;
   const [draft, setDraft] = useState<TaskDraft>(
     () =>
-      task ?? {
+      (task && { ...task, rotation: task.rotation ?? null }) ?? {
         title: "",
         notes: "",
         dueDate: date && isPlainDate(date) ? date : null,
@@ -70,6 +71,7 @@ function TaskForm({ task }: { task?: Task }) {
         private: false,
         importance: "normal",
         repetition: null,
+        rotation: null,
         checklistId: null,
         entryId: entry,
         ...given,
@@ -111,8 +113,13 @@ function TaskForm({ task }: { task?: Task }) {
   };
   const save = useMutation({
     mutationFn: async () => {
-      if (task) return api(`/tasks/${task.id}`, { method: "PUT", body: draft });
-      const created = await api<{ id: string }>("/tasks", { method: "POST", body: draft });
+      // A Rotation of one isn't one.
+      const body =
+        draft.rotation && draft.rotation.personIds.length < 2
+          ? { ...draft, rotation: null }
+          : draft;
+      if (task) return api(`/tasks/${task.id}`, { method: "PUT", body });
+      const created = await api<{ id: string }>("/tasks", { method: "POST", body });
       await sendPending(`task=${created.id}`);
     },
     onSuccess: leave,
@@ -235,7 +242,7 @@ function TaskForm({ task }: { task?: Task }) {
                 set(
                   e.target.value
                     ? { dueDate: e.target.value }
-                    : { dueDate: null, dueTime: null, repetition: null },
+                    : { dueDate: null, dueTime: null, repetition: null, rotation: null },
                 )
               }
             />
@@ -257,14 +264,25 @@ function TaskForm({ task }: { task?: Task }) {
           <RepetitionFields
             value={draft.repetition}
             start={draft.dueDate}
-            onChange={(repetition) => set({ repetition })}
+            onChange={(repetition) =>
+              set(repetition ? { repetition } : { repetition, rotation: null })
+            }
           />
         ) : (
           <p className="text-xs text-muted">{t("tasks.repeatNeedsDate")}</p>
         )}
         {draft.repetition && <p className="-mt-2 text-xs text-muted">{t("tasks.repeatHint")}</p>}
+        {draft.repetition && draft.dueDate && !withItems && (
+          <RotationFields
+            value={draft.rotation}
+            start={draft.dueDate}
+            onChange={(rotation) => set({ rotation })}
+          />
+        )}
 
-        <fieldset className="flex flex-col gap-1 text-sm">
+        <fieldset
+          className={`flex flex-col gap-1 text-sm ${(draft.rotation?.personIds.length ?? 0) >= 2 ? "hidden" : ""}`}
+        >
           <legend className="mb-1 font-medium" data-help="persons" data-help-field="">
             {t("entries.persons")}
           </legend>

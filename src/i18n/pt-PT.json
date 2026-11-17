@@ -1950,5 +1950,18 @@
     "none": "Ninguém fica livre ao mesmo tempo esta semana.",
     "plan": "Marcar aqui",
     "close": "Fechar"
+  },
+  "rotation": {
+    "title": "Rodar entre",
+    "every": "A vez passa",
+    "everyOptions": {
+      "turn": "De cada vez",
+      "week": "Cada semana"
+    },
+    "hint": "Escolhe pela ordem; o primeiro começa. A tarefa fica de quem tem a vez.",
+    "needsTwo": "Escolhe pelo menos duas Pessoas para rodarem.",
+    "turnOf": "Vez de {{name}}",
+    "swap": "Trocar a vez",
+    "swapWith": "Dar a vez a {{name}}"
   }
 }

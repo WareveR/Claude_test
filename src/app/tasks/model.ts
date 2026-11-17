@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Importance } from "../../core/entry-type";
 import type { Repetition } from "../../core/repetition";
+import type { Rotation } from "../../core/rotation";
 import { api } from "../api";
 import { fromList } from "../offline/from-list";
 import i18n from "../i18n";
@@ -19,6 +20,8 @@ export type Task = {
   importance: Importance;
   doneAt: string | null;
   repetition: Repetition | null;
+  /** The Persons who take turns at a repeating Task. */
+  rotation: Rotation | null;
   seriesId: string | null;
   /** The Checklist this Task belongs to, if any. */
   checklistId: string | null;
@@ -40,6 +43,7 @@ export type TaskDraft = Pick<
   | "private"
   | "importance"
   | "repetition"
+  | "rotation"
   | "checklistId"
   | "entryId"
 >;
@@ -86,6 +90,7 @@ export function useMoveTask() {
           private: task.private,
           importance: task.importance,
           repetition: task.repetition,
+          rotation: task.rotation,
           checklistId: task.checklistId,
           parentId: task.parentId,
           entryId: task.entryId,
@@ -109,6 +114,16 @@ export function useTick() {
         ),
       );
     },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["tasks"] }),
+  });
+}
+
+/** Gives a Task that takes turns to another Person of its Rotation, this time only. */
+export function useSwapTurn() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ task, personId }: { task: Task; personId: string }) =>
+      api<Task>(`/tasks/${task.id}/turn`, { method: "POST", body: { personId } }),
     onSettled: () => queryClient.invalidateQueries({ queryKey: ["tasks"] }),
   });
 }
