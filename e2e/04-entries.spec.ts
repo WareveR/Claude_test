@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { signIn } from "./helpers";
+import { signIn, openMoreOptions } from "./helpers";
 
 test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 
@@ -20,6 +20,7 @@ test("create, see, edit and delete Entries in the week view", async ({ page }) =
   await page.getByLabel("Time: minutes", { exact: true }).selectOption("10");
   await expect(page.getByLabel("Has an end")).toBeChecked();
   await expect(page.getByLabel("1 day before")).toBeChecked();
+  await openMoreOptions(page);
   await page.getByLabel("Importance").selectOption("high");
   await page.getByRole("button", { name: "Save" }).click();
 

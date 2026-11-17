@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { signIn } from "./helpers";
+import { openMoreOptions, signIn } from "./helpers";
 
 test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 
@@ -7,6 +7,7 @@ test("the year view marks High days and lists the Entries of each day", async ({
   await signIn(page);
   await page.goto("/entries/new?date=2026-12-24");
   await page.getByLabel("Title").fill("Christmas Eve dinner");
+  await openMoreOptions(page);
   await page.getByLabel("Importance").selectOption("high");
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page).not.toHaveURL(/\/entries\//);

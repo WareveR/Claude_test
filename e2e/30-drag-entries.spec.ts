@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
-import { signIn } from "./helpers";
+import { signIn, openMoreOptions } from "./helpers";
 
 test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 
@@ -84,6 +84,7 @@ test("a repeating Entry dragged asks which Occurrences move", async ({ page }) =
   await page.setViewportSize({ width: 1280, height: 1600 });
   await signIn(page);
   await newEntry(page, "2027-03-15", "17:00", "Swimming");
+  await openMoreOptions(page);
   await page.getByLabel("Repeats").selectOption("weekly");
   await page.getByLabel("Ends").selectOption("count");
   await page.getByLabel("Number of times").fill("3");

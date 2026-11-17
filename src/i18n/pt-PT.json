@@ -2104,5 +2104,10 @@
     "label": "Cor de fundo",
     "none": "Sem cor",
     "n": "Cor {{n}}"
+  },
+  "moreOptions": {
+    "label": "Mais opções",
+    "set_one": "{{count}} definida",
+    "set_other": "{{count}} definidas"
   }
 }

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { signIn } from "./helpers";
+import { signIn, openMoreOptions } from "./helpers";
 
 test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 
@@ -17,12 +17,14 @@ test("one New for Entries and Tasks, picked from the title or by hand", async ({
   await expect(kind.getByRole("radio", { name: "Task" })).toBeChecked();
   await expect(page.getByLabel("Title")).toHaveValue("Buy wrapping paper");
   await expect(page.getByLabel("Due date (optional)")).toHaveValue("2026-12-14");
+  await openMoreOptions(page);
   await page.getByLabel("Notes").fill("The red one");
 
   // Picked by hand it goes back to an Entry, keeping what was filled in, and stays one.
   await kind.getByText("Entry", { exact: true }).click();
   await expect(page).toHaveURL(/\/entries\/new/);
   await expect(page.getByLabel("Title")).toHaveValue("Buy wrapping paper");
+  await openMoreOptions(page);
   await expect(page.getByLabel("Notes")).toHaveValue("The red one");
   await expect(page.getByLabel("Date", { exact: true })).toHaveValue("2026-12-14");
   await page.getByLabel("Title").press("Tab");
@@ -43,5 +45,6 @@ test("one New for Entries and Tasks, picked from the title or by hand", async ({
   await page.getByRole("button", { name: "Turn into an entry" }).click();
   await expect(page).toHaveURL(/\/entries\/(?!new)[\w-]+$/);
   await expect(page.getByLabel("Title")).toHaveValue("Buy wrapping paper");
+  await openMoreOptions(page);
   await expect(page.getByLabel("Notes")).toHaveValue("The red one");
 });

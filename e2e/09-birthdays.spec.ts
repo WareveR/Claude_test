@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { signIn } from "./helpers";
+import { signIn, openMoreOptions } from "./helpers";
 
 test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 
@@ -20,6 +20,7 @@ test("a date of birth keeps a Birthday with the age on the calendar", async ({ p
   await expect(page.getByText("This Birthday follows Bia's date of birth")).toBeVisible();
   await expect(page.getByLabel("Title")).toBeDisabled();
   await expect(page.getByRole("button", { name: "Delete entry" })).toHaveCount(0);
+  await openMoreOptions(page);
   await page.getByLabel("Notes").fill("Loves drawing");
   const saved = page.waitForResponse(
     (r) => r.url().includes("/api/entries/") && r.request().method() === "PUT",
@@ -41,6 +42,7 @@ test("a date of birth keeps a Birthday with the age on the calendar", async ({ p
     .click();
   await page.getByTestId("picked-day").getByRole("link", { name: "Edit" }).click();
   await expect(page.getByLabel("Title")).toBeEnabled();
+  await openMoreOptions(page);
   await expect(page.getByLabel("Notes")).toHaveValue("Loves drawing");
 });
 

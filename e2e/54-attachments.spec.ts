@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { signIn } from "./helpers";
+import { openMoreOptions, signIn } from "./helpers";
 
 test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 
@@ -25,6 +25,7 @@ test("a new Task takes a file before it is saved, and a photo afterwards", async
   await signIn(page);
   await page.goto("/tasks/new");
   await page.getByLabel("Title").fill(TITLE);
+  await openMoreOptions(page);
   const box = page.getByTestId("attachments");
   // A computer has no separate camera button: Photos and Files open the file picker.
   await expect(box.getByRole("button", { name: "Take a photo" })).toHaveCount(0);
@@ -47,6 +48,7 @@ test("a new Task takes a file before it is saved, and a photo afterwards", async
   const popup = page.getByRole("dialog", { name: TITLE });
   await expect(popup.getByTestId("attachments")).toContainText("guia.pdf");
   await popup.getByRole("link", { name: "Edit" }).click();
+  await openMoreOptions(page);
   const saved = page.locator("main").getByTestId("attachments");
   const pdf = saved.getByRole("link", { name: /guia\.pdf/ });
   await expect(pdf).toBeVisible();

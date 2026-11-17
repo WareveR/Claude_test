@@ -2104,5 +2104,10 @@
     "label": "Background colour",
     "none": "No colour",
     "n": "Colour {{n}}"
+  },
+  "moreOptions": {
+    "label": "More options",
+    "set_one": "{{count}} set",
+    "set_other": "{{count}} set"
   }
 }

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { signIn, lisbonDate } from "./helpers";
+import { signIn, lisbonDate, openMoreOptions } from "./helpers";
 
 test.use({ locale: "en-GB", timezoneId: "Europe/Lisbon" });
 
@@ -90,6 +90,7 @@ test("a Checklist repeating every Sunday shows only on Sundays", async ({ page }
   await page.goto("/checklists/new");
   await page.getByLabel("Name").fill("Sunday chores");
   // No start: the rounds count from today.
+  await openMoreOptions(page);
   await page.getByLabel("Repeats").selectOption("weekly");
   await expect(page.getByText(/Rounds count from/)).toBeVisible();
   await page.getByRole("checkbox", { name: "Sun", exact: true }).check();
@@ -117,6 +118,7 @@ test("a Checklist's items carry a note and hold items of their own, at any depth
   await page.goto("/tasks");
   await page.getByRole("link", { name: "New task" }).click();
   await page.getByLabel("Title").fill("Birthday party");
+  await openMoreOptions(page);
   await page.getByRole("switch", { name: "With items" }).check();
   await expect(page.getByText("Due time (optional)")).toHaveCount(0);
   await page.getByRole("button", { name: "Save" }).click();
@@ -196,6 +198,7 @@ test("a task gets items later, from a predefined list, and keeps its deadline", 
   await page.getByRole("link", { name: /Get ready for school/ }).click();
   await page.getByRole("dialog").getByRole("link", { name: "Edit" }).click();
   await expect(page).toHaveURL(/\/tasks\/[^/]+$/);
+  await openMoreOptions(page);
   await page.getByRole("switch", { name: "With items" }).check();
   await page.getByLabel("Use a predefined list").selectOption({ label: "Back to school" });
   await page.getByRole("button", { name: "Save" }).click();

@@ -19,6 +19,7 @@ import { usePersons } from "../persons/model";
 import { PersonAvatar } from "../persons/PersonAvatar";
 import { ErrorText, Field, FormActions, TextInput } from "../screens/form";
 import { ColorChoice } from "../ui/ColorChoice";
+import { MoreOptions } from "../screens/MoreOptions";
 import { paths } from "../paths";
 import { useTask, type Task, type TaskDraft } from "./model";
 import { readyToEdit } from "../offline/fresh";
@@ -169,6 +170,16 @@ function TaskForm({ task }: { task?: Task }) {
     },
   });
   const saving = withItems ? saveWithItems : save;
+  // The folded fields that hold something, so a closed panel still says so.
+  const moreSet = [
+    withItems,
+    draft.repetition,
+    draft.color,
+    draft.importance !== "normal",
+    draft.points > 0,
+    draft.notes,
+    draft.private,
+  ].filter(Boolean).length;
   const remove = useMutation({
     mutationFn: () => api(`/tasks/${task!.id}`, { method: "DELETE" }),
     onSuccess: leave,
@@ -208,39 +219,6 @@ function TaskForm({ task }: { task?: Task }) {
         {draft.entryId && (
           <LinkedEntry entryId={draft.entryId} onUnlink={() => set({ entryId: null })} />
         )}
-        <label className="flex items-center gap-2 text-sm">
-          <Switch checked={withItems} onChange={(e) => setWithItems(e.target.checked)} />
-          {t("tasks.withItems")}
-        </label>
-        <p className="-mt-3 text-xs text-muted">
-          {t(withItems ? "tasks.withItemsOnHint" : "tasks.withItemsHint")}
-        </p>
-        {withItems && (templates.data?.length ?? 0) > 0 && (
-          <Field label={t("checklists.usePredefined")}>
-            <select
-              className={INPUT}
-              value={templateId}
-              onChange={(e) => setTemplateId(e.target.value)}
-            >
-              <option value="">{t("checklistTemplates.blank")}</option>
-              {templates.data?.map((tpl) => (
-                <option key={tpl.id} value={tpl.id}>
-                  {templateText(tpl, language).name}
-                </option>
-              ))}
-            </select>
-          </Field>
-        )}
-        {withItems && (
-          <Field label={t("tasks.moreItems")}>
-            <textarea
-              className={INPUT}
-              rows={3}
-              value={moreItems}
-              onChange={(e) => setMoreItems(e.target.value)}
-            />
-          </Field>
-        )}
         <div className="flex gap-3">
           <Field label={t("tasks.dueDate")}>
             <TextInput
@@ -267,26 +245,6 @@ function TaskForm({ task }: { task?: Task }) {
             </Field>
           )}
         </div>
-
-        {draft.dueDate ? (
-          <RepetitionFields
-            value={draft.repetition}
-            start={draft.dueDate}
-            onChange={(repetition) =>
-              set(repetition ? { repetition } : { repetition, rotation: null })
-            }
-          />
-        ) : (
-          <p className="text-xs text-muted">{t("tasks.repeatNeedsDate")}</p>
-        )}
-        {draft.repetition && <p className="-mt-2 text-xs text-muted">{t("tasks.repeatHint")}</p>}
-        {draft.repetition && draft.dueDate && !withItems && (
-          <RotationFields
-            value={draft.rotation}
-            start={draft.dueDate}
-            onChange={(rotation) => set({ rotation })}
-          />
-        )}
 
         <fieldset
           className={`flex flex-col gap-1 text-sm ${(draft.rotation?.personIds.length ?? 0) >= 2 ? "hidden" : ""}`}
@@ -316,62 +274,117 @@ function TaskForm({ task }: { task?: Task }) {
           </div>
           <p className="text-xs text-muted">{t("tasks.familyWideHint")}</p>
         </fieldset>
-        <ColorChoice value={draft.color} onChange={(color) => set({ color })} />
-        {task ? (
-          <Attachments owner={`task=${task.id}`} />
-        ) : (
-          <Attachments owner={null} pending={pending} onPending={setPending} />
-        )}
-
-        {!withItems && (
-          <>
-            <Field label={t("entries.importance")} help="taskImportance">
+        <MoreOptions set={moreSet}>
+          <label className="flex items-center gap-2 text-sm">
+            <Switch checked={withItems} onChange={(e) => setWithItems(e.target.checked)} />
+            {t("tasks.withItems")}
+          </label>
+          <p className="-mt-3 text-xs text-muted">
+            {t(withItems ? "tasks.withItemsOnHint" : "tasks.withItemsHint")}
+          </p>
+          {withItems && (templates.data?.length ?? 0) > 0 && (
+            <Field label={t("checklists.usePredefined")}>
               <select
                 className={INPUT}
-                value={draft.importance}
-                onChange={(e) => set({ importance: e.target.value as TaskDraft["importance"] })}
+                value={templateId}
+                onChange={(e) => setTemplateId(e.target.value)}
               >
-                {IMPORTANCES.map((i) => (
-                  <option key={i} value={i}>
-                    {t(`importance.${i}`)}
+                <option value="">{t("checklistTemplates.blank")}</option>
+                {templates.data?.map((tpl) => (
+                  <option key={tpl.id} value={tpl.id}>
+                    {templateText(tpl, language).name}
                   </option>
                 ))}
               </select>
             </Field>
-            <Field label={t("points.taskPoints")}>
-              <TextInput
-                type="number"
-                inputMode="numeric"
-                min={0}
-                max={100}
-                value={draft.points ? String(draft.points) : ""}
-                placeholder="0"
-                onChange={(e) =>
-                  set({
-                    points: Math.max(0, Math.min(100, Math.floor(Number(e.target.value) || 0))),
-                  })
-                }
-              />
-            </Field>
-            <Field label={t("entries.notes")}>
+          )}
+          {withItems && (
+            <Field label={t("tasks.moreItems")}>
               <textarea
                 className={INPUT}
                 rows={3}
-                value={draft.notes}
-                onChange={(e) => set({ notes: e.target.value })}
+                value={moreItems}
+                onChange={(e) => setMoreItems(e.target.value)}
               />
             </Field>
+          )}
+          {draft.dueDate ? (
+            <RepetitionFields
+              value={draft.repetition}
+              start={draft.dueDate}
+              onChange={(repetition) =>
+                set(repetition ? { repetition } : { repetition, rotation: null })
+              }
+            />
+          ) : (
+            <p className="text-xs text-muted">{t("tasks.repeatNeedsDate")}</p>
+          )}
+          {draft.repetition && <p className="-mt-2 text-xs text-muted">{t("tasks.repeatHint")}</p>}
+          {draft.repetition && draft.dueDate && !withItems && (
+            <RotationFields
+              value={draft.rotation}
+              start={draft.dueDate}
+              onChange={(rotation) => set({ rotation })}
+            />
+          )}
 
-            <label className="flex items-center gap-2 text-sm">
-              <Switch
-                checked={draft.private}
-                onChange={(e) => set({ private: e.target.checked })}
-              />
-              {t("entries.private")}
-            </label>
-            <p className="-mt-3 text-xs text-muted">{t("entries.privateHint")}</p>
-          </>
-        )}
+          <ColorChoice value={draft.color} onChange={(color) => set({ color })} />
+          {task ? (
+            <Attachments owner={`task=${task.id}`} />
+          ) : (
+            <Attachments owner={null} pending={pending} onPending={setPending} />
+          )}
+
+          {!withItems && (
+            <>
+              <Field label={t("entries.importance")} help="taskImportance">
+                <select
+                  className={INPUT}
+                  value={draft.importance}
+                  onChange={(e) => set({ importance: e.target.value as TaskDraft["importance"] })}
+                >
+                  {IMPORTANCES.map((i) => (
+                    <option key={i} value={i}>
+                      {t(`importance.${i}`)}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label={t("points.taskPoints")}>
+                <TextInput
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={100}
+                  value={draft.points ? String(draft.points) : ""}
+                  placeholder="0"
+                  onChange={(e) =>
+                    set({
+                      points: Math.max(0, Math.min(100, Math.floor(Number(e.target.value) || 0))),
+                    })
+                  }
+                />
+              </Field>
+              <Field label={t("entries.notes")}>
+                <textarea
+                  className={INPUT}
+                  rows={3}
+                  value={draft.notes}
+                  onChange={(e) => set({ notes: e.target.value })}
+                />
+              </Field>
+
+              <label className="flex items-center gap-2 text-sm">
+                <Switch
+                  checked={draft.private}
+                  onChange={(e) => set({ private: e.target.checked })}
+                />
+                {t("entries.private")}
+              </label>
+              <p className="-mt-3 text-xs text-muted">{t("entries.privateHint")}</p>
+            </>
+          )}
+        </MoreOptions>
 
         {saving.error && <ErrorText>{t("errors.unexpected")}</ErrorText>}
         <FormActions
