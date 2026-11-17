@@ -110,7 +110,8 @@ function Plan({ date, today }: { date: PlainDate; today: PlainDate }) {
           <button
             type="button"
             className={BUTTON}
-            disabled={lines.length === 0}
+            // Until the open items are in, every line would look new and be added twice.
+            disabled={lines.length === 0 || !recipes || !openItems}
             data-testid="meal-shopping-button"
             onClick={() => setShopping(true)}
           >
