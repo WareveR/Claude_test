@@ -9,6 +9,7 @@ export const RESET_PARTS = [
   "recipes",
   "meals",
   "notes",
+  "contacts",
   "tree",
   "persons",
   "entryTypes",

@@ -13,6 +13,7 @@ import { PersonAvatar } from "../persons/PersonAvatar";
 import { useNow } from "../shell/useNow";
 import { EntryShopping } from "../shopping/EntryShopping";
 import { EntryPreparation } from "./EntryPreparation";
+import { EntryContacts } from "../contacts/MatchedContacts";
 import { Attachments } from "../attachments/Attachments";
 import { occurrenceValues, useEntry } from "./model";
 
@@ -148,6 +149,7 @@ export function EntrySummary({
             </p>
           )}
           {shown.notes && <p className="whitespace-pre-wrap">{shown.notes}</p>}
+          {!discreet && <EntryContacts title={shown.title} location={shown.location} />}
         </>
       )}
       {hidden && shown.hidden && !discreet && personList}

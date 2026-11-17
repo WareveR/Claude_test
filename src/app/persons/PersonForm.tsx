@@ -7,6 +7,7 @@ import { ErrorText, Field, FormActions, TextInput } from "../screens/form";
 import { PERSON_COLORS, uploadPhoto, usePersons, type Person } from "./model";
 import { PersonAvatar } from "./PersonAvatar";
 import { RelationSection } from "./RelationSection";
+import { PersonContacts } from "../contacts/MatchedContacts";
 import { readyToEdit } from "../offline/fresh";
 import { EMPTY_PROFILE, MAX_PROFILE_FIELD, MAX_PROFILE_NOTES } from "../../core/person-profile";
 import { BUTTON, BUTTON_DANGER } from "../ui/button";
@@ -211,6 +212,7 @@ function PersonForm({ person }: { person?: Person }) {
         />
       </form>
       {person && <RelationSection person={person} />}
+      {person && <PersonContacts personId={person.id} />}
       {person && (
         <div className="flex flex-col gap-2 border-t border-line pt-4">
           <button
