@@ -23,6 +23,7 @@ import { PeriodTasksList } from "../tasks/TasksAccordion";
 import { TasksButton } from "../tasks/TasksButton";
 import { NoteButton, NotesStrip } from "../notes/NotesStrip";
 import { CountdownStrip } from "../countdown/Countdowns";
+import { PointsBoard } from "../points/Points";
 
 /**
  * Display Mode: a seven-day time grid starting today across the whole screen (the coming days'
@@ -144,6 +145,7 @@ export function DisplayBoard() {
             </div>
           </nav>
           <CountdownStrip />
+          <PointsBoard />
           <NotesStrip />
           {summary && (
             <div className="min-h-0 flex-1 overflow-y-auto px-3 max-sm:px-2">

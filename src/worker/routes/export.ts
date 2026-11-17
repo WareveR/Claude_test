@@ -39,6 +39,8 @@ export const EXPORTED: Record<string, string[]> = {
   note: [],
   contact: [],
   countdown_mark: [],
+  points_entry: [],
+  points_goal: [],
   relative: [],
   relative_parent: [],
   relative_partner: [],

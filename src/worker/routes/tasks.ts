@@ -35,6 +35,7 @@ export type TaskInput = {
   parentId: string | null;
   entryId: string | null;
   importance: Importance;
+  points: number;
 };
 
 /** Validates a whole Task; returns the bad field's name or the clean values. */
@@ -98,6 +99,10 @@ async function parseTask(db: Db, body: Record<string, unknown>) {
   }
   const importance = body.importance ?? "normal";
   if (!IMPORTANCES.includes(importance as Importance)) return { field: "importance" };
+  const points = body.points ?? 0;
+  if (!Number.isInteger(points) || (points as number) < 0 || (points as number) > MAX_POINTS) {
+    return { field: "points" };
+  }
   const personIds = Array.isArray(body.personIds) ? [...new Set(body.personIds)] : [];
   if (!personIds.every((p) => typeof p === "string")) return { field: "personIds" };
   if (personIds.length > 0) {
@@ -123,6 +128,7 @@ async function parseTask(db: Db, body: Record<string, unknown>) {
       parentId: parentId as string | null,
       entryId: entryId as string | null,
       importance: importance as Importance,
+      points: points as number,
     } satisfies TaskInput,
   };
 }
@@ -158,6 +164,7 @@ async function present(db: Db, rows: TaskRow[], viewer: Account) {
       parentId: row.parentId,
       entryId: row.entryId,
       importance: hidden ? "normal" : row.importance,
+      points: row.points,
       createdAt: row.createdAt,
       changedAt: row.changedAt,
     };
@@ -195,6 +202,9 @@ personMentionChecks.push(async (db, personId) => {
     .limit(1);
   return Boolean(link);
 });
+
+/** The most points one Task can be worth. */
+export const MAX_POINTS = 100;
 
 export const taskRoutes = new Hono<AppEnv>().use(requireDevice);
 
@@ -338,6 +348,7 @@ taskRoutes.post("/tasks/:id/done", async (c) => {
           private: existing.private,
           createdBy: existing.createdBy,
           importance: existing.importance,
+          points: existing.points,
           entryId: existing.entryId,
           repetition: next.repetition,
           rotation: rotation && nextRotation(rotation),
@@ -357,9 +368,33 @@ taskRoutes.post("/tasks/:id/done", async (c) => {
           : [db.update(schema.task).set({ seriesId: id }).where(eq(schema.task.id, id))]),
       ]);
     }
+    // Its Persons earn its points, once.
+    if (existing.points > 0) await award(db, existing, at);
   }
   return c.json(await presentOne(db, id, c.get("account")));
 });
+
+/** The points a Task ticked done earns each of its Persons (none for a Family-wide Task). */
+async function award(db: Db, task: TaskRow, at: string) {
+  const links = await db
+    .select({ personId: schema.taskPerson.personId })
+    .from(schema.taskPerson)
+    .where(eq(schema.taskPerson.taskId, task.id));
+  if (links.length === 0) return;
+  await db.batch([
+    // Ticked again after an undo, it never pays twice.
+    db.delete(schema.pointsEntry).where(eq(schema.pointsEntry.taskId, task.id)),
+    ...links.map((l) =>
+      db.insert(schema.pointsEntry).values({
+        id: randomId(),
+        personId: l.personId,
+        points: task.points,
+        taskId: task.id,
+        createdAt: at,
+      }),
+    ),
+  ]);
+}
 
 /** Gives a Task that takes turns to another Person of its Rotation, this time only. */
 taskRoutes.post("/tasks/:id/turn", async (c) => {
@@ -435,6 +470,8 @@ taskRoutes.delete("/tasks/:id/done", async (c) => {
       .set({ doneAt: null, changedAt: c.get("now").toISOString() })
       .where(eq(schema.task.id, id)),
     ...(untouched ? [db.delete(schema.task).where(eq(schema.task.id, next.id))] : []),
+    // Undone, its points go back.
+    db.delete(schema.pointsEntry).where(eq(schema.pointsEntry.taskId, id)),
   ]);
   return c.json(await presentOne(db, id, c.get("account")));
 });
