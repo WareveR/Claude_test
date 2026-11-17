@@ -11,6 +11,7 @@ import type { AppEnv } from "../types";
 import { readShoppingPhrase } from "../../core/shopping-phrase";
 import { readNotePhrase } from "../../core/notes";
 import { noteCommand } from "../voice/notes";
+import { asksFreeTime, freeTimeAnswer } from "../voice/free-time";
 import { briefingCommand, openCommand } from "../voice/navigation";
 import { questionCommand, weatherCommand } from "../voice/agenda";
 import { changeCommand } from "../voice/change";
@@ -93,6 +94,22 @@ voiceRoutes.post("/voice", async (c) => {
   const targets = changeTargets(entries, tasks, today);
   const viewer = c.get("account");
   const speaker = active.findIndex((p) => p.id === viewer.personId);
+  // "Quando é que estamos todos livres?" is worked out here, without the model.
+  if (corrections.length === 0 && asksFreeTime(sentence)) {
+    return c.json(
+      await freeTimeAnswer({
+        db,
+        sentence,
+        persons: active,
+        nicknames,
+        speakerId: viewer.personId,
+        family,
+        today,
+        now: c.get("now"),
+        language,
+      }),
+    );
+  }
 
   const raw = await readVoice(c.env, {
     sentence,

@@ -1923,5 +1923,18 @@
     "tomorrow": "tomorrow",
     "days_one": "{{count}} day",
     "days_other": "{{count}} days"
+  },
+  "freeTime": {
+    "title": "Find free time",
+    "who": "Who",
+    "length": "How long",
+    "minutes_one": "{{count}} min",
+    "minutes_other": "{{count}} min",
+    "hours_one": "{{count}} hour",
+    "hours_other": "{{count}} hours",
+    "hint": "Outside the sleeping hours. Private entries count as busy; all-day ones don't.",
+    "none": "Nobody is free at the same time this week.",
+    "plan": "Plan it here",
+    "close": "Close"
   }
 }

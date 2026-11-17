@@ -1128,6 +1128,17 @@ describe("Voice Entry: Notes", () => {
   });
 });
 
+describe("Voice Entry: free time", () => {
+  it("says when the Persons named are free, without the model", async () => {
+    const { browser } = await family();
+    const res = await browser.post("/voice", { sentence: "Quando é que a Ana está livre?" });
+    const body = (await res.json()) as { outcome: string; text: string };
+    expect(body.outcome).toBe("answer");
+    expect(body.text).toMatch(/^Ana está livre esta semana: /);
+    expect(prompts).toHaveLength(0);
+  });
+});
+
 describe("Voice Entry: corrections", () => {
   it("gives the model what was said after the readback, and skips the shopping shortcut", async () => {
     const { browser } = await family();

@@ -12,6 +12,7 @@ import {
 import { useLayoutEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { FreeTimeButton } from "../free-time/FreeTimeButton";
 import { Link, NavLink, useLocation, useNavigate } from "react-router";
 import { todayIn } from "../../core/plain-date";
 import { useSignedIn } from "../family";
@@ -122,6 +123,10 @@ export function ViewNav({
     // The day and week grids can show only their All-day or only their Timed Entries.
     (view === "day" || view === "week") && grid && <LayersButton key="layers" />,
     tasks && <TasksButton key="tasks" from={tasks.from} to={tasks.to} />,
+    // The week finds when the chosen Persons are all free.
+    view === "week" && grid && tasks && (
+      <FreeTimeButton key="free" from={tasks.from} to={tasks.to} />
+    ),
   ].filter(Boolean);
   const linkTo = (v: (typeof VIEWS)[number]) =>
     v === "tasks" || v === "shopping" || v === "recipes" || v === "tree"
