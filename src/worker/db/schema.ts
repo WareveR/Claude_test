@@ -597,6 +597,14 @@ export const contact = sqliteTable("contact", {
   changedAt: text("changed_at").notNull(),
 });
 
+/** An Entry the Wall counts the days to ("Férias · 12 dias"). Birthdays and Christmas need none. */
+export const countdownMark = sqliteTable("countdown_mark", {
+  entryId: text("entry_id")
+    .primaryKey()
+    .references(() => entry.id, { onDelete: "cascade" }),
+  createdAt: text("created_at").notNull(),
+});
+
 /**
  * Someone in the Family Tree: to show the children where they come from. Not a Person: never
  * on the calendar, and may have lived long ago.

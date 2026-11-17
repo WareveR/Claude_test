@@ -98,6 +98,10 @@ _Avoid_: Message, post-it, reminder
 Someone the Family calls or writes to, kept in Settings › Family: a name, a role ("Pediatra", "Escola", "Canalizador"), a phone and an email with buttons to call and write, notes, and optionally the Person whose Contact it is (their doctor), shown on that Person's page. An Entry whose title or place names a Contact's name or role, as whole words, offers that Contact's buttons. Not a Person: never on the calendar.
 _Avoid_: Address book entry, provider
 
+**Countdown**:
+The days to go to something the Family looks forward to, shown on the Wall above the Notes: the soonest three of the Entries marked "Count the days on the Wall" (from the Entry's details), every Birthday, and Christmas, which need no marking. An Entry under way counts as today. A Private Entry can't be marked and never shows there.
+_Avoid_: Timer, days left
+
 **Display Mode**:
 A per-device setting for a screen used as a wall display (typically a tablet): the screen stays awake, text is larger, the view returns to today after a few minutes without touch and rolls over at midnight, editing controls are hidden except ticking a Task done, and Private Entries and Tasks show only as "Private". Display Mode is entered from the "Wall" tab of the view switcher and left with the Wall switch in the header, which asks the password of the Account the device is signed in with, so a child at a wall tablet can't reach everything that Account sees; each device can switch that question off in its own Settings, which the Wall hides. It is not a separate access level.
 _Avoid_: Kiosk, read-only mode, wall mode
