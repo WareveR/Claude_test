@@ -1596,7 +1596,8 @@
       "templates": "Predefined lists",
       "settings": "Family settings",
       "errors": "Error log",
-      "tree": "Family tree"
+      "tree": "Family tree",
+      "medications": "Medication"
     },
     "details": {
       "entries": "Every entry, Private ones included. People's birthdays stay as long as the people do.",
@@ -1611,7 +1612,8 @@
       "templates": "Lists you made go and the built-in ones are reset.",
       "settings": "Holidays, bins, weather, sleeping hours and calendar feeds.",
       "errors": "Every logged error.",
-      "tree": "The tree's people, their links and stories."
+      "tree": "The tree's people, their links and stories.",
+      "medications": "Every medication and the record of doses taken."
     },
     "all": "Tick everything: start again as a new family",
     "none": "Untick everything",
@@ -1979,5 +1981,35 @@
     "taskPoints": "Points when done",
     "plus_one": "+{{count}} point",
     "plus_other": "+{{count}} points"
+  },
+  "medications": {
+    "title": "Medication",
+    "today": "Medication today",
+    "add": "Add medication",
+    "name": "Medication",
+    "dose": "Dose",
+    "doseHint": "1 tablet, 5 ml",
+    "times": "Times",
+    "timeN": "Time {{n}}",
+    "addTime": "Another time",
+    "removeTime": "Remove {{time}}",
+    "start": "Starts",
+    "end": "Ends (optional)",
+    "until": "until {{date}}",
+    "ended": "ended",
+    "private": "Private",
+    "privateHint": "Only you and the Person themselves see this medication and its doses.",
+    "notes": "Notes",
+    "taken": "Taken",
+    "takenFor": "{{name}} at {{time}} taken",
+    "save": "Save",
+    "delete": "Delete",
+    "bad": {
+      "name": "Write the medication's name.",
+      "times": "Give at least one time.",
+      "startDate": "Say when it starts.",
+      "endDate": "The end must be after the start.",
+      "personId": "Pick a Person."
+    }
   }
 }

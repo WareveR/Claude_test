@@ -10,7 +10,7 @@ import {
   vapidKeys,
 } from "../push";
 import type { PushMessage } from "../push";
-import { PASSWORD, setUpFamily, TestBrowser, EMAIL } from "../test/client";
+import { addAccount, PASSWORD, setUpFamily, TestBrowser, EMAIL } from "../test/client";
 
 type Sent = { endpoint: string; message: PushMessage };
 let sent: Sent[] = [];
@@ -396,5 +396,46 @@ describe("VAPID secrets pasted with extras", () => {
       expect(vapidKeys({ ...env, VAPID_PUBLIC_KEY } as Env)).toBeNull();
     }
     expect(vapidKeys({ ...env, VAPID_PRIVATE_KEY: env.VAPID_PUBLIC_KEY } as Env)).toBeNull();
+  });
+
+  it("reminds each Medication dose with a Taken button, a Private one only to who sees it", async () => {
+    const { phone, ana } = await family();
+    const med = async (name: string, isPrivate: boolean) =>
+      (
+        (await (
+          await phone.post("/medications", {
+            personId: ana,
+            name,
+            dose: "1 comprimido",
+            times: ["09:00"],
+            startDate: "2026-10-03",
+            private: isPrivate,
+          })
+        ).json()) as { id: string }
+      ).id;
+    const secret = await med("Ritalina", true);
+    await med("Vitamina D", false);
+    const phoneEndpoint = await subscribe(phone, "phone");
+    const other = await addAccount("rita@example.com");
+    const otherEndpoint = await subscribe(other, "other");
+
+    await runScheduler("2026-10-03T07:55:00Z"); // 08:55 in Lisbon
+    await runScheduler("2026-10-03T08:00:00Z"); // 09:00
+    await runScheduler("2026-10-03T08:05:00Z");
+    const to = (endpoint: string) =>
+      sent.filter((s) => s.endpoint === endpoint).map((s) => s.message.title);
+    expect(to(phoneEndpoint).sort()).toEqual([
+      "Medicação às 09:00",
+      "Vitamina D 1 comprimido · Ana às 09:00",
+    ]);
+    expect(to(otherEndpoint)).toEqual(["Vitamina D 1 comprimido · Ana às 09:00"]);
+    expect(JSON.stringify(sent)).not.toContain("Ritalina");
+    const hidden = sent.find((s) => s.message.title === "Medicação às 09:00")!.message;
+    expect(hidden.action).toEqual({
+      title: "Tomado",
+      post: `/api/medications/${secret}/doses`,
+      date: "2026-10-03",
+      time: "09:00",
+    });
   });
 });

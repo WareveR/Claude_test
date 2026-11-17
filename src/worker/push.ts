@@ -137,7 +137,13 @@ export async function encryptPayload(subscription: PushSubscriptionJson, payload
   return concat(salt, recordSize, new Uint8Array([asPublic.length]), asPublic, ciphertext);
 }
 
-export type PushMessage = { title: string; url: string; tag: string };
+export type PushMessage = {
+  title: string;
+  url: string;
+  tag: string;
+  /** A button on the notification, posting `{date, time}` to `post` when tapped. */
+  action?: { title: string; post: string; date: string; time: string };
+};
 
 /** The push service's answer: `gone` means the subscription expired and should be removed. */
 export type PushResult = { ok: boolean; gone: boolean };

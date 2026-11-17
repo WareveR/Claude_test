@@ -1596,7 +1596,8 @@
       "templates": "Listas pré-definidas",
       "settings": "Definições da família",
       "errors": "Registo de erros",
-      "tree": "Árvore da família"
+      "tree": "Árvore da família",
+      "medications": "Medicação"
     },
     "details": {
       "entries": "Todas as Entradas, as Privadas incluídas. Os aniversários das Pessoas ficam enquanto elas ficarem.",
@@ -1611,7 +1612,8 @@
       "templates": "As listas criadas saem e as de origem voltam ao início.",
       "settings": "Feriados, lixo, meteorologia, horas de sono e feeds de calendário.",
       "errors": "Todos os erros registados.",
-      "tree": "As pessoas da árvore, as suas ligações e histórias."
+      "tree": "As pessoas da árvore, as suas ligações e histórias.",
+      "medications": "Todos os medicamentos e o registo das tomas."
     },
     "all": "Marcar tudo: recomeçar como família nova",
     "none": "Desmarcar tudo",
@@ -1979,5 +1981,35 @@
     "taskPoints": "Pontos ao fazer",
     "plus_one": "+{{count}} ponto",
     "plus_other": "+{{count}} pontos"
+  },
+  "medications": {
+    "title": "Medicação",
+    "today": "Medicação de hoje",
+    "add": "Adicionar medicamento",
+    "name": "Medicamento",
+    "dose": "Dose",
+    "doseHint": "1 comprimido, 5 ml",
+    "times": "Horários",
+    "timeN": "Horário {{n}}",
+    "addTime": "Mais um horário",
+    "removeTime": "Tirar o horário {{time}}",
+    "start": "Começa",
+    "end": "Termina (opcional)",
+    "until": "até {{date}}",
+    "ended": "terminado",
+    "private": "Privado",
+    "privateHint": "Só tu e a própria Pessoa veem este medicamento e as suas tomas.",
+    "notes": "Notas",
+    "taken": "Tomado",
+    "takenFor": "{{name}} às {{time}} tomado",
+    "save": "Guardar",
+    "delete": "Apagar",
+    "bad": {
+      "name": "Escreve o nome do medicamento.",
+      "times": "Indica pelo menos um horário.",
+      "startDate": "Indica quando começa.",
+      "endDate": "O fim tem de ser depois do início.",
+      "personId": "Escolhe uma Pessoa."
+    }
   }
 }
